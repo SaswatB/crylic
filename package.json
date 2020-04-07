@@ -33,6 +33,7 @@
     "react": "^16.13.1",
     "react-app-rewire-postcss": "^3.0.2",
     "react-app-rewired": "^2.1.5",
+    "react-color": "^2.18.0",
     "react-dom": "^16.13.1",
     "react-monaco-editor": "^0.35.0",
     "react-refresh": "^0.8.1",
@@ -42,7 +43,8 @@
     "recast": "^0.18.8",
     "tailwindcss": "^1.2.0",
     "typescript": "~3.7.2",
-    "vm2": "^3.9.1"
+    "vm2": "^3.9.1",
+    "webpack": "^4.42.0"
   },
   "scripts": {
     "start": "react-app-rewired start",
