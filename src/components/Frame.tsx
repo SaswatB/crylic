@@ -1,18 +1,33 @@
-import React, { FunctionComponent, useRef, useEffect, useState, useImperativeHandle, forwardRef, RefAttributes } from 'react';
-import ReactDOM from 'react-dom';
-import { DIV_LOOKUP_DATA_ATTR, DIV_LOOKUP_ROOT } from '../utils/constants';
+import React, {
+  FunctionComponent,
+  useRef,
+  useEffect,
+  useState,
+  useImperativeHandle,
+  forwardRef,
+  RefAttributes,
+} from "react";
+import ReactDOM from "react-dom";
+import { DIV_LOOKUP_DATA_ATTR, DIV_LOOKUP_ROOT } from "../utils/constants";
 // @ts-ignore ignore raw loader import
 // eslint-disable-next-line import/no-webpack-loader-syntax
-import normalizeCss from '!!raw-loader!normalize.css/normalize.css';
+import normalizeCss from "!!raw-loader!normalize.css/normalize.css";
 
-export const Frame: FunctionComponent<React.IframeHTMLAttributes<HTMLIFrameElement> & RefAttributes<HTMLIFrameElement>> = forwardRef(({children, ...props}, ref) => {
+export const Frame: FunctionComponent<
+  React.IframeHTMLAttributes<HTMLIFrameElement> &
+    RefAttributes<HTMLIFrameElement>
+> = forwardRef(({ children, ...props }, ref) => {
   const frame = useRef<HTMLIFrameElement>(null);
   const [root, setRoot] = useState<HTMLDivElement>();
 
   const initIframe = () => {
     if (frame.current) {
       const iframeDocument = frame.current.contentDocument!;
-      if(iframeDocument.readyState === 'complete') {
+      if (iframeDocument.readyState === "complete") {
+        // clear the iframe content
+        iframeDocument.write("");
+        iframeDocument.close();
+
         // add react rendering root
         const newRoot = iframeDocument.createElement("div");
         newRoot.style.display = "flex";
@@ -22,9 +37,10 @@ export const Frame: FunctionComponent<React.IframeHTMLAttributes<HTMLIFrameEleme
         iframeDocument.body.appendChild(newRoot);
         setRoot(newRoot);
 
-        const style = iframeDocument.createElement('style');
+        // add normalize
+        const style = iframeDocument.createElement("style");
         iframeDocument.head.appendChild(style);
-        style.type = 'text/css';
+        style.type = "text/css";
         style.appendChild(iframeDocument.createTextNode(normalizeCss));
         return;
       }
@@ -37,7 +53,7 @@ export const Frame: FunctionComponent<React.IframeHTMLAttributes<HTMLIFrameEleme
     ReactDOM.render(
       // @ts-ignore children typecheck failure
       children,
-      root,
+      root
     );
   }
 

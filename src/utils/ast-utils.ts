@@ -1,37 +1,48 @@
 import { parse, print, types, visit } from "recast";
 import { NodePath } from "ast-types/lib/node-path";
-import { DIV_LOOKUP_DATA_ATTR } from "./constants";
+import { DIV_LOOKUP_DATA_ATTR, DIV_RECENTLY_ADDED_DATA_ATTR } from "./constants";
+import { babelTsParser } from "./babel-ts";
 
 const { format } = __non_webpack_require__(
   "prettier"
 ) as typeof import("prettier");
 const { builders: b } = types;
 
-export const addDataAttrToJSXElements = (code: string) => {
-  const ast = parse(code, {
-    parser: require("recast/parsers/babel"),
-  });
+const traverseJSXOpenElements = (ast: any, visitor: (path: NodePath<types.namedTypes.JSXOpeningElement, any>, index: number) => void) => {
   let count = 0;
   visit(ast, {
     visitJSXOpeningElement(path) {
-      console.log(path);
-      const attr = b.jsxAttribute(
-        b.jsxIdentifier(`data-${DIV_LOOKUP_DATA_ATTR}`),
-        b.stringLiteral(`${count++}`)
-      );
-      path.value.attributes.push(attr);
+      visitor(path, count++);
       this.traverse(path);
     },
   });
-  return print(ast).code;
-}
+};
 
-export const removeDataAttrFromJSXElementsAndEditJSXElement = (code: string, editLookupId?: string, editElement?: (element: NodePath<types.namedTypes.JSXElement, any>) => void) => {
-  const ast = parse(code, { parser: require("recast/parsers/babel") });
+export const addLookupDataAttrToJSXElements = (code: string) => {
+  const ast = parse(code, {
+    parser: babelTsParser,
+  });
+  traverseJSXOpenElements(ast, (path, index) => {
+      const attr = b.jsxAttribute(
+        b.jsxIdentifier(`data-${DIV_LOOKUP_DATA_ATTR}`),
+        b.stringLiteral(`${index}`)
+      );
+      path.value.attributes.push(attr);
+  })
+  console.log("ast", ast);
+  return print(ast).code;
+};
+
+export const removeLookupDataAttrFromJSXElementsAndEditJSXElement = (
+  code: string,
+  editLookupId?: string,
+  editElement?: (path: NodePath<types.namedTypes.JSXElement, any>) => void
+) => {
+  const ast = parse(code, { parser: babelTsParser });
   visit(ast, {
     visitJSXElement(path) {
-      console.log(path);
-      if (editLookupId !== undefined &&
+      if (
+        editLookupId !== undefined &&
         path.value.openingElement.attributes.find(
           (attr: any) =>
             attr.name.name === `data-${DIV_LOOKUP_DATA_ATTR}` &&
@@ -49,11 +60,63 @@ export const removeDataAttrFromJSXElementsAndEditJSXElement = (code: string, edi
   return format(print(ast).code, { parser: "babel" });
 };
 
-export const addJSXChildToJSXElement = (parentElement: any, childElementTag: string, childShouldBeSelfClosing = false) => {
+const valueToASTLiteral = (
+  value: unknown
+):
+  | types.namedTypes.BigIntLiteral
+  | types.namedTypes.BooleanLiteral
+  | types.namedTypes.NumericLiteral
+  | types.namedTypes.NullLiteral
+  | types.namedTypes.ObjectExpression
+  | types.namedTypes.StringLiteral => {
+  switch (typeof value) {
+    case "bigint":
+      return b.bigIntLiteral(`${value}`);
+    case "boolean":
+      return b.booleanLiteral(value);
+    case "number":
+      return b.numericLiteral(value);
+    case "object":
+      if (value === null) return b.nullLiteral();
+      return b.objectExpression(
+        Object.entries(value).map(([key, entryValue]) =>
+          b.objectProperty(b.identifier(key), valueToASTLiteral(entryValue))
+        )
+      );
+    case "string":
+      return b.stringLiteral(value);
+    default:
+      throw new Error("Unsupported value type");
+  }
+};
+
+const valueToJSXLiteral = (value: unknown) => {
+  // jsx allows string literals for property values
+  if (typeof value === "string") return b.stringLiteral(value);
+  // jsx treats properties without any value as true
+  if (value === true) return null;
+  // wrap everything else in an expression container
+  return b.jsxExpressionContainer(valueToASTLiteral(value));
+};
+
+export const addJSXChildToJSXElement = (
+  parentElement: any,
+  childElementTag: string,
+  childAttributes: Record<string, any> = {},
+  childShouldBeSelfClosing = false
+) => {
   parentElement.children.push(
     b.jsxElement(
-      b.jsxOpeningElement(b.jsxIdentifier(childElementTag), [], childShouldBeSelfClosing),
-      childShouldBeSelfClosing ? undefined: b.jsxClosingElement(b.jsxIdentifier(childElementTag))
+      b.jsxOpeningElement(
+        b.jsxIdentifier(childElementTag),
+        Object.entries(childAttributes).map(([name, value]) =>
+          b.jsxAttribute(b.jsxIdentifier(name), valueToJSXLiteral(value))
+        ),
+        childShouldBeSelfClosing
+      ),
+      childShouldBeSelfClosing
+        ? undefined
+        : b.jsxClosingElement(b.jsxIdentifier(childElementTag))
     )
   );
   // if the parent was self closing, open it up
@@ -63,4 +126,36 @@ export const addJSXChildToJSXElement = (parentElement: any, childElementTag: str
     );
     parentElement.openingElement.selfClosing = false;
   }
+};
+
+export const removeRecentlyAddedDataAttrAndGetLookupId = (code: string) => {
+  const ast = parse(code, {
+    parser: babelTsParser,
+  });
+  let resultId;
+  traverseJSXOpenElements(ast, (path, index) => {
+    if (path.value.attributes.find((attr: any) => attr.name.name === `data-${DIV_RECENTLY_ADDED_DATA_ATTR}`)) {
+      resultId = `${index}`;
+      path.value.attributes = path.value.attributes.filter(
+        (attr: any) => attr.name.name !== `data-${DIV_RECENTLY_ADDED_DATA_ATTR}`
+      );
+    }
+  })
+  return [print(ast).code, resultId] as const;
 }
+
+export const applyStyleAttribute = (path: NodePath<types.namedTypes.JSXElement, any>, style: object) => {
+  const existingStyleAttr = path.value.openingElement.attributes.find((attr: any) => attr.name.name === `style`);
+  if (!existingStyleAttr) {
+    path.value.openingElement.attributes.push(b.jsxAttribute(b.jsxIdentifier('style'), valueToJSXLiteral(style)));
+    return;
+  }
+  Object.entries(style).forEach(([styleName, styleValue]) => {
+    const existingStyleProp = existingStyleAttr.value.expression.properties.find((prop: any) => prop.key.name === styleName);
+    if (!existingStyleProp) {
+      existingStyleAttr.value.expression.properties.push(b.objectProperty(b.identifier(styleName), valueToASTLiteral(styleValue)))
+      return;
+    }
+    existingStyleProp.value = valueToASTLiteral(styleValue);
+  });
+};
