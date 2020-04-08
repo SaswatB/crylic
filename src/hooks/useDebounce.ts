@@ -8,6 +8,7 @@ export function useDebounce<T>(value: T, delay: number) {
     () => {
       if (skipNextDebounce) {
         setDebouncedValue(value);
+        setSkipNextDebounce(false);
         return undefined;
       }
       const handler = setTimeout(() => {

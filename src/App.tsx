@@ -6,14 +6,13 @@ import {
   BabelComponentViewRef,
   getComponentElementFromEvent,
 } from "./components/BabelComponentView";
-import { useFilePicker } from "./hooks/useFilePicker";
 import { useDebounce } from "./hooks/useDebounce";
-import { useTextInput, useSelectInput } from "./hooks/useInput";
 import {
   DIV_LOOKUP_DATA_ATTR,
   DIV_LOOKUP_ROOT,
   DIV_RECENTLY_ADDED_DATA_ATTR,
   DIV_RECENTLY_ADDED,
+  SelectModes,
 } from "./utils/constants";
 import {
   addLookupDataAttrToJSXElements,
@@ -23,12 +22,9 @@ import {
   applyStyleAttribute,
 } from "./utils/ast-utils";
 import "./App.scss";
+import { useSideBar } from "./hooks/useSideBar";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
-
-const renderSeparator = () => (
-  <div className="w-full my-5 border-gray-600 border-solid border-b" />
-);
 
 function useOverlay(
   componentView: BabelComponentViewRef | null,
@@ -75,13 +71,14 @@ function useOverlay(
   return renderOverlay;
 }
 
-enum SelectModes {
-  SelectElement,
-  AddDivElement,
+export interface SelectedElement {
+  lookUpId: string;
+  boundingBox: DOMRect;
+  computedStyles: CSSStyleDeclaration;
+  inlineStyles: CSSStyleDeclaration;
 }
 
 function App() {
-  const [filePath, openFilePicker] = useFilePicker();
   const [code, setCode] = useState("");
   const [codeWithData, setCodeWithData] = useState("");
   const componentView = useRef<BabelComponentViewRef>(null);
@@ -100,22 +97,8 @@ function App() {
     setCode(newCode);
   };
 
-  useEffect(() => {
-    if (filePath) {
-      fs.readFile(filePath, { encoding: "utf-8" }, (err, data) => {
-        setCodeImmediately(data);
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filePath]);
-
   const [selectMode, setSelectMode] = useState<SelectModes>(); // todo escape key
-  const [selectedElement, setSelectedElement] = useState<{
-    lookUpId: string;
-    boundingBox: DOMRect;
-    computedStyles: CSSStyleDeclaration;
-    inlineStyles: CSSStyleDeclaration;
-  }>();
+  const [selectedElement, setSelectedElement] = useState<SelectedElement>();
 
   const selectElement = (componentElement: HTMLElement) => {
     const lookUpId = componentElement.dataset?.[DIV_LOOKUP_DATA_ATTR];
@@ -209,14 +192,7 @@ export function MyComponent() {
     }
   );
 
-  const [componentViewWidth, renderComponentViewWidthInput] = useTextInput(
-    "600"
-  );
-  const [componentViewHeight, renderComponentViewHeightInput] = useTextInput(
-    "300"
-  );
-
-  const updateSelectedElementFactory = (
+  const updateSelectedElementStyleFactory = (
     styleProp: keyof CSSStyleDeclaration,
     newValue: string
   ) => () => {
@@ -240,60 +216,21 @@ export function MyComponent() {
     }
   };
 
-  const useBoundTextInput = (initialValue: string) =>
-    useTextInput(initialValue, true);
-  const useSelectedElementEditor = (
-    styleProp: keyof CSSStyleDeclaration,
-    useEditorHook: (
-      iv: string
-    ) => readonly [
-      string,
-      (props?: React.HTMLAttributes<HTMLElement>) => JSX.Element
-    ] = useBoundTextInput
-  ) => {
-    const [
-      selectedElementValue,
-      renderSelectedElementValueInput,
-    ] = useEditorHook(
-      selectedElement?.inlineStyles[styleProp] ||
-        selectedElement?.computedStyles[styleProp]
-    );
-    useEffect(updateSelectedElementFactory(styleProp, selectedElementValue), [
-      selectedElementValue,
-    ]);
-    return [
-      selectedElementValue,
-      (props?: React.HTMLAttributes<HTMLElement>) =>
-        renderSelectedElementValueInput({
-          ...props,
-          style: { ...props?.style, fontStyle: selectedElement?.inlineStyles[styleProp] ? undefined : "italic" },
-        }),
-    ] as const;
-  };
+  const { render: renderSideBar, filePath, componentViewWidth, componentViewHeight } = useSideBar({
+    selectedElement,
+    onChangeSelectMode: setSelectMode,
+    onClearSelectedElement: () => setSelectedElement(undefined),
+    updateSelectedElementStyleFactory,
+  });
 
-  const [, renderSelectedElementWidthInput] = useSelectedElementEditor("width");
-  const [, renderSelectedElementHeightInput] = useSelectedElementEditor(
-    "height"
-  );
-  const [
-    selectedElementPosition,
-    renderSelectedElementPosition,
-  ] = useSelectedElementEditor(
-    "position",
-    useSelectInput.bind(undefined, [
-      { name: "Static", value: "static" },
-      { name: "Relative", value: "relative" },
-      { name: "Fixed", value: "fixed" },
-      { name: "Absolute", value: "absolute" },
-      { name: "Sticky", value: "sticky" },
-    ])
-  );
-  const [, renderSelectedElementTopInput] = useSelectedElementEditor("top");
-  const [, renderSelectedElementLeftInput] = useSelectedElementEditor("left");
-  const [, renderSelectedElementBottomInput] = useSelectedElementEditor(
-    "bottom"
-  );
-  const [, renderSelectedElementRightInput] = useSelectedElementEditor("right");
+  useEffect(() => {
+    if (filePath) {
+      fs.readFile(filePath, { encoding: "utf-8" }, (err, data) => {
+        setCodeImmediately(data);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filePath]);
 
   return (
     <div className="flex flex-col items-stretch w-screen h-screen overflow-hidden text-white">
@@ -303,93 +240,8 @@ export function MyComponent() {
         </div>
       )}
       <div className="flex flex-1 flex-row">
-        <div
-          className="flex flex-col p-4 bg-gray-800"
-          style={{ width: "300px" }}
-        >
-          <button className="btn w-full" onClick={openFilePicker}>
-            Open
-          </button>
-          {renderSeparator()}
-          <button
-            className="btn w-full"
-            onClick={() => setSelectMode(SelectModes.SelectElement)}
-          >
-            Select Element
-          </button>
-          <button
-            className="btn w-full"
-            onClick={() => setSelectedElement(undefined)}
-          >
-            Clear Selected Element
-          </button>
-          <button
-            className="btn w-full"
-            onClick={() => setSelectMode(SelectModes.AddDivElement)}
-          >
-            Add Block
-          </button>
-          {renderSeparator()}
-          <div className="mb-2">Frame</div>
-          <div className="flex flex-row items-center justify-center">
-            w:&nbsp;{" "}
-            {renderComponentViewWidthInput({ className: "w-12 text-center" })}
-            <div className="px-4">x</div>
-            h:&nbsp;{" "}
-            {renderComponentViewHeightInput({ className: "w-12 text-center" })}
-          </div>
-          {selectedElement && (
-            <>
-              {renderSeparator()}
-              <div className="mb-2">Selected Element</div>
-              <div>
-                Width:{" "}
-                {renderSelectedElementWidthInput({
-                  className: "w-32 text-center",
-                })}
-              </div>
-              <div>
-                Height:{" "}
-                {renderSelectedElementHeightInput({
-                  className: "w-32 text-center",
-                })}
-              </div>
-              <div>
-                Position:{" "}
-                {renderSelectedElementPosition({
-                  className: "w-32 text-center",
-                })}
-              </div>
-              {selectedElementPosition !== "static" && (
-                <>
-                  <div>
-                    Top:{" "}
-                    {renderSelectedElementTopInput({
-                      className: "w-32 text-center",
-                    })}
-                  </div>
-                  <div>
-                    Left:{" "}
-                    {renderSelectedElementLeftInput({
-                      className: "w-32 text-center",
-                    })}
-                  </div>
-                  <div>
-                    Bottom:{" "}
-                    {renderSelectedElementBottomInput({
-                      className: "w-32 text-center",
-                    })}
-                  </div>
-                  <div>
-                    Right:{" "}
-                    {renderSelectedElementRightInput({
-                      className: "w-32 text-center",
-                    })}
-                  </div>
-                </>
-              )}
-            </>
-          )}
+        <div className="flex flex-col p-4 bg-gray-800" style={{ width: "300px" }}>
+          {renderSideBar()}
         </div>
         <div className="flex flex-1 relative bg-gray-600 items-center justify-center overflow-hidden">
           <TransformWrapper

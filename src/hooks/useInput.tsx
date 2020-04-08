@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Slider, { SliderProps } from "@material-ui/core/Slider";
 import Popper from '@material-ui/core/Popper';
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
+import { ChromePicker } from 'react-color';
 
 export function useTextInput(initialValue = "", bindInitialValue = false) {
   const [value, setValue] = useState<string>(initialValue);
@@ -76,5 +77,28 @@ export function useSelectInput(
     </select>
   );
 
+  return [value, render] as const;
+}
+
+export function useColorPicker(initialValue = '') {
+  const anchor = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(initialValue);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {!open && setValue(initialValue);}, [initialValue]);
+  console.log('useColorPicker', value)
+
+  const render = () => (
+      <>
+        <button ref={anchor} className="btn w-full" onClick={() => setOpen(!open)}>
+          Open
+        </button>
+        <Popper open={open} anchorEl={anchor.current}>
+    <ClickAwayListener onClickAway={() =>setOpen(false)}>
+          <ChromePicker color={value} onChange={c => setValue(c.hex)} />
+    </ClickAwayListener>
+        </Popper>
+      </>
+  );
   return [value, render] as const;
 }

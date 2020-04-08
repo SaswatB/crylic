@@ -19,6 +19,18 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>React App</title>
+    <!-- Stop react error overlay from showing errors thrown by the vm -->
+    <script>
+      window.addEventListener('error', function(e){
+        const {error} = e;
+        if (!error.captured && error.stack.includes('runInContext')) {
+          console.log(error);
+          error.captured = true;
+          e.stopImmediatePropagation();
+          e.preventDefault();
+        }
+      });
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
