@@ -18,3 +18,10 @@
 .MuiTab-root {
   min-width: 90px !important;
 }
+
+.selected-element-code-highlight {
+  color: red !important;
+  cursor: pointer;
+	font-weight: bold;
+	font-style: oblique;
+}

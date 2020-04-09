@@ -1,6 +1,9 @@
 import { parse, print, types, visit } from "recast";
 import { NodePath } from "ast-types/lib/node-path";
-import { DIV_LOOKUP_DATA_ATTR, DIV_RECENTLY_ADDED_DATA_ATTR } from "./constants";
+import {
+  DIV_LOOKUP_DATA_ATTR,
+  DIV_RECENTLY_ADDED_DATA_ATTR,
+} from "./constants";
 import { babelTsParser } from "./babel-ts";
 
 const { format } = __non_webpack_require__(
@@ -8,11 +11,17 @@ const { format } = __non_webpack_require__(
 ) as typeof import("prettier");
 const { builders: b } = types;
 
-const traverseJSXOpenElements = (ast: any, visitor: (path: NodePath<types.namedTypes.JSXOpeningElement, any>, index: number) => void) => {
+const traverseJSXElements = (
+  ast: any,
+  visitor: (
+    path: NodePath<types.namedTypes.JSXElement, any>,
+    index: string
+  ) => void
+) => {
   let count = 0;
   visit(ast, {
-    visitJSXOpeningElement(path) {
-      visitor(path, count++);
+    visitJSXElement(path) {
+      visitor(path, `${count++}`);
       this.traverse(path);
     },
   });
@@ -22,40 +31,41 @@ export const addLookupDataAttrToJSXElements = (code: string) => {
   const ast = parse(code, {
     parser: babelTsParser,
   });
-  traverseJSXOpenElements(ast, (path, index) => {
-      const attr = b.jsxAttribute(
-        b.jsxIdentifier(`data-${DIV_LOOKUP_DATA_ATTR}`),
-        b.stringLiteral(`${index}`)
-      );
-      path.value.attributes.push(attr);
-  })
+  traverseJSXElements(ast, (path, index) => {
+    const attr = b.jsxAttribute(
+      b.jsxIdentifier(`data-${DIV_LOOKUP_DATA_ATTR}`),
+      b.stringLiteral(index)
+    );
+    path.value.openingElement.attributes.push(attr);
+  });
   console.log("ast", ast);
   return print(ast).code;
 };
 
+/**
+ * Removes lookup data attributes from code that already has them (previously processed by addLookupDataAttrToJSXElements)
+ * Runs `editElement` on the JSXElement with a data lookup attribute set to `editLookupId`
+ */
 export const removeLookupDataAttrFromJSXElementsAndEditJSXElement = (
   code: string,
   editLookupId?: string,
   editElement?: (path: NodePath<types.namedTypes.JSXElement, any>) => void
 ) => {
   const ast = parse(code, { parser: babelTsParser });
-  visit(ast, {
-    visitJSXElement(path) {
-      if (
-        editLookupId !== undefined &&
-        path.value.openingElement.attributes.find(
-          (attr: any) =>
-            attr.name.name === `data-${DIV_LOOKUP_DATA_ATTR}` &&
-            attr.value.value === editLookupId
-        )
-      ) {
-        editElement?.(path);
-      }
-      path.value.openingElement.attributes = path.value.openingElement.attributes.filter(
-        (attr: any) => attr.name.name !== `data-${DIV_LOOKUP_DATA_ATTR}`
-      );
-      this.traverse(path);
-    },
+  traverseJSXElements(ast, (path) => {
+    if (
+      editLookupId !== undefined &&
+      path.value.openingElement.attributes.find(
+        (attr: any) =>
+          attr.name.name === `data-${DIV_LOOKUP_DATA_ATTR}` &&
+          attr.value.value === editLookupId
+      )
+    ) {
+      editElement?.(path);
+    }
+    path.value.openingElement.attributes = path.value.openingElement.attributes.filter(
+      (attr: any) => attr.name.name !== `data-${DIV_LOOKUP_DATA_ATTR}`
+    );
   });
   return format(print(ast).code, { parser: "babel" });
 };
@@ -133,27 +143,83 @@ export const removeRecentlyAddedDataAttrAndGetLookupId = (code: string) => {
     parser: babelTsParser,
   });
   let resultId;
-  traverseJSXOpenElements(ast, (path, index) => {
-    if (path.value.attributes.find((attr: any) => attr.name.name === `data-${DIV_RECENTLY_ADDED_DATA_ATTR}`)) {
-      resultId = `${index}`;
-      path.value.attributes = path.value.attributes.filter(
+  traverseJSXElements(ast, (path, index) => {
+    if (
+      path.value.openingElement.attributes.find(
+        (attr: any) => attr.name.name === `data-${DIV_RECENTLY_ADDED_DATA_ATTR}`
+      )
+    ) {
+      resultId = index;
+      path.value.openingElement.attributes = path.value.openingElement.attributes.filter(
         (attr: any) => attr.name.name !== `data-${DIV_RECENTLY_ADDED_DATA_ATTR}`
       );
     }
-  })
-  return [print(ast).code, resultId] as const;
-}
+  });
+  return { code: print(ast).code, lookupId: resultId };
+};
 
-export const applyStyleAttribute = (path: NodePath<types.namedTypes.JSXElement, any>, style: object) => {
-  const existingStyleAttr = path.value.openingElement.attributes.find((attr: any) => attr.name.name === `style`);
+export const getASTByLookupId = (code: string, lookupId: string) => {
+  const ast = parse(code, {
+    parser: babelTsParser,
+  });
+  let result: NodePath<types.namedTypes.JSXElement, any> | undefined;
+  traverseJSXElements(ast, (path, index) => {
+    if (index === lookupId) {
+      result = path;
+    }
+  });
+  return result;
+};
+
+export const getJSXElementForSourceCodePosition = (
+  code: string,
+  line: number,
+  column: number
+) => {
+  const ast = parse(code, {
+    parser: babelTsParser,
+  });
+  let result: NodePath<types.namedTypes.JSXElement, any> | undefined;
+  let resultId: string | undefined;
+  let tokenCount: number | undefined;
+  traverseJSXElements(ast, (path, index) => {
+    const { start, end } = path?.value?.loc || {};
+    if (
+      start &&
+      end &&
+      (line > start.line || (line === start.line && column >= start.column)) &&
+      (line < end.line || (line === end.line && column <= end.column)) &&
+      (tokenCount === undefined || tokenCount > (end.token - start.token))
+    ) {
+      result = path;
+      resultId = index;
+      tokenCount = end.token - start.token;
+    }
+  });
+  return { path: result, lookupId: resultId };
+};
+
+export const applyStyleAttribute = (
+  path: NodePath<types.namedTypes.JSXElement, any>,
+  style: object
+) => {
+  const existingStyleAttr = path.value.openingElement.attributes.find(
+    (attr: any) => attr.name.name === `style`
+  );
   if (!existingStyleAttr) {
-    path.value.openingElement.attributes.push(b.jsxAttribute(b.jsxIdentifier('style'), valueToJSXLiteral(style)));
+    path.value.openingElement.attributes.push(
+      b.jsxAttribute(b.jsxIdentifier("style"), valueToJSXLiteral(style))
+    );
     return;
   }
   Object.entries(style).forEach(([styleName, styleValue]) => {
-    const existingStyleProp = existingStyleAttr.value.expression.properties.find((prop: any) => prop.key.name === styleName);
+    const existingStyleProp = existingStyleAttr.value.expression.properties.find(
+      (prop: any) => prop.key.name === styleName
+    );
     if (!existingStyleProp) {
-      existingStyleAttr.value.expression.properties.push(b.objectProperty(b.identifier(styleName), valueToASTLiteral(styleValue)))
+      existingStyleAttr.value.expression.properties.push(
+        b.objectProperty(b.identifier(styleName), valueToASTLiteral(styleValue))
+      );
       return;
     }
     existingStyleProp.value = valueToASTLiteral(styleValue);

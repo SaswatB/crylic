@@ -86,7 +86,6 @@ export function useColorPicker(initialValue = '') {
   const [value, setValue] = useState(initialValue);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {!open && setValue(initialValue);}, [initialValue]);
-  console.log('useColorPicker', value)
 
   const render = () => (
       <>

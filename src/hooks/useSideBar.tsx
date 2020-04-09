@@ -6,13 +6,14 @@ import Tab from '@material-ui/core/Tab';
 import { SelectModes } from "../utils/constants";
 import { useTextInput, useSelectInput, useColorPicker } from "../hooks/useInput";
 import { useFilePicker } from "../hooks/useFilePicker";
-import { SelectedElement } from "../App";
+import { SelectedElement, OutlineElement } from "../App";
 
 const renderSeparator = () => (
   <div className="w-full my-5 border-gray-600 border-solid border-b" />
 );
 
 interface Props {
+  outline: OutlineElement[],
   selectedElement: SelectedElement | undefined;
   onChangeSelectMode: (selectMode: SelectModes) => void;
   onClearSelectedElement: () => void;
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export function useSideBar({
+  outline,
   selectedElement,
   onChangeSelectMode,
   onClearSelectedElement,
@@ -91,7 +93,7 @@ export function useSideBar({
     "bottom"
   );
   const [, renderSelectedElementRightInput] = useSelectedElementEditor("right");
-  const [, renderSelectedElementDisplay] = useSelectedElementEditor(
+  const [selectedElementDisplay, renderSelectedElementDisplay] = useSelectedElementEditor(
     "display",
     useSelectInput.bind(undefined, [
       { name: "inline", value: "inline" },
@@ -115,6 +117,23 @@ export function useSideBar({
       { name: "table-cell", value: "table-cell" },
       { name: "table-column", value: "table-column" },
       { name: "table-row", value: "table-row" },
+    ])
+  );
+  const [, renderSelectedElementFlexDirectionInput] = useSelectedElementEditor(
+    "flexDirection",
+    useSelectInput.bind(undefined, [
+      { name: "row", value: "row" },
+      { name: "row-reverse", value: "row-reverse" },
+      { name: "column", value: "column" },
+      { name: "column-reverse", value: "column-reverse" },
+    ])
+  );
+  const [, renderSelectedElementFlexWrapInput] = useSelectedElementEditor(
+    "flexWrap",
+    useSelectInput.bind(undefined, [
+      { name: "nowrap", value: "nowrap" },
+      { name: "wrap", value: "wrap" },
+      { name: "wrap-reverse", value: "wrap-reverse" },
     ])
   );
   const [, renderSelectedElementBackgroundColorInput] = useSelectedElementEditor("backgroundColor", useColorPicker);
@@ -208,6 +227,22 @@ export function useSideBar({
           className: "w-32 text-center",
         })}
       </div>
+      {selectedElementDisplay === "flex" && (
+        <>
+          <div>
+            Flex Direction:{" "}
+            {renderSelectedElementFlexDirectionInput({
+              className: "w-32 text-center",
+            })}
+          </div>
+          <div>
+            Flex Wrap:{" "}
+            {renderSelectedElementFlexWrapInput({
+              className: "w-32 text-center",
+            })}
+          </div>
+        </>
+      )}
       <div>
         Background Color:{" "}
         {renderSelectedElementBackgroundColorInput({

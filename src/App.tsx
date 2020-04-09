@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import MonacoEditor from "react-monaco-editor";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import {
@@ -20,6 +21,8 @@ import {
   addJSXChildToJSXElement,
   removeRecentlyAddedDataAttrAndGetLookupId,
   applyStyleAttribute,
+  getASTByLookupId,
+  getJSXElementForSourceCodePosition,
 } from "./utils/ast-utils";
 import "./App.scss";
 import { useSideBar } from "./hooks/useSideBar";
@@ -78,6 +81,28 @@ export interface SelectedElement {
   inlineStyles: CSSStyleDeclaration;
 }
 
+export interface OutlineElement {
+  tag: string;
+  lookupId: string;
+  children: OutlineElement[];
+}
+
+const buildOutline = (element: Element): OutlineElement[] =>
+  Array.from(element.children)
+    .map((child) => {
+      if (DIV_LOOKUP_DATA_ATTR in (child as HTMLElement).dataset) {
+        return [
+          {
+            tag: child.tagName,
+            lookupId: (child as HTMLElement).dataset[DIV_LOOKUP_DATA_ATTR]!,
+            children: buildOutline(child),
+          },
+        ];
+      }
+      return buildOutline(child);
+    })
+    .reduce((p, c) => [...p, ...c], []);
+
 function App() {
   const [code, setCode] = useState("");
   const [codeWithData, setCodeWithData] = useState("");
@@ -112,6 +137,7 @@ function App() {
     });
   };
 
+  const [outline, setOutline] = useState<OutlineElement[]>([]);
   const compileTasks = useRef<Function[]>([]);
   const onComponentViewCompiled = () => {
     if (selectedElement) {
@@ -124,7 +150,12 @@ function App() {
         setSelectedElement(undefined);
       }
     }
+
+    const root = componentView.current?.getElementByLookupId(DIV_LOOKUP_ROOT);
+    if (root) setOutline(buildOutline(root));
+
     compileTasks.current.forEach((task) => task());
+    compileTasks.current = [];
   };
 
   const renderOverlay = useOverlay(
@@ -166,10 +197,10 @@ export function MyComponent() {
           );
 
           if (madeChange) {
-            const [
-              newCode2,
-              newChildLookUpId,
-            ] = removeRecentlyAddedDataAttrAndGetLookupId(newCode);
+            const {
+              code: newCode2,
+              lookupId: newChildLookUpId,
+            } = removeRecentlyAddedDataAttrAndGetLookupId(newCode);
 
             if (newChildLookUpId) {
               compileTasks.current.push(() => {
@@ -216,12 +247,73 @@ export function MyComponent() {
     }
   };
 
-  const { render: renderSideBar, filePath, componentViewWidth, componentViewHeight } = useSideBar({
+  const {
+    render: renderSideBar,
+    filePath,
+    componentViewWidth,
+    componentViewHeight,
+  } = useSideBar({
+    outline,
     selectedElement,
     onChangeSelectMode: setSelectMode,
     onClearSelectedElement: () => setSelectedElement(undefined),
     updateSelectedElementStyleFactory,
   });
+
+  const activeHighlight = useRef<string[]>([]);
+  const editorRef = useRef<MonacoEditor>(null);
+  useEffect(() => {
+    const decorations: monaco.editor.IModelDeltaDecoration[] = [];
+    if (selectedElement) {
+      const path = getASTByLookupId(code, selectedElement.lookUpId);
+      const { start: openStart, end: openEnd } =
+        path?.value?.openingElement?.name?.loc || {};
+      if (openStart && openEnd) {
+        decorations.push({
+          range: new monaco.Range(
+            openStart.line,
+            openStart.column + 1,
+            openEnd.line,
+            openEnd.column + 1
+          ),
+          options: { inlineClassName: "selected-element-code-highlight" },
+        });
+        editorRef.current?.editor?.revealPositionInCenter({ lineNumber: openStart.line, column: openStart.column + 1 });
+      }
+      const { start: closeStart, end: closeEnd } =
+        path?.value?.closingElement?.name?.loc || {};
+      if (closeStart && closeEnd) {
+        decorations.push({
+          range: new monaco.Range(
+            closeStart.line,
+            closeStart.column + 1,
+            closeEnd.line,
+            closeEnd.column + 1
+          ),
+          options: { inlineClassName: "selected-element-code-highlight" },
+        });
+      }
+    }
+    activeHighlight.current =
+      editorRef.current?.editor?.deltaDecorations(
+        activeHighlight.current,
+        decorations
+      ) || [];
+  }, [code, selectedElement]);
+  useEffect(() => {
+    return editorRef.current?.editor?.onDidChangeCursorPosition(e => {
+      const { lookupId } = getJSXElementForSourceCodePosition(code, e.position.lineNumber, e.position.column);
+
+      if (lookupId !== undefined) {
+        const newSelectedComponent = componentView.current?.getElementByLookupId(
+          lookupId
+        );
+        if (newSelectedComponent) {
+          selectElement(newSelectedComponent as HTMLElement);
+        }
+      }
+    }).dispose;
+  }, [code]);
 
   useEffect(() => {
     if (filePath) {
@@ -240,7 +332,10 @@ export function MyComponent() {
         </div>
       )}
       <div className="flex flex-1 flex-row">
-        <div className="flex flex-col p-4 bg-gray-800" style={{ width: "300px" }}>
+        <div
+          className="flex flex-col p-4 bg-gray-800"
+          style={{ width: "300px" }}
+        >
           {renderSideBar()}
         </div>
         <div className="flex flex-1 relative bg-gray-600 items-center justify-center overflow-hidden">
@@ -285,11 +380,12 @@ export function MyComponent() {
           </TransformWrapper>
         </div>
         <MonacoEditor
+          ref={editorRef}
           language="javascript"
           theme="vs-dark"
           width="600px"
           value={code}
-          onChange={code => {
+          onChange={(code) => {
             setCode(code);
             setSelectedElement(undefined); // todo look into keeping the element selected if possible
           }}
