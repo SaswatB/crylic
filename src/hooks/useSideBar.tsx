@@ -1,10 +1,13 @@
 import React, { useEffect } from "react";
-import SwipeableViews from 'react-swipeable-views';
-import AppBar from '@material-ui/core/AppBar';
-import Tabs from '@material-ui/core/Tabs';
-import Tab from '@material-ui/core/Tab';
+import AppBar from "@material-ui/core/AppBar";
+import Tabs from "@material-ui/core/Tabs";
+import Tab from "@material-ui/core/Tab";
 import { SelectModes } from "../utils/constants";
-import { useTextInput, useSelectInput, useColorPicker } from "../hooks/useInput";
+import {
+  useTextInput,
+  useSelectInput,
+  useColorPicker,
+} from "../hooks/useInput";
 import { useFilePicker } from "../hooks/useFilePicker";
 import { SelectedElement, OutlineElement } from "../App";
 
@@ -13,7 +16,7 @@ const renderSeparator = () => (
 );
 
 interface Props {
-  outline: OutlineElement[],
+  outline: OutlineElement[];
   selectedElement: SelectedElement | undefined;
   onChangeSelectMode: (selectMode: SelectModes) => void;
   onClearSelectedElement: () => void;
@@ -57,15 +60,21 @@ export function useSideBar({
       selectedElement?.inlineStyles[styleProp] ||
         selectedElement?.computedStyles[styleProp]
     );
-    useEffect(updateSelectedElementStyleFactory(styleProp, selectedElementValue), [
-      selectedElementValue,
-    ]);
+    useEffect(
+      updateSelectedElementStyleFactory(styleProp, selectedElementValue),
+      [selectedElementValue]
+    );
     return [
       selectedElementValue,
       (props?: React.HTMLAttributes<HTMLElement>) =>
         renderSelectedElementValueInput({
           ...props,
-          style: { ...props?.style, fontStyle: selectedElement?.inlineStyles[styleProp] ? undefined : "italic" },
+          style: {
+            ...props?.style,
+            fontStyle: selectedElement?.inlineStyles[styleProp]
+              ? undefined
+              : "italic",
+          },
         }),
     ] as const;
   };
@@ -93,7 +102,10 @@ export function useSideBar({
     "bottom"
   );
   const [, renderSelectedElementRightInput] = useSelectedElementEditor("right");
-  const [selectedElementDisplay, renderSelectedElementDisplay] = useSelectedElementEditor(
+  const [
+    selectedElementDisplay,
+    renderSelectedElementDisplay,
+  ] = useSelectedElementEditor(
     "display",
     useSelectInput.bind(undefined, [
       { name: "inline", value: "inline" },
@@ -136,28 +148,15 @@ export function useSideBar({
       { name: "wrap-reverse", value: "wrap-reverse" },
     ])
   );
-  const [, renderSelectedElementBackgroundColorInput] = useSelectedElementEditor("backgroundColor", useColorPicker);
+  const [
+    ,
+    renderSelectedElementBackgroundColorInput,
+  ] = useSelectedElementEditor("backgroundColor", useColorPicker);
 
   const renderMainTab = () => (
     <>
-      <button className="btn w-full mt-4" onClick={openFilePicker}>
+      <button className="btn w-full" onClick={openFilePicker}>
         Open
-      </button>
-      {renderSeparator()}
-      <button
-        className="btn w-full"
-        onClick={() => onChangeSelectMode(SelectModes.SelectElement)}
-      >
-        Select Element
-      </button>
-      <button className="btn w-full" onClick={onClearSelectedElement}>
-        Clear Selected Element
-      </button>
-      <button
-        className="btn w-full"
-        onClick={() => onChangeSelectMode(SelectModes.AddDivElement)}
-      >
-        Add Block
       </button>
       {renderSeparator()}
       <div className="mb-2">Frame</div>
@@ -171,118 +170,121 @@ export function useSideBar({
     </>
   );
 
-  const renderSelectedElementEditor = () => selectedElement && (
+  const renderElementAdder = () => (
     <>
+      <button
+        className="btn w-full"
+        onClick={() => onChangeSelectMode(SelectModes.AddDivElement)}
+      >
+        Add Block
+      </button>
       {renderSeparator()}
-      <div className="mb-2">Selected Element</div>
-      <div>
-        Width:{" "}
-        {renderSelectedElementWidthInput({
-          className: "w-32 text-center",
-        })}
-      </div>
-      <div>
-        Height:{" "}
-        {renderSelectedElementHeightInput({
-          className: "w-32 text-center",
-        })}
-      </div>
-      <div>
-        Position:{" "}
-        {renderSelectedElementPosition({
-          className: "w-32 text-center",
-        })}
-      </div>
-      {selectedElementPosition !== "static" && (
-        <>
-          <div>
-            Top:{" "}
-            {renderSelectedElementTopInput({
-              className: "w-32 text-center",
-            })}
-          </div>
-          <div>
-            Left:{" "}
-            {renderSelectedElementLeftInput({
-              className: "w-32 text-center",
-            })}
-          </div>
-          <div>
-            Bottom:{" "}
-            {renderSelectedElementBottomInput({
-              className: "w-32 text-center",
-            })}
-          </div>
-          <div>
-            Right:{" "}
-            {renderSelectedElementRightInput({
-              className: "w-32 text-center",
-            })}
-          </div>
-        </>
-      )}
-      <div>
-        Display:{" "}
-        {renderSelectedElementDisplay({
-          className: "w-32 text-center",
-        })}
-      </div>
-      {selectedElementDisplay === "flex" && (
-        <>
-          <div>
-            Flex Direction:{" "}
-            {renderSelectedElementFlexDirectionInput({
-              className: "w-32 text-center",
-            })}
-          </div>
-          <div>
-            Flex Wrap:{" "}
-            {renderSelectedElementFlexWrapInput({
-              className: "w-32 text-center",
-            })}
-          </div>
-        </>
-      )}
-      <div>
-        Background Color:{" "}
-        {renderSelectedElementBackgroundColorInput({
-          className: "w-32 text-center",
-        })}
-      </div>
     </>
   );
 
+  const renderSelectedElementEditor = () =>
+    selectedElement && (
+      <>
+        <div className="mb-2">Selected Element</div>
+        <div>
+          Width:{" "}
+          {renderSelectedElementWidthInput({
+            className: "w-32 text-center",
+          })}
+        </div>
+        <div>
+          Height:{" "}
+          {renderSelectedElementHeightInput({
+            className: "w-32 text-center",
+          })}
+        </div>
+        <div>
+          Position:{" "}
+          {renderSelectedElementPosition({
+            className: "w-32 text-center",
+          })}
+        </div>
+        {selectedElementPosition !== "static" && (
+          <>
+            <div>
+              Top:{" "}
+              {renderSelectedElementTopInput({
+                className: "w-32 text-center",
+              })}
+            </div>
+            <div>
+              Left:{" "}
+              {renderSelectedElementLeftInput({
+                className: "w-32 text-center",
+              })}
+            </div>
+            <div>
+              Bottom:{" "}
+              {renderSelectedElementBottomInput({
+                className: "w-32 text-center",
+              })}
+            </div>
+            <div>
+              Right:{" "}
+              {renderSelectedElementRightInput({
+                className: "w-32 text-center",
+              })}
+            </div>
+          </>
+        )}
+        <div>
+          Display:{" "}
+          {renderSelectedElementDisplay({
+            className: "w-32 text-center",
+          })}
+        </div>
+        {selectedElementDisplay === "flex" && (
+          <>
+            <div>
+              Flex Direction:{" "}
+              {renderSelectedElementFlexDirectionInput({
+                className: "w-32 text-center",
+              })}
+            </div>
+            <div>
+              Flex Wrap:{" "}
+              {renderSelectedElementFlexWrapInput({
+                className: "w-32 text-center",
+              })}
+            </div>
+          </>
+        )}
+        <div>
+          Background Color:{" "}
+          {renderSelectedElementBackgroundColorInput({
+            className: "w-32 text-center",
+          })}
+        </div>
+      </>
+    );
+
   const [tabValue, setTabValue] = React.useState(0);
+  useEffect(() => {
+    if (selectedElement) setTabValue(2);
+    else if (tabValue === 2) setTabValue(1);
+  }, [selectedElement?.lookUpId]);
   const render = () => (
     <>
-      <AppBar position="static" color="default">
+      <AppBar position="static" color="default" className="mb-4">
         <Tabs
           value={tabValue}
-          onChange={(e,newValue) => setTabValue(newValue)}
+          onChange={(e, newValue) => setTabValue(newValue)}
           indicatorColor="primary"
           textColor="primary"
         >
           <Tab label="1" />
           <Tab label="2" />
-          <Tab label="3" />
+          {selectedElement && <Tab label="3" />}
         </Tabs>
       </AppBar>
-      <SwipeableViews
-        index={tabValue}
-        onChangeIndex={(newValue) => setTabValue(newValue)}
-      >
-        { tabValue === 0 && (
-          renderMainTab()
-        )}
-        { tabValue === 1 && (
-          renderSelectedElementEditor()
-        )}
-        { tabValue === 2 && (
-          <div>
-            Item Three
-          </div>
-        )}
-      </SwipeableViews>
+      {tabValue === 0 && renderMainTab()}
+      {tabValue === 1 && renderElementAdder()}
+      {tabValue === 2 && renderSelectedElementEditor()}
     </>
   );
 

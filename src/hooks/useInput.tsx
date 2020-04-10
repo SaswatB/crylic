@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useRef } from "react";
 import Slider, { SliderProps } from "@material-ui/core/Slider";
-import Popper from '@material-ui/core/Popper';
-import ClickAwayListener from '@material-ui/core/ClickAwayListener';
-import { ChromePicker } from 'react-color';
+import Popper from "@material-ui/core/Popper";
+import ClickAwayListener from "@material-ui/core/ClickAwayListener";
+import { ChromePicker } from "react-color";
 
 export function useTextInput(initialValue = "", bindInitialValue = false) {
   const [value, setValue] = useState<string>(initialValue);
   const [focused, setFocused] = useState(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {!focused && setValue(initialValue);}, [initialValue]);
+  useEffect(() => {
+    !focused && setValue(initialValue);
+  }, [initialValue]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {bindInitialValue && !focused && setValue(initialValue);}, [focused]);
+  useEffect(() => {
+    bindInitialValue && !focused && setValue(initialValue);
+  }, [focused]);
 
   const render = (
     props?: React.DetailedHTMLProps<
@@ -50,7 +54,7 @@ export function useSliderInput(initialValue = 0) {
 
 export function useSelectInput(
   options: { name: string; value: string }[],
-  initialValue = ''
+  initialValue = ""
 ) {
   const [value, setValue] = useState(initialValue);
   useEffect(() => setValue(initialValue), [initialValue]);
@@ -80,24 +84,30 @@ export function useSelectInput(
   return [value, render] as const;
 }
 
-export function useColorPicker(initialValue = '') {
+export function useColorPicker(initialValue = "") {
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(initialValue);
+  useEffect(() => {
+    !open && setValue(initialValue);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {!open && setValue(initialValue);}, [initialValue]);
+  }, [initialValue]);
 
   const render = () => (
-      <>
-        <button ref={anchor} className="btn w-full" onClick={() => setOpen(!open)}>
-          Open
-        </button>
-        <Popper open={open} anchorEl={anchor.current}>
-    <ClickAwayListener onClickAway={() =>setOpen(false)}>
-          <ChromePicker color={value} onChange={c => setValue(c.hex)} />
-    </ClickAwayListener>
-        </Popper>
-      </>
+    <>
+      <button
+        ref={anchor}
+        className="btn w-full"
+        onClick={() => setOpen(!open)}
+      >
+        Open
+      </button>
+      <Popper open={open} anchorEl={anchor.current}>
+        <ClickAwayListener onClickAway={() => setOpen(false)}>
+          <ChromePicker color={value} onChange={(c) => setValue(c.hex)} />
+        </ClickAwayListener>
+      </Popper>
+    </>
   );
   return [value, render] as const;
 }

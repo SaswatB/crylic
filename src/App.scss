@@ -1,6 +1,6 @@
 
 .btn {
-  @apply w-full p-2 rounded bg-blue-800 text-white transition duration-300 ease-out;
+  @apply p-2 rounded bg-blue-800 text-white transition duration-300 ease-out;
 
   &:hover {
     @apply bg-blue-700;

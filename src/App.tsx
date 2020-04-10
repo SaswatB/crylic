@@ -326,9 +326,14 @@ export function MyComponent() {
 
   return (
     <div className="flex flex-col items-stretch w-screen h-screen overflow-hidden text-white">
-      {selectMode === SelectModes.AddDivElement && (
-        <div className="w-full p-1 bg-blue-600 text-white text-sm text-center">
-          Select where you want to add the element
+      {selectMode !== undefined && (
+        <div className="flex justify-center items-center w-full p-1 bg-blue-600 text-white text-sm text-center">
+          <div className="flex-1" />
+          Select Mode
+          <div className="flex-1" />
+          <button className="btn py-1 px-4" onClick={() => setSelectMode(undefined)}>
+            Cancel
+          </button>
         </div>
       )}
       <div className="flex flex-1 flex-row">
@@ -348,7 +353,19 @@ export function MyComponent() {
           >
             {({ zoomIn, zoomOut, resetTransform }: any) => (
               <React.Fragment>
-                <div className="flex absolute top-0 right-0 z-10">
+                <div className="flex absolute top-0 left-0 right-0 z-10">
+                  <button
+                    className="btn"
+                    onClick={() => setSelectMode(SelectModes.SelectElement)}
+                  >
+                    Select Element
+                  </button>
+                  {selectedElement && (
+                    <button className="btn" onClick={() => setSelectedElement(undefined)}>
+                      Clear Selected Element
+                    </button>
+                  )}
+                  <div className="flex-1" />
                   <button className="btn" onClick={zoomIn}>
                     +
                   </button>
