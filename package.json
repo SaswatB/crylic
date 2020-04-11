@@ -9,22 +9,12 @@
     "@babel/preset-typescript": "^7.9.0",
     "@babel/standalone": "^7.9.4",
     "@material-ui/core": "^4.9.9",
-    "@pmmmwh/react-refresh-webpack-plugin": "^0.2.0",
-    "@testing-library/jest-dom": "^4.2.4",
-    "@testing-library/react": "^9.3.2",
-    "@testing-library/user-event": "^7.1.2",
-    "@types/babel__standalone": "^7.1.2",
-    "@types/jest": "^24.0.0",
-    "@types/node": "^12.0.0",
-    "@types/prettier": "^2.0.0",
-    "@types/react": "^16.9.0",
-    "@types/react-color": "^3.0.1",
-    "@types/react-dom": "^16.9.0",
     "autoprefixer": "^9.7.5",
     "customize-cra": "^0.9.1",
     "electron": "^8.2.0",
     "electron-devtools-installer": "^3.0.0",
     "eslint": "^6.8.0",
+    "memfs": "^3.1.2",
     "monaco-editor-webpack-plugin": "^1.9.0",
     "node-sass": "^4.13.1",
     "normalize.css": "^8.0.1",
@@ -36,6 +26,7 @@
     "react-app-rewire-postcss": "^3.0.2",
     "react-app-rewired": "^2.1.5",
     "react-color": "^2.18.0",
+    "react-dev-utils": "^10.2.1",
     "react-dom": "^16.13.1",
     "react-monaco-editor": "^0.35.0",
     "react-refresh": "^0.8.1",
@@ -46,8 +37,9 @@
     "recast": "^0.18.8",
     "tailwindcss": "^1.2.0",
     "typescript": "~3.7.2",
+    "unionfs": "^4.4.0",
     "vm2": "^3.9.1",
-    "webpack": "^4.42.0"
+    "webpack": "4.42.0"
   },
   "scripts": {
     "start": "react-app-rewired start",
@@ -70,5 +62,19 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.3.0-beta.3",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "@types/babel__standalone": "^7.1.2",
+    "@types/jest": "^24.0.0",
+    "@types/node": "^12.0.0",
+    "@types/prettier": "^2.0.0",
+    "@types/react": "^16.9.0",
+    "@types/react-color": "^3.0.1",
+    "@types/react-dom": "^16.9.0",
+    "@types/webpack": "^4.41.10"
   }
 }
