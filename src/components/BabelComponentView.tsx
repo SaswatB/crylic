@@ -92,7 +92,7 @@ export const getComponentElementFromEvent = (
 
 export interface BabelComponentViewRef {
   getElementAtPoint: (x: number, y: number) => Element | null | undefined;
-  getElementByLookupId: (lookupId: string) => Element | null | undefined;
+  getElementByLookupId: (lookUpId: string) => Element | null | undefined;
 }
 
 export const BabelComponentView: FunctionComponent<
@@ -141,9 +141,9 @@ export const BabelComponentView: FunctionComponent<
     getElementAtPoint(x, y) {
       return frame.current?.contentDocument?.elementFromPoint(x, y);
     },
-    getElementByLookupId(lookupId) {
+    getElementByLookupId(lookUpId) {
       return frame.current?.contentDocument?.querySelector(
-        `[data-${DIV_LOOKUP_DATA_ATTR}="${lookupId}"]`
+        `[data-${DIV_LOOKUP_DATA_ATTR}="${lookUpId}"]`
       );
     },
   }));

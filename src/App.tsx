@@ -83,7 +83,7 @@ export interface SelectedElement {
 
 export interface OutlineElement {
   tag: string;
-  lookupId: string;
+  lookUpId: string;
   children: OutlineElement[];
 }
 
@@ -94,7 +94,7 @@ const buildOutline = (element: Element): OutlineElement[] =>
         return [
           {
             tag: child.tagName,
-            lookupId: (child as HTMLElement).dataset[DIV_LOOKUP_DATA_ATTR]!,
+            lookUpId: (child as HTMLElement).dataset[DIV_LOOKUP_DATA_ATTR]!,
             children: buildOutline(child),
           },
         ];
@@ -199,7 +199,7 @@ export function MyComponent() {
           if (madeChange) {
             const {
               code: newCode2,
-              lookupId: newChildLookUpId,
+              lookUpId: newChildLookUpId,
             } = removeRecentlyAddedDataAttrAndGetLookupId(newCode);
 
             if (newChildLookUpId) {
@@ -265,7 +265,11 @@ export function MyComponent() {
   useEffect(() => {
     const decorations: monaco.editor.IModelDeltaDecoration[] = [];
     if (selectedElement) {
-      const path = getASTByLookupId(code, selectedElement.lookUpId);
+      let path;
+      try {
+        path = getASTByLookupId(code, selectedElement.lookUpId);
+      } catch(err) {
+      }
       const { start: openStart, end: openEnd } =
         path?.value?.openingElement?.name?.loc || {};
       if (openStart && openEnd) {
@@ -302,11 +306,15 @@ export function MyComponent() {
   }, [code, selectedElement]);
   useEffect(() => {
     return editorRef.current?.editor?.onDidChangeCursorPosition(e => {
-      const { lookupId } = getJSXElementForSourceCodePosition(code, e.position.lineNumber, e.position.column);
+      let lookUpId;
+      try {
+        ({lookUpId} = getJSXElementForSourceCodePosition(code, e.position.lineNumber, e.position.column));
+      } catch(err) {
+      }
 
-      if (lookupId !== undefined) {
+      if (lookUpId !== undefined) {
         const newSelectedComponent = componentView.current?.getElementByLookupId(
-          lookupId
+          lookUpId
         );
         if (newSelectedComponent) {
           selectElement(newSelectedComponent as HTMLElement);
@@ -403,8 +411,8 @@ export function MyComponent() {
           width="600px"
           value={code}
           onChange={(code) => {
-            setCode(code);
             setSelectedElement(undefined); // todo look into keeping the element selected if possible
+            setCode(code);
           }}
         />
         {/* <MonacoEditor

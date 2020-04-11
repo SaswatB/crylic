@@ -155,16 +155,16 @@ export const removeRecentlyAddedDataAttrAndGetLookupId = (code: string) => {
       );
     }
   });
-  return { code: print(ast).code, lookupId: resultId };
+  return { code: print(ast).code, lookUpId: resultId };
 };
 
-export const getASTByLookupId = (code: string, lookupId: string) => {
+export const getASTByLookupId = (code: string, lookUpId: string) => {
   const ast = parse(code, {
     parser: babelTsParser,
   });
   let result: NodePath<types.namedTypes.JSXElement, any> | undefined;
   traverseJSXElements(ast, (path, index) => {
-    if (index === lookupId) {
+    if (index === lookUpId) {
       result = path;
     }
   });
@@ -196,7 +196,7 @@ export const getJSXElementForSourceCodePosition = (
       tokenCount = end.token - start.token;
     }
   });
-  return { path: result, lookupId: resultId };
+  return { path: result, lookUpId: resultId };
 };
 
 export const applyStyleAttribute = (

@@ -1,7 +1,9 @@
 // Modules to control application life and create native browser window
 const {app, BrowserWindow} = require('electron')
+const { default: installExtension, REACT_DEVELOPER_TOOLS } = require('electron-devtools-installer');
 
 function createWindow () {
+
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 800,
@@ -21,7 +23,14 @@ function createWindow () {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  installExtension(REACT_DEVELOPER_TOOLS)
+        .then((name) => {
+          console.log(`Added Extension:  ${name}`);
+          createWindow();
+        })
+        .catch((err) => console.log('An error occurred: ', err));
+});
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {
