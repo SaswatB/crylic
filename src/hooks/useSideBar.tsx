@@ -24,6 +24,7 @@ interface Props {
     styleProp: keyof CSSStyleDeclaration,
     newValue: string
   ) => () => void;
+  onSaveCode: () => void;
 }
 
 export function useSideBar({
@@ -32,6 +33,7 @@ export function useSideBar({
   onChangeSelectMode,
   onClearSelectedElement,
   updateSelectedElementStyleFactory,
+  onSaveCode,
 }: Props) {
   const [filePath, openFilePicker] = useFilePicker();
 
@@ -157,6 +159,9 @@ export function useSideBar({
     <>
       <button className="btn w-full" onClick={openFilePicker}>
         Open
+      </button>
+      <button className="btn w-full" onClick={onSaveCode}>
+        Save
       </button>
       {renderSeparator()}
       <div className="mb-2">Frame</div>

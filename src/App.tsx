@@ -258,6 +258,10 @@ export function MyComponent() {
     onChangeSelectMode: setSelectMode,
     onClearSelectedElement: () => setSelectedElement(undefined),
     updateSelectedElementStyleFactory,
+    onSaveCode: () => {
+      if (filePath) fs.writeFileSync(filePath, code);
+      else alert('please open a file before saving');
+    }
   });
 
   const activeHighlight = useRef<string[]>([]);
