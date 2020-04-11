@@ -16,7 +16,7 @@ const webpack = __non_webpack_require__('webpack') as typeof import('webpack');
 
 export const getComponentElementFromEvent = (
   event: React.MouseEvent<HTMLDivElement, MouseEvent>,
-  componentView: BabelComponentViewRef | null
+  componentView: CompilerComponentViewRef | null
 ) => {
   const boundingBox = (event.target as HTMLDivElement).getBoundingClientRect();
   const x = event.clientX - boundingBox.x;
@@ -24,18 +24,18 @@ export const getComponentElementFromEvent = (
   return componentView?.getElementAtPoint(x, y);
 };
 
-export interface BabelComponentViewRef {
+export interface CompilerComponentViewRef {
   getElementAtPoint: (x: number, y: number) => Element | null | undefined;
   getElementByLookupId: (lookUpId: string) => Element | null | undefined;
 }
 
-export const BabelComponentView: FunctionComponent<
+export const CompilerComponentView: FunctionComponent<
   {
     code: string;
     filePath?: string;
     onCompiled?: () => void;
   } & React.IframeHTMLAttributes<HTMLIFrameElement> &
-    RefAttributes<BabelComponentViewRef>
+    RefAttributes<CompilerComponentViewRef>
 > = forwardRef(({ code, filePath, onCompiled, ...props }, ref) => {
   const errorBoundary = useRef<ErrorBoundary>(null);
   const [CompiledElement, setCompiledElement] = useState<any>();

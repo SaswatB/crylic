@@ -3,10 +3,10 @@ import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import MonacoEditor from "react-monaco-editor";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import {
-  BabelComponentView,
-  BabelComponentViewRef,
+  CompilerComponentView,
+  CompilerComponentViewRef,
   getComponentElementFromEvent,
-} from "./components/BabelComponentView";
+} from "./components/CompilerComponentView";
 import { useDebounce } from "./hooks/useDebounce";
 import {
   DIV_LOOKUP_DATA_ATTR,
@@ -30,7 +30,7 @@ import { useSideBar } from "./hooks/useSideBar";
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 
 function useOverlay(
-  componentView: BabelComponentViewRef | null,
+  componentView: CompilerComponentViewRef | null,
   selectionBox?: DOMRect,
   selectEnabled?: boolean,
   onSelect?: (componentElement: Element | null | undefined) => void
@@ -106,7 +106,7 @@ const buildOutline = (element: Element): OutlineElement[] =>
 function App() {
   const [code, setCode] = useState("");
   const [codeWithData, setCodeWithData] = useState("");
-  const componentView = useRef<BabelComponentViewRef>(null);
+  const componentView = useRef<CompilerComponentViewRef>(null);
 
   const [debouncedCode, skipNextCodeDebounce] = useDebounce(code, 1000);
   useEffect(() => {
@@ -390,7 +390,7 @@ export function MyComponent() {
                 </div>
                 <TransformComponent>
                   <div className="flex m-12 relative bg-white shadow-2xl">
-                    <BabelComponentView
+                    <CompilerComponentView
                       ref={componentView}
                       code={codeWithData}
                       filePath={filePath}
