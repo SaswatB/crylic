@@ -63,7 +63,6 @@ export const CompilerComponentView: FunctionComponent<
       if (code) {
         try {
           console.log("compiling");
-          getInactiveFrame().current?.resetFrame();
           const codeExports = await webpackRunCode(filePath, code, {
             window: getInactiveFrame().current?.frameElement.contentWindow,
           });
@@ -73,6 +72,7 @@ export const CompilerComponentView: FunctionComponent<
             )
           );
 
+          getActiveFrame().current?.resetFrame();
           setActiveFrame(activeFrame === 1 ? 2 : 1)
           if (errorBoundary.current?.hasError()) {
             errorBoundary.current.resetError();

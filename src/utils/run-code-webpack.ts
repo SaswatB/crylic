@@ -1,4 +1,4 @@
-import { createFsFromVolume, Volume } from "memfs";
+import { createFsFromVolume, Volume, IFs } from "memfs";
 import { Union } from "unionfs";
 import joinPath from "memory-fs/lib/join";
 
@@ -60,7 +60,7 @@ const WEBPACK_MODULES = {
   ],
 };
 
-const webpackCache: Record<string, import("webpack").Compiler | undefined> = {};
+const webpackCache: Record<string, {compiler: import("webpack").Compiler, inputFs: IFs, outputFs: IFs} | undefined> = {};
 
 export const webpackRunCode = (
   codePath = "/untitled.jsx",
@@ -69,9 +69,8 @@ export const webpackRunCode = (
 ) => {
   const startTime = new Date().getTime();
   console.log("loading...", codePath);
-  const compiler =
-    webpackCache[codePath] ||
-    webpack({
+  if (!webpackCache[codePath]) {
+    const compiler = webpack({
       mode: "development",
       entry: codePath,
       output: {
@@ -96,45 +95,30 @@ export const webpackRunCode = (
         },
       },
     });
-  webpackCache[codePath] = compiler;
+    const ufs1 = new Union();
+    const inputFs = createFsFromVolume(new Volume());
 
-  const ufs1 = new Union();
-  const inputFs = createFsFromVolume(Volume.fromJSON({ [codePath]: code }));
-  // @ts-ignore bad types
-  ufs1.use(__non_webpack_require__("fs")).use(inputFs);
-  // compiler.inputFileSystem = new Proxy(ufs1, {
-  //   get(target, prop) {
-  //     // console.log('get', prop, ufs1[prop], target[prop])
-  //     if (!ufs1[prop]) return ufs1[prop];
+    // @ts-ignore bad types
+    ufs1.use(__non_webpack_require__("fs")).use(inputFs);
+    compiler.inputFileSystem = ufs1;
+    // @ts-ignore bad types
+    compiler.resolvers.normal.fileSystem = compiler.inputFileSystem;
+    // @ts-ignore bad types
+    compiler.resolvers.context.fileSystem = compiler.inputFileSystem;
+    // @ts-ignore bad types
+    compiler.resolvers.loader.fileSystem = compiler.inputFileSystem;
 
-  //     return new Proxy(target[prop], {
-  //       apply(target2, thisArg, argumentsList) {
-  //         console.log("call", prop, argumentsList);
-  //         if (prop === "readFile") {
-  //           return ufs1[prop](argumentsList[0], (...args) => {
-  //             console.log("readFile result", prop, argumentsList, args);
-  //             argumentsList[1](...args);
-  //           });
-  //         }
-  //         return ufs1[prop](...argumentsList);
-  //       },
-  //     });
-  //   },
-  // });
-  compiler.inputFileSystem = ufs1;
-  // @ts-ignore bad types
-  compiler.resolvers.normal.fileSystem = compiler.inputFileSystem;
-  // @ts-ignore bad types
-  compiler.resolvers.context.fileSystem = compiler.inputFileSystem;
-  // @ts-ignore bad types
-  compiler.resolvers.loader.fileSystem = compiler.inputFileSystem;
+    const outputFs = createFsFromVolume(new Volume());
+    // @ts-ignore bug in typescript
+    compiler.outputFileSystem = {
+      join: joinPath,
+      ...outputFs,
+    };
 
-  const outputFs = createFsFromVolume(new Volume());
-  // @ts-ignore bug in typescript
-  compiler.outputFileSystem = {
-    join: joinPath,
-    ...outputFs,
-  };
+    webpackCache[codePath] = { compiler, inputFs, outputFs };
+  }
+  const { compiler, inputFs, outputFs } = webpackCache[codePath]!;
+  inputFs.writeFileSync(codePath, code);
 
   return new Promise<object>((resolve, reject) => {
     compiler.run((err, stats) => {

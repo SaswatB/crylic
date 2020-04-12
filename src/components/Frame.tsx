@@ -52,6 +52,7 @@ export const Frame: FunctionComponent<
   };
   useEffect(resetFrame, []);
 
+  useEffect(() => {
   if (root) {
     ReactDOM.render(
       // @ts-ignore children typecheck failure
@@ -59,6 +60,7 @@ export const Frame: FunctionComponent<
       root
     );
   }
+  }, [children, root])
 
   useImperativeHandle(ref, () => ({
     frameElement: frame.current!,

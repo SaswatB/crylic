@@ -3,6 +3,7 @@ import Slider, { SliderProps } from "@material-ui/core/Slider";
 import Popper from "@material-ui/core/Popper";
 import ClickAwayListener from "@material-ui/core/ClickAwayListener";
 import { ChromePicker } from "react-color";
+import { useThrottle } from "./useThrottle";
 
 export function useTextInput(initialValue = "", bindInitialValue = false) {
   const [value, setValue] = useState<string>(initialValue);
@@ -89,7 +90,7 @@ export function useColorPicker(initialValue = "") {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(initialValue);
   useEffect(() => {
-    !open && setValue(initialValue);
+    if (!open) setValue(initialValue);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialValue]);
 
@@ -109,5 +110,7 @@ export function useColorPicker(initialValue = "") {
       </Popper>
     </>
   );
-  return [value, render] as const;
+
+  const throttledValue = useThrottle(value, 300);
+  return [throttledValue, render] as const;
 }

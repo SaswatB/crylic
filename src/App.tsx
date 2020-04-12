@@ -3,6 +3,7 @@ import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import MonacoEditor from "react-monaco-editor";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { CircularProgress } from "@material-ui/core";
+import { namedTypes as t } from "ast-types";
 import {
   CompilerComponentView,
   CompilerComponentViewRef,
@@ -19,17 +20,20 @@ import {
 } from "./utils/constants";
 import {
   addLookupData,
-  removeLookupDataAndEditByLookup,
   addJSXChildToJSXElement,
   removeRecentlyAddedDataAttrAndGetLookupId,
   applyJSXInlineStyleAttribute,
-  getASTByLookupId,
+  getJSXASTByLookupId,
   getJSXElementForSourceCodePosition,
   AddLookupDataResult,
   applyStyledStyleAttribute,
-} from "./utils/ast-utils";
+  editJSXElementByLookup,
+  removeLookupData,
+  editStyledTemplateByLookup,
+} from "./utils/ast-parsers";
 import { useSideBar } from "./hooks/useSideBar";
 import "./App.scss";
+import { parseAST, printAST, prettyPrintAST } from "./utils/ast-helpers";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 
@@ -109,14 +113,19 @@ const buildOutline = (element: Element): OutlineElement[] =>
 
 function App() {
   const [loading, setLoading] = useState(false);
+  const [debouncedLoading] = useDebounce(loading, 300);
   const [code, setCode] = useState("");
-  const [codeWithData, setCodeWithData] = useState<AddLookupDataResult>();
+  const [codeWithLookupData, setCodeWithLookupData] = useState<
+    AddLookupDataResult & { ast: t.File; transformedCode: string }
+  >();
   const componentView = useRef<CompilerComponentViewRef>(null);
 
   const [debouncedCode, skipNextCodeDebounce] = useDebounce(code, 1000);
   useEffect(() => {
     try {
-      setCodeWithData(addLookupData(debouncedCode));
+      const res = addLookupData(parseAST(debouncedCode));
+      const transformedCode = printAST(res.ast);
+      setCodeWithLookupData({ transformedCode, ...res, ast: Object.freeze(res.ast) });
       setLoading(true);
     } catch (e) {
       console.log(e);
@@ -185,11 +194,11 @@ function App() {
           }
           break;
         case SelectModes.AddDivElement: {
-          if (codeWithData === undefined) {
+          if (!code.trim()) {
             setCodeImmediately(`import React from "react";
 
 export function MyComponent() {
-  return <div style={{ display: "flex", flex: 1 }} />;
+  return <div style={{ height: "100%" }} />;
 }
 `);
             setSelectMode(undefined);
@@ -199,11 +208,11 @@ export function MyComponent() {
           const lookUpId = (componentElement as HTMLElement)?.dataset?.[
             JSX_LOOKUP_DATA_ATTR
           ];
-          if (!lookUpId) break;
+          if (!lookUpId || !codeWithLookupData) break;
 
           let madeChange = false;
-          const newCode = removeLookupDataAndEditByLookup(
-            codeWithData.transformedCode,
+          const newAst = removeLookupData(editJSXElementByLookup(
+            codeWithLookupData.ast,
             lookUpId,
             (path) => {
               addJSXChildToJSXElement(path.value, "div", {
@@ -211,15 +220,16 @@ export function MyComponent() {
               });
               madeChange = true;
             }
-          );
+          ));
 
           if (madeChange) {
             const {
-              code: newCode2,
-              lookUpId: newChildLookUpId,
-            } = removeRecentlyAddedDataAttrAndGetLookupId(newCode);
+              ast: newAst2,
+              resultId: newChildLookUpId,
+            } = removeRecentlyAddedDataAttrAndGetLookupId(newAst);
 
             if (newChildLookUpId) {
+              // try to select the newly added element when the CompilerComponentView next compiles
               compileTasks.current.push(() => {
                 const newChildComponent = componentView.current?.getElementByLookupId(
                   newChildLookUpId!
@@ -234,7 +244,7 @@ export function MyComponent() {
               });
             }
 
-            setCodeImmediately(newCode2);
+            setCodeImmediately(prettyPrintAST(newAst2));
           }
           break;
         }
@@ -255,31 +265,35 @@ export function MyComponent() {
       const selectedComponent = componentView.current?.getElementByLookupId(
         selectedElement.lookUpId
       );
-      const selectedComponentStyledLookupId = selectedComponent && codeWithData?.styledElementLookupIds.find(lookUpId => {
-        return !!window.getComputedStyle(selectedComponent).getPropertyValue(`${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookUpId}`)
-      });
+      const selectedComponentStyledLookupId =
+        selectedComponent &&
+        codeWithLookupData?.styledElementLookupIds.find((lookUpId) => {
+          return !!window
+            .getComputedStyle(selectedComponent)
+            .getPropertyValue(`${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookUpId}`);
+        });
 
       let madeChange = false;
-      const newCode = selectedComponentStyledLookupId ? removeLookupDataAndEditByLookup(
-        codeWithData!.transformedCode,
-        undefined,
-        undefined,
-        selectedComponentStyledLookupId,
-        (path) => {
-          applyStyledStyleAttribute(path, { [styleProp]: newValue });
-          madeChange = true;
-        }
-      ) : removeLookupDataAndEditByLookup(
-        codeWithData!.transformedCode,
-        selectedElement.lookUpId,
-        (path) => {
-          applyJSXInlineStyleAttribute(path, { [styleProp]: newValue });
-          madeChange = true;
-        }
-      );
+      const newAst = removeLookupData(selectedComponentStyledLookupId
+        ? editStyledTemplateByLookup(
+            codeWithLookupData!.ast,
+            selectedComponentStyledLookupId,
+            (path) => {
+              applyStyledStyleAttribute(path, { [styleProp]: newValue });
+              madeChange = true;
+            }
+          )
+        : editJSXElementByLookup(
+            codeWithLookupData!.ast,
+            selectedElement.lookUpId,
+            (path) => {
+              applyJSXInlineStyleAttribute(path, { [styleProp]: newValue });
+              madeChange = true;
+            }
+          ));
 
       if (madeChange) {
-        setCodeImmediately(newCode);
+        setCodeImmediately(prettyPrintAST(newAst));
       }
     }
   };
@@ -308,7 +322,7 @@ export function MyComponent() {
     if (selectedElement) {
       let path;
       try {
-        path = getASTByLookupId(code, selectedElement.lookUpId);
+        path = getJSXASTByLookupId(parseAST(code), selectedElement.lookUpId);
       } catch (err) {}
       const { start: openStart, end: openEnd } =
         path?.value?.openingElement?.name?.loc || {};
@@ -354,7 +368,7 @@ export function MyComponent() {
       let lookUpId;
       try {
         ({ lookUpId } = getJSXElementForSourceCodePosition(
-          code,
+          parseAST(code),
           e.position.lineNumber,
           e.position.column
         ));
@@ -407,9 +421,9 @@ export function MyComponent() {
           {renderSideBar()}
         </div>
         <div className="flex flex-1 relative bg-gray-600 items-center justify-center overflow-hidden">
-          {loading && (
+          {debouncedLoading && (
             <div className="flex items-center justify-center absolute inset-0 z-20 dark-glass">
-              <CircularProgress color="white" />
+              <CircularProgress />
             </div>
           )}
           <TransformWrapper
@@ -452,7 +466,7 @@ export function MyComponent() {
                   <div className="flex m-12 relative bg-white shadow-2xl">
                     <CompilerComponentView
                       ref={componentView}
-                      code={codeWithData?.transformedCode || ''}
+                      code={codeWithLookupData?.transformedCode || ""}
                       filePath={filePath}
                       onCompiled={onComponentViewCompiled}
                       style={{
