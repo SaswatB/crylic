@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { Frame } from "./Frame";
-import { DIV_LOOKUP_DATA_ATTR } from "../utils/constants";
+import { JSX_LOOKUP_DATA_ATTR } from "../utils/constants";
 import { webpackRunCode } from "../utils/run-code-webpack";
 
 export const getComponentElementFromEvent = (
@@ -91,7 +91,7 @@ export const CompilerComponentView: FunctionComponent<
     },
     getElementByLookupId(lookUpId) {
       return getActiveFrame().current?.frameElement.contentDocument?.querySelector(
-        `[data-${DIV_LOOKUP_DATA_ATTR}="${lookUpId}"]`
+        `[data-${JSX_LOOKUP_DATA_ATTR}="${lookUpId}"]`
       );
     },
   }));

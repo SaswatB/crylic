@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import MonacoEditor from "react-monaco-editor";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { CircularProgress } from "@material-ui/core";
 import {
   CompilerComponentView,
   CompilerComponentViewRef,
@@ -9,20 +10,23 @@ import {
 } from "./components/CompilerComponentView";
 import { useDebounce } from "./hooks/useDebounce";
 import {
-  DIV_LOOKUP_DATA_ATTR,
-  DIV_LOOKUP_ROOT,
-  DIV_RECENTLY_ADDED_DATA_ATTR,
-  DIV_RECENTLY_ADDED,
+  JSX_LOOKUP_DATA_ATTR,
+  JSX_LOOKUP_ROOT,
+  JSX_RECENTLY_ADDED_DATA_ATTR,
+  JSX_RECENTLY_ADDED,
   SelectModes,
+  STYLED_LOOKUP_CSS_VAR_PREFIX,
 } from "./utils/constants";
 import {
-  addLookupDataAttrToJSXElements,
-  removeLookupDataAttrFromJSXElementsAndEditJSXElement,
+  addLookupData,
+  removeLookupDataAndEditByLookup,
   addJSXChildToJSXElement,
   removeRecentlyAddedDataAttrAndGetLookupId,
-  applyStyleAttribute,
+  applyJSXInlineStyleAttribute,
   getASTByLookupId,
   getJSXElementForSourceCodePosition,
+  AddLookupDataResult,
+  applyStyledStyleAttribute,
 } from "./utils/ast-utils";
 import { useSideBar } from "./hooks/useSideBar";
 import "./App.scss";
@@ -90,11 +94,11 @@ export interface OutlineElement {
 const buildOutline = (element: Element): OutlineElement[] =>
   Array.from(element.children)
     .map((child) => {
-      if (DIV_LOOKUP_DATA_ATTR in (child as HTMLElement).dataset) {
+      if (JSX_LOOKUP_DATA_ATTR in (child as HTMLElement).dataset) {
         return [
           {
             tag: child.tagName,
-            lookUpId: (child as HTMLElement).dataset[DIV_LOOKUP_DATA_ATTR]!,
+            lookUpId: (child as HTMLElement).dataset[JSX_LOOKUP_DATA_ATTR]!,
             children: buildOutline(child),
           },
         ];
@@ -104,14 +108,16 @@ const buildOutline = (element: Element): OutlineElement[] =>
     .reduce((p, c) => [...p, ...c], []);
 
 function App() {
+  const [loading, setLoading] = useState(false);
   const [code, setCode] = useState("");
-  const [codeWithData, setCodeWithData] = useState("");
+  const [codeWithData, setCodeWithData] = useState<AddLookupDataResult>();
   const componentView = useRef<CompilerComponentViewRef>(null);
 
   const [debouncedCode, skipNextCodeDebounce] = useDebounce(code, 1000);
   useEffect(() => {
     try {
-      setCodeWithData(addLookupDataAttrToJSXElements(debouncedCode));
+      setCodeWithData(addLookupData(debouncedCode));
+      setLoading(true);
     } catch (e) {
       console.log(e);
     }
@@ -126,8 +132,8 @@ function App() {
   const [selectedElement, setSelectedElement] = useState<SelectedElement>();
 
   const selectElement = (componentElement: HTMLElement) => {
-    const lookUpId = componentElement.dataset?.[DIV_LOOKUP_DATA_ATTR];
-    if (!lookUpId || lookUpId === DIV_LOOKUP_ROOT) return;
+    const lookUpId = componentElement.dataset?.[JSX_LOOKUP_DATA_ATTR];
+    if (!lookUpId || lookUpId === JSX_LOOKUP_ROOT) return;
 
     setSelectedElement({
       lookUpId,
@@ -140,6 +146,7 @@ function App() {
   const [outline, setOutline] = useState<OutlineElement[]>([]);
   const compileTasks = useRef<Function[]>([]);
   const onComponentViewCompiled = () => {
+    setLoading(false);
     if (selectedElement) {
       const newSelectedComponent = componentView.current?.getElementByLookupId(
         selectedElement.lookUpId
@@ -155,7 +162,7 @@ function App() {
       }
     }
 
-    const root = componentView.current?.getElementByLookupId(DIV_LOOKUP_ROOT);
+    const root = componentView.current?.getElementByLookupId(JSX_LOOKUP_ROOT);
     if (root) setOutline(buildOutline(root));
 
     compileTasks.current.forEach((task) => task());
@@ -172,13 +179,13 @@ function App() {
           if (componentElement) {
             console.log(
               "setting selected from manual selection",
-              (componentElement as any).dataset?.[DIV_LOOKUP_DATA_ATTR]
+              (componentElement as any).dataset?.[JSX_LOOKUP_DATA_ATTR]
             );
             selectElement(componentElement as HTMLElement);
           }
           break;
         case SelectModes.AddDivElement: {
-          if (codeWithData === "") {
+          if (codeWithData === undefined) {
             setCodeImmediately(`import React from "react";
 
 export function MyComponent() {
@@ -190,17 +197,17 @@ export function MyComponent() {
           }
 
           const lookUpId = (componentElement as HTMLElement)?.dataset?.[
-            DIV_LOOKUP_DATA_ATTR
+            JSX_LOOKUP_DATA_ATTR
           ];
           if (!lookUpId) break;
 
           let madeChange = false;
-          const newCode = removeLookupDataAttrFromJSXElementsAndEditJSXElement(
-            codeWithData,
+          const newCode = removeLookupDataAndEditByLookup(
+            codeWithData.transformedCode,
             lookUpId,
             (path) => {
               addJSXChildToJSXElement(path.value, "div", {
-                [`data-${DIV_RECENTLY_ADDED_DATA_ATTR}`]: DIV_RECENTLY_ADDED,
+                [`data-${JSX_RECENTLY_ADDED_DATA_ATTR}`]: JSX_RECENTLY_ADDED,
               });
               madeChange = true;
             }
@@ -245,12 +252,28 @@ export function MyComponent() {
       selectedElement &&
       newValue !== selectedElement?.computedStyles[styleProp]
     ) {
+      const selectedComponent = componentView.current?.getElementByLookupId(
+        selectedElement.lookUpId
+      );
+      const selectedComponentStyledLookupId = selectedComponent && codeWithData?.styledElementLookupIds.find(lookUpId => {
+        return !!window.getComputedStyle(selectedComponent).getPropertyValue(`${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookUpId}`)
+      });
+
       let madeChange = false;
-      const newCode = removeLookupDataAttrFromJSXElementsAndEditJSXElement(
-        codeWithData,
+      const newCode = selectedComponentStyledLookupId ? removeLookupDataAndEditByLookup(
+        codeWithData!.transformedCode,
+        undefined,
+        undefined,
+        selectedComponentStyledLookupId,
+        (path) => {
+          applyStyledStyleAttribute(path, { [styleProp]: newValue });
+          madeChange = true;
+        }
+      ) : removeLookupDataAndEditByLookup(
+        codeWithData!.transformedCode,
         selectedElement.lookUpId,
         (path) => {
-          applyStyleAttribute(path, { [styleProp]: newValue });
+          applyJSXInlineStyleAttribute(path, { [styleProp]: newValue });
           madeChange = true;
         }
       );
@@ -344,7 +367,7 @@ export function MyComponent() {
         if (newSelectedComponent) {
           console.log(
             "setting selected element through editor cursor update",
-            (newSelectedComponent as any).dataset?.[DIV_LOOKUP_DATA_ATTR]
+            (newSelectedComponent as any).dataset?.[JSX_LOOKUP_DATA_ATTR]
           );
           selectElement(newSelectedComponent as HTMLElement);
         }
@@ -384,6 +407,11 @@ export function MyComponent() {
           {renderSideBar()}
         </div>
         <div className="flex flex-1 relative bg-gray-600 items-center justify-center overflow-hidden">
+          {loading && (
+            <div className="flex items-center justify-center absolute inset-0 z-20 dark-glass">
+              <CircularProgress color="white" />
+            </div>
+          )}
           <TransformWrapper
             defaultScale={1}
             options={{
@@ -424,7 +452,7 @@ export function MyComponent() {
                   <div className="flex m-12 relative bg-white shadow-2xl">
                     <CompilerComponentView
                       ref={componentView}
-                      code={codeWithData}
+                      code={codeWithData?.transformedCode || ''}
                       filePath={filePath}
                       onCompiled={onComponentViewCompiled}
                       style={{
