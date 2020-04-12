@@ -87,6 +87,15 @@ export const valueToJSXLiteral = (value: unknown) => {
   return b.jsxExpressionContainer(valueToASTLiteral(value));
 };
 
+export const copyJSXName = (name: t.JSXIdentifier | t.JSXMemberExpression | t.JSXNamespacedName) => {
+  switch(name.type) {
+    case "JSXIdentifier": return b.jsxIdentifier.from(name);
+    case "JSXMemberExpression": return b.jsxMemberExpression.from(name);
+    case "JSXNamespacedName": return b.jsxNamespacedName.from(name);
+    default: throw new Error(`Unknown jsx name type "${(name as any).type}"`)
+  }
+};
+
 export const traverseStyledTemplatesElements = (
   ast: t.File,
   visitor: (

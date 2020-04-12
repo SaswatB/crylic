@@ -21,6 +21,7 @@ import {
   editAST,
   ifStringLiteral,
   ifIdentifier,
+  copyJSXName,
 } from "./ast-helpers";
 
 const { builders: b } = types;
@@ -28,6 +29,15 @@ const { builders: b } = types;
 const STYLED_LOOKUP_MATCHER = new RegExp(
   `${STYLED_LOOKUP_CSS_VAR_PREFIX}(\\d+): 1;`
 );
+
+// fix missing token prop from in types
+declare module 'ast-types/gen/namedTypes' {
+  namespace namedTypes {
+    interface Position {
+        token?: number;
+    }
+  }
+}
 
 export interface AddLookupDataResult {
   ast: t.File;
@@ -193,7 +203,7 @@ export const addJSXChildToJSXElement = (
   // if the parent was self closing, open it up
   if (parentElement.openingElement.selfClosing) {
     parentElement.closingElement = b.jsxClosingElement(
-      b.jsxIdentifier(parentElement.openingElement.name.name)
+      copyJSXName(parentElement.openingElement.name)
     );
     parentElement.openingElement.selfClosing = false;
   }
