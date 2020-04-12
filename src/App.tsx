@@ -24,8 +24,8 @@ import {
   getASTByLookupId,
   getJSXElementForSourceCodePosition,
 } from "./utils/ast-utils";
-import "./App.scss";
 import { useSideBar } from "./hooks/useSideBar";
+import "./App.scss";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 
@@ -145,6 +145,10 @@ function App() {
         selectedElement.lookUpId
       );
       if (newSelectedComponent) {
+        console.log(
+          "setting selected element post-compile",
+          selectedElement.lookUpId
+        );
         selectElement(newSelectedComponent as HTMLElement);
       } else {
         setSelectedElement(undefined);
@@ -165,7 +169,13 @@ function App() {
     (componentElement) => {
       switch (selectMode) {
         case SelectModes.SelectElement:
-          if (componentElement) selectElement(componentElement as HTMLElement);
+          if (componentElement) {
+            console.log(
+              "setting selected from manual selection",
+              (componentElement as any).dataset?.[DIV_LOOKUP_DATA_ATTR]
+            );
+            selectElement(componentElement as HTMLElement);
+          }
           break;
         case SelectModes.AddDivElement: {
           if (codeWithData === "") {
@@ -208,6 +218,10 @@ export function MyComponent() {
                   newChildLookUpId!
                 );
                 if (newChildComponent) {
+                  console.log(
+                    "setting selected element through post-child add",
+                    newChildLookUpId
+                  );
                   selectElement(newChildComponent as HTMLElement);
                 }
               });
@@ -260,8 +274,8 @@ export function MyComponent() {
     updateSelectedElementStyleFactory,
     onSaveCode: () => {
       if (filePath) fs.writeFileSync(filePath, code);
-      else alert('please open a file before saving');
-    }
+      else alert("please open a file before saving");
+    },
   });
 
   const activeHighlight = useRef<string[]>([]);
@@ -272,8 +286,7 @@ export function MyComponent() {
       let path;
       try {
         path = getASTByLookupId(code, selectedElement.lookUpId);
-      } catch(err) {
-      }
+      } catch (err) {}
       const { start: openStart, end: openEnd } =
         path?.value?.openingElement?.name?.loc || {};
       if (openStart && openEnd) {
@@ -286,7 +299,10 @@ export function MyComponent() {
           ),
           options: { inlineClassName: "selected-element-code-highlight" },
         });
-        editorRef.current?.editor?.revealPositionInCenter({ lineNumber: openStart.line, column: openStart.column + 1 });
+        editorRef.current?.editor?.revealPositionInCenter({
+          lineNumber: openStart.line,
+          column: openStart.column + 1,
+        });
       }
       const { start: closeStart, end: closeEnd } =
         path?.value?.closingElement?.name?.loc || {};
@@ -309,18 +325,27 @@ export function MyComponent() {
       ) || [];
   }, [code, selectedElement]);
   useEffect(() => {
-    return editorRef.current?.editor?.onDidChangeCursorPosition(e => {
+    return editorRef.current?.editor?.onDidChangeCursorPosition((e) => {
+      if (!editorRef.current?.editor?.hasTextFocus()) return;
+
       let lookUpId;
       try {
-        ({lookUpId} = getJSXElementForSourceCodePosition(code, e.position.lineNumber, e.position.column));
-      } catch(err) {
-      }
+        ({ lookUpId } = getJSXElementForSourceCodePosition(
+          code,
+          e.position.lineNumber,
+          e.position.column
+        ));
+      } catch (err) {}
 
       if (lookUpId !== undefined) {
         const newSelectedComponent = componentView.current?.getElementByLookupId(
           lookUpId
         );
         if (newSelectedComponent) {
+          console.log(
+            "setting selected element through editor cursor update",
+            (newSelectedComponent as any).dataset?.[DIV_LOOKUP_DATA_ATTR]
+          );
           selectElement(newSelectedComponent as HTMLElement);
         }
       }
@@ -343,7 +368,10 @@ export function MyComponent() {
           <div className="flex-1" />
           Select Mode
           <div className="flex-1" />
-          <button className="btn py-1 px-4" onClick={() => setSelectMode(undefined)}>
+          <button
+            className="btn py-1 px-4"
+            onClick={() => setSelectMode(undefined)}
+          >
             Cancel
           </button>
         </div>
@@ -361,6 +389,7 @@ export function MyComponent() {
             options={{
               minScale: 0.01,
               maxScale: 3,
+              limitToBounds: false,
             }}
           >
             {({ zoomIn, zoomOut, resetTransform }: any) => (
@@ -373,7 +402,10 @@ export function MyComponent() {
                     Select Element
                   </button>
                   {selectedElement && (
-                    <button className="btn" onClick={() => setSelectedElement(undefined)}>
+                    <button
+                      className="btn"
+                      onClick={() => setSelectedElement(undefined)}
+                    >
                       Clear Selected Element
                     </button>
                   )}

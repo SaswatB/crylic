@@ -13,41 +13,44 @@ import { DIV_LOOKUP_DATA_ATTR, DIV_LOOKUP_ROOT } from "../utils/constants";
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import normalizeCss from "!!raw-loader!normalize.css/normalize.css";
 
+export interface FrameRef {
+  frameElement: HTMLIFrameElement,
+  resetFrame: () => void
+}
+
 export const Frame: FunctionComponent<
   React.IframeHTMLAttributes<HTMLIFrameElement> &
-    RefAttributes<HTMLIFrameElement>
+    RefAttributes<FrameRef>
 > = forwardRef(({ children, ...props }, ref) => {
   const frame = useRef<HTMLIFrameElement>(null);
   const [root, setRoot] = useState<HTMLDivElement>();
 
-  const initIframe = () => {
-    if (frame.current) {
-      const iframeDocument = frame.current.contentDocument!;
-      if (iframeDocument.readyState === "complete") {
-        // clear the iframe content
-        iframeDocument.write("");
-        iframeDocument.close();
-
-        // add react rendering root
-        const newRoot = iframeDocument.createElement("div");
-        newRoot.style.display = "flex";
-        newRoot.style.width = "100%";
-        newRoot.style.height = "100%";
-        newRoot.dataset[DIV_LOOKUP_DATA_ATTR] = DIV_LOOKUP_ROOT;
-        iframeDocument.body.appendChild(newRoot);
-        setRoot(newRoot);
-
-        // add normalize
-        const style = iframeDocument.createElement("style");
-        iframeDocument.head.appendChild(style);
-        style.type = "text/css";
-        style.appendChild(iframeDocument.createTextNode(normalizeCss));
-        return;
-      }
+  const resetFrame = () => {
+    const iframeDocument = frame.current?.contentDocument;
+    if (iframeDocument?.readyState !== "complete") {
+      setTimeout(resetFrame, 10);
+      return;
     }
-    setTimeout(initIframe, 10);
+
+    // clear the iframe content
+    iframeDocument.write("");
+    iframeDocument.close();
+
+    // add react rendering root
+    const newRoot = iframeDocument.createElement("div");
+    newRoot.style.width = "100%";
+    newRoot.style.height = "100%";
+    newRoot.dataset[DIV_LOOKUP_DATA_ATTR] = DIV_LOOKUP_ROOT;
+    iframeDocument.body.appendChild(newRoot);
+    setRoot(newRoot);
+
+    // add normalize
+    const style = iframeDocument.createElement("style");
+    iframeDocument.head.appendChild(style);
+    style.type = "text/css";
+    style.appendChild(iframeDocument.createTextNode(normalizeCss));
   };
-  useEffect(initIframe, []);
+  useEffect(resetFrame, []);
 
   if (root) {
     ReactDOM.render(
@@ -57,7 +60,11 @@ export const Frame: FunctionComponent<
     );
   }
 
-  useImperativeHandle(ref, () => frame.current!);
+  useImperativeHandle(ref, () => ({
+    frameElement: frame.current!,
+    resetFrame,
+  }));
 
+  // @ts-ignore ignore ref that's overridden by useImperativeHandle
   return <iframe ref={frame} title="frame" {...props} />;
 });

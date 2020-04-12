@@ -11,6 +11,25 @@ const { format } = __non_webpack_require__(
 ) as typeof import("prettier");
 const { builders: b } = types;
 
+const traverseStyledTemplatesElements = (
+  ast: any,
+  visitor: (
+    path: NodePath<types.namedTypes.TaggedTemplateExpression, any>,
+    index: string
+  ) => void
+) => {
+  let count = 0;
+  visit(ast, {
+    visitTaggedTemplateExpression(path) {
+      // todo use better static analysis than this for styled components support
+      if (path.value?.tag?.object?.name === 'styled') {
+        visitor(path, `${count++}`);
+      }
+      this.traverse(path);
+    }
+  });
+};
+
 const traverseJSXElements = (
   ast: any,
   visitor: (
@@ -37,6 +56,9 @@ export const addLookupDataAttrToJSXElements = (code: string) => {
       b.stringLiteral(index)
     );
     path.value.openingElement.attributes.push(attr);
+  });
+  traverseStyledTemplatesElements(ast, (path, index) => {
+    path.value.quasi.quasis[0].value.raw = `--paint-styledlookup-${index}: 1;${path.value.quasi.quasis[0].value.raw}`
   });
   console.log("ast", ast);
   return print(ast).code;
@@ -66,6 +88,9 @@ export const removeLookupDataAttrFromJSXElementsAndEditJSXElement = (
     path.value.openingElement.attributes = path.value.openingElement.attributes.filter(
       (attr: any) => attr.name.name !== `data-${DIV_LOOKUP_DATA_ATTR}`
     );
+  });
+  traverseStyledTemplatesElements(ast, (path) => {
+    path.value.quasi.quasis[0].value.raw = path.value.quasi.quasis[0].value.raw.replace(/--paint-styledlookup-\d+: 1;/, '');
   });
   return format(print(ast).code, { parser: "babel" });
 };

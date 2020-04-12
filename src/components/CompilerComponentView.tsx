@@ -10,9 +10,7 @@ import React, {
 import { ErrorBoundary } from "./ErrorBoundary";
 import { Frame } from "./Frame";
 import { DIV_LOOKUP_DATA_ATTR } from "../utils/constants";
-import { babelRunCode } from "../utils/run-code-babel";
-
-const webpack = __non_webpack_require__('webpack') as typeof import('webpack');
+import { webpackRunCode } from "../utils/run-code-webpack";
 
 export const getComponentElementFromEvent = (
   event: React.MouseEvent<HTMLDivElement, MouseEvent>,
@@ -37,6 +35,19 @@ export const CompilerComponentView: FunctionComponent<
   } & React.IframeHTMLAttributes<HTMLIFrameElement> &
     RefAttributes<CompilerComponentViewRef>
 > = forwardRef(({ code, filePath, onCompiled, ...props }, ref) => {
+  const [activeFrame, setActiveFrame] = useState(1)
+  const frame1 = useRef<{
+    frameElement: HTMLIFrameElement,
+    resetFrame: () => void
+  }>(null);
+  const frame2 = useRef<{
+    frameElement: HTMLIFrameElement,
+    resetFrame: () => void
+  }>(null);
+
+  const getActiveFrame = () => activeFrame === 1 ? frame1 : frame2;
+  const getInactiveFrame = () => activeFrame === 1 ? frame2 : frame1;
+
   const errorBoundary = useRef<ErrorBoundary>(null);
   const [CompiledElement, setCompiledElement] = useState<any>();
   useEffect(() => {
@@ -48,47 +59,62 @@ export const CompilerComponentView: FunctionComponent<
   }, [CompiledElement]);
 
   useEffect(() => {
-    if (code) {
-      try {
-        console.log("compiled!");
-        const codeExports = babelRunCode(filePath, code);
-        setCompiledElement(() =>
-          Object.values(codeExports).find(
-            (e): e is Function => typeof e === "function"
-          )
-        );
+    (async () => {
+      if (code) {
+        try {
+          console.log("compiling");
+          getInactiveFrame().current?.resetFrame();
+          const codeExports = await webpackRunCode(filePath, code, {
+            window: getInactiveFrame().current?.frameElement.contentWindow,
+          });
+          setCompiledElement(() =>
+            Object.values(codeExports).find(
+              (e): e is Function => typeof e === "function"
+            )
+          );
 
-        if (errorBoundary.current?.hasError()) {
-          errorBoundary.current.resetError();
+          setActiveFrame(activeFrame === 1 ? 2 : 1)
+          if (errorBoundary.current?.hasError()) {
+            errorBoundary.current.resetError();
+          }
+        } catch (e) {
+          console.log(e);
         }
-      } catch (e) {
-        console.log(e);
       }
-    }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filePath, code]);
 
-  const frame = useRef<HTMLIFrameElement>(null);
   useImperativeHandle(ref, () => ({
     getElementAtPoint(x, y) {
-      return frame.current?.contentDocument?.elementFromPoint(x, y);
+      return getActiveFrame().current?.frameElement.contentDocument?.elementFromPoint(x, y);
     },
     getElementByLookupId(lookUpId) {
-      return frame.current?.contentDocument?.querySelector(
+      return getActiveFrame().current?.frameElement.contentDocument?.querySelector(
         `[data-${DIV_LOOKUP_DATA_ATTR}="${lookUpId}"]`
       );
     },
   }));
 
+  const renderFrameContent = () => (
+    <ErrorBoundary
+      ref={errorBoundary}
+      onError={(error, errorInfo) => {
+        console.log(error, errorInfo);
+      }}
+    >
+      {CompiledElement && <CompiledElement />}
+    </ErrorBoundary>
+  );
+
   return (
-    <Frame {...props} ref={frame}>
-      <ErrorBoundary
-        ref={errorBoundary}
-        onError={(error, errorInfo) => {
-          console.log(error, errorInfo);
-        }}
-      >
-        {CompiledElement && <CompiledElement />}
-      </ErrorBoundary>
-    </Frame>
+    <>
+      <Frame {...props} style={{...props.style, ...(activeFrame !== 1 && { display: 'none' })}} ref={frame1}>
+        {activeFrame === 1 && renderFrameContent()}
+      </Frame>
+      <Frame {...props} style={{...props.style, ...(activeFrame !== 2 && { display: 'none' })}} ref={frame2}>
+        {activeFrame === 2 && renderFrameContent()}
+      </Frame>
+    </>
   );
 });

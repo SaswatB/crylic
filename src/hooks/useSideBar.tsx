@@ -150,6 +150,11 @@ export function useSideBar({
       { name: "wrap-reverse", value: "wrap-reverse" },
     ])
   );
+  const [, renderSelectedElementOpacityInput] = useSelectedElementEditor("opacity");
+  const [
+    ,
+    renderSelectedElementColorInput,
+  ] = useSelectedElementEditor("color", useColorPicker);
   const [
     ,
     renderSelectedElementBackgroundColorInput,
@@ -259,6 +264,18 @@ export function useSideBar({
             </div>
           </>
         )}
+        <div>
+          Opacity:{" "}
+          {renderSelectedElementOpacityInput({
+            className: "w-32 text-center",
+          })}
+        </div>
+        <div>
+          Text Color:{" "}
+          {renderSelectedElementColorInput({
+            className: "w-32 text-center",
+          })}
+        </div>
         <div>
           Background Color:{" "}
           {renderSelectedElementBackgroundColorInput({
