@@ -1,20 +1,33 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, ReactNode, useMemo } from "react";
 import Slider, { SliderProps } from "@material-ui/core/Slider";
 import Popper from "@material-ui/core/Popper";
 import ClickAwayListener from "@material-ui/core/ClickAwayListener";
 import { ChromePicker } from "react-color";
 import { useThrottle } from "./useThrottle";
+import {
+  FormControl,
+  InputLabel,
+  Select,
+  TextField,
+  OutlinedInput,
+  InputAdornment,
+} from "@material-ui/core";
 
-export function useTextInput(initialValue = "", bindInitialValue = false) {
+export function useTextInput(
+  onChange = (value: string) => {},
+  label = "",
+  initialValue = "",
+  bindInitialValue = false
+) {
   const [value, setValue] = useState<string>(initialValue);
   const [focused, setFocused] = useState(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     !focused && setValue(initialValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialValue]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     bindInitialValue && !focused && setValue(initialValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focused]);
 
   const render = (
@@ -23,13 +36,14 @@ export function useTextInput(initialValue = "", bindInitialValue = false) {
       HTMLInputElement
     >
   ) => (
-    <input
-      {...props}
-      className={`${
-        props?.className || ""
-      } px-2 bg-transparent border border-white border-solid`}
+    <TextField
+      label={label}
+      variant="outlined"
       value={value}
-      onChange={(e) => setValue(e.target.value)}
+      onChange={(e) => {
+        setValue(e.target.value);
+        onChange(e.target.value);
+      }}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
     />
@@ -38,7 +52,91 @@ export function useTextInput(initialValue = "", bindInitialValue = false) {
   return [value, render] as const;
 }
 
-export function useSliderInput(initialValue = 0) {
+export function useCSSLengthInput(
+  onChange = (value: string) => {},
+  label = "",
+  initialValue = "",
+  bindInitialValue = false
+) {
+  const [value, setValue] = useState<string>(initialValue);
+  const [focused, setFocused] = useState(false);
+  useEffect(() => {
+    !focused && setValue(initialValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialValue]);
+  useEffect(() => {
+    bindInitialValue && !focused && setValue(initialValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focused]);
+
+  const units = [
+    { name: "px", value: "px" },
+    { name: "%", value: "%" },
+    { name: "em", value: "em" },
+    { name: "vh", value: "vh" },
+    { name: "vw", value: "vw" },
+    { name: "ex", value: "ex" },
+    { name: "cm", value: "cm" },
+    { name: "mm", value: "mm" },
+    { name: "in", value: "in" },
+    { name: "pt", value: "pt" },
+    { name: "pc", value: "pc" },
+    { name: "ch", value: "ch" },
+    { name: "rem", value: "rem" },
+    { name: "vmin", value: "vmin" },
+    { name: "vmax", value: "vmax" },
+  ];
+
+  const { numberValue, unit } = useMemo(() => {
+    const res = /(\d+)(.+)/.exec(value);
+    return res ? { numberValue: res[1], unit: res[2] } : { numberValue: value };
+  }, [value]);
+  const updateValue = (newValue: string) => {
+    setValue(newValue);
+    onChange(newValue);
+  };
+
+  const render = (
+    props?: React.DetailedHTMLProps<
+      React.InputHTMLAttributes<HTMLInputElement>,
+      HTMLInputElement
+    >
+  ) => (
+    <FormControl variant="outlined">
+      <InputLabel>{label}</InputLabel>
+      <OutlinedInput
+        value={numberValue}
+        onChange={(e) => updateValue(`${e.target.value}${unit}`)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        endAdornment={
+          <InputAdornment position="end">
+            <Select
+              native
+              value={unit}
+              onChange={(e) => updateValue(`${numberValue}${e.target.value}`)}
+            >
+              {units.map((o) => (
+                <option key={o.name} value={o.value}>
+                  {o.name}
+                </option>
+              ))}
+            </Select>
+          </InputAdornment>
+        }
+        labelWidth={label.length * 8.7}
+      />
+    </FormControl>
+  );
+
+  return [value, render] as const;
+}
+
+export function useSliderInput(
+  onChange = (value: number) => {},
+  label = "",
+  initialValue = 0
+) {
   const [value, setValue] = useState<number>(initialValue);
   useEffect(() => setValue(initialValue), [initialValue]);
 
@@ -46,7 +144,7 @@ export function useSliderInput(initialValue = 0) {
     <Slider
       {...props}
       value={value}
-      onChange={(e, v) => setValue(v as number)}
+      onChange={(e, v) => {setValue(v as number); onChange(v as number);}}
     />
   );
 
@@ -55,6 +153,8 @@ export function useSliderInput(initialValue = 0) {
 
 export function useSelectInput(
   options: { name: string; value: string }[],
+  onChange = (value: string) => {},
+  label = "",
   initialValue = ""
 ) {
   const [value, setValue] = useState(initialValue);
@@ -66,32 +166,38 @@ export function useSelectInput(
       HTMLSelectElement
     >
   ) => (
-    <select
-      {...props}
-      className={`${
-        props?.className || ""
-      } px-2 bg-transparent border border-white border-solid`}
-      value={value}
-      onChange={(e) => setValue(e.target.value)}
-    >
-      {options.map((o) => (
-        <option key={o.name} value={o.value} className="bg-black">
-          {o.name}
-        </option>
-      ))}
-    </select>
+    <FormControl fullWidth variant="outlined">
+      <InputLabel>{label}</InputLabel>
+      <Select
+        native
+        value={value}
+        onChange={(e) => {setValue(e.target.value as string); onChange(e.target.value as string);}}
+        label={label}
+      >
+        {options.map((o) => (
+          <option key={o.name} value={o.value}>
+            {o.name}
+          </option>
+        ))}
+      </Select>
+    </FormControl>
   );
 
   return [value, render] as const;
 }
 
-export function useColorPicker(initialValue = "") {
+export function useColorPicker(
+  onChange = (value: string) => {},
+  label = "",
+  initialValue = "",
+  btnText: ReactNode = "Open"
+) {
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(initialValue);
   useEffect(() => {
     if (!open) setValue(initialValue);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialValue]);
 
   const render = () => (
@@ -101,11 +207,11 @@ export function useColorPicker(initialValue = "") {
         className="btn w-full"
         onClick={() => setOpen(!open)}
       >
-        Open
+        {btnText}
       </button>
       <Popper open={open} anchorEl={anchor.current}>
         <ClickAwayListener onClickAway={() => setOpen(false)}>
-          <ChromePicker color={value} onChange={(c) => setValue(c.hex)} />
+          <ChromePicker color={value} onChange={(c) => {setValue(c.hex); onChange(c.hex);}} />
         </ClickAwayListener>
       </Popper>
     </>

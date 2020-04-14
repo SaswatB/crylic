@@ -2,7 +2,8 @@ import { parse, print, types, visit } from "recast";
 import { namedTypes as t } from "ast-types";
 import { NodePath } from "ast-types/lib/node-path";
 import { LiteralKind } from "ast-types/gen/kinds";
-import { produce } from "immer";
+import { cloneDeep } from 'lodash';
+import deepFreeze from "deep-freeze-strict";
 import { babelTsParser } from "./babel-ts";
 
 const { format } = __non_webpack_require__(
@@ -15,9 +16,9 @@ export const parseAST = (code: string): t.File =>
   parse(code, {
     parser: babelTsParser,
   });
-export const printAST = (ast: t.File) => print(ast).code;
+export const printAST = (ast: t.File) => print(cloneDeep(ast)).code;
 export const prettyPrintAST = (ast: t.File) =>
-  format(printAST(ast), { parser: "babel-ts" });
+  format(printAST(cloneDeep(ast)), { parser: "babel-ts" });
 
 export const ifIdentifier = (
   node: t.Node | null | undefined
@@ -138,16 +139,19 @@ export const editAST = <T extends object | void, U extends any[]>(
   apply: (ast: t.File, ...rest: U) => T
 ) => (ast: t.File, ...rest: U): T extends void ? t.File : T & {ast: t.File} => {
   let applyResult: T | undefined = undefined;
-  const newAst = produce(ast, (draft) => {
-    applyResult = apply(draft, ...rest)
-  });
+  const newAst = cloneDeep(ast);
+  // const newAst = produce(ast, (draft) => {
+  //   console.log('using draft')
+  applyResult = apply(newAst, ...rest)
+  //   console.log('finished draft')
+  // });
   if (applyResult) {
+    // @ts-ignore ts bug
     return {
-      // @ts-ignore ts bug
       ...applyResult,
-      ast,
+      ast: deepFreeze(newAst),
     }
   }
   // @ts-ignore ts bug
-  return newAst;
+  return deepFreeze(newAst);
 }

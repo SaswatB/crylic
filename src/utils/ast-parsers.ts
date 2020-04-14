@@ -31,13 +31,15 @@ const STYLED_LOOKUP_MATCHER = new RegExp(
 );
 
 // fix missing token prop from in types
-declare module 'ast-types/gen/namedTypes' {
+declare module "ast-types/gen/namedTypes" {
   namespace namedTypes {
     interface Position {
-        token?: number;
+      token?: number;
     }
   }
 }
+
+export type Styles = { styleName: keyof CSSStyleDeclaration, styleValue: string }[];
 
 export interface AddLookupDataResult {
   ast: t.File;
@@ -185,8 +187,8 @@ export const addJSXChildToJSXElement = (
   childAttributes: Record<string, unknown> = {},
   childShouldBeSelfClosing = false
 ) => {
-  parentElement.children = parentElement.children || [];
-  parentElement.children.push(
+  parentElement.children = [
+    ...(parentElement.children || []),
     b.jsxElement(
       b.jsxOpeningElement(
         b.jsxIdentifier(childElementTag),
@@ -198,8 +200,8 @@ export const addJSXChildToJSXElement = (
       childShouldBeSelfClosing
         ? undefined
         : b.jsxClosingElement(b.jsxIdentifier(childElementTag))
-    )
-  );
+    ),
+  ];
   // if the parent was self closing, open it up
   if (parentElement.openingElement.selfClosing) {
     parentElement.closingElement = b.jsxClosingElement(
@@ -211,20 +213,18 @@ export const addJSXChildToJSXElement = (
 
 export const applyJSXInlineStyleAttribute = (
   path: NodePath<types.namedTypes.JSXElement, t.JSXElement>,
-  style: object
+  styles: Styles
 ) => {
-  const existingStyleAttr = path.value.openingElement.attributes?.find(
+  let existingStyleAttr = path.value.openingElement.attributes?.find(
     (attr) => attr.type === "JSXAttribute" && attr.name.name === `style`
   );
   if (!existingStyleAttr) {
     path.value.openingElement.attributes =
       path.value.openingElement.attributes || [];
-    path.value.openingElement.attributes.push(
-      b.jsxAttribute(b.jsxIdentifier("style"), valueToJSXLiteral(style))
-    );
-    return;
+    existingStyleAttr = b.jsxAttribute(b.jsxIdentifier("style"), valueToJSXLiteral({}))
+    path.value.openingElement.attributes.push(existingStyleAttr);
   }
-  Object.entries(style).forEach(([styleName, styleValue]) => {
+  styles.forEach(({styleName, styleValue}) => {
     // todo handle more cases
     const existingStyleProp = pipe(
       existingStyleAttr,
@@ -259,7 +259,7 @@ export const applyJSXInlineStyleAttribute = (
       (_) => _?.properties
     );
     existingStylePropObject?.push(
-      b.objectProperty(b.identifier(styleName), valueToASTLiteral(styleValue))
+      b.objectProperty(b.identifier(`${styleName}`), valueToASTLiteral(styleValue))
     );
   });
 };
@@ -269,10 +269,10 @@ export const applyStyledStyleAttribute = (
     types.namedTypes.TaggedTemplateExpression,
     t.TaggedTemplateExpression
   >,
-  style: object
+  styles: Styles
 ) => {
-  Object.entries(style).forEach(([styleName, styleValue]) => {
-    const cssStyleName = kebabCase(styleName);
+  styles.forEach(({styleName, styleValue}) => {
+    const cssStyleName = kebabCase(`${styleName}`);
     const styleMatcher = new RegExp(`($|\\s)\\s*${cssStyleName}: ([^:;]+);`);
     const found = path.value.quasi.quasis.find(({ value: quasiValue }) => {
       const res = styleMatcher.exec(quasiValue.raw);

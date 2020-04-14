@@ -60,9 +60,9 @@ const WEBPACK_MODULES = {
   ],
 };
 
-const webpackCache: Record<string, {compiler: import("webpack").Compiler, inputFs: IFs, outputFs: IFs} | undefined> = {};
+const webpackCache: Record<string, {compiler: import("webpack").Compiler, inputFs: IFs, outputFs: IFs, runId: number, lastPromise?: Promise<unknown>} | undefined> = {};
 
-export const webpackRunCode = (
+export const webpackRunCode = async (
   codePath = "/untitled.jsx",
   code: string,
   { window }: any
@@ -115,12 +115,23 @@ export const webpackRunCode = (
       ...outputFs,
     };
 
-    webpackCache[codePath] = { compiler, inputFs, outputFs };
+    webpackCache[codePath] = { compiler, inputFs, outputFs, runId: 0 };
   }
   const { compiler, inputFs, outputFs } = webpackCache[codePath]!;
   inputFs.writeFileSync(codePath, code);
 
-  return new Promise<object>((resolve, reject) => {
+  const runId = ++webpackCache[codePath]!.runId;
+
+  // only allow one instance of webpack to run at a time
+  while (webpackCache[codePath]!.lastPromise) {
+    await webpackCache[codePath]!.lastPromise;
+  }
+  if (runId !== webpackCache[codePath]!.runId) {
+    return null;
+  }
+
+  console.log('running webpack')
+  const runPromise = new Promise<object>((resolve, reject) => {
     compiler.run((err, stats) => {
       try {
         if (err) throw err;
@@ -149,5 +160,9 @@ export const webpackRunCode = (
         reject(error);
       }
     });
+  }).finally(() => {
+    webpackCache[codePath]!.lastPromise = undefined;
   });
+  webpackCache[codePath]!.lastPromise = runPromise;
+  return runPromise;
 };

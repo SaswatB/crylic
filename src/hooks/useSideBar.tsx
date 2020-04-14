@@ -1,15 +1,23 @@
-import React, { useEffect } from "react";
-import AppBar from "@material-ui/core/AppBar";
-import Tabs from "@material-ui/core/Tabs";
-import Tab from "@material-ui/core/Tab";
+import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCog,
+  faPlus,
+  faEdit,
+  faPalette,
+  faFillDrip,
+} from "@fortawesome/free-solid-svg-icons";
+import { startCase } from "lodash";
 import { SelectModes } from "../utils/constants";
 import {
   useTextInput,
   useSelectInput,
   useColorPicker,
+  useCSSLengthInput,
 } from "../hooks/useInput";
 import { useFilePicker } from "../hooks/useFilePicker";
 import { SelectedElement, OutlineElement } from "../App";
+import { Tabs } from "../components/Tabs";
 
 const renderSeparator = () => (
   <div className="w-full my-5 border-gray-600 border-solid border-b" />
@@ -19,11 +27,10 @@ interface Props {
   outline: OutlineElement[];
   selectedElement: SelectedElement | undefined;
   onChangeSelectMode: (selectMode: SelectModes) => void;
-  onClearSelectedElement: () => void;
-  updateSelectedElementStyleFactory: (
+  updateSelectedElementStyle: (
     styleProp: keyof CSSStyleDeclaration,
     newValue: string
-  ) => () => void;
+  ) => void;
   onSaveCode: () => void;
 }
 
@@ -31,24 +38,33 @@ export function useSideBar({
   outline,
   selectedElement,
   onChangeSelectMode,
-  onClearSelectedElement,
-  updateSelectedElementStyleFactory,
+  updateSelectedElementStyle,
   onSaveCode,
 }: Props) {
   const [filePath, openFilePicker] = useFilePicker();
 
   const [componentViewWidth, renderComponentViewWidthInput] = useTextInput(
+    undefined,
+    "Width",
     "600"
   );
   const [componentViewHeight, renderComponentViewHeightInput] = useTextInput(
+    undefined,
+    "Height",
     "300"
   );
 
-  const useBoundTextInput = (initialValue: string) =>
-    useTextInput(initialValue, true);
+  const useBoundTextInput = (
+    onChange: (v: string) => void,
+    label: string,
+    initialValue: string
+  ) => useTextInput(onChange, label, initialValue, true);
   const useSelectedElementEditor = (
     styleProp: keyof CSSStyleDeclaration,
+    label?: string,
     useEditorHook: (
+      onChange: (v: string) => void,
+      label: string,
       iv: string
     ) => readonly [
       string,
@@ -59,12 +75,12 @@ export function useSideBar({
       selectedElementValue,
       renderSelectedElementValueInput,
     ] = useEditorHook(
+      (newValue) => {
+        updateSelectedElementStyle(styleProp, newValue);
+      },
+      label || startCase(`${styleProp || ""}`),
       selectedElement?.inlineStyles[styleProp] ||
         selectedElement?.computedStyles[styleProp]
-    );
-    useEffect(
-      updateSelectedElementStyleFactory(styleProp, selectedElementValue),
-      [selectedElementValue]
     );
     return [
       selectedElementValue,
@@ -81,15 +97,27 @@ export function useSideBar({
     ] as const;
   };
 
-  const [, renderSelectedElementWidthInput] = useSelectedElementEditor("width");
+  const useBoundCSSLengthInput = (
+    onChange: (v: string) => void,
+    label: string,
+    initialValue: string
+  ) => useCSSLengthInput(onChange, label, initialValue, true);
+  const [, renderSelectedElementWidthInput] = useSelectedElementEditor(
+    "width",
+    undefined,
+    useBoundCSSLengthInput
+  );
   const [, renderSelectedElementHeightInput] = useSelectedElementEditor(
-    "height"
+    "height",
+    undefined,
+    useBoundCSSLengthInput
   );
   const [
     selectedElementPosition,
     renderSelectedElementPosition,
   ] = useSelectedElementEditor(
     "position",
+    undefined,
     useSelectInput.bind(undefined, [
       { name: "Static", value: "static" },
       { name: "Relative", value: "relative" },
@@ -109,72 +137,107 @@ export function useSideBar({
     renderSelectedElementDisplay,
   ] = useSelectedElementEditor(
     "display",
+    undefined,
     useSelectInput.bind(undefined, [
-      { name: "inline", value: "inline" },
-      { name: "block", value: "block" },
-      { name: "flex", value: "flex" },
-      { name: "none", value: "none" },
-      { name: "contents", value: "contents" },
-      { name: "grid", value: "grid" },
-      { name: "inline-block", value: "inline-block" },
-      { name: "inline-flex", value: "inline-flex" },
-      { name: "inline-grid", value: "inline-grid" },
-      { name: "inline-table", value: "inline-table" },
-      { name: "list-item", value: "list-item" },
-      { name: "run-in", value: "run-in" },
-      { name: "table", value: "table" },
-      { name: "table-caption", value: "table-caption" },
-      { name: "table-column-group", value: "table-column-group" },
-      { name: "table-header-group", value: "table-header-group" },
-      { name: "table-footer-group", value: "table-footer-group" },
-      { name: "table-row-group", value: "table-row-group" },
-      { name: "table-cell", value: "table-cell" },
-      { name: "table-column", value: "table-column" },
-      { name: "table-row", value: "table-row" },
+      { name: "Inline", value: "inline" },
+      { name: "Block", value: "block" },
+      { name: "Flex", value: "flex" },
+      { name: "None", value: "none" },
+      { name: "Contents", value: "contents" },
+      { name: "Grid", value: "grid" },
+      { name: "Inline Block", value: "inline-block" },
+      { name: "Inline Flex", value: "inline-flex" },
+      { name: "Inline Grid", value: "inline-grid" },
+      { name: "Inline Table", value: "inline-table" },
+      { name: "List Item", value: "list-item" },
+      { name: "Run In", value: "run-in" },
+      { name: "Table", value: "table" },
+      { name: "Table Caption", value: "table-caption" },
+      { name: "Table Column Group", value: "table-column-group" },
+      { name: "Table Header Group", value: "table-header-group" },
+      { name: "Table Footer Group", value: "table-footer-group" },
+      { name: "Table Row Group", value: "table-row-group" },
+      { name: "Table Cell", value: "table-cell" },
+      { name: "Table Column", value: "table-column" },
+      { name: "Table Row", value: "table-row" },
     ])
   );
   const [, renderSelectedElementFlexDirectionInput] = useSelectedElementEditor(
     "flexDirection",
+    "Direction",
     useSelectInput.bind(undefined, [
-      { name: "row", value: "row" },
-      { name: "row-reverse", value: "row-reverse" },
-      { name: "column", value: "column" },
-      { name: "column-reverse", value: "column-reverse" },
+      { name: "Row", value: "row" },
+      { name: "Column", value: "column" },
+      { name: "Row Reverse", value: "row-reverse" },
+      { name: "Column Reverse", value: "column-reverse" },
     ])
   );
   const [, renderSelectedElementFlexWrapInput] = useSelectedElementEditor(
     "flexWrap",
+    "Wrap",
     useSelectInput.bind(undefined, [
-      { name: "nowrap", value: "nowrap" },
-      { name: "wrap", value: "wrap" },
-      { name: "wrap-reverse", value: "wrap-reverse" },
+      { name: "No", value: "No Wrap" },
+      { name: "Yes", value: "wrap" },
+      { name: "Reverse", value: "wrap-reverse" },
     ])
   );
-  const [, renderSelectedElementOpacityInput] = useSelectedElementEditor("opacity");
-  const [
-    ,
-    renderSelectedElementColorInput,
-  ] = useSelectedElementEditor("color", useColorPicker);
+  const [, renderSelectedElementOpacityInput] = useSelectedElementEditor(
+    "opacity"
+  );
+  const [, renderSelectedElementBorderRadiusInput] = useSelectedElementEditor(
+    "borderRadius", undefined, useBoundCSSLengthInput
+  );
+  const useBackgroundColorPicker = (
+    onChange: (v: string) => void,
+    label: string,
+    initialValue: string
+  ) =>
+    useColorPicker(
+      onChange,
+      initialValue,
+      label,
+      <><FontAwesomeIcon icon={faFillDrip} />&nbsp;Fill</>
+    );
   const [
     ,
     renderSelectedElementBackgroundColorInput,
-  ] = useSelectedElementEditor("backgroundColor", useColorPicker);
+  ] = useSelectedElementEditor(
+    "backgroundColor",
+    undefined,
+    useBackgroundColorPicker
+  );
 
+  const useTextColorPicker = (
+    onChange: (v: string) => void,
+    label: string,
+    initialValue: string
+  ) =>
+    useColorPicker(
+      onChange,
+      initialValue,
+      label,
+      <FontAwesomeIcon icon={faPalette} />
+    );
+  const [, renderSelectedElementColorInput] = useSelectedElementEditor(
+    "color",
+    undefined,
+    useTextColorPicker
+  );
   const renderMainTab = () => (
     <>
-      <button className="btn w-full" onClick={openFilePicker}>
-        Open
-      </button>
-      <button className="btn w-full" onClick={onSaveCode}>
-        Save
-      </button>
+      <div className="btngrp-v">
+        <button className="btn w-full" onClick={openFilePicker}>
+          Open
+        </button>
+        <button className="btn w-full" onClick={onSaveCode}>
+          Save
+        </button>
+      </div>
       {renderSeparator()}
-      <div className="mb-2">Frame</div>
+      <div className="mb-4">Frame</div>
       <div className="flex flex-row items-center justify-center">
-        w:&nbsp;{" "}
         {renderComponentViewWidthInput({ className: "w-12 text-center" })}
         <div className="px-4">x</div>
-        h:&nbsp;{" "}
         {renderComponentViewHeightInput({ className: "w-12 text-center" })}
       </div>
     </>
@@ -195,119 +258,123 @@ export function useSideBar({
   const renderSelectedElementEditor = () =>
     selectedElement && (
       <>
-        <div className="mb-2">Selected Element</div>
-        <div>
-          Width:{" "}
-          {renderSelectedElementWidthInput({
-            className: "w-32 text-center",
-          })}
+        <div>Edit Selected Element</div>
+        {renderSeparator()}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            {renderSelectedElementWidthInput({
+              className: "w-32 text-center",
+            })}
+          </div>
+          <div>
+            {renderSelectedElementHeightInput({
+              className: "w-32 text-center",
+            })}
+          </div>
+          <div>
+            {renderSelectedElementPosition({
+              className: "w-32 text-center",
+            })}
+          </div>
+          <div>
+            {renderSelectedElementDisplay({
+              className: "w-32 text-center",
+            })}
+          </div>
+          {selectedElementPosition !== "static" && (
+            <>
+              <div>
+                {renderSelectedElementTopInput({
+                  className: "w-32 text-center",
+                })}
+              </div>
+              <div>
+                {renderSelectedElementLeftInput({
+                  className: "w-32 text-center",
+                })}
+              </div>
+              <div>
+                {renderSelectedElementBottomInput({
+                  className: "w-32 text-center",
+                })}
+              </div>
+              <div>
+                {renderSelectedElementRightInput({
+                  className: "w-32 text-center",
+                })}
+              </div>
+            </>
+          )}
+          {/* todo padding + margin */}
         </div>
-        <div>
-          Height:{" "}
-          {renderSelectedElementHeightInput({
-            className: "w-32 text-center",
-          })}
+        {renderSeparator()}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            {renderSelectedElementOpacityInput({
+              className: "w-32 text-center",
+            })}
+          </div>
+          <div>
+            {renderSelectedElementBorderRadiusInput({
+              className: "w-32 text-center",
+            })}
+          </div>
+          <div>
+            {renderSelectedElementBackgroundColorInput({
+              className: "w-32 text-center",
+            })}
+          </div>
         </div>
-        <div>
-          Position:{" "}
-          {renderSelectedElementPosition({
-            className: "w-32 text-center",
-          })}
-        </div>
-        {selectedElementPosition !== "static" && (
-          <>
-            <div>
-              Top:{" "}
-              {renderSelectedElementTopInput({
-                className: "w-32 text-center",
-              })}
-            </div>
-            <div>
-              Left:{" "}
-              {renderSelectedElementLeftInput({
-                className: "w-32 text-center",
-              })}
-            </div>
-            <div>
-              Bottom:{" "}
-              {renderSelectedElementBottomInput({
-                className: "w-32 text-center",
-              })}
-            </div>
-            <div>
-              Right:{" "}
-              {renderSelectedElementRightInput({
-                className: "w-32 text-center",
-              })}
-            </div>
-          </>
-        )}
-        <div>
-          Display:{" "}
-          {renderSelectedElementDisplay({
-            className: "w-32 text-center",
-          })}
-        </div>
-        {selectedElementDisplay === "flex" && (
-          <>
-            <div>
-              Flex Direction:{" "}
-              {renderSelectedElementFlexDirectionInput({
-                className: "w-32 text-center",
-              })}
-            </div>
-            <div>
-              Flex Wrap:{" "}
-              {renderSelectedElementFlexWrapInput({
-                className: "w-32 text-center",
-              })}
-            </div>
-          </>
-        )}
-        <div>
-          Opacity:{" "}
-          {renderSelectedElementOpacityInput({
-            className: "w-32 text-center",
-          })}
-        </div>
+        {/* todo border */}
+        {renderSeparator()}
         <div>
           Text Color:{" "}
           {renderSelectedElementColorInput({
             className: "w-32 text-center",
           })}
         </div>
-        <div>
-          Background Color:{" "}
-          {renderSelectedElementBackgroundColorInput({
-            className: "w-32 text-center",
-          })}
-        </div>
+        {selectedElementDisplay === "flex" && (
+          <>
+            {renderSeparator()}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                {renderSelectedElementFlexDirectionInput({
+                  className: "w-32 text-center",
+                })}
+              </div>
+              <div>
+                {renderSelectedElementFlexWrapInput({
+                  className: "w-32 text-center",
+                })}
+              </div>
+            </div>
+            {/* todo align items + justify content */}
+          </>
+        )}
       </>
     );
 
-  const [tabValue, setTabValue] = React.useState(0);
-  useEffect(() => {
-    if (selectedElement) setTabValue(2);
-    else if (tabValue === 2) setTabValue(1);
-  }, [selectedElement?.lookUpId]);
+  // useEffect(() => {
+  //   if (selectedElement) setTabValue(2);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [selectedElement?.lookUpId]);
   const render = () => (
-    <>
-      <AppBar position="static" color="default" className="mb-4">
-        <Tabs
-          value={tabValue}
-          onChange={(e, newValue) => setTabValue(newValue)}
-          indicatorColor="primary"
-          textColor="primary"
-        >
-          <Tab label="1" />
-          <Tab label="2" />
-          {selectedElement && <Tab label="3" />}
-        </Tabs>
-      </AppBar>
-      {tabValue === 0 && renderMainTab()}
-      {tabValue === 1 && renderElementAdder()}
-      {tabValue === 2 && renderSelectedElementEditor()}
-    </>
+    <Tabs
+      tabs={[
+        {
+          name: <FontAwesomeIcon icon={faCog} />,
+          render: renderMainTab,
+        },
+        {
+          name: <FontAwesomeIcon icon={faPlus} />,
+          render: renderElementAdder,
+        },
+        !!selectedElement && {
+          name: <FontAwesomeIcon icon={faEdit} />,
+          render: renderSelectedElementEditor,
+        },
+      ]}
+    />
   );
 
   return {

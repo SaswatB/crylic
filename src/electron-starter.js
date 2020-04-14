@@ -1,3 +1,4 @@
+require('dotenv').config()
 // Modules to control application life and create native browser window
 const {app, BrowserWindow} = require('electron')
 const { default: installExtension, REACT_DEVELOPER_TOOLS } = require('electron-devtools-installer');

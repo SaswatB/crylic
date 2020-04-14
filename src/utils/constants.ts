@@ -10,3 +10,10 @@ export enum SelectModes {
   SelectElement,
   AddDivElement,
 }
+
+export const BOILER_PLATE_CODE = `import React from "react";
+
+export function MyComponent() {
+  return <div style={{ height: "100%", display: "flex" }} />;
+}
+`
