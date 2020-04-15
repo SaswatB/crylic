@@ -18,22 +18,31 @@ export interface TabsRef {
   selectTab: (index: number) => void;
 }
 
-export const Tabs: FunctionComponent<{ tabs?: (Tab | false)[] } & RefAttributes<TabsRef>> = forwardRef(({
-  tabs,
-}, ref) => {
+interface Props {
+  tabs?: (Tab | false)[];
+  activeTab?: number;
+  onChange?: (newTab: number) => void;
+}
+export const Tabs: FunctionComponent<
+  Props & RefAttributes<TabsRef>
+> = forwardRef(({ tabs, ...props }, ref) => {
   const usableTabs = tabs?.filter((tab): tab is Tab => !!tab) || [];
-  const [activeTab, setActiveTab] = useState(0);
+
+  const [uncontrolledActiveTab, setUncontrolledActiveTab] = useState(0);
+  const activeTab = props.activeTab ?? uncontrolledActiveTab;
+  const setActiveTab = props.onChange ?? setUncontrolledActiveTab;
+
   useEffect(() => {
     if ((usableTabs.length || 0) <= activeTab && activeTab !== 0) {
       setActiveTab((usableTabs.length || 1) - 1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usableTabs.length]);
-  
+
   useImperativeHandle(ref, () => ({
     selectTab(index) {
       setActiveTab(index);
-    }
+    },
   }));
 
   return (
@@ -44,7 +53,8 @@ export const Tabs: FunctionComponent<{ tabs?: (Tab | false)[] } & RefAttributes<
             key={index}
             className="btn px-6"
             style={
-              (activeTab === index && { backgroundColor: "#7895c1" }) || undefined
+              (activeTab === index && { backgroundColor: "#7895c1" }) ||
+              undefined
             }
             onClick={() => setActiveTab(index)}
           >
@@ -52,7 +62,9 @@ export const Tabs: FunctionComponent<{ tabs?: (Tab | false)[] } & RefAttributes<
           </button>
         ))}
       </div>
-      <div className="overflow-y-auto">{usableTabs[activeTab]?.render() || null}</div>
+      <div className="min-h-full overflow-y-auto">
+        {usableTabs[activeTab]?.render() || null}
+      </div>
     </div>
   );
 });

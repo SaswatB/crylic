@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-import MonacoEditor from "react-monaco-editor";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { CircularProgress } from "@material-ui/core";
 import { namedTypes as t } from "ast-types";
 import { cloneDeep } from "lodash";
 import deepFreeze from "deep-freeze-strict";
 import { Rnd, DraggableData } from "react-rnd";
-import { produce } from 'immer';
+import { produce } from "immer";
+import { useSnackbar } from "notistack";
 import {
   CompilerComponentView,
   CompilerComponentViewRef,
@@ -28,8 +27,6 @@ import {
   addJSXChildToJSXElement,
   removeRecentlyAddedDataAttrAndGetLookupId,
   applyJSXInlineStyleAttribute,
-  getJSXASTByLookupId,
-  getJSXElementForSourceCodePosition,
   AddLookupDataResult,
   applyStyledStyleAttribute,
   editJSXElementByLookup,
@@ -38,9 +35,9 @@ import {
   Styles,
 } from "./utils/ast-parsers";
 import { useSideBar } from "./hooks/useSideBar";
-import "./App.scss";
 import { parseAST, printAST, prettyPrintAST } from "./utils/ast-helpers";
-import { useSnackbar } from "notistack";
+import { EditorPane } from "./components/EditorPane";
+import "./App.scss";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 
@@ -77,7 +74,7 @@ function useOverlay(
   const onOverlayClick = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
-    console.log('onOverlayClick', Date.now() - lastDragResizeHandled)
+    console.log("onOverlayClick", Date.now() - lastDragResizeHandled);
     // todo find a better way to prevent this misfire then this hack
     if (selectMode === undefined && Date.now() - lastDragResizeHandled < 500) {
       return;
@@ -87,8 +84,15 @@ function useOverlay(
     onSelect?.(componentElement);
   };
 
-  const [tempOffset, setTempOffset] = useState({ x: 0, y: 0, width: 0, height: 0 });
-  useEffect(() => setTempOffset({ x: 0, y: 0, width: 0, height: 0 }), [selectedElement]);
+  const [tempOffset, setTempOffset] = useState({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
+  useEffect(() => setTempOffset({ x: 0, y: 0, width: 0, height: 0 }), [
+    selectedElement,
+  ]);
   const {
     selectedElementBoundingBox,
     selectedElementParentBoundingBox,
@@ -98,7 +102,10 @@ function useOverlay(
     const componentElement = componentView?.getElementByLookupId(
       selectedElement?.lookUpId
     );
-    const pbcr = selectedElement?.computedStyles.position === 'static' ? componentElement?.parentElement?.getBoundingClientRect() : undefined;
+    const pbcr =
+      selectedElement?.computedStyles.position === "static"
+        ? componentElement?.parentElement?.getBoundingClientRect()
+        : undefined;
     const bcr = componentElement?.getBoundingClientRect();
     if (pbcr && bcr) {
       bcr.x -= pbcr.x;
@@ -109,7 +116,7 @@ function useOverlay(
       selectedElementParentBoundingBox: pbcr,
       selectedElementBoundingBox: bcr,
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedElement]);
   const selectEnabled = selectMode !== undefined;
   const [draggingHighlight, setDraggingHighlight] = useState<DraggableData>();
@@ -184,21 +191,25 @@ function useOverlay(
                 if (deltaX || deltaY) {
                   lastDragResizeHandled = Date.now();
                   onMoveResizeSelection?.(deltaX, deltaY, undefined, undefined);
-                  setTempOffset(produce(draft => {
-                    draft.x += deltaX;
-                    draft.y += deltaY;
-                  }));
+                  setTempOffset(
+                    produce((draft) => {
+                      draft.x += deltaX;
+                      draft.y += deltaY;
+                    })
+                  );
                 }
               }}
               onResizeStop={(e, direction, ref, delta, position) => {
                 if (!delta.width && !delta.height) return;
-                console.log('onResizeStop')
+                console.log("onResizeStop");
 
                 lastDragResizeHandled = Date.now();
-                setTempOffset(produce(draft => {
-                  draft.width += delta.width;
-                  draft.height += delta.height;
-                }));
+                setTempOffset(
+                  produce((draft) => {
+                    draft.width += delta.width;
+                    draft.height += delta.height;
+                  })
+                );
                 if (delta.height) {
                   if (delta.width) {
                     onMoveResizeSelection?.(
@@ -373,11 +384,7 @@ function App() {
               }
             )
       );
-      console.log(
-        "updateSelectedElementStyle change",
-        madeChange,
-        newAst
-      );
+      console.log("updateSelectedElementStyle change", madeChange, newAst);
 
       if (madeChange) {
         setCode(prettyPrintAST(newAst));
@@ -516,82 +523,6 @@ function App() {
     }
   );
 
-  const activeHighlight = useRef<string[]>([]);
-  const editorRef = useRef<MonacoEditor>(null);
-  useEffect(() => {
-    const decorations: monaco.editor.IModelDeltaDecoration[] = [];
-    if (selectedElement) {
-      console.log("refreshing monaco decorations");
-      let path;
-      try {
-        path = getJSXASTByLookupId(parseAST(code), selectedElement.lookUpId);
-      } catch (err) {}
-      const { start: openStart, end: openEnd } =
-        path?.value?.openingElement?.name?.loc || {};
-      if (openStart && openEnd) {
-        decorations.push({
-          range: new monaco.Range(
-            openStart.line,
-            openStart.column + 1,
-            openEnd.line,
-            openEnd.column + 1
-          ),
-          options: { inlineClassName: "selected-element-code-highlight" },
-        });
-        editorRef.current?.editor?.revealPositionInCenter({
-          lineNumber: openStart.line,
-          column: openStart.column + 1,
-        });
-      }
-      const { start: closeStart, end: closeEnd } =
-        path?.value?.closingElement?.name?.loc || {};
-      if (closeStart && closeEnd) {
-        decorations.push({
-          range: new monaco.Range(
-            closeStart.line,
-            closeStart.column + 1,
-            closeEnd.line,
-            closeEnd.column + 1
-          ),
-          options: { inlineClassName: "selected-element-code-highlight" },
-        });
-      }
-    }
-    activeHighlight.current =
-      editorRef.current?.editor?.deltaDecorations(
-        activeHighlight.current,
-        decorations
-      ) || [];
-  }, [code, selectedElement]);
-
-  useEffect(() => {
-    return editorRef.current?.editor?.onDidChangeCursorPosition((e) => {
-      if (!editorRef.current?.editor?.hasTextFocus()) return;
-
-      let lookUpId;
-      try {
-        ({ lookUpId } = getJSXElementForSourceCodePosition(
-          parseAST(code),
-          e.position.lineNumber,
-          e.position.column
-        ));
-      } catch (err) {}
-
-      if (lookUpId !== undefined) {
-        const newSelectedComponent = componentView.current?.getElementByLookupId(
-          lookUpId
-        );
-        if (newSelectedComponent) {
-          console.log(
-            "setting selected element through editor cursor update",
-            (newSelectedComponent as any).dataset?.[JSX_LOOKUP_DATA_ATTR]
-          );
-          selectElement(newSelectedComponent as HTMLElement);
-        }
-      }
-    }).dispose;
-  }, [code]);
-
   useEffect(() => {
     if (filePath) {
       fs.readFile(filePath, { encoding: "utf-8" }, (err, data) => {
@@ -700,22 +631,28 @@ function App() {
             )}
           </TransformWrapper>
         </div>
-        <MonacoEditor
-          ref={editorRef}
-          language="javascript"
-          theme="vs-dark"
-          width="600px"
-          value={code}
-          onChange={(code) => {
+        <EditorPane
+          codeEntries={[
+            { id: filePath || "0", filePath: filePath || "untitled", code },
+          ]}
+          onCodeChange={(newCode) => {
             setSelectedElement(undefined); // todo look into keeping the element selected if possible
-            setCode(code);
+            setCode(newCode);
+          }}
+          selectedElementId={selectedElement && { codeId: filePath || "0", lookUpId: selectedElement.lookUpId }}
+          onSelectElement={(codeId, lookUpId) => {
+            const newSelectedComponent = componentView.current?.getElementByLookupId(
+              lookUpId
+            );
+            if (newSelectedComponent) {
+              console.log(
+                "setting selected element through editor cursor update",
+                (newSelectedComponent as any).dataset?.[JSX_LOOKUP_DATA_ATTR]
+              );
+              selectElement(newSelectedComponent as HTMLElement);
+            }
           }}
         />
-        {/* <MonacoEditor
-          language="javascript"
-          theme="vs-dark"
-          value={transformedCode}
-        /> */}
       </div>
       {selectMode !== undefined && renderSelectBar()}
     </div>
