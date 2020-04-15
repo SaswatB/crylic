@@ -98,7 +98,7 @@ function useOverlay(
     const componentElement = componentView?.getElementByLookupId(
       selectedElement?.lookUpId
     );
-    const pbcr = componentElement?.parentElement?.getBoundingClientRect();
+    const pbcr = selectedElement?.computedStyles.position === 'static' ? componentElement?.parentElement?.getBoundingClientRect() : undefined;
     const bcr = componentElement?.getBoundingClientRect();
     if (pbcr && bcr) {
       bcr.x -= pbcr.x;
@@ -136,7 +136,7 @@ function useOverlay(
           <div
             className="absolute"
             style={
-              selectedElementParentBoundingBox && (selectedElement?.computedStyles.position === 'static')
+              selectedElementParentBoundingBox
                 ? {
                     top: selectedElementParentBoundingBox.top,
                     left: selectedElementParentBoundingBox.left,

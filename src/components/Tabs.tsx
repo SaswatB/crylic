@@ -3,6 +3,9 @@ import React, {
   useState,
   ReactNode,
   useEffect,
+  RefAttributes,
+  forwardRef,
+  useImperativeHandle,
 } from "react";
 import "../index.scss";
 
@@ -10,9 +13,14 @@ interface Tab {
   name: ReactNode;
   render: () => ReactNode;
 }
-export const Tabs: FunctionComponent<{ tabs?: (Tab | false)[] }> = ({
+
+export interface TabsRef {
+  selectTab: (index: number) => void;
+}
+
+export const Tabs: FunctionComponent<{ tabs?: (Tab | false)[] } & RefAttributes<TabsRef>> = forwardRef(({
   tabs,
-}) => {
+}, ref) => {
   const usableTabs = tabs?.filter((tab): tab is Tab => !!tab) || [];
   const [activeTab, setActiveTab] = useState(0);
   useEffect(() => {
@@ -21,9 +29,16 @@ export const Tabs: FunctionComponent<{ tabs?: (Tab | false)[] }> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usableTabs.length]);
+  
+  useImperativeHandle(ref, () => ({
+    selectTab(index) {
+      setActiveTab(index);
+    }
+  }));
+
   return (
     <div className="flex flex-col h-full">
-      <div className="btngrp-h mb-5">
+      <div className="btngrp-h mb-2">
         {usableTabs.map(({ name }, index) => (
           <button
             key={index}
@@ -40,4 +55,4 @@ export const Tabs: FunctionComponent<{ tabs?: (Tab | false)[] }> = ({
       <div className="overflow-y-auto">{usableTabs[activeTab]?.render() || null}</div>
     </div>
   );
-};
+});

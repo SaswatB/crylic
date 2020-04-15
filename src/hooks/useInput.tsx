@@ -3,7 +3,6 @@ import Slider, { SliderProps } from "@material-ui/core/Slider";
 import Popper from "@material-ui/core/Popper";
 import ClickAwayListener from "@material-ui/core/ClickAwayListener";
 import { ChromePicker } from "react-color";
-import { useThrottle } from "./useThrottle";
 import {
   FormControl,
   InputLabel,
@@ -12,6 +11,12 @@ import {
   OutlinedInput,
   InputAdornment,
 } from "@material-ui/core";
+import ColorPicker from 'rc-color-picker';
+import rgbHex from 'rgb-hex';
+import { useThrottle } from "./useThrottle";
+import 'rc-color-picker/assets/index.css';
+
+const HEX_COLOR_REGEX = /^#([A-Fa-f0-9]{8}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
 
 export function useTextInput(
   onChange = (value: string) => {},
@@ -193,27 +198,43 @@ export function useColorPicker(
   btnText: ReactNode = "Open"
 ) {
   const anchor = useRef<HTMLButtonElement>(null);
-  const [open, setOpen] = useState(false);
   const [value, setValue] = useState(initialValue);
+  const [focused, setFocused] = useState(false);
   useEffect(() => {
-    if (!open) setValue(initialValue);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialValue]);
+    if (!focused) setValue(initialValue ? `#${rgbHex(initialValue)}` : '');
+  }, [initialValue, focused]);
+  const onColorPickerChange = ({color, alpha}: { color: string, alpha: number }) => {
+    let alphaSuffix = '';
+    if (alpha !== 100) {
+      alphaSuffix = Math.round((alpha/100) * 255).toString(16).padStart(2, '0');
+    }
+    console.log(color, alpha, alphaSuffix);
+    setValue(`${color}${alphaSuffix}`);
+    onChange(`${color}${alphaSuffix}`);
+  };
 
   const render = () => (
     <>
-      <button
-        ref={anchor}
-        className="btn w-full"
-        onClick={() => setOpen(!open)}
-      >
-        {btnText}
-      </button>
-      <Popper open={open} anchorEl={anchor.current}>
-        <ClickAwayListener onClickAway={() => setOpen(false)}>
-          <ChromePicker color={value} onChange={(c) => {setValue(c.hex); onChange(c.hex);}} />
-        </ClickAwayListener>
-      </Popper>
+      <FormControl variant="outlined">
+        <InputLabel>{label}</InputLabel>
+        <OutlinedInput
+          ref={anchor}
+          value={value}
+          onChange={(e) => {setValue(e.target.value); if(HEX_COLOR_REGEX.test(e.target.value)) onChange(e.target.value); }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          endAdornment={
+            <InputAdornment position="end">
+              <ColorPicker
+                animation="slide-up"
+                color={value}
+                onChange={onColorPickerChange}
+              />
+            </InputAdornment>
+          }
+          labelWidth={label.length * 8.7}
+        />
+      </FormControl>
     </>
   );
 

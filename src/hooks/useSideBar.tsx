@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCog,
@@ -17,10 +17,13 @@ import {
 } from "../hooks/useInput";
 import { useFilePicker } from "../hooks/useFilePicker";
 import { SelectedElement, OutlineElement } from "../App";
-import { Tabs } from "../components/Tabs";
+import { Tabs, TabsRef } from "../components/Tabs";
 
-const renderSeparator = () => (
-  <div className="w-full my-5 border-gray-600 border-solid border-b" />
+const renderSeparator = (title?: string) => (
+  <div className="flex items-center">
+    {title && <span className="pb-1 mr-2 text-sm text-gray-500">{title}</span>}
+    <div className="w-full my-5 border-gray-600 border-solid border-b" />
+  </div>
 );
 
 interface Props {
@@ -194,8 +197,8 @@ export function useSideBar({
   ) =>
     useColorPicker(
       onChange,
-      initialValue,
       label,
+      initialValue,
       <><FontAwesomeIcon icon={faFillDrip} />&nbsp;Fill</>
     );
   const [
@@ -203,7 +206,7 @@ export function useSideBar({
     renderSelectedElementBackgroundColorInput,
   ] = useSelectedElementEditor(
     "backgroundColor",
-    undefined,
+    "Fill",
     useBackgroundColorPicker
   );
 
@@ -214,8 +217,8 @@ export function useSideBar({
   ) =>
     useColorPicker(
       onChange,
-      initialValue,
       label,
+      initialValue,
       <FontAwesomeIcon icon={faPalette} />
     );
   const [, renderSelectedElementColorInput] = useSelectedElementEditor(
@@ -258,9 +261,8 @@ export function useSideBar({
   const renderSelectedElementEditor = () =>
     selectedElement && (
       <>
-        <div>Edit Selected Element</div>
-        {renderSeparator()}
-        <div className="grid grid-cols-2 gap-4">
+        {renderSeparator('Layout')}
+        <div className="grid grid-cols-2 row-gap-3 col-gap-2 py-2">
           <div>
             {renderSelectedElementWidthInput({
               className: "w-32 text-center",
@@ -305,17 +307,17 @@ export function useSideBar({
               </div>
             </>
           )}
-          {/* todo padding + margin */}
-        </div>
-        {renderSeparator()}
-        <div className="grid grid-cols-2 gap-4">
           <div>
-            {renderSelectedElementOpacityInput({
+            {renderSelectedElementBorderRadiusInput({
               className: "w-32 text-center",
             })}
           </div>
+          {/* todo padding + margin */}
+        </div>
+        {renderSeparator('Colors')}
+        <div className="grid grid-cols-2 row-gap-3 col-gap-2 py-2">
           <div>
-            {renderSelectedElementBorderRadiusInput({
+            {renderSelectedElementOpacityInput({
               className: "w-32 text-center",
             })}
           </div>
@@ -326,17 +328,16 @@ export function useSideBar({
           </div>
         </div>
         {/* todo border */}
-        {renderSeparator()}
+        {renderSeparator('Text')}
         <div>
-          Text Color:{" "}
           {renderSelectedElementColorInput({
             className: "w-32 text-center",
           })}
         </div>
         {selectedElementDisplay === "flex" && (
           <>
-            {renderSeparator()}
-            <div className="grid grid-cols-2 gap-4">
+            {renderSeparator('Content')}
+            <div className="grid grid-cols-2  row-gap-3 col-gap-2 pt-1 pb-2">
               <div>
                 {renderSelectedElementFlexDirectionInput({
                   className: "w-32 text-center",
@@ -354,12 +355,14 @@ export function useSideBar({
       </>
     );
 
-  // useEffect(() => {
-  //   if (selectedElement) setTabValue(2);
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [selectedElement?.lookUpId]);
+  const tabsRef = useRef<TabsRef>(null);
+  useEffect(() => {
+    if (selectedElement) tabsRef.current?.selectTab(2);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedElement?.lookUpId]);
   const render = () => (
     <Tabs
+      ref={tabsRef}
       tabs={[
         {
           name: <FontAwesomeIcon icon={faCog} />,
