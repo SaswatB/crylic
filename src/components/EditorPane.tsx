@@ -124,12 +124,24 @@ export const EditorPane: FunctionComponent<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCodeId, activeCode, selectedElementId]);
 
+  // switch to the editor that the selected element belongs to when it's selected
+  useEffect(() => {
+    if (selectedElementId) {
+      const codeId = getCodeIdFromLookupId(selectedElementId);
+      const codeIndex = codeEntries.findIndex((entry) => entry.id === codeId);
+      if (codeIndex !== -1 && codeIndex !== activeTab) {
+        setActiveTab(codeIndex);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedElementId]);
+
   return (
     <Tabs
       activeTab={activeTab}
       onChange={setActiveTab}
       tabs={codeEntries.map((entry) => ({
-        name: entry.filePath,
+        name: entry.filePath.replace(/^.*(\/|\\)/, ""),
         render: () => (
           <MonacoEditor
             ref={editorRef}

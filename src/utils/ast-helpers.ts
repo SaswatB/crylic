@@ -171,7 +171,7 @@ export function hashString(input: string) {
     hash = (hash << 5) - hash + chr;
     hash |= 0;
   }
-  return hash.toString(16);
+  return hash.toString(16).replace("-", "");
 }
 
 export const createLookupId = (codeId: string, elementIndex: number) =>
