@@ -342,9 +342,17 @@ function App() {
     compileTasks.current = [];
   };
 
-  const updateSelectedElementStyles = (styles: Styles) => {
+  const updateSelectedElementStyles = (styles: Styles, preview?: boolean) => {
     if (selectedElement) {
-      componentView.current?.addTempStyles(selectedElement.lookupId, styles);
+      componentView.current?.addTempStyles(
+        selectedElement.lookupId,
+        styles,
+        !preview
+      );
+      // preview is a flag used to quickly show updates in the dom
+      // there shouldn't be any expensive calculations done when it's on
+      // such as changing state or parsing ast
+      if (preview) return;
 
       const codeId = getCodeIdFromLookupId(selectedElement.lookupId);
       const lookupData = codeEntriesLookupData[codeId];
@@ -395,15 +403,17 @@ function App() {
 
   const updateSelectedElementStyle = (
     styleProp: keyof CSSStyleDeclaration,
-    newValue: string
+    newValue: string,
+    preview?: boolean
   ) => {
     if (
       selectedElement &&
       newValue !== selectedElement?.computedStyles[styleProp]
     ) {
-      updateSelectedElementStyles([
-        { styleName: styleProp, styleValue: newValue },
-      ]);
+      updateSelectedElementStyles(
+        [{ styleName: styleProp, styleValue: newValue }],
+        preview
+      );
     }
   };
 

@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import produce from "immer";
 
+import { useDebounce } from "../hooks/useDebounce";
 import { CodeEntry } from "../types/paint";
 import { Styles } from "../utils/ast-parsers";
 import { JSX_LOOKUP_DATA_ATTR } from "../utils/constants";
@@ -31,7 +32,11 @@ export interface CompilerComponentViewRef {
   getElementAtPoint: (x: number, y: number) => Element | null | undefined;
   getElementByLookupId: (lookupId: string) => Element | null | undefined;
   // cleared on next compile
-  addTempStyles: (lookupId: string, styles: Styles) => void;
+  addTempStyles: (
+    lookupId: string,
+    styles: Styles,
+    persistRender: boolean
+  ) => void;
 }
 
 interface Props {
@@ -99,14 +104,15 @@ export const CompilerComponentView: FunctionComponent<
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [CompiledElement]);
 
+    const [debouncedCodeEntries] = useDebounce(codeEntries, 300);
     useEffect(() => {
       (async () => {
-        if (codeEntries.length) {
+        if (debouncedCodeEntries.length) {
           try {
             onCompileStart?.();
             console.log("compiling");
             const codeExports = await webpackRunCode(
-              codeEntries,
+              debouncedCodeEntries,
               primaryCodeId,
               codeTransformer,
               {
@@ -135,7 +141,7 @@ export const CompilerComponentView: FunctionComponent<
         }
       })();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [codeEntries]);
+    }, [debouncedCodeEntries]);
 
     const applyTempStyles = (newTempStyles: typeof tempStyles) => {
       Object.entries(newTempStyles).forEach(([lookupId, styles]) => {
@@ -153,12 +159,12 @@ export const CompilerComponentView: FunctionComponent<
     useImperativeHandle(ref, () => ({
       getElementAtPoint,
       getElementByLookupId,
-      addTempStyles: (lookupId, styles) => {
+      addTempStyles: (lookupId, styles, persistRender) => {
         const newTempStyles = produce(tempStyles, (draft) => {
           draft[lookupId] = [...(draft[lookupId] || []), ...styles];
         });
         applyTempStyles(newTempStyles);
-        setTempStyles(newTempStyles);
+        if (persistRender) setTempStyles(newTempStyles);
       },
     }));
 

@@ -39,7 +39,7 @@ const useBoundCSSLengthInput = (
 ) => useCSSLengthInput(onChange, label, initialValue, true);
 
 type EditorHook = (
-  onChange: (v: string) => void,
+  onChange: (v: string, preview?: boolean) => void,
   label: string,
   iv: string
 ) => readonly [
@@ -53,7 +53,8 @@ interface Props {
   onChangeSelectMode: (selectMode: SelectModes) => void;
   updateSelectedElementStyle: (
     styleProp: keyof CSSStyleDeclaration,
-    newValue: string
+    newValue: string,
+    preview?: boolean
   ) => void;
   onOpenFile: (filePath: string) => void;
   onSaveFile: () => void;
@@ -87,8 +88,8 @@ export const SideBar: FunctionComponent<Props> = ({
     styleProp: keyof CSSStyleDeclaration,
     useEditorHook: EditorHook = useBoundTextInput
   ) => {
-    const onChange = (newValue: string) =>
-      updateSelectedElementStyle(styleProp, newValue);
+    const onChange = (newValue: string, preview?: boolean) =>
+      updateSelectedElementStyle(styleProp, newValue, preview);
     const label =
       StylePropNameMap[styleProp] || startCase(`${styleProp || ""}`);
     const initialValue =

@@ -8,9 +8,9 @@ import {
   TextField,
 } from "@material-ui/core";
 import Slider, { SliderProps } from "@material-ui/core/Slider";
-import ColorPicker from "rc-color-picker";
 import rgbHex from "rgb-hex";
 
+import { DebouncingColorPicker } from "../components/DebouncingColorPicker";
 import { useThrottle } from "./useThrottle";
 import "rc-color-picker/assets/index.css";
 
@@ -196,7 +196,7 @@ export function useSelectInput(
 }
 
 export function useColorPicker(
-  onChange = (value: string) => {},
+  onChange = (value: string, preview?: boolean) => {},
   label = "",
   initialValue = ""
 ) {
@@ -206,23 +206,6 @@ export function useColorPicker(
   useEffect(() => {
     if (!focused) setValue(initialValue ? `#${rgbHex(initialValue)}` : "");
   }, [initialValue, focused]);
-  const onColorPickerChange = ({
-    color,
-    alpha,
-  }: {
-    color: string;
-    alpha: number;
-  }) => {
-    let alphaSuffix = "";
-    if (alpha !== 100) {
-      alphaSuffix = Math.round((alpha / 100) * 255)
-        .toString(16)
-        .padStart(2, "0");
-    }
-    console.log(color, alpha, alphaSuffix);
-    setValue(`${color}${alphaSuffix}`);
-    onChange(`${color}${alphaSuffix}`);
-  };
 
   const render = () => (
     <>
@@ -239,10 +222,13 @@ export function useColorPicker(
           onBlur={() => setFocused(false)}
           endAdornment={
             <InputAdornment position="end">
-              <ColorPicker
-                animation="slide-up"
-                color={value}
-                onChange={onColorPickerChange}
+              <DebouncingColorPicker
+                value={value}
+                onChange={(newValue) => {
+                  setValue(newValue);
+                  onChange(newValue);
+                }}
+                onTempChange={(previewValue) => onChange(previewValue, true)}
               />
             </InputAdornment>
           }
