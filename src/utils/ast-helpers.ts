@@ -1,9 +1,10 @@
-import { parse, print, types, visit } from "recast";
 import { namedTypes as t } from "ast-types";
-import { NodePath } from "ast-types/lib/node-path";
 import { LiteralKind } from "ast-types/gen/kinds";
-import { cloneDeep } from 'lodash';
+import { NodePath } from "ast-types/lib/node-path";
 import deepFreeze from "deep-freeze-strict";
+import { cloneDeep } from "lodash";
+import { parse, print, types, visit } from "recast";
+
 import { babelTsParser } from "./babel-ts";
 
 const { format } = __non_webpack_require__(
@@ -53,9 +54,7 @@ export const getValue = <S, T extends { value?: S }>(
 
 export const valueToASTLiteral = (
   value: unknown
-):
-  | LiteralKind
-  | t.ObjectExpression => {
+): LiteralKind | t.ObjectExpression => {
   switch (typeof value) {
     case "bigint":
       return b.bigIntLiteral(`${value}`);
@@ -73,7 +72,7 @@ export const valueToASTLiteral = (
     case "string":
       return b.stringLiteral(value);
     case "undefined":
-      return b.literal('undefined');
+      return b.literal("undefined");
     default:
       throw new Error(`Unsupported value type ${typeof value}`);
   }
@@ -88,12 +87,18 @@ export const valueToJSXLiteral = (value: unknown) => {
   return b.jsxExpressionContainer(valueToASTLiteral(value));
 };
 
-export const copyJSXName = (name: t.JSXIdentifier | t.JSXMemberExpression | t.JSXNamespacedName) => {
-  switch(name.type) {
-    case "JSXIdentifier": return b.jsxIdentifier.from(name);
-    case "JSXMemberExpression": return b.jsxMemberExpression.from(name);
-    case "JSXNamespacedName": return b.jsxNamespacedName.from(name);
-    default: throw new Error(`Unknown jsx name type "${(name as any).type}"`)
+export const copyJSXName = (
+  name: t.JSXIdentifier | t.JSXMemberExpression | t.JSXNamespacedName
+) => {
+  switch (name.type) {
+    case "JSXIdentifier":
+      return b.jsxIdentifier.from(name);
+    case "JSXMemberExpression":
+      return b.jsxMemberExpression.from(name);
+    case "JSXNamespacedName":
+      return b.jsxNamespacedName.from(name);
+    default:
+      throw new Error(`Unknown jsx name type "${(name as any).type}"`);
   }
 };
 
@@ -137,12 +142,15 @@ export const traverseJSXElements = (
 
 export const editAST = <T extends object | void, U extends any[]>(
   apply: (ast: t.File, ...rest: U) => T
-) => (ast: t.File, ...rest: U): T extends void ? t.File : T & {ast: t.File} => {
+) => (
+  ast: t.File,
+  ...rest: U
+): T extends void ? t.File : T & { ast: t.File } => {
   let applyResult: T | undefined = undefined;
   const newAst = cloneDeep(ast);
   // const newAst = produce(ast, (draft) => {
   //   console.log('using draft')
-  applyResult = apply(newAst, ...rest)
+  applyResult = apply(newAst, ...rest);
   //   console.log('finished draft')
   // });
   if (applyResult) {
@@ -150,8 +158,8 @@ export const editAST = <T extends object | void, U extends any[]>(
     return {
       ...applyResult,
       ast: deepFreeze(newAst),
-    }
+    };
   }
   // @ts-ignore ts bug
   return deepFreeze(newAst);
-}
+};

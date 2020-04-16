@@ -1,28 +1,29 @@
-import { types } from "recast";
-import { NodePath } from "ast-types/lib/node-path";
 import { namedTypes as t } from "ast-types";
-import { kebabCase } from "lodash";
+import { NodePath } from "ast-types/lib/node-path";
 import { pipe } from "fp-ts/lib/pipeable";
+import { kebabCase } from "lodash";
+import { types } from "recast";
+
+import {
+  copyJSXName,
+  editAST,
+  getValue,
+  ifIdentifier,
+  ifJSXAttribute,
+  ifJSXExpressionContainer,
+  ifObjectExpression,
+  ifObjectProperty,
+  ifStringLiteral,
+  traverseJSXElements,
+  traverseStyledTemplatesElements,
+  valueToASTLiteral,
+  valueToJSXLiteral,
+} from "./ast-helpers";
 import {
   JSX_LOOKUP_DATA_ATTR,
   JSX_RECENTLY_ADDED_DATA_ATTR,
   STYLED_LOOKUP_CSS_VAR_PREFIX,
 } from "./constants";
-import {
-  traverseJSXElements,
-  ifJSXAttribute,
-  getValue,
-  ifJSXExpressionContainer,
-  ifObjectExpression,
-  ifObjectProperty,
-  valueToASTLiteral,
-  valueToJSXLiteral,
-  traverseStyledTemplatesElements,
-  editAST,
-  ifStringLiteral,
-  ifIdentifier,
-  copyJSXName,
-} from "./ast-helpers";
 
 const { builders: b } = types;
 
@@ -39,7 +40,10 @@ declare module "ast-types/gen/namedTypes" {
   }
 }
 
-export type Styles = { styleName: keyof CSSStyleDeclaration, styleValue: string }[];
+export type Styles = {
+  styleName: keyof CSSStyleDeclaration;
+  styleValue: string;
+}[];
 
 export interface AddLookupDataResult {
   ast: t.File;
@@ -221,10 +225,13 @@ export const applyJSXInlineStyleAttribute = (
   if (!existingStyleAttr) {
     path.value.openingElement.attributes =
       path.value.openingElement.attributes || [];
-    existingStyleAttr = b.jsxAttribute(b.jsxIdentifier("style"), valueToJSXLiteral({}))
+    existingStyleAttr = b.jsxAttribute(
+      b.jsxIdentifier("style"),
+      valueToJSXLiteral({})
+    );
     path.value.openingElement.attributes.push(existingStyleAttr);
   }
-  styles.forEach(({styleName, styleValue}) => {
+  styles.forEach(({ styleName, styleValue }) => {
     // todo handle more cases
     const existingStyleProp = pipe(
       existingStyleAttr,
@@ -259,7 +266,10 @@ export const applyJSXInlineStyleAttribute = (
       (_) => _?.properties
     );
     existingStylePropObject?.push(
-      b.objectProperty(b.identifier(`${styleName}`), valueToASTLiteral(styleValue))
+      b.objectProperty(
+        b.identifier(`${styleName}`),
+        valueToASTLiteral(styleValue)
+      )
     );
   });
 };
@@ -271,7 +281,7 @@ export const applyStyledStyleAttribute = (
   >,
   styles: Styles
 ) => {
-  styles.forEach(({styleName, styleValue}) => {
+  styles.forEach(({ styleName, styleValue }) => {
     const cssStyleName = kebabCase(`${styleName}`);
     const styleMatcher = new RegExp(`($|\\s)\\s*${cssStyleName}: ([^:;]+);`);
     const found = path.value.quasi.quasis.find(({ value: quasiValue }) => {

@@ -1,13 +1,14 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { createMuiTheme, ThemeProvider } from '@material-ui/core';
-import { SnackbarProvider } from 'notistack';
-import App from './App';
-import './index.scss';
+import React from "react";
+import ReactDOM from "react-dom";
+import { createMuiTheme, ThemeProvider } from "@material-ui/core";
+import { SnackbarProvider } from "notistack";
+
+import App from "./App";
+import "./index.scss";
 
 const darkTheme = createMuiTheme({
   palette: {
-    type: 'dark',
+    type: "dark",
   },
 });
 
@@ -19,5 +20,5 @@ ReactDOM.render(
       </ThemeProvider>
     </React.StrictMode>
   </SnackbarProvider>,
-  document.getElementById('root')
+  document.getElementById("root")
 );

@@ -1,14 +1,21 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-const {dialog} = (__non_webpack_require__('electron') as typeof import('electron')).remote;
+const { dialog } = (__non_webpack_require__(
+  "electron"
+) as typeof import("electron")).remote;
+
+export const openFilePicker = async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    properties: ["openFile"],
+  });
+
+  return canceled ? null : filePaths[0];
+};
 
 export function useFilePicker() {
   const [filePath, setFilePath] = useState<string>();
-  const openFilePicker = async () => {
-    const { canceled, filePaths } = await dialog.showOpenDialog({
-        properties: ['openFile']
-    });
-    if (!canceled) setFilePath(filePaths[0])
-  }
-  return [filePath, openFilePicker] as const;
+  return [
+    filePath,
+    () => openFilePicker().then((f) => f && setFilePath(f)),
+  ] as const;
 }

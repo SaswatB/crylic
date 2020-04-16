@@ -1,12 +1,13 @@
 import React, {
-  FunctionComponent,
-  useState,
-  ReactNode,
-  useEffect,
-  RefAttributes,
   forwardRef,
+  FunctionComponent,
+  ReactNode,
+  RefAttributes,
+  useEffect,
   useImperativeHandle,
+  useState,
 } from "react";
+
 import "../index.scss";
 
 interface Tab {

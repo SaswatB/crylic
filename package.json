@@ -23,7 +23,6 @@
     "deep-freeze-strict": "^1.1.1",
     "electron": "^8.2.0",
     "electron-devtools-installer": "^3.0.0",
-    "eslint": "^6.8.0",
     "fp-ts": "^2.5.3",
     "immer": "^6.0.3",
     "less": "^3.11.1",
@@ -64,10 +63,41 @@
     "test": "react-app-rewired test",
     "eject": "react-app-rewired eject",
     "electron": "electron .",
-    "postinstall": "npx electron-rebuild -o node-sass"
+    "postinstall": "npx electron-rebuild -o node-sass",
+    "lint": "npx eslint --ext .ts,.tsx,.js .",
+    "lint:fix": "npx eslint --ext .ts,.tsx,.js --fix .",
+    "pretty": "npx prettier --write ."
   },
   "eslintConfig": {
-    "extends": "react-app"
+    "extends": "react-app",
+    "plugins": [
+      "simple-import-sort",
+      "import"
+    ],
+    "rules": {
+      "simple-import-sort/sort": [
+        "error",
+        {
+          "groups": [
+            [
+              "^react",
+              "^@?\\w"
+            ],
+            [
+              "^\\u0000"
+            ],
+            [
+              "^\\.\\.(?!/?$)",
+              "^\\.\\./?$",
+              "^\\./(?=.*/)(?!/?$)",
+              "^\\.(?!/?$)",
+              "^\\./?$",
+              "^.+\\.s?css$"
+            ]
+          ]
+        }
+      ]
+    }
   },
   "browserslist": {
     "production": [
@@ -96,6 +126,8 @@
     "@types/react-color": "^3.0.1",
     "@types/react-dom": "^16.9.0",
     "@types/webpack": "^4.41.10",
-    "electron-rebuild": "^1.10.1"
+    "electron-rebuild": "^1.10.1",
+    "eslint": "^6.8.0",
+    "eslint-plugin-simple-import-sort": "^5.0.2"
   }
 }

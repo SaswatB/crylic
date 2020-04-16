@@ -1,20 +1,18 @@
-import React, { useState, useEffect, useRef, ReactNode, useMemo } from "react";
-import Slider, { SliderProps } from "@material-ui/core/Slider";
-import Popper from "@material-ui/core/Popper";
-import ClickAwayListener from "@material-ui/core/ClickAwayListener";
-import { ChromePicker } from "react-color";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   FormControl,
+  InputAdornment,
   InputLabel,
+  OutlinedInput,
   Select,
   TextField,
-  OutlinedInput,
-  InputAdornment,
 } from "@material-ui/core";
-import ColorPicker from 'rc-color-picker';
-import rgbHex from 'rgb-hex';
+import Slider, { SliderProps } from "@material-ui/core/Slider";
+import ColorPicker from "rc-color-picker";
+import rgbHex from "rgb-hex";
+
 import { useThrottle } from "./useThrottle";
-import 'rc-color-picker/assets/index.css';
+import "rc-color-picker/assets/index.css";
 
 const HEX_COLOR_REGEX = /^#([A-Fa-f0-9]{8}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
 
@@ -149,7 +147,10 @@ export function useSliderInput(
     <Slider
       {...props}
       value={value}
-      onChange={(e, v) => {setValue(v as number); onChange(v as number);}}
+      onChange={(e, v) => {
+        setValue(v as number);
+        onChange(v as number);
+      }}
     />
   );
 
@@ -176,7 +177,10 @@ export function useSelectInput(
       <Select
         native
         value={value}
-        onChange={(e) => {setValue(e.target.value as string); onChange(e.target.value as string);}}
+        onChange={(e) => {
+          setValue(e.target.value as string);
+          onChange(e.target.value as string);
+        }}
         label={label}
       >
         {options.map((o) => (
@@ -194,19 +198,26 @@ export function useSelectInput(
 export function useColorPicker(
   onChange = (value: string) => {},
   label = "",
-  initialValue = "",
-  btnText: ReactNode = "Open"
+  initialValue = ""
 ) {
   const anchor = useRef<HTMLButtonElement>(null);
   const [value, setValue] = useState(initialValue);
   const [focused, setFocused] = useState(false);
   useEffect(() => {
-    if (!focused) setValue(initialValue ? `#${rgbHex(initialValue)}` : '');
+    if (!focused) setValue(initialValue ? `#${rgbHex(initialValue)}` : "");
   }, [initialValue, focused]);
-  const onColorPickerChange = ({color, alpha}: { color: string, alpha: number }) => {
-    let alphaSuffix = '';
+  const onColorPickerChange = ({
+    color,
+    alpha,
+  }: {
+    color: string;
+    alpha: number;
+  }) => {
+    let alphaSuffix = "";
     if (alpha !== 100) {
-      alphaSuffix = Math.round((alpha/100) * 255).toString(16).padStart(2, '0');
+      alphaSuffix = Math.round((alpha / 100) * 255)
+        .toString(16)
+        .padStart(2, "0");
     }
     console.log(color, alpha, alphaSuffix);
     setValue(`${color}${alphaSuffix}`);
@@ -220,7 +231,10 @@ export function useColorPicker(
         <OutlinedInput
           ref={anchor}
           value={value}
-          onChange={(e) => {setValue(e.target.value); if(HEX_COLOR_REGEX.test(e.target.value)) onChange(e.target.value); }}
+          onChange={(e) => {
+            setValue(e.target.value);
+            if (HEX_COLOR_REGEX.test(e.target.value)) onChange(e.target.value);
+          }}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           endAdornment={

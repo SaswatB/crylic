@@ -6,5 +6,5 @@ export const babelTsParser = {
     const babelOptions = getBabelOptions(options);
     babelOptions.plugins.push("jsx", "typescript");
     return babelParse(source, babelOptions);
-  }
+  },
 };

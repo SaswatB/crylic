@@ -1,26 +1,26 @@
 import React, {
-  FunctionComponent,
-  useRef,
-  useEffect,
-  useState,
-  useImperativeHandle,
   forwardRef,
+  FunctionComponent,
   RefAttributes,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
 } from "react";
 import ReactDOM from "react-dom";
+
 import { JSX_LOOKUP_DATA_ATTR, JSX_LOOKUP_ROOT } from "../utils/constants";
 // @ts-ignore ignore raw loader import
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import normalizeCss from "!!raw-loader!normalize.css/normalize.css";
 
 export interface FrameRef {
-  frameElement: HTMLIFrameElement,
-  resetFrame: () => void
+  frameElement: HTMLIFrameElement;
+  resetFrame: () => void;
 }
 
 export const Frame: FunctionComponent<
-  React.IframeHTMLAttributes<HTMLIFrameElement> &
-    RefAttributes<FrameRef>
+  React.IframeHTMLAttributes<HTMLIFrameElement> & RefAttributes<FrameRef>
 > = forwardRef(({ children, ...props }, ref) => {
   const frame = useRef<HTMLIFrameElement>(null);
   const [root, setRoot] = useState<HTMLDivElement>();
@@ -53,14 +53,14 @@ export const Frame: FunctionComponent<
   useEffect(resetFrame, []);
 
   useEffect(() => {
-  if (root) {
-    ReactDOM.render(
-      // @ts-ignore children typecheck failure
-      children,
-      root
-    );
-  }
-  }, [children, root])
+    if (root) {
+      ReactDOM.render(
+        // @ts-ignore children typecheck failure
+        children,
+        root
+      );
+    }
+  }, [children, root]);
 
   useImperativeHandle(ref, () => ({
     frameElement: frame.current!,

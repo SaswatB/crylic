@@ -1,6 +1,8 @@
-import React, { ErrorInfo } from 'react';
+import React, { ErrorInfo } from "react";
 
-export class ErrorBoundary extends React.Component<{onError: (error: Error, errorInfo: ErrorInfo) => void}> {
+export class ErrorBoundary extends React.Component<{
+  onError: (error: Error, errorInfo: ErrorInfo) => void;
+}> {
   state = { hasError: false };
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {

@@ -10,10 +10,18 @@ const BABEL_PLUGINS = ["proposal-class-properties"];
 // todo clear cache button
 let cache: Record<string, Record<string, unknown> | undefined> = {};
 
-export const babelRunCode = (codePath: string | undefined, originalCode: string) => {
+export const babelRunCode = (
+  codePath: string | undefined,
+  originalCode: string
+) => {
   const startTime = new Date().getTime();
   console.log("loading...", codePath);
-  const code = Babel.transform(originalCode, { filename: codePath || 'untitled', presets: BABEL_PRESETS, plugins: BABEL_PLUGINS }).code || '';
+  const code =
+    Babel.transform(originalCode, {
+      filename: codePath || "untitled",
+      presets: BABEL_PRESETS,
+      plugins: BABEL_PLUGINS,
+    }).code || "";
   const moduleRequire = codePath
     ? module.createRequire(codePath)
     : __non_webpack_require__;
@@ -32,7 +40,12 @@ export const babelRunCode = (codePath: string | undefined, originalCode: string)
           return cache[codePath || ""]![name];
         }
 
-        if (name.endsWith('.css') || name.endsWith('.scss') || name.endsWith('.sass')) return {};
+        if (
+          name.endsWith(".css") ||
+          name.endsWith(".scss") ||
+          name.endsWith(".sass")
+        )
+          return {};
 
         let subRequirePath;
         try {
@@ -43,14 +56,14 @@ export const babelRunCode = (codePath: string | undefined, originalCode: string)
           } catch (e2) {
             try {
               subRequirePath = moduleRequire.resolve(`${name}.tsx`);
-            } catch(e3) {
+            } catch (e3) {
               throw e;
             }
           }
         }
         const codeExports = babelRunCode(
           subRequirePath,
-          fs.readFileSync(subRequirePath, { encoding: "utf-8" }),
+          fs.readFileSync(subRequirePath, { encoding: "utf-8" })
         );
         cache[codePath || ""] = cache[codePath || ""] || {};
         cache[codePath || ""]![name] = codeExports;

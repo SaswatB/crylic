@@ -1,6 +1,6 @@
-import { createFsFromVolume, Volume, IFs } from "memfs";
-import { Union } from "unionfs";
+import { createFsFromVolume, IFs,Volume } from "memfs";
 import joinPath from "memory-fs/lib/join";
+import { Union } from "unionfs";
 
 const webpack = __non_webpack_require__("webpack") as typeof import("webpack");
 
@@ -13,11 +13,14 @@ const WEBPACK_MODULES = {
         loader: "babel-loader",
         options: {
           presets: [
-            ["@babel/preset-env", {
-              "targets": {
-                "electron": "8",
-              }
-            }],
+            [
+              "@babel/preset-env",
+              {
+                targets: {
+                  electron: "8",
+                },
+              },
+            ],
             "@babel/preset-react",
             "@babel/preset-typescript",
           ],
@@ -60,7 +63,17 @@ const WEBPACK_MODULES = {
   ],
 };
 
-const webpackCache: Record<string, {compiler: import("webpack").Compiler, inputFs: IFs, outputFs: IFs, runId: number, lastPromise?: Promise<unknown>} | undefined> = {};
+const webpackCache: Record<
+  string,
+  | {
+      compiler: import("webpack").Compiler;
+      inputFs: IFs;
+      outputFs: IFs;
+      runId: number;
+      lastPromise?: Promise<unknown>;
+    }
+  | undefined
+> = {};
 
 export const webpackRunCode = async (
   codePath = "/untitled.jsx",
@@ -130,7 +143,7 @@ export const webpackRunCode = async (
     return null;
   }
 
-  console.log('running webpack')
+  console.log("running webpack");
   const runPromise = new Promise<object>((resolve, reject) => {
     compiler.run((err, stats) => {
       try {
