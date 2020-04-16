@@ -1,6 +1,8 @@
-import { createFsFromVolume, IFs,Volume } from "memfs";
+import { createFsFromVolume, IFs, Volume } from "memfs";
 import joinPath from "memory-fs/lib/join";
 import { Union } from "unionfs";
+
+import { CodeEntry } from "../types/paint";
 
 const webpack = __non_webpack_require__("webpack") as typeof import("webpack");
 
@@ -76,16 +78,22 @@ const webpackCache: Record<
 > = {};
 
 export const webpackRunCode = async (
-  codePath = "/untitled.jsx",
-  code: string,
+  codeEntries: CodeEntry[],
+  primaryCodeId: string,
+  codeTransformer: (codeEntry: CodeEntry) => string,
   { window }: any
 ) => {
   const startTime = new Date().getTime();
-  console.log("loading...", codePath);
-  if (!webpackCache[codePath]) {
+  const primaryCodeEntry = codeEntries.find(
+    (entry) => entry.id === primaryCodeId
+  );
+  console.log("loading...", primaryCodeId, primaryCodeEntry, codeEntries);
+  if (!primaryCodeEntry) throw new Error("Failed to find primary code entry");
+
+  if (!webpackCache[primaryCodeEntry.id]) {
     const compiler = webpack({
       mode: "development",
-      entry: codePath,
+      entry: primaryCodeEntry.filePath,
       output: {
         path: "/static",
         filename: "[name].js",
@@ -128,18 +136,25 @@ export const webpackRunCode = async (
       ...outputFs,
     };
 
-    webpackCache[codePath] = { compiler, inputFs, outputFs, runId: 0 };
+    webpackCache[primaryCodeEntry.id] = {
+      compiler,
+      inputFs,
+      outputFs,
+      runId: 0,
+    };
   }
-  const { compiler, inputFs, outputFs } = webpackCache[codePath]!;
-  inputFs.writeFileSync(codePath, code);
+  const { compiler, inputFs, outputFs } = webpackCache[primaryCodeEntry.id]!;
+  codeEntries.forEach((entry) => {
+    inputFs.writeFileSync(entry.filePath, codeTransformer(entry));
+  });
 
-  const runId = ++webpackCache[codePath]!.runId;
+  const runId = ++webpackCache[primaryCodeEntry.id]!.runId;
 
   // only allow one instance of webpack to run at a time
-  while (webpackCache[codePath]!.lastPromise) {
-    await webpackCache[codePath]!.lastPromise;
+  while (webpackCache[primaryCodeEntry.id]!.lastPromise) {
+    await webpackCache[primaryCodeEntry.id]!.lastPromise;
   }
-  if (runId !== webpackCache[codePath]!.runId) {
+  if (runId !== webpackCache[primaryCodeEntry.id]!.runId) {
     return null;
   }
 
@@ -165,17 +180,17 @@ export const webpackRunCode = async (
         window.exports = exports;
         window.eval(bundle);
         const endTime = new Date().getTime();
-        console.log("loaded", codePath, endTime - startTime);
+        console.log("loaded", primaryCodeEntry.filePath, endTime - startTime);
 
         resolve(moduleExports.exports || exports);
       } catch (error) {
-        console.log("error file", codePath, error);
+        console.log("error file", primaryCodeEntry.filePath, error);
         reject(error);
       }
     });
   }).finally(() => {
-    webpackCache[codePath]!.lastPromise = undefined;
+    webpackCache[primaryCodeEntry.id]!.lastPromise = undefined;
   });
-  webpackCache[codePath]!.lastPromise = runPromise;
+  webpackCache[primaryCodeEntry.id]!.lastPromise = runPromise;
   return runPromise;
 };

@@ -5,13 +5,13 @@ export interface CodeEntry {
 }
 
 export interface SelectedElement {
-  lookUpId: string;
+  lookupId: string;
   computedStyles: CSSStyleDeclaration;
   inlineStyles: CSSStyleDeclaration;
 }
 
 export interface OutlineElement {
   tag: string;
-  lookUpId: string;
+  lookupId: string;
   children: OutlineElement[];
 }

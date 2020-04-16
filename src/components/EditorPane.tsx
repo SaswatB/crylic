@@ -3,18 +3,23 @@ import MonacoEditor from "react-monaco-editor";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
 import { CodeEntry } from "../types/paint";
-import { parseAST } from "../utils/ast-helpers";
 import {
-  getJSXASTByLookupId,
+  createLookupId,
+  getCodeIdFromLookupId,
+  getElementIndexFromLookupId,
+  parseAST,
+} from "../utils/ast-helpers";
+import {
+  getJSXASTByLookupIndex,
   getJSXElementForSourceCodePosition,
 } from "../utils/ast-parsers";
 import { Tabs } from "./Tabs";
 
 interface Props {
   codeEntries: CodeEntry[];
-  onCodeChange: (filePath: string, newCode: string) => void;
-  selectedElementId: { codeId: string; lookUpId: string } | undefined;
-  onSelectElement: (codeId: string, lookUpId: string) => void;
+  onCodeChange: (codeId: string, newCode: string) => void;
+  selectedElementId: string | undefined;
+  onSelectElement: (lookupId: string) => void;
 }
 
 export const EditorPane: FunctionComponent<Props> = ({
@@ -33,13 +38,16 @@ export const EditorPane: FunctionComponent<Props> = ({
   const activeHighlights = useRef<Record<string, string[] | undefined>>({}); // code id -> decoration map
   useEffect(() => {
     const decorations: monaco.editor.IModelDeltaDecoration[] = [];
-    if (selectedElementId && selectedElementId.codeId === activeCodeId) {
+    if (
+      selectedElementId &&
+      getCodeIdFromLookupId(selectedElementId) === activeCodeId
+    ) {
       // try to find the jsx element in the latest ast
       let path;
       try {
-        path = getJSXASTByLookupId(
+        path = getJSXASTByLookupIndex(
           parseAST(activeCode),
-          selectedElementId.lookUpId
+          getElementIndexFromLookupId(selectedElementId)
         );
       } catch (err) {}
 
@@ -89,15 +97,7 @@ export const EditorPane: FunctionComponent<Props> = ({
           decorations
         ) || [];
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    activeCode,
-    activeCodeId,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    selectedElementId?.codeId,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    selectedElementId?.lookUpId,
-  ]);
+  }, [activeCode, activeCodeId, selectedElementId]);
 
   // try to select the element the editor cursor is at
   useEffect(() => {
@@ -105,26 +105,24 @@ export const EditorPane: FunctionComponent<Props> = ({
       if (!editorRef.current?.editor?.hasTextFocus()) return;
 
       // try to find a jsx element at the cursor location in the latest code ast
-      let lookUpId;
+      let lookupIndex;
       try {
-        ({ lookUpId } = getJSXElementForSourceCodePosition(
+        ({ lookupIndex } = getJSXElementForSourceCodePosition(
           parseAST(activeCode),
           e.position.lineNumber,
           e.position.column
         ));
       } catch (err) {}
+      if (lookupIndex === undefined) return;
 
       // if the selection is different than what's already selected, select the element
-      if (
-        lookUpId !== undefined &&
-        (activeCodeId !== selectedElementId?.codeId ||
-          lookUpId !== selectedElementId?.lookUpId)
-      ) {
-        onSelectElement(activeCodeId, lookUpId);
+      const lookupId = createLookupId(activeCodeId, lookupIndex);
+      if (!selectedElementId || lookupId !== selectedElementId) {
+        onSelectElement(lookupId);
       }
     }).dispose;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCodeId, activeCode, selectedElementId?.lookUpId]);
+  }, [activeCodeId, activeCode, selectedElementId]);
 
   return (
     <Tabs
@@ -139,7 +137,7 @@ export const EditorPane: FunctionComponent<Props> = ({
             theme="vs-dark"
             width="600px"
             value={entry.code}
-            onChange={(newCode) => onCodeChange(entry.filePath, newCode)}
+            onChange={(newCode) => onCodeChange(entry.id, newCode)}
           />
         ),
       }))}

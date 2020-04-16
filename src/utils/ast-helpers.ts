@@ -109,7 +109,7 @@ export const traverseStyledTemplatesElements = (
       types.namedTypes.TaggedTemplateExpression,
       t.TaggedTemplateExpression
     >,
-    index: string
+    index: number
   ) => void
 ) => {
   let count = 0;
@@ -117,7 +117,7 @@ export const traverseStyledTemplatesElements = (
     visitTaggedTemplateExpression(path) {
       // todo use better static analysis than this for styled components support
       if (path.value?.tag?.object?.name === "styled") {
-        visitor(path, `${count++}`);
+        visitor(path, count++);
       }
       this.traverse(path);
     },
@@ -128,13 +128,13 @@ export const traverseJSXElements = (
   ast: t.File,
   visitor: (
     path: NodePath<types.namedTypes.JSXElement, t.JSXElement>,
-    index: string
+    index: number
   ) => void
 ) => {
   let count = 0;
   visit(ast, {
     visitJSXElement(path) {
-      visitor(path, `${count++}`);
+      visitor(path, count++);
       this.traverse(path);
     },
   });
@@ -163,3 +163,22 @@ export const editAST = <T extends object | void, U extends any[]>(
   // @ts-ignore ts bug
   return deepFreeze(newAst);
 };
+
+export function hashString(input: string) {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    let chr = input.charCodeAt(i);
+    hash = (hash << 5) - hash + chr;
+    hash |= 0;
+  }
+  return hash.toString(16);
+}
+
+export const createLookupId = (codeId: string, elementIndex: number) =>
+  `${codeId}-${elementIndex}`;
+
+export const getCodeIdFromLookupId = (lookupId: string) =>
+  lookupId.split("-")[0];
+
+export const getElementIndexFromLookupId = (lookupId: string) =>
+  parseInt(lookupId.split("-")[1]);

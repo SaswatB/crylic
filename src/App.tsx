@@ -1,42 +1,51 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { DraggableData, Rnd } from "react-rnd";
+import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import { CircularProgress } from "@material-ui/core";
 import { namedTypes as t } from "ast-types";
-import { cloneDeep } from "lodash";
 import deepFreeze from "deep-freeze-strict";
-import { Rnd, DraggableData } from "react-rnd";
 import { produce } from "immer";
+import { cloneDeep } from "lodash";
 import { useSnackbar } from "notistack";
+
 import {
   CompilerComponentView,
   CompilerComponentViewRef,
   getComponentElementFromEvent,
 } from "./components/CompilerComponentView";
+import { EditorPane } from "./components/EditorPane";
+import { SideBar } from "./components/SideBar";
 import { useDebounce } from "./hooks/useDebounce";
+import { CodeEntry, OutlineElement, SelectedElement } from "./types/paint";
 import {
-  JSX_LOOKUP_DATA_ATTR,
-  JSX_LOOKUP_ROOT,
-  JSX_RECENTLY_ADDED_DATA_ATTR,
-  JSX_RECENTLY_ADDED,
-  SelectModes,
-  STYLED_LOOKUP_CSS_VAR_PREFIX,
-  BOILER_PLATE_CODE,
-} from "./utils/constants";
+  createLookupId,
+  getCodeIdFromLookupId,
+  hashString,
+  parseAST,
+  prettyPrintAST,
+  printAST,
+} from "./utils/ast-helpers";
 import {
-  addLookupData,
   addJSXChildToJSXElement,
-  removeRecentlyAddedDataAttrAndGetLookupId,
-  applyJSXInlineStyleAttribute,
+  addLookupData,
   AddLookupDataResult,
+  applyJSXInlineStyleAttribute,
   applyStyledStyleAttribute,
-  editJSXElementByLookup,
-  removeLookupData,
+  editJSXElementByLookupId,
   editStyledTemplateByLookup,
+  removeLookupData,
+  removeRecentlyAddedDataAttrAndGetLookupId,
   Styles,
 } from "./utils/ast-parsers";
-import { useSideBar } from "./hooks/useSideBar";
-import { parseAST, printAST, prettyPrintAST } from "./utils/ast-helpers";
-import { EditorPane } from "./components/EditorPane";
+import {
+  BOILER_PLATE_CODE,
+  JSX_LOOKUP_DATA_ATTR,
+  JSX_LOOKUP_ROOT,
+  JSX_RECENTLY_ADDED,
+  JSX_RECENTLY_ADDED_DATA_ATTR,
+  SelectModes,
+  STYLED_LOOKUP_CSS_VAR_PREFIX,
+} from "./utils/constants";
 import "./App.scss";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
@@ -59,12 +68,12 @@ function useOverlay(
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
     const componentElement = getComponentElementFromEvent(event, componentView);
-    const lookUpId = (componentElement as HTMLElement)?.dataset[
+    const lookupId = (componentElement as HTMLElement)?.dataset[
       JSX_LOOKUP_DATA_ATTR
     ];
     if (
-      lookUpId &&
-      (selectMode !== SelectModes.SelectElement || lookUpId !== JSX_LOOKUP_ROOT)
+      lookupId &&
+      (selectMode !== SelectModes.SelectElement || lookupId !== JSX_LOOKUP_ROOT)
     ) {
       setHighlightBox(componentElement?.getBoundingClientRect());
     } else {
@@ -100,7 +109,7 @@ function useOverlay(
     if (!selectedElement) return {};
 
     const componentElement = componentView?.getElementByLookupId(
-      selectedElement?.lookUpId
+      selectedElement?.lookupId
     );
     const pbcr =
       selectedElement?.computedStyles.position === "static"
@@ -244,18 +253,6 @@ function useOverlay(
   return [!!draggingHighlight, renderOverlay] as const;
 }
 
-export interface SelectedElement {
-  lookUpId: string;
-  computedStyles: CSSStyleDeclaration;
-  inlineStyles: CSSStyleDeclaration;
-}
-
-export interface OutlineElement {
-  tag: string;
-  lookUpId: string;
-  children: OutlineElement[];
-}
-
 const buildOutline = (element: Element): OutlineElement[] =>
   Array.from(element.children)
     .map((child) => {
@@ -263,7 +260,7 @@ const buildOutline = (element: Element): OutlineElement[] =>
         return [
           {
             tag: child.tagName,
-            lookUpId: (child as HTMLElement).dataset[JSX_LOOKUP_DATA_ATTR]!,
+            lookupId: (child as HTMLElement).dataset[JSX_LOOKUP_DATA_ATTR]!,
             children: buildOutline(child),
           },
         ];
@@ -276,42 +273,44 @@ function App() {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
   const [debouncedLoading] = useDebounce(loading, 300);
-  const [code, setCode] = useState("");
-  const [codeWithLookupData, setCodeWithLookupData] = useState<
-    AddLookupDataResult & { ast: t.File; transformedCode: string }
-  >();
+  const [codeEntriesLookupData, setCodeEntriesLookupData] = useState<
+    Record<string, (AddLookupDataResult & { ast: t.File }) | undefined>
+  >({});
   const componentView = useRef<CompilerComponentViewRef>(null);
 
-  const [debouncedCode, skipNextCodeDebounce] = useDebounce(code, 1000);
-  useEffect(() => {
-    try {
-      const res = addLookupData(parseAST(debouncedCode));
-      const transformedCode = printAST(res.ast);
-      console.log("setCodeWithLookupData", res.ast);
-      setCodeWithLookupData({
-        transformedCode,
-        ...res,
-        ast: deepFreeze(cloneDeep(res.ast)),
-      });
-    } catch (e) {
-      console.log(e);
-    }
-  }, [debouncedCode]);
-
-  const setCodeImmediately = (newCode: string) => {
-    skipNextCodeDebounce();
-    setCode(newCode);
+  const setCode = (codeId: string, code: string) => {
+    setCodeEntries(
+      produce((draft: CodeEntry[]) => {
+        (
+          draft.find((entry) => entry.id === codeId) ||
+          ({} as Partial<CodeEntry>)
+        ).code = code;
+      })
+    );
+  };
+  const codeTransformer = (codeEntry: CodeEntry) => {
+    const res = addLookupData(parseAST(codeEntry.code), codeEntry.id);
+    console.log("codeTransformer", res.ast);
+    setCodeEntriesLookupData(
+      produce((draft) => {
+        draft[codeEntry.id] = {
+          ...res,
+          ast: deepFreeze(cloneDeep(res.ast)),
+        };
+      })
+    );
+    return printAST(res.ast);
   };
 
   const [selectMode, setSelectMode] = useState<SelectModes>(); // todo escape key
   const [selectedElement, setSelectedElement] = useState<SelectedElement>();
 
   const selectElement = (componentElement: HTMLElement) => {
-    const lookUpId = componentElement.dataset?.[JSX_LOOKUP_DATA_ATTR];
-    if (!lookUpId || lookUpId === JSX_LOOKUP_ROOT) return;
+    const lookupId = componentElement.dataset?.[JSX_LOOKUP_DATA_ATTR];
+    if (!lookupId || lookupId === JSX_LOOKUP_ROOT) return;
 
     setSelectedElement({
-      lookUpId,
+      lookupId,
       computedStyles: window.getComputedStyle(componentElement),
       inlineStyles: componentElement.style,
     });
@@ -323,12 +322,12 @@ function App() {
     setLoading(false);
     if (selectedElement) {
       const newSelectedComponent = componentView.current?.getElementByLookupId(
-        selectedElement.lookUpId
+        selectedElement.lookupId
       );
       if (newSelectedComponent) {
         console.log(
           "setting selected element post-compile",
-          selectedElement.lookUpId
+          selectedElement.lookupId
         );
         selectElement(newSelectedComponent as HTMLElement);
       } else {
@@ -345,39 +344,41 @@ function App() {
 
   const updateSelectedElementStyles = (styles: Styles) => {
     if (selectedElement) {
-      componentView.current?.addTempStyles(selectedElement.lookUpId, styles);
+      componentView.current?.addTempStyles(selectedElement.lookupId, styles);
 
+      const codeId = getCodeIdFromLookupId(selectedElement.lookupId);
+      const lookupData = codeEntriesLookupData[codeId];
       const selectedComponent = componentView.current?.getElementByLookupId(
-        selectedElement.lookUpId
+        selectedElement.lookupId
       );
       const selectedComponentStyledLookupId =
         selectedComponent &&
-        codeWithLookupData?.styledElementLookupIds.find((lookUpId) => {
+        lookupData?.styledElementLookupIds.find((lookupId) => {
           return !!window
             .getComputedStyle(selectedComponent)
-            .getPropertyValue(`${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookUpId}`);
+            .getPropertyValue(`${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookupId}`);
         });
 
       console.log(
         "updateSelectedElementStyles",
         styles,
         selectedElement,
-        codeWithLookupData
+        lookupData
       );
       let madeChange = false;
       const newAst = removeLookupData(
         selectedComponentStyledLookupId
           ? editStyledTemplateByLookup(
-              codeWithLookupData!.ast,
+              lookupData!.ast,
               selectedComponentStyledLookupId,
               (path) => {
                 applyStyledStyleAttribute(path, styles);
                 madeChange = true;
               }
             )
-          : editJSXElementByLookup(
-              codeWithLookupData!.ast,
-              selectedElement.lookUpId,
+          : editJSXElementByLookupId(
+              lookupData!.ast,
+              selectedElement.lookupId,
               (path) => {
                 applyJSXInlineStyleAttribute(path, styles);
                 madeChange = true;
@@ -387,7 +388,7 @@ function App() {
       console.log("updateSelectedElementStyle change", madeChange, newAst);
 
       if (madeChange) {
-        setCode(prettyPrintAST(newAst));
+        setCode(codeId, prettyPrintAST(newAst));
       }
     }
   };
@@ -406,22 +407,6 @@ function App() {
     }
   };
 
-  const {
-    render: renderSideBar,
-    filePath,
-    componentViewWidth,
-    componentViewHeight,
-  } = useSideBar({
-    outline,
-    selectedElement,
-    onChangeSelectMode: setSelectMode,
-    updateSelectedElementStyle,
-    onSaveCode: () => {
-      if (filePath) fs.writeFileSync(filePath, code);
-      else alert("please open a file before saving");
-    },
-  });
-
   const [draggingHighlight, renderOverlay] = useOverlay(
     componentView.current,
     selectedElement,
@@ -439,21 +424,26 @@ function App() {
           }
           break;
         case SelectModes.AddDivElement: {
-          if (!code.trim()) {
-            setCodeImmediately(BOILER_PLATE_CODE);
+          if (!codeEntries.length) {
+            setCodeEntries([
+              { id: "new", filePath: "/untitled.tsx", code: BOILER_PLATE_CODE },
+            ]);
             setSelectMode(undefined);
             enqueueSnackbar("Started a new component!");
             break;
           }
 
-          const lookUpId = (componentElement as HTMLElement)?.dataset?.[
+          const lookupId = (componentElement as HTMLElement)?.dataset?.[
             JSX_LOOKUP_DATA_ATTR
           ];
-          if (!lookUpId || !codeWithLookupData) break;
+          if (!lookupId) break;
+          const codeId = getCodeIdFromLookupId(lookupId);
+          const lookupData = codeEntriesLookupData[codeId];
+          if (!lookupData) break;
 
           let madeChange = false;
           const newAst = removeLookupData(
-            editJSXElementByLookup(codeWithLookupData.ast, lookUpId, (path) => {
+            editJSXElementByLookupId(lookupData.ast, lookupId, (path) => {
               addJSXChildToJSXElement(path.value, "div", {
                 [`data-${JSX_RECENTLY_ADDED_DATA_ATTR}`]: JSX_RECENTLY_ADDED,
                 style: { display: "flex" },
@@ -465,26 +455,30 @@ function App() {
           if (madeChange) {
             const {
               ast: newAst2,
-              resultId: newChildLookUpId,
+              resultIndex: newChildLookupIndex,
             } = removeRecentlyAddedDataAttrAndGetLookupId(newAst);
 
-            if (newChildLookUpId) {
+            if (newChildLookupIndex !== undefined) {
+              const newChildLookupId = createLookupId(
+                codeId,
+                newChildLookupIndex
+              );
               // try to select the newly added element when the CompilerComponentView next compiles
               compileTasks.current.push(() => {
                 const newChildComponent = componentView.current?.getElementByLookupId(
-                  newChildLookUpId!
+                  newChildLookupId!
                 );
                 if (newChildComponent) {
                   console.log(
                     "setting selected element through post-child add",
-                    newChildLookUpId
+                    newChildLookupId
                   );
                   selectElement(newChildComponent as HTMLElement);
                 }
               });
             }
 
-            setCodeImmediately(prettyPrintAST(newAst2));
+            setCode(codeId, prettyPrintAST(newAst2));
           }
           break;
         }
@@ -523,15 +517,6 @@ function App() {
     }
   );
 
-  useEffect(() => {
-    if (filePath) {
-      fs.readFile(filePath, { encoding: "utf-8" }, (err, data) => {
-        setCodeImmediately(data);
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filePath]);
-
   const renderSelectBar = () => (
     <div className="flex justify-center items-center absolute bottom-0 left-0 right-0 p-1 bg-blue-600 text-white text-sm text-center">
       <div className="flex-1" />
@@ -544,6 +529,36 @@ function App() {
         Cancel
       </button>
     </div>
+  );
+
+  const [codeEntries, setCodeEntries] = useState<CodeEntry[]>([]);
+  const renderSideBar = () => (
+    <SideBar
+      outline={outline}
+      selectedElement={selectedElement}
+      onChangeSelectMode={setSelectMode}
+      updateSelectedElementStyle={updateSelectedElementStyle}
+      onOpenFile={(filePath) => {
+        setCodeEntries(
+          produce((draft: CodeEntry[]) => {
+            draft.push({
+              id: hashString(filePath),
+              filePath,
+              code: fs.readFileSync(filePath, { encoding: "utf-8" }),
+            });
+          })
+        );
+      }}
+      onSaveFile={() => {
+        if (codeEntries) {
+          codeEntries.forEach(({ filePath, code }) =>
+            fs.writeFileSync(filePath, code)
+          );
+        } else {
+          alert("please open a file before saving");
+        }
+      }}
+    />
   );
 
   return (
@@ -614,13 +629,16 @@ function App() {
                   <div className="flex m-12 relative bg-white shadow-2xl">
                     <CompilerComponentView
                       ref={componentView}
-                      code={codeWithLookupData?.transformedCode || ""}
-                      filePath={filePath}
+                      codeEntries={codeEntries}
+                      primaryCodeId={codeEntries[0]?.id} // todo support switching between components shown
+                      codeTransformer={codeTransformer}
                       onCompileStart={() => setLoading(true)}
                       onCompileEnd={onComponentViewCompiled}
                       style={{
-                        width: `${componentViewWidth}px`,
-                        height: `${componentViewHeight}px`,
+                        // width: `${componentViewWidth}px`,
+                        // height: `${componentViewHeight}px`,
+                        width: `600px`,
+                        height: `300px`,
                       }}
                     />
                     {(selectMode !== undefined || selectedElement) &&
@@ -632,17 +650,15 @@ function App() {
           </TransformWrapper>
         </div>
         <EditorPane
-          codeEntries={[
-            { id: filePath || "0", filePath: filePath || "untitled", code },
-          ]}
-          onCodeChange={(newCode) => {
+          codeEntries={codeEntries}
+          onCodeChange={(codeId, newCode) => {
             setSelectedElement(undefined); // todo look into keeping the element selected if possible
-            setCode(newCode);
+            setCode(codeId, newCode);
           }}
-          selectedElementId={selectedElement && { codeId: filePath || "0", lookUpId: selectedElement.lookUpId }}
-          onSelectElement={(codeId, lookUpId) => {
+          selectedElementId={selectedElement?.lookupId}
+          onSelectElement={(lookupId) => {
             const newSelectedComponent = componentView.current?.getElementByLookupId(
-              lookUpId
+              lookupId
             );
             if (newSelectedComponent) {
               console.log(

@@ -6,6 +6,7 @@ import { types } from "recast";
 
 import {
   copyJSXName,
+  createLookupId,
   editAST,
   getValue,
   ifIdentifier,
@@ -52,20 +53,22 @@ export interface AddLookupDataResult {
 }
 
 export const addLookupData = editAST(
-  (ast): AddLookupDataResult => {
+  (ast, codeId: string): AddLookupDataResult => {
     let jsxElementLookupIds: string[] = [];
     traverseJSXElements(ast, (path, index) => {
+      const lookupId = createLookupId(codeId, index);
       const attr = b.jsxAttribute(
         b.jsxIdentifier(`data-${JSX_LOOKUP_DATA_ATTR}`),
-        b.stringLiteral(index)
+        b.stringLiteral(lookupId)
       );
       path.value.openingElement.attributes?.push(attr);
-      jsxElementLookupIds.push(index);
+      jsxElementLookupIds.push(lookupId);
     });
     let styledElementLookupIds: string[] = [];
     traverseStyledTemplatesElements(ast, (path, index) => {
-      path.value.quasi.quasis[0].value.raw = `${STYLED_LOOKUP_CSS_VAR_PREFIX}${index}: 1;${path.value.quasi.quasis[0].value.raw}`;
-      styledElementLookupIds.push(index);
+      const lookupId = createLookupId(codeId, index);
+      path.value.quasi.quasis[0].value.raw = `${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookupId}: 1;${path.value.quasi.quasis[0].value.raw}`;
+      styledElementLookupIds.push(lookupId);
     });
     console.log("ast", ast);
     return {
@@ -90,10 +93,10 @@ export const removeLookupData = editAST((ast) => {
   });
 });
 
-export const editJSXElementByLookup = editAST(
+export const editJSXElementByLookupId = editAST(
   (
     ast,
-    lookUpId: string,
+    lookupId: string,
     apply: (path: NodePath<types.namedTypes.JSXElement, t.JSXElement>) => void
   ) => {
     traverseJSXElements(ast, (path) => {
@@ -101,7 +104,7 @@ export const editJSXElementByLookup = editAST(
         (attr) =>
           ifJSXAttribute(attr)?.name.name === `data-${JSX_LOOKUP_DATA_ATTR}` &&
           pipe(attr, ifJSXAttribute, getValue, ifStringLiteral, getValue) ===
-            lookUpId
+            lookupId
       );
       if (lookupMatches) apply(path);
     });
@@ -111,7 +114,7 @@ export const editJSXElementByLookup = editAST(
 export const editStyledTemplateByLookup = editAST(
   (
     ast,
-    lookUpId: string,
+    lookupId: string,
     apply: (
       path: NodePath<
         types.namedTypes.TaggedTemplateExpression,
@@ -123,13 +126,13 @@ export const editStyledTemplateByLookup = editAST(
       const res = STYLED_LOOKUP_MATCHER.exec(
         path.value.quasi.quasis[0].value.raw
       );
-      if (res?.[1] === lookUpId) apply(path);
+      if (res?.[1] === lookupId) apply(path);
     });
   }
 );
 
 export const removeRecentlyAddedDataAttrAndGetLookupId = editAST((ast) => {
-  let resultId;
+  let resultIndex: number | undefined;
   traverseJSXElements(ast, (path, index) => {
     const hasRecentlyAddedDataAttr = path.value.openingElement.attributes?.find(
       (attr) =>
@@ -142,16 +145,16 @@ export const removeRecentlyAddedDataAttrAndGetLookupId = editAST((ast) => {
           ifJSXAttribute(attr)?.name.name !==
           `data-${JSX_RECENTLY_ADDED_DATA_ATTR}`
       );
-      resultId = index;
+      resultIndex = index;
     }
   });
-  return { resultId };
+  return { resultIndex };
 });
 
-export const getJSXASTByLookupId = (ast: t.File, lookUpId: string) => {
+export const getJSXASTByLookupIndex = (ast: t.File, lookupIndex: number) => {
   let result: NodePath<types.namedTypes.JSXElement, t.JSXElement> | undefined;
   traverseJSXElements(ast, (path, index) => {
-    if (index === lookUpId) result = path;
+    if (index === lookupIndex) result = path;
   });
   return result;
 };
@@ -162,7 +165,7 @@ export const getJSXElementForSourceCodePosition = (
   column: number
 ) => {
   let result: NodePath<types.namedTypes.JSXElement, t.JSXElement> | undefined;
-  let resultId: string | undefined;
+  let resultId: number | undefined;
   let tokenCount: number | undefined;
   traverseJSXElements(ast, (path, index) => {
     const { start, end } = path?.value?.loc || {};
@@ -179,10 +182,10 @@ export const getJSXElementForSourceCodePosition = (
       tokenCount = (end.token || 0) - (start.token || 0);
     }
   });
-  return { path: result, lookUpId: resultId };
+  return { path: result, lookupIndex: resultId };
 };
 
-// these are expected to be used in callbacks of editJSXElementByLookup and editStyledTemplateByLookup
+// these are expected to be used in callbacks of editJSXElementByLookupId and editStyledTemplateByLookup
 // as they mutate the ast
 
 export const addJSXChildToJSXElement = (

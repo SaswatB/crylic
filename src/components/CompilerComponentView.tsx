@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import produce from "immer";
 
+import { CodeEntry } from "../types/paint";
 import { Styles } from "../utils/ast-parsers";
 import { JSX_LOOKUP_DATA_ATTR } from "../utils/constants";
 import { webpackRunCode } from "../utils/run-code-webpack";
@@ -28,21 +29,35 @@ export const getComponentElementFromEvent = (
 
 export interface CompilerComponentViewRef {
   getElementAtPoint: (x: number, y: number) => Element | null | undefined;
-  getElementByLookupId: (lookUpId: string) => Element | null | undefined;
+  getElementByLookupId: (lookupId: string) => Element | null | undefined;
   // cleared on next compile
-  addTempStyles: (lookUpId: string, styles: Styles) => void;
+  addTempStyles: (lookupId: string, styles: Styles) => void;
+}
+
+interface Props {
+  codeEntries: CodeEntry[];
+  primaryCodeId: string;
+  codeTransformer: (codeEntry: CodeEntry) => string;
+  onCompileStart?: () => void;
+  onCompileEnd?: () => void;
 }
 
 export const CompilerComponentView: FunctionComponent<
-  {
-    code: string;
-    filePath?: string;
-    onCompileStart?: () => void;
-    onCompileEnd?: () => void;
-  } & React.IframeHTMLAttributes<HTMLIFrameElement> &
+  Props &
+    React.IframeHTMLAttributes<HTMLIFrameElement> &
     RefAttributes<CompilerComponentViewRef>
 > = forwardRef(
-  ({ code, filePath, onCompileStart, onCompileEnd, ...props }, ref) => {
+  (
+    {
+      codeEntries,
+      primaryCodeId,
+      codeTransformer,
+      onCompileStart,
+      onCompileEnd,
+      ...props
+    },
+    ref
+  ) => {
     const [tempStyles, setTempStyles] = useState<Record<string, Styles>>({});
     const [activeFrame, setActiveFrame] = useState(1);
     const frame1 = useRef<{
@@ -64,10 +79,10 @@ export const CompilerComponentView: FunctionComponent<
       );
     };
     const getElementByLookupId: CompilerComponentViewRef["getElementByLookupId"] = (
-      lookUpId
+      lookupId
     ) => {
       return getActiveFrame().current?.frameElement.contentDocument?.querySelector(
-        `[data-${JSX_LOOKUP_DATA_ATTR}="${lookUpId}"]`
+        `[data-${JSX_LOOKUP_DATA_ATTR}="${lookupId}"]`
       );
     };
 
@@ -86,13 +101,18 @@ export const CompilerComponentView: FunctionComponent<
 
     useEffect(() => {
       (async () => {
-        if (code) {
+        if (codeEntries.length) {
           try {
             onCompileStart?.();
             console.log("compiling");
-            const codeExports = await webpackRunCode(filePath, code, {
-              window: getInactiveFrame().current?.frameElement.contentWindow,
-            });
+            const codeExports = await webpackRunCode(
+              codeEntries,
+              primaryCodeId,
+              codeTransformer,
+              {
+                window: getInactiveFrame().current?.frameElement.contentWindow,
+              }
+            );
             setTempStyles({});
             // if nothing was returned, the compilation was likely preempted
             if (!codeExports) return;
@@ -115,13 +135,14 @@ export const CompilerComponentView: FunctionComponent<
         }
       })();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filePath, code]);
+    }, [codeEntries]);
 
     const applyTempStyles = (newTempStyles: typeof tempStyles) => {
-      Object.entries(newTempStyles).forEach(([lookUpId, styles]) => {
-        const element = getElementByLookupId(lookUpId) as HTMLElement;
+      Object.entries(newTempStyles).forEach(([lookupId, styles]) => {
+        const element = getElementByLookupId(lookupId) as HTMLElement;
         console.log("applying temp styles");
         styles.forEach(({ styleName, styleValue }) => {
+          // @ts-ignore ignore read-only css props
           element.style[styleName] = styleValue;
         });
       });
@@ -132,9 +153,9 @@ export const CompilerComponentView: FunctionComponent<
     useImperativeHandle(ref, () => ({
       getElementAtPoint,
       getElementByLookupId,
-      addTempStyles: (lookUpId, styles) => {
+      addTempStyles: (lookupId, styles) => {
         const newTempStyles = produce(tempStyles, (draft) => {
-          draft[lookUpId] = [...(draft[lookUpId] || []), ...styles];
+          draft[lookupId] = [...(draft[lookupId] || []), ...styles];
         });
         applyTempStyles(newTempStyles);
         setTempStyles(newTempStyles);
