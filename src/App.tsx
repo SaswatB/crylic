@@ -404,6 +404,37 @@ function App() {
     </div>
   );
 
+  const renderComponentViews = () =>
+    codeEntries
+      .filter((entry) => entry.filePath.match(/\.(jsx?|tsx?)$/))
+      .map((entry, index) => (
+        <div className="flex flex-col m-10">
+          {getFriendlyName(codeEntries, index)}
+          <div className="flex relative bg-white shadow-2xl">
+            <OverlayComponentView
+              compilerProps={{
+                ref(componentView) {
+                  componentViews.current[entry.id] = componentView;
+                },
+                codeEntries: codeEntries,
+                selectedCodeId: entry.id,
+                codeTransformer: codeTransformer,
+                onCompileStart: () => setLoading(true),
+                onCompileEnd: onComponentViewCompiled,
+                style: {
+                  width: `${frameSize.width}px`,
+                  height: `${frameSize.height}px`,
+                },
+              }}
+              selectMode={selectMode}
+              selectedElement={selectedElement}
+              onSelectElement={onOverlaySelectElement}
+              updateSelectedElementStyles={updateSelectedElementStyles}
+            />
+          </div>
+        </div>
+      ));
+
   return (
     <div className="flex flex-col items-stretch w-screen h-screen relative overflow-hidden text-white">
       <div className="flex flex-1 flex-row">
@@ -431,39 +462,7 @@ function App() {
               <React.Fragment>
                 {renderToolbar(actions)}
                 <TransformComponent>
-                  {codeEntries
-                    .filter((entry) => entry.filePath.match(/\.(jsx?|tsx?)$/))
-                    .map((entry, index) => (
-                      <div className="flex flex-col m-10">
-                        {getFriendlyName(codeEntries, index)}
-                        <div className="flex relative bg-white shadow-2xl">
-                          <OverlayComponentView
-                            compilerProps={{
-                              ref(componentView) {
-                                componentViews.current[
-                                  entry.id
-                                ] = componentView;
-                              },
-                              codeEntries: codeEntries,
-                              selectedCodeId: entry.id,
-                              codeTransformer: codeTransformer,
-                              onCompileStart: () => setLoading(true),
-                              onCompileEnd: onComponentViewCompiled,
-                              style: {
-                                width: `${frameSize.width}px`,
-                                height: `${frameSize.height}px`,
-                              },
-                            }}
-                            selectMode={selectMode}
-                            selectedElement={selectedElement}
-                            onSelectElement={onOverlaySelectElement}
-                            updateSelectedElementStyles={
-                              updateSelectedElementStyles
-                            }
-                          />
-                        </div>
-                      </div>
-                    ))}
+                  {renderComponentViews()}
                 </TransformComponent>
               </React.Fragment>
             )}
@@ -472,7 +471,7 @@ function App() {
         <EditorPane
           codeEntries={codeEntries}
           onCodeChange={(codeId, newCode) => {
-            setSelectedElement(undefined); // todo look into keeping the element selected, if possible
+            setSelectedElement(undefined);
             setCode(codeId, newCode);
           }}
           selectedElementId={selectedElement?.lookupId}
