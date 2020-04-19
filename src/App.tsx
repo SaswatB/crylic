@@ -1,22 +1,26 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { DraggableData, ResizableDelta, Rnd } from "react-rnd";
+import React, { useRef, useState } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import { CircularProgress } from "@material-ui/core";
-import { namedTypes as t } from "ast-types";
 import deepFreeze from "deep-freeze-strict";
 import { produce } from "immer";
-import { cloneDeep } from "lodash";
+import { camelCase, cloneDeep, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
 
 import {
-  CompilerComponentView,
   CompilerComponentViewRef,
-  getComponentElementFromEvent,
+  GetElementByLookupId,
 } from "./components/CompilerComponentView";
 import { EditorPane } from "./components/EditorPane";
+import { InputModal } from "./components/InputModal";
+import { OverlayComponentView } from "./components/OverlayComponentView";
 import { SideBar } from "./components/SideBar";
 import { useDebounce } from "./hooks/useDebounce";
-import { CodeEntry, OutlineElement, SelectedElement } from "./types/paint";
+import {
+  CodeEntry,
+  CodeEntryLookupDataMap,
+  OutlineElement,
+  SelectedElement,
+} from "./types/paint";
 import {
   createLookupId,
   getCodeIdFromLookupId,
@@ -28,7 +32,6 @@ import {
 import {
   addJSXChildToJSXElement,
   addLookupData,
-  AddLookupDataResult,
   applyJSXInlineStyleAttribute,
   applyStyledStyleAttribute,
   editJSXElementByLookupId,
@@ -38,7 +41,7 @@ import {
   Styles,
 } from "./utils/ast-parsers";
 import {
-  BOILER_PLATE_CODE,
+  getBoilerPlateComponent,
   JSX_LOOKUP_DATA_ATTR,
   JSX_LOOKUP_ROOT,
   JSX_RECENTLY_ADDED,
@@ -51,300 +54,37 @@ import "./App.scss";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 
-let lastDragResizeHandled = 0;
-function useOverlay(
-  componentView: CompilerComponentViewRef | null,
-  selectedElement?: SelectedElement,
-  selectMode?: SelectModes,
-  onSelect?: (componentElement: Element | null | undefined) => void,
-  onMoveResizeSelection?: (
-    deltaX: number | undefined,
-    totalDeltaX: number | undefined,
-    deltaY: number | undefined,
-    totalDeltaY: number | undefined,
-    width: string | undefined,
-    height: string | undefined,
-    preview?: boolean
-  ) => void
-) {
-  const [highlightBox, setHighlightBox] = useState<DOMRect>();
-  const onOverlayMove = (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
-  ) => {
-    const componentElement = getComponentElementFromEvent(event, componentView);
-    const lookupId = (componentElement as HTMLElement)?.dataset[
-      JSX_LOOKUP_DATA_ATTR
-    ];
-    if (
-      lookupId &&
-      (selectMode !== SelectModes.SelectElement || lookupId !== JSX_LOOKUP_ROOT)
-    ) {
-      setHighlightBox(componentElement?.getBoundingClientRect());
-    } else {
-      setHighlightBox(undefined);
-    }
-  };
-  const onOverlayClick = (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
-  ) => {
-    console.log("onOverlayClick", Date.now() - lastDragResizeHandled);
-    // todo find a better way to prevent this misfire then this hack
-    if (selectMode === undefined && Date.now() - lastDragResizeHandled < 500) {
-      return;
-    }
-    lastDragResizeHandled = 0;
-    const componentElement = getComponentElementFromEvent(event, componentView);
-    onSelect?.(componentElement);
-  };
-
-  const [tempOffset, setTempOffset] = useState({
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0,
-  });
-  useEffect(() => setTempOffset({ x: 0, y: 0, width: 0, height: 0 }), [
-    selectedElement,
-  ]);
-  const {
-    selectedElementBoundingBox,
-    selectedElementParentBoundingBox,
-  } = useMemo(() => {
-    if (!selectedElement) return {};
-
-    const componentElement = componentView?.getElementByLookupId(
-      selectedElement?.lookupId
-    );
-    const pbcr =
-      selectedElement?.computedStyles.position === "static"
-        ? componentElement?.parentElement?.getBoundingClientRect()
-        : undefined;
-    const bcr = componentElement?.getBoundingClientRect();
-    if (pbcr && bcr) {
-      bcr.x -= pbcr.x;
-      bcr.y -= pbcr.y;
-    }
-
-    return {
-      selectedElementParentBoundingBox: pbcr,
-      selectedElementBoundingBox: bcr,
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedElement]);
-
-  const onResizeSelection = (
-    ref: HTMLDivElement,
-    delta: ResizableDelta,
-    preview?: boolean
-  ) => {
-    if (delta.height) {
-      if (delta.width) {
-        onMoveResizeSelection?.(
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          ref.style.width,
-          ref.style.height,
-          preview
-        );
-      } else {
-        onMoveResizeSelection?.(
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          ref.style.height,
-          preview
-        );
-      }
-    } else {
-      onMoveResizeSelection?.(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        ref.style.width,
-        undefined,
-        preview
-      );
-    }
-  };
-
-  const selectEnabled = selectMode !== undefined;
-  const [draggingHighlight, setDraggingHighlight] = useState<DraggableData>();
-  const previewDraggingHighlight = useRef({ dx: 0, dy: 0 });
-  const renderOverlay = () => (
-    <div
-      className="absolute inset-0"
-      onMouseMove={selectEnabled ? onOverlayMove : undefined}
-      onMouseLeave={() => setHighlightBox(undefined)}
-      onClick={onOverlayClick}
-    >
-      {selectEnabled && highlightBox ? (
-        <div
-          className="absolute border-blue-300 border-solid pointer-events-none"
-          style={{
-            top: highlightBox.top,
-            left: highlightBox.left,
-            width: highlightBox.width,
-            height: highlightBox.height,
-            borderWidth: selectEnabled && highlightBox ? "4px" : "2px",
-          }}
-        />
-      ) : (
-        selectedElementBoundingBox && (
-          <div
-            className="absolute"
-            style={
-              selectedElementParentBoundingBox
-                ? {
-                    top: selectedElementParentBoundingBox.top,
-                    left: selectedElementParentBoundingBox.left,
-                    width: selectedElementParentBoundingBox.width,
-                    height: selectedElementParentBoundingBox.height,
-                  }
-                : {
-                    top: 0,
-                    left: 0,
-                    bottom: 0,
-                    right: 0,
-                  }
-            }
-          >
-            <Rnd
-              className="border-2 border-blue-300 border-solid"
-              size={{
-                width: selectedElementBoundingBox.width + tempOffset.width,
-                height: selectedElementBoundingBox.height + tempOffset.height,
-              }}
-              position={{
-                x: selectedElementBoundingBox.x + tempOffset.x,
-                y: selectedElementBoundingBox.y + tempOffset.y,
-              }}
-              enableResizing={{
-                bottom: true,
-                right: true,
-                bottomRight: true,
-
-                top: false,
-                left: false,
-                topLeft: false,
-                topRight: false,
-                bottomLeft: false,
-              }}
-              bounds="parent"
-              onDragStart={(e, d) => {
-                setDraggingHighlight(cloneDeep(d));
-                previewDraggingHighlight.current.dx = 0;
-                previewDraggingHighlight.current.dy = 0;
-              }}
-              onDrag={(e, d) => {
-                const deltaX =
-                  d.x -
-                  (draggingHighlight?.x || 0) -
-                  previewDraggingHighlight.current.dx;
-                const deltaY =
-                  d.y -
-                  (draggingHighlight?.y || 0) -
-                  previewDraggingHighlight.current.dy;
-                onMoveResizeSelection?.(
-                  deltaX,
-                  undefined,
-                  deltaY,
-                  undefined,
-                  undefined,
-                  undefined,
-                  true
-                );
-                previewDraggingHighlight.current.dx += deltaX;
-                previewDraggingHighlight.current.dy += deltaY;
-              }}
-              onDragStop={(e, d) => {
-                console.log("onDragStop", draggingHighlight, d);
-                setDraggingHighlight(undefined);
-                const deltaX = d.x - (draggingHighlight?.x || 0);
-                const deltaY = d.y - (draggingHighlight?.y || 0);
-                if (deltaX || deltaY) {
-                  lastDragResizeHandled = Date.now();
-                  const offsetDeltaX =
-                    deltaX - previewDraggingHighlight.current.dx;
-                  const offsetDeltaY =
-                    deltaY - previewDraggingHighlight.current.dy;
-                  onMoveResizeSelection?.(
-                    offsetDeltaX,
-                    deltaX,
-                    offsetDeltaY,
-                    deltaY,
-                    undefined,
-                    undefined
-                  );
-                  setTempOffset(
-                    produce((draft) => {
-                      draft.x += deltaX;
-                      draft.y += deltaY;
-                    })
-                  );
-                }
-              }}
-              onResize={(e, direction, ref, delta, position) =>
-                onResizeSelection(ref, delta, true)
-              }
-              onResizeStop={(e, direction, ref, delta, position) => {
-                if (!delta.width && !delta.height) return;
-                console.log("onResizeStop");
-
-                lastDragResizeHandled = Date.now();
-                setTempOffset(
-                  produce((draft) => {
-                    draft.width += delta.width;
-                    draft.height += delta.height;
-                  })
-                );
-                onResizeSelection(ref, delta);
-              }}
-            />
-          </div>
-        )
-      )}
-    </div>
-  );
-  return [!!draggingHighlight, renderOverlay] as const;
-}
-
-const buildOutline = (element: Element): OutlineElement[] =>
-  Array.from(element.children)
-    .map((child) => {
-      if (JSX_LOOKUP_DATA_ATTR in (child as HTMLElement).dataset) {
-        return [
-          {
-            tag: child.tagName,
-            lookupId: (child as HTMLElement).dataset[JSX_LOOKUP_DATA_ATTR]!,
-            children: buildOutline(child),
-          },
-        ];
-      }
-      return buildOutline(child);
-    })
-    .reduce((p, c) => [...p, ...c], []);
-
 function App() {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
   const [debouncedLoading, skipLoadingDebounce] = useDebounce(loading, 700);
   const [codeEntriesLookupData, setCodeEntriesLookupData] = useState<
-    Record<string, (AddLookupDataResult & { ast: t.File }) | undefined>
+    CodeEntryLookupDataMap
   >({});
-  const componentView = useRef<CompilerComponentViewRef>(null);
+  const componentViews = useRef<
+    Record<string, CompilerComponentViewRef | null | undefined>
+  >({});
 
-  const setCode = (codeId: string, code: string) => {
+  const [codeEntries, setCodeEntries] = useState<CodeEntry[]>([]);
+  const setCode = (codeId: string, code: string) =>
     setCodeEntries(
       produce((draft: CodeEntry[]) => {
         (
           draft.find((entry) => entry.id === codeId) ||
           ({} as Partial<CodeEntry>)
         ).code = code;
+      })
+    );
+  const addCodeEntry = (
+    partialEntry: Partial<CodeEntry> & { filePath: string }
+  ) => {
+    setCodeEntries(
+      produce((draft: CodeEntry[]) => {
+        draft.push({
+          id: hashString(partialEntry.filePath),
+          code: "",
+          ...partialEntry,
+        });
       })
     );
   };
@@ -377,12 +117,23 @@ function App() {
   };
 
   const [outline, setOutline] = useState<OutlineElement[]>([]);
-  const compileTasks = useRef<Function[]>([]);
-  const onComponentViewCompiled = () => {
+  const compileTasks = useRef<
+    Record<
+      string,
+      ((getElementByLookupId: GetElementByLookupId) => void)[] | undefined
+    >
+  >({});
+  const onComponentViewCompiled = (
+    codeId: string,
+    getElementByLookupId: GetElementByLookupId
+  ) => {
     skipLoadingDebounce();
     setLoading(false);
-    if (selectedElement) {
-      const newSelectedComponent = componentView.current?.getElementByLookupId(
+    if (
+      selectedElement &&
+      getCodeIdFromLookupId(selectedElement.lookupId) === codeId
+    ) {
+      const newSelectedComponent = getElementByLookupId(
         selectedElement.lookupId
       );
       if (newSelectedComponent) {
@@ -396,75 +147,139 @@ function App() {
       }
     }
 
-    const root = componentView.current?.getElementByLookupId(JSX_LOOKUP_ROOT);
-    if (root) setOutline(buildOutline(root));
+    // const root = getElementByLookupId(JSX_LOOKUP_ROOT);
+    // if (root) setOutline(buildOutline(root));
 
-    compileTasks.current.forEach((task) => task());
-    compileTasks.current = [];
+    compileTasks.current[codeId]?.forEach((task) => task(getElementByLookupId));
+    compileTasks.current[codeId] = [];
+  };
+
+  const onOverlaySelectElement = (
+    componentElement: HTMLElement,
+    componentView: CompilerComponentViewRef
+  ) => {
+    switch (selectMode) {
+      default:
+      case SelectModes.SelectElement:
+        console.log(
+          "setting selected from manual selection",
+          (componentElement as HTMLElement).dataset?.[JSX_LOOKUP_DATA_ATTR]
+        );
+        selectElement(componentElement);
+        break;
+      case SelectModes.AddElement: {
+        const lookupId = componentElement.dataset?.[JSX_LOOKUP_DATA_ATTR];
+        if (!lookupId) break;
+
+        const codeId = getCodeIdFromLookupId(lookupId);
+        const lookupData = codeEntriesLookupData[codeId];
+        if (!lookupData) break;
+
+        let madeChange = false;
+        const newAst = removeLookupData(
+          editJSXElementByLookupId(lookupData.ast, lookupId, (path) => {
+            addJSXChildToJSXElement(path.value, "div", {
+              [`data-${JSX_RECENTLY_ADDED_DATA_ATTR}`]: JSX_RECENTLY_ADDED,
+              style: { display: "flex" },
+            });
+            madeChange = true;
+          })
+        );
+
+        if (madeChange) {
+          const {
+            ast: newAst2,
+            resultIndex: newChildLookupIndex,
+          } = removeRecentlyAddedDataAttrAndGetLookupId(newAst);
+
+          if (newChildLookupIndex !== undefined) {
+            const newChildLookupId = createLookupId(
+              codeId,
+              newChildLookupIndex
+            );
+            // try to select the newly added element when the CompilerComponentView next compiles
+            compileTasks.current[codeId] = compileTasks.current[codeId] || [];
+            compileTasks.current[codeId]!.push((getElementByLookupId) => {
+              const newChildComponent = getElementByLookupId(newChildLookupId!);
+              if (newChildComponent) {
+                console.log(
+                  "setting selected element through post-child add",
+                  newChildLookupId
+                );
+                selectElement(newChildComponent as HTMLElement);
+              }
+            });
+          }
+
+          setCode(codeId, prettyPrintAST(newAst2));
+        }
+        break;
+      }
+    }
+
+    setSelectMode(undefined);
   };
 
   const updateSelectedElementStyles = (styles: Styles, preview?: boolean) => {
-    if (selectedElement) {
-      componentView.current?.addTempStyles(
-        selectedElement.lookupId,
-        styles,
-        !preview
-      );
-      // preview is a flag used to quickly show updates in the dom
-      // there shouldn't be any expensive calculations done when it's on
-      // such as changing state or parsing ast
-      if (preview) return;
+    if (!selectedElement) return;
 
-      const codeId = getCodeIdFromLookupId(selectedElement.lookupId);
-      const lookupData = codeEntriesLookupData[codeId];
-      const selectedComponent = componentView.current?.getElementByLookupId(
-        selectedElement.lookupId
-      );
-      const selectedComponentStyledLookupId =
-        selectedComponent &&
-        lookupData?.styledElementLookupIds.find((lookupId) => {
-          return !!window
-            .getComputedStyle(selectedComponent)
-            .getPropertyValue(`${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookupId}`);
-        });
+    const componentView =
+      componentViews.current[getCodeIdFromLookupId(selectedElement.lookupId)];
+    componentView?.addTempStyles(selectedElement.lookupId, styles, !preview);
+    // preview is a flag used to quickly show updates in the dom
+    // there shouldn't be any expensive calculations done when it's on
+    // such as changing state or parsing ast
+    if (preview) return;
 
-      console.log(
-        "updateSelectedElementStyles",
-        styles,
-        selectedElement,
-        lookupData
-      );
-      let madeChange = false;
-      const newAst = removeLookupData(
-        selectedComponentStyledLookupId
-          ? editStyledTemplateByLookup(
-              lookupData!.ast,
-              selectedComponentStyledLookupId,
-              (path) => {
-                applyStyledStyleAttribute(path, styles);
-                madeChange = true;
-              }
-            )
-          : editJSXElementByLookupId(
-              lookupData!.ast,
-              selectedElement.lookupId,
-              (path) => {
-                applyJSXInlineStyleAttribute(path, styles);
-                madeChange = true;
-              }
-            )
-      );
-      console.log(
-        "updateSelectedElementStyle change",
-        madeChange,
-        styles,
-        lookupData!.ast,
-        newAst
-      );
+    const codeId = getCodeIdFromLookupId(selectedElement.lookupId);
+    const lookupData = codeEntriesLookupData[codeId];
+    const selectedComponent = componentView?.getElementByLookupId(
+      selectedElement.lookupId
+    );
+    const selectedComponentStyledLookupId =
+      selectedComponent &&
+      lookupData?.styledElementLookupIds.find((lookupId) => {
+        return !!window
+          .getComputedStyle(selectedComponent)
+          .getPropertyValue(`${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookupId}`);
+      });
 
-      if (madeChange) {
-        setCode(codeId, prettyPrintAST(newAst));
-      }
+    console.log(
+      "updateSelectedElementStyles",
+      styles,
+      selectedElement,
+      lookupData
+    );
+    let madeChange = false;
+    const newAst = removeLookupData(
+      selectedComponentStyledLookupId
+        ? editStyledTemplateByLookup(
+            lookupData!.ast,
+            selectedComponentStyledLookupId,
+            (path) => {
+              applyStyledStyleAttribute(path, styles);
+              madeChange = true;
+            }
+          )
+        : editJSXElementByLookupId(
+            lookupData!.ast,
+            selectedElement.lookupId,
+            (path) => {
+              applyJSXInlineStyleAttribute(path, styles);
+              madeChange = true;
+            }
+          )
+    );
+    console.log(
+      "updateSelectedElementStyle change",
+      madeChange,
+      styles,
+      lookupData!.ast,
+      newAst
+    );
+
+    if (madeChange) {
+      setCode(codeId, prettyPrintAST(newAst));
     }
   };
 
@@ -484,128 +299,6 @@ function App() {
     }
   };
 
-  const [draggingHighlight, renderOverlay] = useOverlay(
-    componentView.current,
-    selectedElement,
-    selectMode,
-    (componentElement) => {
-      switch (selectMode) {
-        default:
-        case SelectModes.SelectElement:
-          if (componentElement) {
-            console.log(
-              "setting selected from manual selection",
-              (componentElement as any).dataset?.[JSX_LOOKUP_DATA_ATTR]
-            );
-            selectElement(componentElement as HTMLElement);
-          }
-          break;
-        case SelectModes.AddDivElement: {
-          if (!codeEntries.length) {
-            setCodeEntries([
-              {
-                id: "new",
-                filePath: "/src/components/MyComponent.tsx",
-                code: BOILER_PLATE_CODE,
-              },
-            ]);
-            setSelectMode(undefined);
-            enqueueSnackbar("Started a new component!");
-            break;
-          }
-
-          const lookupId = (componentElement as HTMLElement)?.dataset?.[
-            JSX_LOOKUP_DATA_ATTR
-          ];
-          if (!lookupId) break;
-          const codeId = getCodeIdFromLookupId(lookupId);
-          const lookupData = codeEntriesLookupData[codeId];
-          if (!lookupData) break;
-
-          let madeChange = false;
-          const newAst = removeLookupData(
-            editJSXElementByLookupId(lookupData.ast, lookupId, (path) => {
-              addJSXChildToJSXElement(path.value, "div", {
-                [`data-${JSX_RECENTLY_ADDED_DATA_ATTR}`]: JSX_RECENTLY_ADDED,
-                style: { display: "flex" },
-              });
-              madeChange = true;
-            })
-          );
-
-          if (madeChange) {
-            const {
-              ast: newAst2,
-              resultIndex: newChildLookupIndex,
-            } = removeRecentlyAddedDataAttrAndGetLookupId(newAst);
-
-            if (newChildLookupIndex !== undefined) {
-              const newChildLookupId = createLookupId(
-                codeId,
-                newChildLookupIndex
-              );
-              // try to select the newly added element when the CompilerComponentView next compiles
-              compileTasks.current.push(() => {
-                const newChildComponent = componentView.current?.getElementByLookupId(
-                  newChildLookupId!
-                );
-                if (newChildComponent) {
-                  console.log(
-                    "setting selected element through post-child add",
-                    newChildLookupId
-                  );
-                  selectElement(newChildComponent as HTMLElement);
-                }
-              });
-            }
-
-            setCode(codeId, prettyPrintAST(newAst2));
-          }
-          break;
-        }
-      }
-
-      setSelectMode(undefined);
-    },
-    (deltaX, totalDeltaX, deltaY, totalDeltaY, width, height, preview) => {
-      if (
-        !deltaX &&
-        !totalDeltaX &&
-        !deltaY &&
-        !totalDeltaY &&
-        !width &&
-        !height
-      )
-        return;
-      const styles: Styles = [];
-
-      if (deltaX || totalDeltaX) {
-        const currentMarginLeft = parseInt(
-          selectedElement?.computedStyles.marginLeft.replace("px", "") || "0"
-        );
-        const newMarginLeft = (currentMarginLeft + deltaX!).toFixed(0);
-        styles.push({
-          styleName: "marginLeft",
-          styleValue: `${newMarginLeft}px`,
-        });
-      }
-      if (deltaY || totalDeltaY) {
-        const currentMarginTop = parseInt(
-          selectedElement?.computedStyles.marginTop.replace("px", "") || "0"
-        );
-        const newMarginTop = (currentMarginTop + deltaY!).toFixed(0);
-        styles.push({
-          styleName: "marginTop",
-          styleValue: `${newMarginTop}px`,
-        });
-      }
-      if (width) styles.push({ styleName: "width", styleValue: width });
-      if (height) styles.push({ styleName: "height", styleValue: height });
-
-      updateSelectedElementStyles(styles, preview);
-    }
-  );
-
   const renderSelectBar = () => (
     <div className="flex justify-center items-center absolute bottom-0 left-0 right-0 p-1 bg-blue-600 text-white text-sm text-center">
       <div className="flex-1" />
@@ -621,34 +314,53 @@ function App() {
   );
 
   const [frameSize, setFrameSize] = useState({ width: "600", height: "300" });
-  const [codeEntries, setCodeEntries] = useState<CodeEntry[]>([]);
   const renderSideBar = () => (
     <SideBar
       outline={outline}
+      codeEntries={codeEntries}
       selectedElement={selectedElement}
       onChangeSelectMode={setSelectMode}
       updateSelectedElementStyle={updateSelectedElementStyle}
-      onChangeFrameSize={(width, height) =>
+      onChangeFrameSize={(width, height) => {
         setFrameSize(
           produce((draft) => {
             if (width) draft.width = width;
             if (height) draft.height = height;
           })
-        )
-      }
-      onOpenFile={(filePath) => {
-        setCodeEntries(
-          produce((draft: CodeEntry[]) => {
-            draft.push({
-              id: hashString(filePath),
-              filePath,
-              code: fs.readFileSync(filePath, { encoding: "utf-8" }),
-            });
-          })
         );
       }}
+      onNewComponent={async () => {
+        const inputName = await InputModal({
+          title: "New Component",
+          message: "Please enter a component name",
+        });
+        if (!inputName) return;
+        // todo add validation/duplicate checking to name
+        const name = upperFirst(camelCase(inputName));
+        const filePath = `/src/components/${name}.tsx`;
+        const code = getBoilerPlateComponent(name);
+        addCodeEntry({ filePath, code });
+        enqueueSnackbar("Started a new component!");
+      }}
+      onNewStyleSheet={async () => {
+        const inputName = await InputModal({
+          title: "New StyleSheet",
+          message: "Please enter a stylesheet name",
+        });
+        if (!inputName) return;
+        // todo add validation/duplicate checking to name
+        const name = upperFirst(camelCase(inputName));
+        const filePath = `/src/styles/${name}.css`;
+        addCodeEntry({ filePath });
+        enqueueSnackbar("Started a new component!");
+      }}
+      onOpenFile={(filePath) => {
+        // todo handle file not found or reopening an open file
+        const code = fs.readFileSync(filePath, { encoding: "utf-8" });
+        addCodeEntry({ filePath, code });
+      }}
       onSaveFile={() => {
-        if (codeEntries) {
+        if (codeEntries.length) {
           codeEntries.forEach(({ filePath, code }) =>
             fs.writeFileSync(filePath, code)
           );
@@ -657,6 +369,39 @@ function App() {
         }
       }}
     />
+  );
+
+  const renderToolbar = ({ zoomIn, zoomOut, resetTransform }: any) => (
+    <div className="flex absolute top-0 left-0 right-0 z-10">
+      <div className="btngrp-h">
+        <button
+          className="btn px-4 rounded-l-none rounded-tr-none"
+          onClick={() => setSelectMode(SelectModes.SelectElement)}
+        >
+          Select Element
+        </button>
+        {selectedElement && (
+          <button
+            className="btn px-4 rounded-tr-none"
+            onClick={() => setSelectedElement(undefined)}
+          >
+            Clear Selected Element
+          </button>
+        )}
+      </div>
+      <div className="flex-1" />
+      <div className="btngrp-h">
+        <button className="btn px-4 rounded-tl-none" onClick={zoomIn}>
+          +
+        </button>
+        <button className="btn px-4" onClick={zoomOut}>
+          -
+        </button>
+        <button className="btn px-4 rounded-r-none" onClick={resetTransform}>
+          x
+        </button>
+      </div>
+    </div>
   );
 
   return (
@@ -676,73 +421,49 @@ function App() {
           )}
           <TransformWrapper
             defaultScale={1}
-            pan={{
-              disabled: draggingHighlight,
-            }}
             options={{
               minScale: 0.01,
               maxScale: 3,
               limitToBounds: false,
             }}
           >
-            {({ zoomIn, zoomOut, resetTransform }: any) => (
+            {(actions: any) => (
               <React.Fragment>
-                <div className="flex absolute top-0 left-0 right-0 z-10">
-                  <div className="btngrp-h">
-                    <button
-                      className="btn px-4 rounded-l-none rounded-tr-none"
-                      onClick={() => setSelectMode(SelectModes.SelectElement)}
-                    >
-                      Select Element
-                    </button>
-                    {selectedElement && (
-                      <button
-                        className="btn px-4 rounded-tr-none"
-                        onClick={() => setSelectedElement(undefined)}
-                      >
-                        Clear Selected Element
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex-1" />
-                  <div className="btngrp-h">
-                    <button
-                      className="btn px-4 rounded-tl-none"
-                      onClick={zoomIn}
-                    >
-                      +
-                    </button>
-                    <button className="btn px-4" onClick={zoomOut}>
-                      -
-                    </button>
-                    <button
-                      className="btn px-4 rounded-r-none"
-                      onClick={resetTransform}
-                    >
-                      x
-                    </button>
-                  </div>
-                </div>
+                {renderToolbar(actions)}
                 <TransformComponent>
-                  <div className="flex flex-col">
-                    {getFriendlyName(codeEntries, 0)}
-                    <div className="flex relative bg-white shadow-2xl">
-                      <CompilerComponentView
-                        ref={componentView}
-                        codeEntries={codeEntries}
-                        selectedCodeId={codeEntries[0]?.id} // todo support switching between components shown
-                        codeTransformer={codeTransformer}
-                        onCompileStart={() => setLoading(true)}
-                        onCompileEnd={onComponentViewCompiled}
-                        style={{
-                          width: `${frameSize.width}px`,
-                          height: `${frameSize.height}px`,
-                        }}
-                      />
-                      {(selectMode !== undefined || selectedElement) &&
-                        renderOverlay()}
-                    </div>
-                  </div>
+                  {codeEntries
+                    .filter((entry) => entry.filePath.match(/\.(jsx?|tsx?)$/))
+                    .map((entry, index) => (
+                      <div className="flex flex-col m-10">
+                        {getFriendlyName(codeEntries, index)}
+                        <div className="flex relative bg-white shadow-2xl">
+                          <OverlayComponentView
+                            compilerProps={{
+                              ref(componentView) {
+                                componentViews.current[
+                                  entry.id
+                                ] = componentView;
+                              },
+                              codeEntries: codeEntries,
+                              selectedCodeId: entry.id,
+                              codeTransformer: codeTransformer,
+                              onCompileStart: () => setLoading(true),
+                              onCompileEnd: onComponentViewCompiled,
+                              style: {
+                                width: `${frameSize.width}px`,
+                                height: `${frameSize.height}px`,
+                              },
+                            }}
+                            selectMode={selectMode}
+                            selectedElement={selectedElement}
+                            onSelectElement={onOverlaySelectElement}
+                            updateSelectedElementStyles={
+                              updateSelectedElementStyles
+                            }
+                          />
+                        </div>
+                      </div>
+                    ))}
                 </TransformComponent>
               </React.Fragment>
             )}
@@ -751,14 +472,16 @@ function App() {
         <EditorPane
           codeEntries={codeEntries}
           onCodeChange={(codeId, newCode) => {
-            setSelectedElement(undefined); // todo look into keeping the element selected if possible
+            setSelectedElement(undefined); // todo look into keeping the element selected, if possible
             setCode(codeId, newCode);
           }}
           selectedElementId={selectedElement?.lookupId}
           onSelectElement={(lookupId) => {
-            const newSelectedComponent = componentView.current?.getElementByLookupId(
-              lookupId
-            );
+            const newSelectedComponent = Object.values(componentViews.current)
+              .map((componentView) =>
+                componentView?.getElementByLookupId(lookupId)
+              )
+              .filter((e) => !!e)[0];
             if (newSelectedComponent) {
               console.log(
                 "setting selected element through editor cursor update",

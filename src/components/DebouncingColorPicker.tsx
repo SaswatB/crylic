@@ -2,6 +2,8 @@ import React, { FunctionComponent, useEffect, useRef, useState } from "react";
 import { debounce } from "lodash";
 import ColorPicker from "rc-color-picker";
 
+import { useUpdatingRef } from "../hooks/useUpdatingRef";
+
 interface Props {
   value: string;
   onChange: (c: string) => void;
@@ -12,8 +14,7 @@ export const DebouncingColorPicker: FunctionComponent<Props> = ({
   onChange,
   onTempChange,
 }) => {
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
+  const onChangeRef = useUpdatingRef(onChange);
   const debounceOnChangeRef = useRef(
     debounce((c: string) => onChangeRef.current(c), 300)
   );

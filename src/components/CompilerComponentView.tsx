@@ -11,6 +11,7 @@ import React, {
 import produce from "immer";
 
 import { useDebounce } from "../hooks/useDebounce";
+import { useUpdatingRef } from "../hooks/useUpdatingRef";
 import { CodeEntry } from "../types/paint";
 import { Styles } from "../utils/ast-parsers";
 import { JSX_LOOKUP_DATA_ATTR } from "../utils/constants";
@@ -20,7 +21,7 @@ import { Frame } from "./Frame";
 
 export const getComponentElementFromEvent = (
   event: React.MouseEvent<HTMLDivElement, MouseEvent>,
-  componentView: CompilerComponentViewRef | null
+  componentView: CompilerComponentViewRef | null | undefined
 ) => {
   const boundingBox = (event.target as HTMLDivElement).getBoundingClientRect();
   const x = event.clientX - boundingBox.x;
@@ -28,9 +29,13 @@ export const getComponentElementFromEvent = (
   return componentView?.getElementAtPoint(x, y);
 };
 
+export type GetElementByLookupId = (
+  lookupId: string
+) => Element | null | undefined;
+
 export interface CompilerComponentViewRef {
   getElementAtPoint: (x: number, y: number) => Element | null | undefined;
-  getElementByLookupId: (lookupId: string) => Element | null | undefined;
+  getElementByLookupId: GetElementByLookupId;
   // cleared on next compile
   addTempStyles: (
     lookupId: string,
@@ -39,16 +44,19 @@ export interface CompilerComponentViewRef {
   ) => void;
 }
 
-interface Props {
+export interface CompilerComponentViewProps {
   codeEntries: CodeEntry[];
   selectedCodeId: string;
   codeTransformer: (codeEntry: CodeEntry) => string;
   onCompileStart?: () => void;
-  onCompileEnd?: () => void;
+  onCompileEnd?: (
+    codeId: string,
+    getElementByLookupId: GetElementByLookupId
+  ) => void;
 }
 
 export const CompilerComponentView: FunctionComponent<
-  Props &
+  CompilerComponentViewProps &
     React.IframeHTMLAttributes<HTMLIFrameElement> &
     RefAttributes<CompilerComponentViewRef>
 > = forwardRef(
@@ -74,22 +82,29 @@ export const CompilerComponentView: FunctionComponent<
       resetFrame: () => void;
     }>(null);
 
-    const getElementAtPoint: CompilerComponentViewRef["getElementAtPoint"] = (
-      x,
-      y
-    ) => {
-      return getActiveFrame().current?.frameElement.contentDocument?.elementFromPoint(
-        x,
-        y
-      );
+    const handle: CompilerComponentViewRef = {
+      getElementAtPoint(x, y) {
+        const iframeDocument = getActiveFrame().current?.frameElement
+          .contentDocument;
+        return iframeDocument?.elementFromPoint(x, y);
+      },
+      getElementByLookupId(lookupId) {
+        const iframeDocument = getActiveFrame().current?.frameElement
+          .contentDocument;
+        return iframeDocument?.querySelector(
+          `[data-${JSX_LOOKUP_DATA_ATTR}="${lookupId}"]`
+        );
+      },
+      addTempStyles(lookupId, styles, persistRender) {
+        const newTempStyles = produce(tempStyles, (draft) => {
+          draft[lookupId] = [...(draft[lookupId] || []), ...styles];
+        });
+        applyTempStyles(newTempStyles);
+        if (persistRender) setTempStyles(newTempStyles);
+      },
     };
-    const getElementByLookupId: CompilerComponentViewRef["getElementByLookupId"] = (
-      lookupId
-    ) => {
-      return getActiveFrame().current?.frameElement.contentDocument?.querySelector(
-        `[data-${JSX_LOOKUP_DATA_ATTR}="${lookupId}"]`
-      );
-    };
+    const handleRef = useUpdatingRef(handle);
+    useImperativeHandle(ref, () => handle);
 
     const getActiveFrame = () => (activeFrame === 1 ? frame1 : frame2);
     const getInactiveFrame = () => (activeFrame === 1 ? frame2 : frame1);
@@ -99,7 +114,11 @@ export const CompilerComponentView: FunctionComponent<
     useEffect(() => {
       if (onCompileEnd) {
         // wait until the dom is fully updated so that getElementByLookupId can work with the updated view
-        setTimeout(() => requestAnimationFrame(() => onCompileEnd()));
+        setTimeout(() =>
+          requestAnimationFrame(() =>
+            onCompileEnd(selectedCodeId, handleRef.current.getElementByLookupId)
+          )
+        );
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [CompiledElement]);
@@ -122,6 +141,7 @@ export const CompilerComponentView: FunctionComponent<
             setTempStyles({});
             // if nothing was returned, the compilation was likely preempted
             if (!codeExports) return;
+            console.log("codeExports", codeExports);
 
             setCompiledElement(() =>
               Object.values(codeExports).find(
@@ -136,7 +156,7 @@ export const CompilerComponentView: FunctionComponent<
             }
           } catch (e) {
             console.log(e);
-            onCompileEnd?.();
+            onCompileEnd?.(selectedCodeId, handle.getElementByLookupId);
           }
         }
       })();
@@ -145,7 +165,7 @@ export const CompilerComponentView: FunctionComponent<
 
     const applyTempStyles = (newTempStyles: typeof tempStyles) => {
       Object.entries(newTempStyles).forEach(([lookupId, styles]) => {
-        const element = getElementByLookupId(lookupId) as HTMLElement;
+        const element = handle.getElementByLookupId(lookupId) as HTMLElement;
         console.log("applying temp styles");
         styles.forEach(({ styleName, styleValue }) => {
           // @ts-ignore ignore read-only css props
@@ -155,18 +175,6 @@ export const CompilerComponentView: FunctionComponent<
     };
 
     useLayoutEffect(() => applyTempStyles(tempStyles));
-
-    useImperativeHandle(ref, () => ({
-      getElementAtPoint,
-      getElementByLookupId,
-      addTempStyles: (lookupId, styles, persistRender) => {
-        const newTempStyles = produce(tempStyles, (draft) => {
-          draft[lookupId] = [...(draft[lookupId] || []), ...styles];
-        });
-        applyTempStyles(newTempStyles);
-        if (persistRender) setTempStyles(newTempStyles);
-      },
-    }));
 
     const renderFrameContent = () => (
       <ErrorBoundary

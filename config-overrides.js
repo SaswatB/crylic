@@ -1,10 +1,6 @@
 const ReactRefreshPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
-const {
-  addBabelPlugin,
-  addWebpackPlugin,
-  override,
-} = require("customize-cra");
+const { addBabelPlugin, addWebpackPlugin, override } = require("customize-cra");
 
 module.exports = override(
   (config) => require("react-app-rewire-postcss")(config, true),

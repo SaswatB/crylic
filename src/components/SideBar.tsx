@@ -11,11 +11,13 @@ import {
   useSelectInput,
   useTextInput,
 } from "../hooks/useInput";
-import { OutlineElement, SelectedElement } from "../types/paint";
+import { CodeEntry, OutlineElement, SelectedElement } from "../types/paint";
 import {
+  CSS_ALIGN_ITEMS_OPTIONS,
   CSS_DISPLAY_OPTIONS,
   CSS_FLEX_DIRECTION_OPTIONS,
   CSS_FLEX_WRAP_OPTIONS,
+  CSS_JUSTIFY_CONTENT_OPTIONS,
   CSS_POSITION_OPTIONS,
   SelectModes,
 } from "../utils/constants";
@@ -53,6 +55,7 @@ type EditorHook = (
 
 interface Props {
   outline: OutlineElement[];
+  codeEntries: CodeEntry[];
   selectedElement: SelectedElement | undefined;
   onChangeSelectMode: (selectMode: SelectModes) => void;
   updateSelectedElementStyle: (
@@ -64,16 +67,21 @@ interface Props {
     width: string | undefined,
     height: string | undefined
   ) => void;
+  onNewComponent: () => void;
+  onNewStyleSheet: () => void;
   onOpenFile: (filePath: string) => void;
   onSaveFile: () => void;
 }
 
 export const SideBar: FunctionComponent<Props> = ({
   outline,
+  codeEntries,
   selectedElement,
   onChangeSelectMode,
   updateSelectedElementStyle,
   onChangeFrameSize,
+  onNewComponent,
+  onNewStyleSheet,
   onOpenFile,
   onSaveFile,
 }) => {
@@ -89,9 +97,11 @@ export const SideBar: FunctionComponent<Props> = ({
   );
 
   const StylePropNameMap: { [index in keyof CSSStyleDeclaration]?: string } = {
+    backgroundColor: "Fill",
     flexDirection: "Direction",
     flexWrap: "Wrap",
-    backgroundColor: "Fill",
+    alignItems: "Align",
+    justifyContent: "Justify",
   };
   const useSelectedElementEditor = (
     styleProp: keyof CSSStyleDeclaration,
@@ -152,6 +162,14 @@ export const SideBar: FunctionComponent<Props> = ({
     "flexWrap",
     useSelectInput.bind(undefined, CSS_FLEX_WRAP_OPTIONS)
   );
+  const [, renderSelectedElementAlignItemsInput] = useSelectedElementEditor(
+    "alignItems",
+    useSelectInput.bind(undefined, CSS_ALIGN_ITEMS_OPTIONS)
+  );
+  const [, renderSelectedElementJustifyContentInput] = useSelectedElementEditor(
+    "justifyContent",
+    useSelectInput.bind(undefined, CSS_JUSTIFY_CONTENT_OPTIONS)
+  );
   const [, renderSelectedElementOpacityInput] = useSelectedElementEditor(
     "opacity"
   );
@@ -173,6 +191,12 @@ export const SideBar: FunctionComponent<Props> = ({
     <>
       {renderSeparator("File Options")}
       <div className="btngrp-v">
+        <button className="btn w-full" onClick={onNewComponent}>
+          New Component
+        </button>
+        <button className="btn w-full" onClick={onNewStyleSheet}>
+          New Style Sheet
+        </button>
         <button
           className="btn w-full"
           onClick={() => openFilePicker().then((f) => f && onOpenFile(f))}
@@ -197,7 +221,7 @@ export const SideBar: FunctionComponent<Props> = ({
       {renderSeparator("Containers")}
       <button
         className="btn w-full"
-        onClick={() => onChangeSelectMode(SelectModes.AddDivElement)}
+        onClick={() => onChangeSelectMode(SelectModes.AddElement)}
       >
         Block
       </button>
@@ -238,6 +262,8 @@ export const SideBar: FunctionComponent<Props> = ({
             <div className="grid grid-cols-2  row-gap-3 col-gap-2 pt-1 pb-2">
               {renderSelectedElementFlexDirectionInput()}
               {renderSelectedElementFlexWrapInput()}
+              {renderSelectedElementAlignItemsInput()}
+              {renderSelectedElementJustifyContentInput()}
             </div>
             {/* todo align items + justify content */}
           </>
@@ -258,7 +284,7 @@ export const SideBar: FunctionComponent<Props> = ({
           name: <FontAwesomeIcon icon={faCog} />,
           render: renderMainTab,
         },
-        {
+        !!codeEntries.length && {
           name: <FontAwesomeIcon icon={faPlus} />,
           render: renderElementAdder,
         },

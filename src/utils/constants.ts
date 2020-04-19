@@ -8,12 +8,24 @@ export const STYLED_LOOKUP_CSS_VAR_PREFIX = "--paint-styledlookup-";
 
 export enum SelectModes {
   SelectElement,
-  AddDivElement,
+  AddElement,
 }
 
-export const BOILER_PLATE_CODE = `import React from "react";
+export enum CODE_ENTRY_TYPE {
+  StyleSheet,
+  Component,
+}
 
-export function MyComponent() {
+export enum CODE_ENTRY_BACKING {
+  Virtual,
+  Physical,
+}
+
+export const getBoilerPlateComponent = (
+  name: string
+) => `import React from "react";
+
+export function ${name}() {
   return (
     <div
       style={{
@@ -69,4 +81,36 @@ export const CSS_FLEX_WRAP_OPTIONS = [
   { name: "No", value: "No Wrap" },
   { name: "Yes", value: "wrap" },
   { name: "Reverse", value: "wrap-reverse" },
+];
+
+export const CSS_ALIGN_ITEMS_OPTIONS = [
+  { name: "Normal", value: "normal" },
+  { name: "Stretch", value: "stretch" },
+  { name: "Center", value: "center" },
+  { name: "Start", value: "start" },
+  { name: "End", value: "end" },
+  { name: "Flex Start", value: "flex-start" },
+  { name: "Flex End", value: "flex-end" },
+  { name: "Baseline", value: "baseline" },
+  { name: "First Baseline", value: "first baseline" },
+  { name: "Last Baseline", value: "last baseline" },
+  { name: "Safe Center", value: "safe center" },
+  { name: "Unsafe Center", value: "unsafe center" },
+];
+
+export const CSS_JUSTIFY_CONTENT_OPTIONS = [
+  { name: "Normal", value: "normal" },
+  { name: "Center", value: "center" },
+  { name: "Start", value: "start" },
+  { name: "End", value: "end" },
+  { name: "Left", value: "left" },
+  { name: "Right", value: "right" },
+  { name: "Flex Start", value: "flex-start" },
+  { name: "Flex End", value: "flex-end" },
+  { name: "Space Between", value: "space-between" },
+  { name: "Space Around", value: "space-around" },
+  { name: "Space Evenly", value: "space-evenly" },
+  { name: "Stretch", value: "stretch" },
+  { name: "Safe Center", value: "safe center" },
+  { name: "Unsafe Center", value: "unsafe center" },
 ];
