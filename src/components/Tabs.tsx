@@ -8,8 +8,6 @@ import React, {
   useState,
 } from "react";
 
-import "../index.scss";
-
 interface Tab {
   name: ReactNode;
   render: () => ReactNode;
@@ -20,13 +18,14 @@ export interface TabsRef {
 }
 
 interface Props {
+  className?: string;
   tabs?: (Tab | false)[];
   activeTab?: number;
   onChange?: (newTab: number) => void;
 }
 export const Tabs: FunctionComponent<
   Props & RefAttributes<TabsRef>
-> = forwardRef(({ tabs, ...props }, ref) => {
+> = forwardRef(({ tabs, className, ...props }, ref) => {
   const usableTabs = tabs?.filter((tab): tab is Tab => !!tab) || [];
 
   const [uncontrolledActiveTab, setUncontrolledActiveTab] = useState(0);
@@ -47,12 +46,12 @@ export const Tabs: FunctionComponent<
   }));
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="btngrp-h mb-2">
+    <div className={`${className || ""} tabs flex flex-col h-full`}>
+      <div className="btngrp-h">
         {usableTabs.map(({ name }, index) => (
           <button
             key={index}
-            className="btn px-6"
+            className="tab btn px-6"
             style={
               (activeTab === index && { backgroundColor: "#7895c1" }) ||
               undefined
@@ -63,7 +62,7 @@ export const Tabs: FunctionComponent<
           </button>
         ))}
       </div>
-      <div className="min-h-full overflow-y-auto">
+      <div className="tab-content overflow-y-auto">
         {usableTabs[activeTab]?.render() || null}
       </div>
     </div>

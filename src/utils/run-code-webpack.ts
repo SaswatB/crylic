@@ -5,6 +5,7 @@ import { Union } from "unionfs";
 import { CodeEntry } from "../types/paint";
 
 const webpack = __non_webpack_require__("webpack") as typeof import("webpack");
+const path = __non_webpack_require__("path") as typeof import("path");
 
 // supports ts, jsx, css, sass, less and
 const WEBPACK_MODULES = {
@@ -79,21 +80,22 @@ const webpackCache: Record<
 
 export const webpackRunCode = async (
   codeEntries: CodeEntry[],
-  primaryCodeId: string,
+  selectedCodeId: string,
   codeTransformer: (codeEntry: CodeEntry) => string,
   { window }: any
 ) => {
   const startTime = new Date().getTime();
   const primaryCodeEntry = codeEntries.find(
-    (entry) => entry.id === primaryCodeId
+    (entry) => entry.id === selectedCodeId
   );
-  console.log("loading...", primaryCodeId, primaryCodeEntry, codeEntries);
+  console.log("loading...", selectedCodeId, primaryCodeEntry, codeEntries);
   if (!primaryCodeEntry) throw new Error("Failed to find primary code entry");
 
   if (!webpackCache[primaryCodeEntry.id]) {
     const compiler = webpack({
       mode: "development",
       entry: primaryCodeEntry.filePath,
+      devtool: false,
       output: {
         path: "/static",
         filename: "[name].js",
@@ -115,6 +117,13 @@ export const webpackRunCode = async (
           amd: "react-dom",
         },
       },
+      // plugins: [
+      //   new webpack.ProgressPlugin({
+      //     handler(percentage, msg) {
+      //       console.log("wb progress", percentage, msg);
+      //     },
+      //   }),
+      // ],
     });
     const ufs1 = new Union();
     const inputFs = createFsFromVolume(new Volume());
@@ -145,6 +154,7 @@ export const webpackRunCode = async (
   }
   const { compiler, inputFs, outputFs } = webpackCache[primaryCodeEntry.id]!;
   codeEntries.forEach((entry) => {
+    inputFs.mkdirpSync(path.dirname(entry.filePath));
     inputFs.writeFileSync(entry.filePath, codeTransformer(entry));
   });
 

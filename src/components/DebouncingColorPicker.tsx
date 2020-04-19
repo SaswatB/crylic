@@ -12,7 +12,11 @@ export const DebouncingColorPicker: FunctionComponent<Props> = ({
   onChange,
   onTempChange,
 }) => {
-  const debounceOnChangeRef = useRef(debounce((c: string) => onChange(c), 300));
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  const debounceOnChangeRef = useRef(
+    debounce((c: string) => onChangeRef.current(c), 300)
+  );
   const [tempValue, setTempValue] = useState(value);
   useEffect(() => setTempValue(value), [value]);
 

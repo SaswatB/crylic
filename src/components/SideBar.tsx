@@ -22,7 +22,11 @@ import {
 
 const renderSeparator = (title?: string) => (
   <div className="flex items-center">
-    {title && <span className="pb-1 mr-2 text-sm text-gray-500">{title}</span>}
+    {title && (
+      <span className="pb-1 mr-2 text-sm text-gray-500 whitespace-no-wrap">
+        {title}
+      </span>
+    )}
     <div className="w-full my-5 border-gray-600 border-solid border-b" />
   </div>
 );
@@ -56,6 +60,10 @@ interface Props {
     newValue: string,
     preview?: boolean
   ) => void;
+  onChangeFrameSize: (
+    width: string | undefined,
+    height: string | undefined
+  ) => void;
   onOpenFile: (filePath: string) => void;
   onSaveFile: () => void;
 }
@@ -65,16 +73,17 @@ export const SideBar: FunctionComponent<Props> = ({
   selectedElement,
   onChangeSelectMode,
   updateSelectedElementStyle,
+  onChangeFrameSize,
   onOpenFile,
   onSaveFile,
 }) => {
-  const [componentViewWidth, renderComponentViewWidthInput] = useTextInput(
-    undefined,
+  const [, renderComponentViewWidthInput] = useTextInput(
+    (newWidth) => onChangeFrameSize(newWidth, undefined),
     "Width",
     "600"
   );
-  const [componentViewHeight, renderComponentViewHeightInput] = useTextInput(
-    undefined,
+  const [, renderComponentViewHeightInput] = useTextInput(
+    (newHeight) => onChangeFrameSize(undefined, newHeight),
     "Height",
     "300"
   );

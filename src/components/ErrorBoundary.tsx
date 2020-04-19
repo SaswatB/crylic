@@ -3,24 +3,29 @@ import React, { ErrorInfo } from "react";
 export class ErrorBoundary extends React.Component<{
   onError: (error: Error, errorInfo: ErrorInfo) => void;
 }> {
-  state = { hasError: false };
+  state = { error: false as Error | false };
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.props.onError(error, errorInfo);
-    this.setState({ hasError: true });
+    this.setState({ error });
   }
 
   hasError() {
-    return this.state.hasError;
+    return !!this.state.error;
   }
 
   resetError() {
-    this.setState({ hasError: false });
+    this.setState({ error: false });
   }
 
   render() {
-    if (this.state.hasError) {
-      return <h1>Something went wrong.</h1>;
+    const { error } = this.state;
+    if (error) {
+      return (
+        <div className="w-full h-full p-5 overflow-auto bg-gray-900 text-white text-sm whitespace-pre-wrap">
+          {error.stack}
+        </div>
+      );
     }
     return this.props.children || null;
   }

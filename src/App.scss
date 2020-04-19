@@ -1,12 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 .btn {
   @apply p-2 rounded bg-blue-800 text-white transition duration-300 ease-out;
 
   &:hover {
     @apply bg-blue-700;
   }
+
   &:active {
     @apply bg-blue-900;
   }
+}
+
+.MuiCircularProgress-colorPrimary {
+  color: white !important;
 }
 
 .react-transform-component {
@@ -40,6 +49,7 @@
       border-bottom-right-radius: 0;
       border-right: 1px solid #3479c1;
     }
+
     &:not(:first-child) {
       border-top-left-radius: 0;
       border-bottom-left-radius: 0;
@@ -62,6 +72,7 @@
       border-bottom-right-radius: 0;
       border-bottom: 1px solid #3479c1;
     }
+
     &:not(:first-child) {
       border-top-left-radius: 0;
       border-top-right-radius: 0;
@@ -86,4 +97,10 @@
 
 div[role="tooltip"] {
   z-index: 1;
+}
+
+.editor-tabs {
+  .tab-content {
+    min-height: 100%;
+  }
 }

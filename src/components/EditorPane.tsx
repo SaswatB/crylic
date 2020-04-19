@@ -13,6 +13,7 @@ import {
   getJSXASTByLookupIndex,
   getJSXElementForSourceCodePosition,
 } from "../utils/ast-parsers";
+import { getFriendlyName } from "../utils/utils";
 import { Tabs } from "./Tabs";
 
 interface Props {
@@ -138,10 +139,11 @@ export const EditorPane: FunctionComponent<Props> = ({
 
   return (
     <Tabs
+      className="editor-tabs"
       activeTab={activeTab}
       onChange={setActiveTab}
-      tabs={codeEntries.map((entry) => ({
-        name: entry.filePath.replace(/^.*(\/|\\)/, ""),
+      tabs={codeEntries.map((entry, index) => ({
+        name: getFriendlyName(codeEntries, index),
         render: () => (
           <MonacoEditor
             ref={editorRef}
@@ -149,6 +151,9 @@ export const EditorPane: FunctionComponent<Props> = ({
             theme="vs-dark"
             width="600px"
             value={entry.code}
+            options={{
+              automaticLayout: true,
+            }}
             onChange={(newCode) => onCodeChange(entry.id, newCode)}
           />
         ),

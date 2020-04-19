@@ -41,7 +41,7 @@ export interface CompilerComponentViewRef {
 
 interface Props {
   codeEntries: CodeEntry[];
-  primaryCodeId: string;
+  selectedCodeId: string;
   codeTransformer: (codeEntry: CodeEntry) => string;
   onCompileStart?: () => void;
   onCompileEnd?: () => void;
@@ -55,7 +55,7 @@ export const CompilerComponentView: FunctionComponent<
   (
     {
       codeEntries,
-      primaryCodeId,
+      selectedCodeId,
       codeTransformer,
       onCompileStart,
       onCompileEnd,
@@ -113,7 +113,7 @@ export const CompilerComponentView: FunctionComponent<
             console.log("compiling");
             const codeExports = await webpackRunCode(
               debouncedCodeEntries,
-              primaryCodeId,
+              selectedCodeId,
               codeTransformer,
               {
                 window: getInactiveFrame().current?.frameElement.contentWindow,

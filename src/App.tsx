@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { DraggableData, Rnd } from "react-rnd";
+import { DraggableData, ResizableDelta, Rnd } from "react-rnd";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import { CircularProgress } from "@material-ui/core";
 import { namedTypes as t } from "ast-types";
@@ -46,6 +46,7 @@ import {
   SelectModes,
   STYLED_LOOKUP_CSS_VAR_PREFIX,
 } from "./utils/constants";
+import { getFriendlyName } from "./utils/utils";
 import "./App.scss";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
@@ -58,9 +59,12 @@ function useOverlay(
   onSelect?: (componentElement: Element | null | undefined) => void,
   onMoveResizeSelection?: (
     deltaX: number | undefined,
+    totalDeltaX: number | undefined,
     deltaY: number | undefined,
+    totalDeltaY: number | undefined,
     width: string | undefined,
-    height: string | undefined
+    height: string | undefined,
+    preview?: boolean
   ) => void
 ) {
   const [highlightBox, setHighlightBox] = useState<DOMRect>();
@@ -127,8 +131,50 @@ function useOverlay(
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedElement]);
+
+  const onResizeSelection = (
+    ref: HTMLDivElement,
+    delta: ResizableDelta,
+    preview?: boolean
+  ) => {
+    if (delta.height) {
+      if (delta.width) {
+        onMoveResizeSelection?.(
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          ref.style.width,
+          ref.style.height,
+          preview
+        );
+      } else {
+        onMoveResizeSelection?.(
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          ref.style.height,
+          preview
+        );
+      }
+    } else {
+      onMoveResizeSelection?.(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        ref.style.width,
+        undefined,
+        preview
+      );
+    }
+  };
+
   const selectEnabled = selectMode !== undefined;
   const [draggingHighlight, setDraggingHighlight] = useState<DraggableData>();
+  const previewDraggingHighlight = useRef({ dx: 0, dy: 0 });
   const renderOverlay = () => (
     <div
       className="absolute inset-0"
@@ -191,6 +237,29 @@ function useOverlay(
               bounds="parent"
               onDragStart={(e, d) => {
                 setDraggingHighlight(cloneDeep(d));
+                previewDraggingHighlight.current.dx = 0;
+                previewDraggingHighlight.current.dy = 0;
+              }}
+              onDrag={(e, d) => {
+                const deltaX =
+                  d.x -
+                  (draggingHighlight?.x || 0) -
+                  previewDraggingHighlight.current.dx;
+                const deltaY =
+                  d.y -
+                  (draggingHighlight?.y || 0) -
+                  previewDraggingHighlight.current.dy;
+                onMoveResizeSelection?.(
+                  deltaX,
+                  undefined,
+                  deltaY,
+                  undefined,
+                  undefined,
+                  undefined,
+                  true
+                );
+                previewDraggingHighlight.current.dx += deltaX;
+                previewDraggingHighlight.current.dy += deltaY;
               }}
               onDragStop={(e, d) => {
                 console.log("onDragStop", draggingHighlight, d);
@@ -199,7 +268,18 @@ function useOverlay(
                 const deltaY = d.y - (draggingHighlight?.y || 0);
                 if (deltaX || deltaY) {
                   lastDragResizeHandled = Date.now();
-                  onMoveResizeSelection?.(deltaX, deltaY, undefined, undefined);
+                  const offsetDeltaX =
+                    deltaX - previewDraggingHighlight.current.dx;
+                  const offsetDeltaY =
+                    deltaY - previewDraggingHighlight.current.dy;
+                  onMoveResizeSelection?.(
+                    offsetDeltaX,
+                    deltaX,
+                    offsetDeltaY,
+                    deltaY,
+                    undefined,
+                    undefined
+                  );
                   setTempOffset(
                     produce((draft) => {
                       draft.x += deltaX;
@@ -208,6 +288,9 @@ function useOverlay(
                   );
                 }
               }}
+              onResize={(e, direction, ref, delta, position) =>
+                onResizeSelection(ref, delta, true)
+              }
               onResizeStop={(e, direction, ref, delta, position) => {
                 if (!delta.width && !delta.height) return;
                 console.log("onResizeStop");
@@ -219,30 +302,7 @@ function useOverlay(
                     draft.height += delta.height;
                   })
                 );
-                if (delta.height) {
-                  if (delta.width) {
-                    onMoveResizeSelection?.(
-                      undefined,
-                      undefined,
-                      ref.style.width,
-                      ref.style.height
-                    );
-                  } else {
-                    onMoveResizeSelection?.(
-                      undefined,
-                      undefined,
-                      undefined,
-                      ref.style.height
-                    );
-                  }
-                } else {
-                  onMoveResizeSelection?.(
-                    undefined,
-                    undefined,
-                    ref.style.width,
-                    undefined
-                  );
-                }
+                onResizeSelection(ref, delta);
               }}
             />
           </div>
@@ -272,7 +332,7 @@ const buildOutline = (element: Element): OutlineElement[] =>
 function App() {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
-  const [debouncedLoading] = useDebounce(loading, 300);
+  const [debouncedLoading, skipLoadingDebounce] = useDebounce(loading, 700);
   const [codeEntriesLookupData, setCodeEntriesLookupData] = useState<
     Record<string, (AddLookupDataResult & { ast: t.File }) | undefined>
   >({});
@@ -319,6 +379,7 @@ function App() {
   const [outline, setOutline] = useState<OutlineElement[]>([]);
   const compileTasks = useRef<Function[]>([]);
   const onComponentViewCompiled = () => {
+    skipLoadingDebounce();
     setLoading(false);
     if (selectedElement) {
       const newSelectedComponent = componentView.current?.getElementByLookupId(
@@ -393,7 +454,13 @@ function App() {
               }
             )
       );
-      console.log("updateSelectedElementStyle change", madeChange, newAst);
+      console.log(
+        "updateSelectedElementStyle change",
+        madeChange,
+        styles,
+        lookupData!.ast,
+        newAst
+      );
 
       if (madeChange) {
         setCode(codeId, prettyPrintAST(newAst));
@@ -436,7 +503,11 @@ function App() {
         case SelectModes.AddDivElement: {
           if (!codeEntries.length) {
             setCodeEntries([
-              { id: "new", filePath: "/untitled.tsx", code: BOILER_PLATE_CODE },
+              {
+                id: "new",
+                filePath: "/src/components/MyComponent.tsx",
+                code: BOILER_PLATE_CODE,
+              },
             ]);
             setSelectMode(undefined);
             enqueueSnackbar("Started a new component!");
@@ -496,25 +567,33 @@ function App() {
 
       setSelectMode(undefined);
     },
-    (deltaX, deltaY, width, height) => {
-      if (!deltaX && !deltaY && !width && !height) return;
+    (deltaX, totalDeltaX, deltaY, totalDeltaY, width, height, preview) => {
+      if (
+        !deltaX &&
+        !totalDeltaX &&
+        !deltaY &&
+        !totalDeltaY &&
+        !width &&
+        !height
+      )
+        return;
       const styles: Styles = [];
 
-      if (deltaX) {
+      if (deltaX || totalDeltaX) {
         const currentMarginLeft = parseInt(
           selectedElement?.computedStyles.marginLeft.replace("px", "") || "0"
         );
-        const newMarginLeft = (currentMarginLeft + deltaX).toFixed(0);
+        const newMarginLeft = (currentMarginLeft + deltaX!).toFixed(0);
         styles.push({
           styleName: "marginLeft",
           styleValue: `${newMarginLeft}px`,
         });
       }
-      if (deltaY) {
+      if (deltaY || totalDeltaY) {
         const currentMarginTop = parseInt(
           selectedElement?.computedStyles.marginTop.replace("px", "") || "0"
         );
-        const newMarginTop = (currentMarginTop + deltaY).toFixed(0);
+        const newMarginTop = (currentMarginTop + deltaY!).toFixed(0);
         styles.push({
           styleName: "marginTop",
           styleValue: `${newMarginTop}px`,
@@ -523,7 +602,7 @@ function App() {
       if (width) styles.push({ styleName: "width", styleValue: width });
       if (height) styles.push({ styleName: "height", styleValue: height });
 
-      updateSelectedElementStyles(styles);
+      updateSelectedElementStyles(styles, preview);
     }
   );
 
@@ -541,6 +620,7 @@ function App() {
     </div>
   );
 
+  const [frameSize, setFrameSize] = useState({ width: "600", height: "300" });
   const [codeEntries, setCodeEntries] = useState<CodeEntry[]>([]);
   const renderSideBar = () => (
     <SideBar
@@ -548,6 +628,14 @@ function App() {
       selectedElement={selectedElement}
       onChangeSelectMode={setSelectMode}
       updateSelectedElementStyle={updateSelectedElementStyle}
+      onChangeFrameSize={(width, height) =>
+        setFrameSize(
+          produce((draft) => {
+            if (width) draft.width = width;
+            if (height) draft.height = height;
+          })
+        )
+      }
       onOpenFile={(filePath) => {
         setCodeEntries(
           produce((draft: CodeEntry[]) => {
@@ -636,23 +724,24 @@ function App() {
                   </div>
                 </div>
                 <TransformComponent>
-                  <div className="flex m-12 relative bg-white shadow-2xl">
-                    <CompilerComponentView
-                      ref={componentView}
-                      codeEntries={codeEntries}
-                      primaryCodeId={codeEntries[0]?.id} // todo support switching between components shown
-                      codeTransformer={codeTransformer}
-                      onCompileStart={() => setLoading(true)}
-                      onCompileEnd={onComponentViewCompiled}
-                      style={{
-                        // width: `${componentViewWidth}px`,
-                        // height: `${componentViewHeight}px`,
-                        width: `600px`,
-                        height: `300px`,
-                      }}
-                    />
-                    {(selectMode !== undefined || selectedElement) &&
-                      renderOverlay()}
+                  <div className="flex flex-col">
+                    {getFriendlyName(codeEntries, 0)}
+                    <div className="flex relative bg-white shadow-2xl">
+                      <CompilerComponentView
+                        ref={componentView}
+                        codeEntries={codeEntries}
+                        selectedCodeId={codeEntries[0]?.id} // todo support switching between components shown
+                        codeTransformer={codeTransformer}
+                        onCompileStart={() => setLoading(true)}
+                        onCompileEnd={onComponentViewCompiled}
+                        style={{
+                          width: `${frameSize.width}px`,
+                          height: `${frameSize.height}px`,
+                        }}
+                      />
+                      {(selectMode !== undefined || selectedElement) &&
+                        renderOverlay()}
+                    </div>
                   </div>
                 </TransformComponent>
               </React.Fragment>

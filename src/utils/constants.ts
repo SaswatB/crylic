@@ -14,7 +14,15 @@ export enum SelectModes {
 export const BOILER_PLATE_CODE = `import React from "react";
 
 export function MyComponent() {
-  return <div style={{ width: "100%", height: "100%", display: "flex" }} />;
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+      }}
+    />
+  );
 }
 `;
 
