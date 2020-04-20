@@ -1,7 +1,5 @@
 import { namedTypes as t } from "ast-types";
 
-import { AddLookupDataResult } from "../utils/ast-parsers";
-
 export interface CodeEntry {
   id: string;
   filePath: string;
@@ -10,7 +8,7 @@ export interface CodeEntry {
 
 export type CodeEntryLookupDataMap = Record<
   string,
-  (AddLookupDataResult & { ast: t.File }) | undefined
+  { ast: t.File } | undefined
 >;
 
 export interface SelectedElement {
@@ -34,3 +32,8 @@ export type onMoveResizeCallback = (
   height: string | undefined,
   preview?: boolean
 ) => void;
+
+export type Styles = {
+  styleName: keyof CSSStyleDeclaration;
+  styleValue: string;
+}[];

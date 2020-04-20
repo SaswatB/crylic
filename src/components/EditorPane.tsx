@@ -1,49 +1,13 @@
 import React, { FunctionComponent, useEffect, useRef, useState } from "react";
 import MonacoEditor from "react-monaco-editor";
-import { wireTmGrammars } from "monaco-editor-textmate";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-import { Registry } from "monaco-textmate";
 
-import darkVs from "../lib/dark-vs.json";
 import { CodeEntry } from "../types/paint";
-import {
-  createLookupId,
-  getCodeIdFromLookupId,
-  getElementIndexFromLookupId,
-  parseAST,
-} from "../utils/ast-helpers";
-import {
-  getJSXASTByLookupIndex,
-  getJSXElementForSourceCodePosition,
-} from "../utils/ast-parsers";
+import { parseAST } from "../utils/ast/ast-helpers";
+import { JSXASTEditor } from "../utils/ast/JSXASTEditor";
+import { setupLanguageService } from "../utils/moncao-helpers";
 import { getFileExtensionLanguage, getFriendlyName } from "../utils/utils";
 import { Tabs } from "./Tabs";
-
-// @ts-ignore ignore raw loader import
-// eslint-disable-next-line import/no-webpack-loader-syntax
-import TypeScriptReactTMLanguage from "!!raw-loader!../lib/TypeScriptReact.tmLanguage";
-// @ts-ignore ignore raw loader import
-// eslint-disable-next-line import/no-webpack-loader-syntax
-import reactTypes from "!!raw-loader!@types/react/index.d.ts";
-
-// setup a better typescript grammar for jsx syntax highlighting
-const registry = new Registry({
-  getGrammarDefinition: async (scopeName) => {
-    return {
-      format: "plist",
-      content: TypeScriptReactTMLanguage,
-    };
-  },
-});
-const grammars = new Map();
-grammars.set("typescript", "source.tsx");
-grammars.set("javascript", "source.tsx");
-
-// add a theme that works with the textmate token names
-monaco.editor.defineTheme(
-  "darkVsPlus",
-  darkVs as monaco.editor.IStandaloneThemeData
-);
 
 interface Props {
   codeEntries: CodeEntry[];
@@ -59,6 +23,7 @@ export const EditorPane: FunctionComponent<Props> = ({
   onSelectElement,
 }) => {
   const [activeTab, setActiveTab] = useState(0);
+  const activeCodeEntry = codeEntries[activeTab];
   const activeCodeId = codeEntries[activeTab]?.id;
   const activeCode = codeEntries[activeTab]?.code;
 
@@ -67,56 +32,35 @@ export const EditorPane: FunctionComponent<Props> = ({
   // highlight the selected element in the editor
   const activeHighlights = useRef<Record<string, string[] | undefined>>({}); // code id -> decoration map
   useEffect(() => {
-    const decorations: monaco.editor.IModelDeltaDecoration[] = [];
+    let decorations: monaco.editor.IModelDeltaDecoration[] = [];
     if (
       selectedElementId &&
-      getCodeIdFromLookupId(selectedElementId) === activeCodeId
+      new JSXASTEditor().getCodeIdFromLookupId(selectedElementId) ===
+        activeCodeId
     ) {
-      // try to find the jsx element in the latest ast
-      let path;
       try {
-        path = getJSXASTByLookupIndex(
-          parseAST(activeCode),
-          getElementIndexFromLookupId(selectedElementId)
+        const ast = parseAST(activeCode);
+        decorations = new JSXASTEditor().getEditorDecorationsForElement(
+          ast,
+          // todo sync code in entry?
+          activeCodeEntry!,
+          selectedElementId
         );
-      } catch (err) {}
+      } catch (err) {
+        console.log(err);
+      }
 
-      // get the start tag location
-      const { start: openStart, end: openEnd } =
-        path?.value?.openingElement?.name?.loc || {};
-      if (openStart && openEnd) {
-        decorations.push({
-          range: new monaco.Range(
-            openStart.line,
-            openStart.column + 1,
-            openEnd.line,
-            openEnd.column + 1
-          ),
-          options: { inlineClassName: "selected-element-code-highlight" },
-        });
-        // center to the open tag if the editor doesn't currently have focus
+      if (decorations.length > 0) {
+        // center to the first decoration if the editor doesn't currently have focus
         if (!editorRef.current?.editor?.hasTextFocus()) {
           editorRef.current?.editor?.revealPositionInCenter({
-            lineNumber: openStart.line,
-            column: openStart.column + 1,
+            lineNumber: decorations[0].range.startLineNumber,
+            column: decorations[0].range.startColumn,
           });
         }
       }
-      // get the end tag location (may not be available for self-closing tags)
-      const { start: closeStart, end: closeEnd } =
-        path?.value?.closingElement?.name?.loc || {};
-      if (closeStart && closeEnd) {
-        decorations.push({
-          range: new monaco.Range(
-            closeStart.line,
-            closeStart.column + 1,
-            closeEnd.line,
-            closeEnd.column + 1
-          ),
-          options: { inlineClassName: "selected-element-code-highlight" },
-        });
-      }
     }
+
     // update the highlight decorations on the editor
     const oldDecorations = activeHighlights.current[activeCodeId] || [];
     if (oldDecorations.length !== 0 || decorations.length !== 0) {
@@ -127,26 +71,30 @@ export const EditorPane: FunctionComponent<Props> = ({
           decorations
         ) || [];
     }
-  }, [activeCode, activeCodeId, selectedElementId]);
+  }, [activeCode, activeCodeEntry, activeCodeId, selectedElementId]);
 
   // try to select the element the editor cursor is at
   useEffect(() => {
     return editorRef.current?.editor?.onDidChangeCursorPosition((e) => {
       if (!editorRef.current?.editor?.hasTextFocus()) return;
 
-      // try to find a jsx element at the cursor location in the latest code ast
-      let lookupIndex;
+      // try to find an element at the cursor location in the latest code ast
+      let lookupId;
       try {
-        ({ lookupIndex } = getJSXElementForSourceCodePosition(
-          parseAST(activeCode),
+        const ast = parseAST(activeCode);
+        lookupId = new JSXASTEditor().getElementLookupIdAtCodePosition(
+          ast,
+          // todo sync code in entry?
+          activeCodeEntry!,
           e.position.lineNumber,
           e.position.column
-        ));
-      } catch (err) {}
-      if (lookupIndex === undefined) return;
+        );
+      } catch (err) {
+        console.log(err);
+      }
+      if (lookupId === undefined) return;
 
       // if the selection is different than what's already selected, select the element
-      const lookupId = createLookupId(activeCodeId, lookupIndex);
       if (!selectedElementId || lookupId !== selectedElementId) {
         onSelectElement(lookupId);
       }
@@ -157,7 +105,9 @@ export const EditorPane: FunctionComponent<Props> = ({
   // switch to the editor that the selected element belongs to when it's selected
   useEffect(() => {
     if (selectedElementId) {
-      const codeId = getCodeIdFromLookupId(selectedElementId);
+      const codeId = new JSXASTEditor().getCodeIdFromLookupId(
+        selectedElementId
+      );
       const codeIndex = codeEntries.findIndex((entry) => entry.id === codeId);
       if (codeIndex !== -1 && codeIndex !== activeTab) {
         setActiveTab(codeIndex);
@@ -171,57 +121,22 @@ export const EditorPane: FunctionComponent<Props> = ({
       className="editor-tabs"
       activeTab={activeTab}
       onChange={setActiveTab}
-      tabs={codeEntries.map((entry, index) => ({
+      tabs={codeEntries.map((codeEntry, index) => ({
         name: getFriendlyName(codeEntries, index),
         render: () => (
           <MonacoEditor
             ref={editorRef}
-            language={getFileExtensionLanguage(entry)}
+            language={getFileExtensionLanguage(codeEntry)}
             theme="darkVsPlus"
             width="600px"
-            value={entry.code}
+            value={codeEntry.code}
             options={{
               automaticLayout: true,
             }}
-            onChange={(newCode) => onCodeChange(entry.id, newCode)}
-            editorDidMount={(editorMonaco) => {
-              const language = getFileExtensionLanguage(entry);
-              // setup typescript autocomplete
-              if (language === "typescript") {
-                const model = monaco.editor.createModel(
-                  entry.code,
-                  language,
-                  monaco.Uri.parse(
-                    `file://${entry.filePath.replace("\\", "/")}`
-                  )
-                );
-                editorMonaco.setModel(null);
-                editorMonaco.setModel(model);
-                monaco.languages.typescript.typescriptDefaults.addExtraLib(
-                  entry.code,
-                  entry.filePath
-                );
-                // add react types
-                const MONACO_LIB_PREFIX = "file:///node_modules/";
-                monaco.languages.typescript.typescriptDefaults.addExtraLib(
-                  reactTypes,
-                  `${MONACO_LIB_PREFIX}react/index.d.ts`
-                );
-                // add jsx support
-                monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
-                  {
-                    jsx: monaco.languages.typescript.JsxEmit.React,
-                    moduleResolution:
-                      monaco.languages.typescript.ModuleResolutionKind.NodeJs,
-                    esModuleInterop: true,
-                  }
-                );
-                // apply the better typescript grammar when the worker loads
-                monaco.languages.typescript
-                  .getTypeScriptWorker()
-                  .then(() => wireTmGrammars(monaco, registry, grammars));
-              }
-            }}
+            onChange={(newCode) => onCodeChange(codeEntry.id, newCode)}
+            editorDidMount={(editorMonaco) =>
+              setupLanguageService(editorMonaco, codeEntry)
+            }
           />
         ),
       }))}

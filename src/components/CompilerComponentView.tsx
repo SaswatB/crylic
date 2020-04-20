@@ -12,9 +12,8 @@ import produce from "immer";
 
 import { useDebounce } from "../hooks/useDebounce";
 import { useUpdatingRef } from "../hooks/useUpdatingRef";
-import { CodeEntry } from "../types/paint";
-import { Styles } from "../utils/ast-parsers";
-import { JSX_LOOKUP_DATA_ATTR } from "../utils/constants";
+import { CodeEntry, Styles } from "../types/paint";
+import { JSXASTEditor } from "../utils/ast/JSXASTEditor";
 import { webpackRunCode } from "../utils/run-code-webpack";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { Frame } from "./Frame";
@@ -31,10 +30,10 @@ export const getComponentElementFromEvent = (
 
 export type GetElementByLookupId = (
   lookupId: string
-) => Element | null | undefined;
+) => HTMLElement | null | undefined;
 
 export interface CompilerComponentViewRef {
-  getElementAtPoint: (x: number, y: number) => Element | null | undefined;
+  getElementAtPoint: (x: number, y: number) => HTMLElement | null | undefined;
   getElementByLookupId: GetElementByLookupId;
   // cleared on next compile
   addTempStyles: (
@@ -51,7 +50,10 @@ export interface CompilerComponentViewProps {
   onCompileStart?: () => void;
   onCompileEnd?: (
     codeId: string,
-    getElementByLookupId: GetElementByLookupId
+    context: {
+      iframe: HTMLIFrameElement;
+      getElementByLookupId: GetElementByLookupId;
+    }
   ) => void;
 }
 
@@ -86,13 +88,17 @@ export const CompilerComponentView: FunctionComponent<
       getElementAtPoint(x, y) {
         const iframeDocument = getActiveFrame().current?.frameElement
           .contentDocument;
-        return iframeDocument?.elementFromPoint(x, y);
+        return iframeDocument?.elementFromPoint(x, y) as
+          | HTMLElement
+          | null
+          | undefined;
       },
       getElementByLookupId(lookupId) {
         const iframeDocument = getActiveFrame().current?.frameElement
           .contentDocument;
-        return iframeDocument?.querySelector(
-          `[data-${JSX_LOOKUP_DATA_ATTR}="${lookupId}"]`
+        return (
+          iframeDocument &&
+          new JSXASTEditor().getHTMLElementByLookupId(iframeDocument, lookupId)
         );
       },
       addTempStyles(lookupId, styles, persistRender) {
@@ -116,7 +122,10 @@ export const CompilerComponentView: FunctionComponent<
         // wait until the dom is fully updated so that getElementByLookupId can work with the updated view
         setTimeout(() =>
           requestAnimationFrame(() =>
-            onCompileEnd(selectedCodeId, handleRef.current.getElementByLookupId)
+            onCompileEnd(selectedCodeId, {
+              iframe: getActiveFrame().current!.frameElement,
+              getElementByLookupId: handleRef.current.getElementByLookupId,
+            })
           )
         );
       }
@@ -156,7 +165,10 @@ export const CompilerComponentView: FunctionComponent<
             }
           } catch (e) {
             console.log(e);
-            onCompileEnd?.(selectedCodeId, handle.getElementByLookupId);
+            onCompileEnd?.(selectedCodeId, {
+              iframe: getActiveFrame().current!.frameElement,
+              getElementByLookupId: handleRef.current.getElementByLookupId,
+            });
           }
         }
       })();

@@ -9,7 +9,6 @@ import React, {
 } from "react";
 import ReactDOM from "react-dom";
 
-import { JSX_LOOKUP_DATA_ATTR, JSX_LOOKUP_ROOT } from "../utils/constants";
 // @ts-ignore ignore raw loader import
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import normalizeCss from "!!raw-loader!normalize.css/normalize.css";
@@ -40,7 +39,6 @@ export const Frame: FunctionComponent<
     const newRoot = iframeDocument.createElement("div");
     newRoot.style.width = "100%";
     newRoot.style.height = "100%";
-    newRoot.dataset[JSX_LOOKUP_DATA_ATTR] = JSX_LOOKUP_ROOT;
     iframeDocument.body.appendChild(newRoot);
     setRoot(newRoot);
 

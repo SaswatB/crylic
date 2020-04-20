@@ -5,7 +5,7 @@ import deepFreeze from "deep-freeze-strict";
 import { cloneDeep } from "lodash";
 import { parse, print, types, visit } from "recast";
 
-import { babelTsParser } from "./babel-ts";
+import { babelTsParser } from "../babel-ts";
 
 const { format } = __non_webpack_require__(
   "prettier"
@@ -140,12 +140,9 @@ export const traverseJSXElements = (
   });
 };
 
-export const editAST = <T extends object | void, U extends any[]>(
-  apply: (ast: t.File, ...rest: U) => T
-) => (
-  ast: t.File,
-  ...rest: U
-): T extends void ? t.File : T & { ast: t.File } => {
+export const editAST = <S, T extends object | void, U extends any[]>(
+  apply: (ast: S, ...rest: U) => T
+) => (ast: S, ...rest: U): T extends void ? S : T & { ast: S } => {
   let applyResult: T | undefined = undefined;
   const newAst = cloneDeep(ast);
   // const newAst = produce(ast, (draft) => {
@@ -173,12 +170,3 @@ export function hashString(input: string) {
   }
   return hash.toString(16).replace("-", "");
 }
-
-export const createLookupId = (codeId: string, elementIndex: number) =>
-  `${codeId}-${elementIndex}`;
-
-export const getCodeIdFromLookupId = (lookupId: string) =>
-  lookupId.split("-")[0];
-
-export const getElementIndexFromLookupId = (lookupId: string) =>
-  parseInt(lookupId.split("-")[1]);

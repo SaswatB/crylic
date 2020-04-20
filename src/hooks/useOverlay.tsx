@@ -8,11 +8,8 @@ import {
   getComponentElementFromEvent,
 } from "../components/CompilerComponentView";
 import { onMoveResizeCallback, SelectedElement } from "../types/paint";
-import {
-  JSX_LOOKUP_DATA_ATTR,
-  JSX_LOOKUP_ROOT,
-  SelectModes,
-} from "../utils/constants";
+import { JSXASTEditor } from "../utils/ast/JSXASTEditor";
+import { SelectModes } from "../utils/constants";
 
 let lastDragResizeHandled = 0;
 export function useOverlay(
@@ -27,13 +24,11 @@ export function useOverlay(
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
     const componentElement = getComponentElementFromEvent(event, componentView);
-    const lookupId = (componentElement as HTMLElement)?.dataset[
-      JSX_LOOKUP_DATA_ATTR
-    ];
-    if (
-      lookupId &&
-      (selectMode !== SelectModes.SelectElement || lookupId !== JSX_LOOKUP_ROOT)
-    ) {
+
+    const lookupId =
+      componentElement &&
+      new JSXASTEditor().getLookupIdsFromHTMLElement(componentElement)[0];
+    if (lookupId) {
       setHighlightBox(componentElement?.getBoundingClientRect());
     } else {
       setHighlightBox(undefined);

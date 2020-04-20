@@ -1,8 +1,7 @@
 import React, { FunctionComponent, RefAttributes, useRef } from "react";
 
 import { useOverlay } from "../hooks/useOverlay";
-import { SelectedElement } from "../types/paint";
-import { Styles } from "../utils/ast-parsers";
+import { SelectedElement, Styles } from "../types/paint";
 import { SelectModes } from "../utils/constants";
 import {
   CompilerComponentView,

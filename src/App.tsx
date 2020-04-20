@@ -20,39 +20,24 @@ import {
   CodeEntryLookupDataMap,
   OutlineElement,
   SelectedElement,
+  Styles,
 } from "./types/paint";
 import {
-  createLookupId,
-  getCodeIdFromLookupId,
   hashString,
   parseAST,
   prettyPrintAST,
   printAST,
-} from "./utils/ast-helpers";
-import {
-  addJSXChildToJSXElement,
-  addLookupData,
-  applyJSXInlineStyleAttribute,
-  applyStyledStyleAttribute,
-  editJSXElementByLookupId,
-  editStyledTemplateByLookup,
-  removeLookupData,
-  removeRecentlyAddedDataAttrAndGetLookupId,
-  Styles,
-} from "./utils/ast-parsers";
-import {
-  getBoilerPlateComponent,
-  JSX_LOOKUP_DATA_ATTR,
-  JSX_LOOKUP_ROOT,
-  JSX_RECENTLY_ADDED,
-  JSX_RECENTLY_ADDED_DATA_ATTR,
-  SelectModes,
-  STYLED_LOOKUP_CSS_VAR_PREFIX,
-} from "./utils/constants";
-import { getFriendlyName } from "./utils/utils";
+} from "./utils/ast/ast-helpers";
+import { JSXASTEditor } from "./utils/ast/JSXASTEditor";
+import { StyledASTEditor } from "./utils/ast/StyledASTEditor";
+import { getBoilerPlateComponent, SelectModes } from "./utils/constants";
+import { getFriendlyName, isStyleEntry } from "./utils/utils";
 import "./App.scss";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
+
+const elementEditor = new JSXASTEditor();
+const styledEditor = new StyledASTEditor();
 
 function App() {
   const { enqueueSnackbar } = useSnackbar();
@@ -89,25 +74,32 @@ function App() {
     );
   };
   const codeTransformer = (codeEntry: CodeEntry) => {
-    const res = addLookupData(parseAST(codeEntry.code), codeEntry.id);
-    console.log("codeTransformer", res.ast);
+    if (isStyleEntry(codeEntry)) {
+      return codeEntry.code;
+    }
+    let ast = parseAST(codeEntry.code);
+    ({ ast } = elementEditor.addLookupData(ast, codeEntry));
+    ({ ast } = styledEditor.addLookupData(ast, codeEntry));
+
+    console.log("codeTransformer", ast);
     setCodeEntriesLookupData(
       produce((draft) => {
         draft[codeEntry.id] = {
-          ...res,
-          ast: deepFreeze(cloneDeep(res.ast)),
+          ast: deepFreeze(cloneDeep(ast)),
         };
       })
     );
-    return printAST(res.ast);
+    return printAST(ast);
   };
 
   const [selectMode, setSelectMode] = useState<SelectModes>(); // todo escape key
   const [selectedElement, setSelectedElement] = useState<SelectedElement>();
 
   const selectElement = (componentElement: HTMLElement) => {
-    const lookupId = componentElement.dataset?.[JSX_LOOKUP_DATA_ATTR];
-    if (!lookupId || lookupId === JSX_LOOKUP_ROOT) return;
+    const [lookupId] = elementEditor.getLookupIdsFromHTMLElement(
+      componentElement
+    );
+    if (!lookupId) return;
 
     setSelectedElement({
       lookupId,
@@ -116,7 +108,7 @@ function App() {
     });
   };
 
-  const [outline, setOutline] = useState<OutlineElement[]>([]);
+  const [outline] = useState<OutlineElement[]>([]);
   const compileTasks = useRef<
     Record<
       string,
@@ -125,13 +117,22 @@ function App() {
   >({});
   const onComponentViewCompiled = (
     codeId: string,
-    getElementByLookupId: GetElementByLookupId
+    {
+      iframe,
+      getElementByLookupId,
+    }: {
+      iframe: HTMLIFrameElement;
+      getElementByLookupId: GetElementByLookupId;
+    }
   ) => {
     skipLoadingDebounce();
     setLoading(false);
+
+    styledEditor.onASTRender(iframe);
+
     if (
       selectedElement &&
-      getCodeIdFromLookupId(selectedElement.lookupId) === codeId
+      elementEditor.getCodeIdFromLookupId(selectedElement.lookupId) === codeId
     ) {
       const newSelectedComponent = getElementByLookupId(
         selectedElement.lookupId
@@ -163,40 +164,38 @@ function App() {
       case SelectModes.SelectElement:
         console.log(
           "setting selected from manual selection",
-          (componentElement as HTMLElement).dataset?.[JSX_LOOKUP_DATA_ATTR]
+          elementEditor.getLookupIdsFromHTMLElement(
+            componentElement as HTMLElement
+          )[0]
         );
         selectElement(componentElement);
         break;
       case SelectModes.AddElement: {
-        const lookupId = componentElement.dataset?.[JSX_LOOKUP_DATA_ATTR];
+        const lookupId = elementEditor.getLookupIdsFromHTMLElement(
+          componentElement
+        )[0];
         if (!lookupId) break;
 
-        const codeId = getCodeIdFromLookupId(lookupId);
+        const codeId = elementEditor.getCodeIdFromLookupId(lookupId);
+        const codeEntry = codeEntries.find(
+          (codeEntry) => codeEntry.id === codeId
+        );
         const lookupData = codeEntriesLookupData[codeId];
-        if (!lookupData) break;
+        if (!codeEntry || !lookupData) break;
 
-        let madeChange = false;
-        const newAst = removeLookupData(
-          editJSXElementByLookupId(lookupData.ast, lookupId, (path) => {
-            addJSXChildToJSXElement(path.value, "div", {
-              [`data-${JSX_RECENTLY_ADDED_DATA_ATTR}`]: JSX_RECENTLY_ADDED,
-              style: { display: "flex" },
-            });
-            madeChange = true;
-          })
+        let newAst = elementEditor.addChildToElement(
+          lookupData.ast,
+          codeEntry,
+          lookupId,
+          "div",
+          { style: { display: "flex" } }
+        );
+        const [newChildLookupId] = elementEditor.getRecentlyAddedElements(
+          newAst,
+          codeEntry
         );
 
-        if (madeChange) {
-          const {
-            ast: newAst2,
-            resultIndex: newChildLookupIndex,
-          } = removeRecentlyAddedDataAttrAndGetLookupId(newAst);
-
-          if (newChildLookupIndex !== undefined) {
-            const newChildLookupId = createLookupId(
-              codeId,
-              newChildLookupIndex
-            );
+        if (newChildLookupId !== undefined) {
             // try to select the newly added element when the CompilerComponentView next compiles
             compileTasks.current[codeId] = compileTasks.current[codeId] || [];
             compileTasks.current[codeId]!.push((getElementByLookupId) => {
@@ -211,8 +210,9 @@ function App() {
             });
           }
 
-          setCode(codeId, prettyPrintAST(newAst2));
-        }
+        newAst = elementEditor.removeLookupData(newAst, codeEntry);
+        newAst = styledEditor.removeLookupData(newAst, codeEntry);
+        setCode(codeId, prettyPrintAST(newAst));
         break;
       }
     }
@@ -223,26 +223,26 @@ function App() {
   const updateSelectedElementStyles = (styles: Styles, preview?: boolean) => {
     if (!selectedElement) return;
 
-    const componentView =
-      componentViews.current[getCodeIdFromLookupId(selectedElement.lookupId)];
+    const codeId = elementEditor.getCodeIdFromLookupId(
+      selectedElement.lookupId
+    );
+    const componentView = componentViews.current[codeId];
     componentView?.addTempStyles(selectedElement.lookupId, styles, !preview);
     // preview is a flag used to quickly show updates in the dom
     // there shouldn't be any expensive calculations done when it's on
     // such as changing state or parsing ast
     if (preview) return;
 
-    const codeId = getCodeIdFromLookupId(selectedElement.lookupId);
+    const codeEntry = codeEntries.find((codeEntry) => codeEntry.id === codeId);
     const lookupData = codeEntriesLookupData[codeId];
+    if (!codeEntry || !lookupData) return;
+
     const selectedComponent = componentView?.getElementByLookupId(
       selectedElement.lookupId
     );
     const selectedComponentStyledLookupId =
       selectedComponent &&
-      lookupData?.styledElementLookupIds.find((lookupId) => {
-        return !!window
-          .getComputedStyle(selectedComponent)
-          .getPropertyValue(`${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookupId}`);
-      });
+      styledEditor.getLookupIdsFromHTMLElement(selectedComponent)[0];
 
     console.log(
       "updateSelectedElementStyles",
@@ -250,37 +250,34 @@ function App() {
       selectedElement,
       lookupData
     );
-    let madeChange = false;
-    const newAst = removeLookupData(
-      selectedComponentStyledLookupId
-        ? editStyledTemplateByLookup(
-            lookupData!.ast,
+
+    let newAst;
+    if (selectedComponentStyledLookupId) {
+      newAst = styledEditor.addStyles(
+        lookupData.ast,
+        codeEntry,
             selectedComponentStyledLookupId,
-            (path) => {
-              applyStyledStyleAttribute(path, styles);
-              madeChange = true;
-            }
-          )
-        : editJSXElementByLookupId(
-            lookupData!.ast,
+        styles
+      );
+    } else {
+      newAst = elementEditor.addStyles(
+        lookupData.ast,
+        codeEntry,
             selectedElement.lookupId,
-            (path) => {
-              applyJSXInlineStyleAttribute(path, styles);
-              madeChange = true;
+        styles
+      );
             }
-          )
-    );
+    newAst = elementEditor.removeLookupData(newAst, codeEntry);
+    newAst = styledEditor.removeLookupData(newAst, codeEntry);
+
     console.log(
       "updateSelectedElementStyle change",
-      madeChange,
       styles,
       lookupData!.ast,
       newAst
     );
 
-    if (madeChange) {
       setCode(codeId, prettyPrintAST(newAst));
-    }
   };
 
   const updateSelectedElementStyle = (
@@ -349,7 +346,7 @@ function App() {
         });
         if (!inputName) return;
         // todo add validation/duplicate checking to name
-        const name = upperFirst(camelCase(inputName));
+        const name = camelCase(inputName);
         const filePath = `/src/styles/${name}.css`;
         addCodeEntry({ filePath });
         enqueueSnackbar("Started a new component!");
@@ -484,7 +481,9 @@ function App() {
             if (newSelectedComponent) {
               console.log(
                 "setting selected element through editor cursor update",
-                (newSelectedComponent as any).dataset?.[JSX_LOOKUP_DATA_ATTR]
+                elementEditor.getLookupIdsFromHTMLElement(
+                  newSelectedComponent as HTMLElement
+                )[0]
               );
               selectElement(newSelectedComponent as HTMLElement);
             }

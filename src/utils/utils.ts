@@ -1,7 +1,7 @@
 import { startCase } from "lodash";
 
 import { CodeEntry, OutlineElement } from "../types/paint";
-import { JSX_LOOKUP_DATA_ATTR } from "./constants";
+import { JSXASTEditor } from "./ast/JSXASTEditor";
 
 const STYLE_EXTENSION_REGEX = /\.(s?css|sass|less)$/;
 
@@ -37,11 +37,14 @@ export function getFriendlyName(
 export const buildOutline = (element: Element): OutlineElement[] =>
   Array.from(element.children)
     .map((child) => {
-      if (JSX_LOOKUP_DATA_ATTR in (child as HTMLElement).dataset) {
+      const [lookupId] = new JSXASTEditor().getLookupIdsFromHTMLElement(
+        child as HTMLElement
+      );
+      if (lookupId) {
         return [
           {
             tag: child.tagName,
-            lookupId: (child as HTMLElement).dataset[JSX_LOOKUP_DATA_ATTR]!,
+            lookupId,
             children: buildOutline(child),
           },
         ];
