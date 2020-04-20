@@ -9,7 +9,7 @@ module.exports = override(
   addWebpackPlugin(
     new MonacoWebpackPlugin({
       // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
-      languages: ["javascript"],
+      languages: ["javascript", "typescript", "css", "scss", "less", "html"],
     })
   )
 );

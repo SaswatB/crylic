@@ -29,10 +29,14 @@
     "less-loader": "^5.0.0",
     "lodash": "^4.17.15",
     "memfs": "^3.1.2",
+    "monaco-editor-textmate": "^2.2.1",
     "monaco-editor-webpack-plugin": "^1.9.0",
+    "monaco-textmate": "^3.0.1",
     "node-sass": "^4.13.1",
     "normalize.css": "^8.0.1",
     "notistack": "^0.9.9",
+    "oniguruma": "^7.2.1",
+    "patch-package": "^6.2.2",
     "postcss-cli": "^7.1.0",
     "postcss-loader": "^3.0.0",
     "prettier": "^2.0.2",
@@ -64,7 +68,7 @@
     "test": "react-app-rewired test",
     "eject": "react-app-rewired eject",
     "electron": "electron .",
-    "postinstall": "npx electron-rebuild -o node-sass",
+    "postinstall": "patch-package && npx electron-rebuild -o node-sass,oniguruma",
     "lint": "npx eslint --ext .ts,.tsx,.js .",
     "lint:fix": "npx eslint --ext .ts,.tsx,.js --fix .",
     "pretty": "npx prettier --write .",
@@ -130,6 +134,7 @@
     "@types/webpack": "^4.41.10",
     "electron-rebuild": "^1.10.1",
     "eslint": "^6.8.0",
-    "eslint-plugin-simple-import-sort": "^5.0.2"
+    "eslint-plugin-simple-import-sort": "^5.0.2",
+    "node-gyp": "^6.1.0"
   }
 }

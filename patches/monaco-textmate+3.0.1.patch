@@ -1,0 +1,13 @@
+diff --git a/node_modules/monaco-textmate/dist/rule.js b/node_modules/monaco-textmate/dist/rule.js
+index 45769cc..5bcda1e 100644
+--- a/node_modules/monaco-textmate/dist/rule.js
++++ b/node_modules/monaco-textmate/dist/rule.js
+@@ -15,7 +15,7 @@ var __extends = (this && this.__extends) || (function () {
+ Object.defineProperty(exports, "__esModule", { value: true });
+ var path = require("path");
+ var utils_1 = require("./utils");
+-var onigasm_1 = require("onigasm");
++var onigasm_1 = __non_webpack_require__("oniguruma");
+ var HAS_BACK_REFERENCES = /\\(\d+)/;
+ var BACK_REFERENCING_END = /\\(\d+)/g;
+ var Rule = /** @class */ (function () {
