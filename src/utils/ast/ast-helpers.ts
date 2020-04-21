@@ -6,7 +6,7 @@ import { CSSASTNode } from "gonzales-pe";
 import { cloneDeep, isArray } from "lodash";
 import { parse, print, types, visit } from "recast";
 
-import { babelTsParser } from "../babel-ts";
+import { babelTsParser } from "./babel-ts";
 
 const { format } = __non_webpack_require__(
   "prettier"

@@ -61,7 +61,8 @@
     "tailwindcss": "^1.2.0",
     "typescript": "~3.7.2",
     "unionfs": "^4.4.0",
-    "webpack": "4.42.0"
+    "webpack": "4.42.0",
+    "worker-loader": "^2.0.0"
   },
   "scripts": {
     "start": "react-app-rewired start",

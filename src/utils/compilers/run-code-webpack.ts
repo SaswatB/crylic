@@ -2,10 +2,19 @@ import { createFsFromVolume, IFs, Volume } from "memfs";
 import joinPath from "memory-fs/lib/join";
 import { Union } from "unionfs";
 
-import { CodeEntry } from "../types/paint";
+import { CodeEntry } from "../../types/paint";
 
-const webpack = __non_webpack_require__("webpack") as typeof import("webpack");
 const path = __non_webpack_require__("path") as typeof import("path");
+const fs = __non_webpack_require__("fs") as typeof import("fs");
+let webpack: typeof import("webpack");
+let dartSass;
+let tailwindcss;
+
+export function initialize(nodeModulesPath = "") {
+  webpack = __non_webpack_require__(`${nodeModulesPath}webpack`);
+  dartSass = __non_webpack_require__(`${nodeModulesPath}dart-sass`);
+  tailwindcss = __non_webpack_require__(`${nodeModulesPath}tailwindcss`);
+}
 
 // supports ts, jsx, css, sass, less and
 const WEBPACK_MODULES = {
@@ -47,14 +56,14 @@ const WEBPACK_MODULES = {
           loader: "sass-loader",
           options: {
             // use dart sass to avoid node compatibility issues
-            implementation: __non_webpack_require__("dart-sass"),
+            implementation: dartSass,
           },
         },
         {
           loader: "postcss-loader",
           options: {
             ident: "postcss",
-            plugins: [__non_webpack_require__("tailwindcss")],
+            plugins: [tailwindcss],
           },
         },
       ],
@@ -80,9 +89,7 @@ const webpackCache: Record<
 
 export const webpackRunCode = async (
   codeEntries: CodeEntry[],
-  selectedCodeId: string,
-  codeTransformer: (codeEntry: CodeEntry) => string,
-  { window }: any
+  selectedCodeId: string
 ) => {
   const startTime = new Date().getTime();
   const primaryCodeEntry = codeEntries.find(
@@ -129,7 +136,7 @@ export const webpackRunCode = async (
     const inputFs = createFsFromVolume(new Volume());
 
     // @ts-ignore bad types
-    ufs1.use(__non_webpack_require__("fs")).use(inputFs);
+    ufs1.use(fs).use(inputFs);
     compiler.inputFileSystem = ufs1;
     // @ts-ignore bad types
     compiler.resolvers.normal.fileSystem = compiler.inputFileSystem;
@@ -155,7 +162,7 @@ export const webpackRunCode = async (
   const { compiler, inputFs, outputFs } = webpackCache[primaryCodeEntry.id]!;
   codeEntries.forEach((entry) => {
     inputFs.mkdirpSync(path.dirname(entry.filePath));
-    inputFs.writeFileSync(entry.filePath, codeTransformer(entry));
+    inputFs.writeFileSync(entry.filePath, entry.code);
   });
 
   const runId = ++webpackCache[primaryCodeEntry.id]!.runId;
@@ -169,7 +176,7 @@ export const webpackRunCode = async (
   }
 
   console.log("running webpack");
-  const runPromise = new Promise<object>((resolve, reject) => {
+  const runPromise = new Promise<string>((resolve, reject) => {
     compiler.run((err, stats) => {
       try {
         if (err) throw err;
@@ -177,22 +184,11 @@ export const webpackRunCode = async (
         console.log("webpackRunCode", err, stats);
         const bundle = outputFs.readFileSync("/static/main.js", {
           encoding: "utf-8",
-        }) as string;
-        let moduleExports: any = {};
-        let exports: any = {};
-        window.require = (name: string) => {
-          if (name === "react") return require("react");
-          if (name === "react-dom") return require("react-dom");
-          return __non_webpack_require__(name);
-          // throw new Error(`Unable to require "${name}"`)
-        };
-        window.module = moduleExports;
-        window.exports = exports;
-        window.eval(bundle);
+        });
         const endTime = new Date().getTime();
         console.log("loaded", primaryCodeEntry.filePath, endTime - startTime);
 
-        resolve(moduleExports.exports || exports);
+        resolve(bundle as string);
       } catch (error) {
         console.log("error file", primaryCodeEntry.filePath, error);
         reject(error);

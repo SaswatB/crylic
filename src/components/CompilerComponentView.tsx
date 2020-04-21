@@ -14,7 +14,7 @@ import { useDebounce } from "../hooks/useDebounce";
 import { useUpdatingRef } from "../hooks/useUpdatingRef";
 import { CodeEntry, Styles } from "../types/paint";
 import { JSXASTEditor } from "../utils/ast/JSXASTEditor";
-import { webpackRunCode } from "../utils/run-code-webpack";
+import { webpackRunCodeWithWorker } from "../utils/compilers/run-code-webpack-worker";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { Frame } from "./Frame";
 
@@ -132,14 +132,14 @@ export const CompilerComponentView: FunctionComponent<
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [CompiledElement]);
 
-    const [debouncedCodeEntries] = useDebounce(codeEntries, 300);
+    const [debouncedCodeEntries] = useDebounce(codeEntries, 150);
     useEffect(() => {
       (async () => {
         if (debouncedCodeEntries.length) {
           try {
             onCompileStart?.();
             console.log("compiling");
-            const codeExports = await webpackRunCode(
+            const codeExports = await webpackRunCodeWithWorker(
               debouncedCodeEntries,
               selectedCodeId,
               codeTransformer,
