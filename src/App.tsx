@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import { CircularProgress } from "@material-ui/core";
 import deepFreeze from "deep-freeze-strict";
+import gonzales from "gonzales-pe";
 import { produce } from "immer";
 import { camelCase, cloneDeep, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
@@ -26,10 +27,12 @@ import {
   hashString,
   parseAST,
   prettyPrintAST,
+  prettyPrintStyleSheetAST,
   printAST,
 } from "./utils/ast/ast-helpers";
 import { JSXASTEditor } from "./utils/ast/JSXASTEditor";
 import { StyledASTEditor } from "./utils/ast/StyledASTEditor";
+import { StyleSheetASTEditor } from "./utils/ast/StyleSheetASTEditor";
 import { getBoilerPlateComponent, SelectModes } from "./utils/constants";
 import { getFriendlyName, isStyleEntry } from "./utils/utils";
 import "./App.scss";
@@ -38,6 +41,7 @@ const fs = __non_webpack_require__("fs") as typeof import("fs");
 
 const elementEditor = new JSXASTEditor();
 const styledEditor = new StyledASTEditor();
+const styleSheetEditor = new StyleSheetASTEditor();
 
 function App() {
   const { enqueueSnackbar } = useSnackbar();
@@ -74,22 +78,30 @@ function App() {
     );
   };
   const codeTransformer = (codeEntry: CodeEntry) => {
+    let finalAst: unknown;
+    let transformedCode;
     if (isStyleEntry(codeEntry)) {
-      return codeEntry.code;
+      let ast = gonzales.parse(codeEntry.code);
+      ({ ast } = styleSheetEditor.addLookupData(ast, codeEntry));
+      transformedCode = ast.toString() || "";
+      finalAst = ast;
+    } else {
+      let ast = parseAST(codeEntry.code);
+      ({ ast } = elementEditor.addLookupData(ast, codeEntry));
+      ({ ast } = styledEditor.addLookupData(ast, codeEntry));
+      transformedCode = printAST(ast);
+      finalAst = ast;
     }
-    let ast = parseAST(codeEntry.code);
-    ({ ast } = elementEditor.addLookupData(ast, codeEntry));
-    ({ ast } = styledEditor.addLookupData(ast, codeEntry));
 
-    console.log("codeTransformer", ast);
+    console.log("codeTransformer", finalAst);
     setCodeEntriesLookupData(
       produce((draft) => {
         draft[codeEntry.id] = {
-          ast: deepFreeze(cloneDeep(ast)),
+          ast: deepFreeze(cloneDeep(finalAst)),
         };
       })
     );
-    return printAST(ast);
+    return transformedCode;
   };
 
   const [selectMode, setSelectMode] = useState<SelectModes>(); // todo escape key
@@ -129,6 +141,7 @@ function App() {
     setLoading(false);
 
     styledEditor.onASTRender(iframe);
+    styleSheetEditor.onASTRender(iframe);
 
     if (
       selectedElement &&
@@ -196,19 +209,19 @@ function App() {
         );
 
         if (newChildLookupId !== undefined) {
-            // try to select the newly added element when the CompilerComponentView next compiles
-            compileTasks.current[codeId] = compileTasks.current[codeId] || [];
-            compileTasks.current[codeId]!.push((getElementByLookupId) => {
-              const newChildComponent = getElementByLookupId(newChildLookupId!);
-              if (newChildComponent) {
-                console.log(
-                  "setting selected element through post-child add",
-                  newChildLookupId
-                );
-                selectElement(newChildComponent as HTMLElement);
-              }
-            });
-          }
+          // try to select the newly added element when the CompilerComponentView next compiles
+          compileTasks.current[codeId] = compileTasks.current[codeId] || [];
+          compileTasks.current[codeId]!.push((getElementByLookupId) => {
+            const newChildComponent = getElementByLookupId(newChildLookupId!);
+            if (newChildComponent) {
+              console.log(
+                "setting selected element through post-child add",
+                newChildLookupId
+              );
+              selectElement(newChildComponent as HTMLElement);
+            }
+          });
+        }
 
         newAst = elementEditor.removeLookupData(newAst, codeEntry);
         newAst = styledEditor.removeLookupData(newAst, codeEntry);
@@ -223,61 +236,88 @@ function App() {
   const updateSelectedElementStyles = (styles: Styles, preview?: boolean) => {
     if (!selectedElement) return;
 
-    const codeId = elementEditor.getCodeIdFromLookupId(
+    const selectedCodeId = elementEditor.getCodeIdFromLookupId(
       selectedElement.lookupId
     );
-    const componentView = componentViews.current[codeId];
+    const componentView = componentViews.current[selectedCodeId];
     componentView?.addTempStyles(selectedElement.lookupId, styles, !preview);
     // preview is a flag used to quickly show updates in the dom
     // there shouldn't be any expensive calculations done when it's on
     // such as changing state or parsing ast
     if (preview) return;
 
-    const codeEntry = codeEntries.find((codeEntry) => codeEntry.id === codeId);
-    const lookupData = codeEntriesLookupData[codeId];
-    if (!codeEntry || !lookupData) return;
-
     const selectedComponent = componentView?.getElementByLookupId(
       selectedElement.lookupId
     );
+    const selectedComponentStyleSheetLookupId =
+      selectedComponent &&
+      styleSheetEditor.getLookupIdsFromHTMLElement(selectedComponent)[0];
     const selectedComponentStyledLookupId =
       selectedComponent &&
       styledEditor.getLookupIdsFromHTMLElement(selectedComponent)[0];
 
-    console.log(
-      "updateSelectedElementStyles",
-      styles,
-      selectedElement,
-      lookupData
-    );
+    let edittedCodeEntry;
+    let newAst: any;
+    if (selectedComponentStyleSheetLookupId) {
+      const edittedCodeId = styledEditor.getCodeIdFromLookupId(
+        selectedComponentStyleSheetLookupId
+      );
+      edittedCodeEntry = codeEntries.find(
+        (codeEntry) => codeEntry.id === edittedCodeId
+      );
+      const lookupData = codeEntriesLookupData[edittedCodeId];
+      if (!edittedCodeEntry || !lookupData) return;
 
-    let newAst;
-    if (selectedComponentStyledLookupId) {
+      newAst = styleSheetEditor.addStyles(
+        lookupData.ast,
+        edittedCodeEntry,
+        selectedComponentStyleSheetLookupId,
+        styles
+      );
+    } else if (selectedComponentStyledLookupId) {
+      const edittedCodeId = styledEditor.getCodeIdFromLookupId(
+        selectedComponentStyledLookupId
+      );
+      edittedCodeEntry = codeEntries.find(
+        (codeEntry) => codeEntry.id === edittedCodeId
+      );
+      const lookupData = codeEntriesLookupData[edittedCodeId];
+      if (!edittedCodeEntry || !lookupData) return;
+
       newAst = styledEditor.addStyles(
         lookupData.ast,
-        codeEntry,
-            selectedComponentStyledLookupId,
+        edittedCodeEntry,
+        selectedComponentStyledLookupId,
         styles
       );
     } else {
+      edittedCodeEntry = codeEntries.find(
+        (codeEntry) => codeEntry.id === selectedCodeId
+      );
+      const lookupData = codeEntriesLookupData[selectedCodeId];
+      if (!edittedCodeEntry || !lookupData) return;
+
       newAst = elementEditor.addStyles(
         lookupData.ast,
-        codeEntry,
-            selectedElement.lookupId,
+        edittedCodeEntry,
+        selectedElement.lookupId,
         styles
       );
-            }
-    newAst = elementEditor.removeLookupData(newAst, codeEntry);
-    newAst = styledEditor.removeLookupData(newAst, codeEntry);
+    }
 
-    console.log(
-      "updateSelectedElementStyle change",
-      styles,
-      lookupData!.ast,
-      newAst
-    );
+    let transformedCode;
+    if (isStyleEntry(edittedCodeEntry)) {
+      newAst = styleSheetEditor.removeLookupData(newAst, edittedCodeEntry);
+      transformedCode = prettyPrintStyleSheetAST(newAst);
+    } else {
+      newAst = elementEditor.removeLookupData(newAst, edittedCodeEntry);
+      newAst = styledEditor.removeLookupData(newAst, edittedCodeEntry);
+      transformedCode = prettyPrintAST(newAst);
+    }
 
-      setCode(codeId, prettyPrintAST(newAst));
+    console.log("updateSelectedElementStyle change", styles, newAst);
+
+    setCode(edittedCodeEntry.id, transformedCode);
   };
 
   const updateSelectedElementStyle = (

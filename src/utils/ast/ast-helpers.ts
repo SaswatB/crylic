@@ -2,7 +2,8 @@ import { namedTypes as t } from "ast-types";
 import { LiteralKind } from "ast-types/gen/kinds";
 import { NodePath } from "ast-types/lib/node-path";
 import deepFreeze from "deep-freeze-strict";
-import { cloneDeep } from "lodash";
+import { CSSASTNode } from "gonzales-pe";
+import { cloneDeep, isArray } from "lodash";
 import { parse, print, types, visit } from "recast";
 
 import { babelTsParser } from "../babel-ts";
@@ -19,7 +20,9 @@ export const parseAST = (code: string): t.File =>
   });
 export const printAST = (ast: t.File) => print(cloneDeep(ast)).code;
 export const prettyPrintAST = (ast: t.File) =>
-  format(printAST(cloneDeep(ast)), { parser: "babel-ts" });
+  format(printAST(ast), { parser: "babel-ts" });
+export const prettyPrintStyleSheetAST = (ast: CSSASTNode) =>
+  format(ast.toString(), { parser: "css" });
 
 export const ifIdentifier = (
   node: t.Node | null | undefined
@@ -48,9 +51,22 @@ export const ifStringLiteral = (
 ): t.StringLiteral | undefined =>
   node?.type === "StringLiteral" ? (node as t.StringLiteral) : undefined;
 
+export const ifString = (value: unknown) =>
+  typeof value === "string" ? value : undefined;
+export const ifArray = <T, U>(value: T[] | U) =>
+  isArray(value) ? (value as T[]) : undefined;
+
+type ExtractPropType<T, U extends string> = T extends { [index in U]?: infer S }
+  ? S
+  : never;
+
 export const getValue = <S, T extends { value?: S }>(
   node: T | null | undefined
-): S | undefined => node?.value;
+): ExtractPropType<T, "value"> | undefined => node?.value as any;
+
+export const getContent = <S, T extends { content?: S }>(
+  node: T | null | undefined
+): ExtractPropType<T, "content"> | undefined => node?.content as any;
 
 export const valueToASTLiteral = (
   value: unknown
@@ -140,6 +156,16 @@ export const traverseJSXElements = (
   });
 };
 
+export const traverseStyleSheetRuleSets = (
+  ast: CSSASTNode,
+  visitor: (path: CSSASTNode, index: number) => void
+) => {
+  let count = 0;
+  ast.traverseByType("ruleset", (path: CSSASTNode) => {
+    visitor(path, count++);
+  });
+};
+
 export const editAST = <S, T extends object | void, U extends any[]>(
   apply: (ast: S, ...rest: U) => T
 ) => (ast: S, ...rest: U): T extends void ? S : T & { ast: S } => {
@@ -169,4 +195,17 @@ export function hashString(input: string) {
     hash |= 0;
   }
   return hash.toString(16).replace("-", "");
+}
+
+export function registerUninheritedCSSProperty(
+  iframe: HTMLIFrameElement,
+  property: string
+) {
+  try {
+    // @ts-ignore ignore new api missing types
+    iframe.contentWindow!.CSS.registerProperty({
+      name: property,
+      inherits: false,
+    });
+  } catch (e) {}
 }

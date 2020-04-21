@@ -6,10 +6,7 @@ export interface CodeEntry {
   code: string;
 }
 
-export type CodeEntryLookupDataMap = Record<
-  string,
-  { ast: t.File } | undefined
->;
+export type CodeEntryLookupDataMap = Record<string, { ast: any } | undefined>;
 
 export interface SelectedElement {
   lookupId: string;

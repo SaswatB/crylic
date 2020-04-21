@@ -24,6 +24,7 @@
     "electron": "^8.2.0",
     "electron-devtools-installer": "^3.0.0",
     "fp-ts": "^2.5.3",
+    "gonzales-pe": "^4.3.0",
     "immer": "^6.0.3",
     "less": "^3.11.1",
     "less-loader": "^5.0.0",

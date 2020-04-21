@@ -4,7 +4,10 @@ import { kebabCase } from "lodash";
 import { types } from "recast";
 
 import { CodeEntry, Styles } from "../../types/paint";
-import { traverseStyledTemplatesElements } from "./ast-helpers";
+import {
+  registerUninheritedCSSProperty,
+  traverseStyledTemplatesElements,
+} from "./ast-helpers";
 import { StyleASTEditor } from "./ASTEditor";
 
 export const STYLED_LOOKUP_CSS_VAR_PREFIX = "--paint-styledlookup-";
@@ -39,15 +42,12 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
 
   public onASTRender(iframe: HTMLIFrameElement) {
     // prevent property inheritance for data lookup ids
-    this.createdIds.forEach((lookupId) => {
-      try {
-        // @ts-ignore ignore new api missing types
-        iframe.contentWindow!.CSS.registerProperty({
-          name: `${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookupId}`,
-          inherits: false,
-        });
-      } catch (e) {}
-    });
+    this.createdIds.forEach((lookupId) =>
+      registerUninheritedCSSProperty(
+        iframe,
+        `${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookupId}`
+      )
+    );
   }
 
   public getLookupIdsFromHTMLElement(element: HTMLElement) {
@@ -110,6 +110,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
       const found = path.value.quasi.quasis.find(({ value: quasiValue }) => {
         const res = styleMatcher.exec(quasiValue.raw);
         if (res) {
+          // replace existing rule
           quasiValue.raw = quasiValue.raw.replace(
             styleMatcher,
             `${cssStyleName}: ${styleValue};`
