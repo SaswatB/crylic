@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-webpack-loader-syntax
-import WebpackWorker from "worker-loader!../utils/compilers/webpack-worker";
+import WebpackWorker from "worker-loader!./webpack-worker";
 
 import { CodeEntry } from "../../types/paint";
 

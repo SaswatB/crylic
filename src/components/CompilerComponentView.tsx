@@ -117,21 +117,6 @@ export const CompilerComponentView: FunctionComponent<
 
     const errorBoundary = useRef<ErrorBoundary>(null);
     const [CompiledElement, setCompiledElement] = useState<any>();
-    useEffect(() => {
-      if (onCompileEnd) {
-        // wait until the dom is fully updated so that getElementByLookupId can work with the updated view
-        setTimeout(() =>
-          requestAnimationFrame(() =>
-            onCompileEnd(selectedCodeId, {
-              iframe: getActiveFrame().current!.frameElement,
-              getElementByLookupId: handleRef.current.getElementByLookupId,
-            })
-          )
-        );
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [CompiledElement]);
-
     const [debouncedCodeEntries] = useDebounce(codeEntries, 150);
     useEffect(() => {
       (async () => {
@@ -163,6 +148,16 @@ export const CompilerComponentView: FunctionComponent<
             if (errorBoundary.current?.hasError()) {
               errorBoundary.current.resetError();
             }
+
+            // wait until the dom is fully updated so that getElementByLookupId can work with the updated view
+            setTimeout(() =>
+              requestAnimationFrame(() =>
+                onCompileEnd?.(selectedCodeId, {
+                  iframe: getActiveFrame().current!.frameElement,
+                  getElementByLookupId: handleRef.current.getElementByLookupId,
+                })
+              )
+            );
           } catch (e) {
             console.log(e);
             onCompileEnd?.(selectedCodeId, {

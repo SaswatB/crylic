@@ -1,5 +1,12 @@
-import React, { FunctionComponent, RefAttributes, useRef } from "react";
+import React, {
+  FunctionComponent,
+  RefAttributes,
+  useRef,
+  useState,
+} from "react";
+import { CircularProgress } from "@material-ui/core";
 
+import { useDebounce } from "../hooks/useDebounce";
 import { useOverlay } from "../hooks/useOverlay";
 import { SelectedElement, Styles } from "../types/paint";
 import { SelectModes } from "../utils/constants";
@@ -29,6 +36,8 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   onSelectElement,
   updateSelectedElementStyles,
 }) => {
+  const [loading, setLoading] = useState(false);
+  const [debouncedLoading, skipLoadingDebounce] = useDebounce(loading, 700);
   const componentView = useRef<CompilerComponentViewRef>();
 
   const [renderOverlay] = useOverlay(
@@ -99,8 +108,22 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
             }
           }
         }}
+        onCompileStart={() => {
+          setLoading(true);
+          compilerProps?.onCompileStart?.();
+        }}
+        onCompileEnd={(codeId, context) => {
+          skipLoadingDebounce();
+          setLoading(false);
+          compilerProps?.onCompileEnd?.(codeId, context);
+        }}
       />
       {(selectMode !== undefined || selectedElement) && renderOverlay()}
+      {debouncedLoading && (
+        <div className="flex items-center justify-center absolute inset-0 z-20 dark-glass">
+          <CircularProgress />
+        </div>
+      )}
     </>
   );
 };

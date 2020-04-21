@@ -45,8 +45,6 @@ const styleSheetEditor = new StyleSheetASTEditor();
 
 function App() {
   const { enqueueSnackbar } = useSnackbar();
-  const [loading, setLoading] = useState(false);
-  const [debouncedLoading, skipLoadingDebounce] = useDebounce(loading, 700);
   const [codeEntriesLookupData, setCodeEntriesLookupData] = useState<
     CodeEntryLookupDataMap
   >({});
@@ -137,9 +135,6 @@ function App() {
       getElementByLookupId: GetElementByLookupId;
     }
   ) => {
-    skipLoadingDebounce();
-    setLoading(false);
-
     styledEditor.onASTRender(iframe);
     styleSheetEditor.onASTRender(iframe);
 
@@ -456,7 +451,6 @@ function App() {
                 codeEntries: codeEntries,
                 selectedCodeId: entry.id,
                 codeTransformer: codeTransformer,
-                onCompileStart: () => setLoading(true),
                 onCompileEnd: onComponentViewCompiled,
                 style: {
                   width: `${frameSize.width}px`,
@@ -482,11 +476,6 @@ function App() {
           {renderSideBar()}
         </div>
         <div className="flex flex-1 relative bg-gray-600 items-center justify-center overflow-hidden">
-          {debouncedLoading && (
-            <div className="flex items-center justify-center absolute inset-0 z-20 dark-glass">
-              <CircularProgress />
-            </div>
-          )}
           <TransformWrapper
             defaultScale={1}
             options={{
