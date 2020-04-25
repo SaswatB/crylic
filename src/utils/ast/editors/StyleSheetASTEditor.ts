@@ -2,14 +2,14 @@ import { pipe } from "fp-ts/lib/pipeable";
 import { createNode, CSSASTNode, CSSASTNodeType } from "gonzales-pe";
 import { kebabCase } from "lodash";
 
-import { CodeEntry, Styles } from "../../types/paint";
+import { CodeEntry, Styles } from "../../../types/paint";
 import {
   getContent,
   ifArray,
   ifString,
   registerUninheritedCSSProperty,
   traverseStyleSheetRuleSets,
-} from "./ast-helpers";
+} from "../ast-helpers";
 import { StyleASTEditor } from "./ASTEditor";
 
 export const STYLESHEET_LOOKUP_CSS_VAR_PREFIX = "--paint-stylesheetlookup-";

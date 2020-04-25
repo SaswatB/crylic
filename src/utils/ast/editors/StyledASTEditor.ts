@@ -3,11 +3,11 @@ import { NodePath } from "ast-types/lib/node-path";
 import { kebabCase } from "lodash";
 import { types } from "recast";
 
-import { CodeEntry, Styles } from "../../types/paint";
+import { CodeEntry, Styles } from "../../../types/paint";
 import {
   registerUninheritedCSSProperty,
   traverseStyledTemplatesElements,
-} from "./ast-helpers";
+} from "../ast-helpers";
 import { StyleASTEditor } from "./ASTEditor";
 
 export const STYLED_LOOKUP_CSS_VAR_PREFIX = "--paint-styledlookup-";

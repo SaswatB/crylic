@@ -1,7 +1,7 @@
 import { startCase } from "lodash";
 
 import { CodeEntry, OutlineElement } from "../types/paint";
-import { JSXASTEditor } from "./ast/JSXASTEditor";
+import { JSXASTEditor } from "./ast/editors/JSXASTEditor";
 
 const STYLE_EXTENSION_REGEX = /\.(s?css|sass|less)$/;
 

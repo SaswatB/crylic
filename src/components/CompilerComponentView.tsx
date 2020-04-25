@@ -13,7 +13,7 @@ import produce from "immer";
 import { useDebounce } from "../hooks/useDebounce";
 import { useUpdatingRef } from "../hooks/useUpdatingRef";
 import { CodeEntry, Styles } from "../types/paint";
-import { JSXASTEditor } from "../utils/ast/JSXASTEditor";
+import { JSXASTEditor } from "../utils/ast/editors/JSXASTEditor";
 import { webpackRunCodeWithWorker } from "../utils/compilers/run-code-webpack-worker";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { Frame } from "./Frame";
@@ -77,11 +77,9 @@ export const CompilerComponentView: FunctionComponent<
     const [activeFrame, setActiveFrame] = useState(1);
     const frame1 = useRef<{
       frameElement: HTMLIFrameElement;
-      resetFrame: () => void;
     }>(null);
     const frame2 = useRef<{
       frameElement: HTMLIFrameElement;
-      resetFrame: () => void;
     }>(null);
 
     const handle: CompilerComponentViewRef = {
@@ -143,8 +141,7 @@ export const CompilerComponentView: FunctionComponent<
               )
             );
 
-            getActiveFrame().current?.resetFrame();
-            setActiveFrame(activeFrame === 1 ? 2 : 1);
+            getActiveFrame().current?.frameElement.contentDocument?.location.reload();
             if (errorBoundary.current?.hasError()) {
               errorBoundary.current.resetError();
             }
@@ -153,11 +150,14 @@ export const CompilerComponentView: FunctionComponent<
             setTimeout(() =>
               requestAnimationFrame(() =>
                 onCompileEnd?.(selectedCodeId, {
-                  iframe: getActiveFrame().current!.frameElement,
+                  iframe: getInactiveFrame().current!.frameElement,
                   getElementByLookupId: handleRef.current.getElementByLookupId,
                 })
               )
             );
+
+            // flip the active frame
+            setActiveFrame(activeFrame === 1 ? 2 : 1);
           } catch (e) {
             console.log(e);
             onCompileEnd?.(selectedCodeId, {

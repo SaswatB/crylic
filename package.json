@@ -48,7 +48,6 @@
     "react-app-rewired": "^2.1.5",
     "react-dev-utils": "^10.2.1",
     "react-dom": "^16.13.1",
-    "react-modal-promise": "^0.5.2",
     "react-monaco-editor": "^0.35.0",
     "react-refresh": "^0.8.1",
     "react-rnd": "^10.1.8",

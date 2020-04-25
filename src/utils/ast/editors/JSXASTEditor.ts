@@ -4,7 +4,7 @@ import { pipe } from "fp-ts/lib/pipeable";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { types } from "recast";
 
-import { CodeEntry, Styles } from "../../types/paint";
+import { CodeEntry, Styles } from "../../../types/paint";
 import {
   copyJSXName,
   getValue,
@@ -17,7 +17,7 @@ import {
   traverseJSXElements,
   valueToASTLiteral,
   valueToJSXLiteral,
-} from "./ast-helpers";
+} from "../ast-helpers";
 import { ElementASTEditor } from "./ASTEditor";
 
 const { builders: b } = types;
@@ -184,13 +184,6 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       });
     }
     return decorations;
-  }
-  public getEditorActionsForElement(
-    ast: Readonly<t.File>,
-    codeEntry: CodeEntry,
-    lookupId: string
-  ): void {
-    throw new Error("Method not implemented.");
   }
 
   protected addStylesToAST(

@@ -1,18 +1,18 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
-import { CodeEntry, Styles } from "../../types/paint";
-import { editAST } from "./ast-helpers";
+import { CodeEntry, Styles } from "../../../types/paint";
+import { editAST } from "../ast-helpers";
 
-export abstract class ASTEditor<T> {
+abstract class ASTEditor<ASTType> {
   public addLookupData = editAST(this.addLookupDataToAST.bind(this));
   protected abstract addLookupDataToAST(
-    ast: T,
+    ast: ASTType,
     codeEntry: CodeEntry
   ): { lookupIds: string[] };
 
   public removeLookupData = editAST(this.removeLookupDataFromAST.bind(this));
   protected abstract removeLookupDataFromAST(
-    ast: T,
+    ast: ASTType,
     codeEntry: CodeEntry
   ): void;
 
@@ -31,20 +31,22 @@ export abstract class ASTEditor<T> {
   }
 }
 
-export abstract class StyleASTEditor<T> extends ASTEditor<T> {
+export abstract class StyleASTEditor<ASTType> extends ASTEditor<ASTType> {
   public addStyles = editAST(this.addStylesToAST.bind(this));
   protected abstract addStylesToAST(
-    ast: T,
+    ast: ASTType,
     codeEntry: CodeEntry,
     lookupId: string,
     styles: Styles
   ): void;
 }
 
-export abstract class ElementASTEditor<T> extends StyleASTEditor<T> {
+export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
+  ASTType
+> {
   public addChildToElement = editAST(this.addChildToElementInAST.bind(this));
   protected abstract addChildToElementInAST(
-    ast: T,
+    ast: ASTType,
     codeEntry: CodeEntry,
     parentLookupId: string,
     elementTag: keyof HTMLElementTagNameMap,
@@ -52,12 +54,12 @@ export abstract class ElementASTEditor<T> extends StyleASTEditor<T> {
   ): void;
 
   public abstract getRecentlyAddedElements(
-    ast: Readonly<T>,
+    ast: Readonly<ASTType>,
     codeEntry: CodeEntry
   ): string[];
 
   public abstract getElementLookupIdAtCodePosition(
-    ast: Readonly<T>,
+    ast: Readonly<ASTType>,
     codeEntry: CodeEntry,
     line: number,
     column: number
@@ -69,13 +71,8 @@ export abstract class ElementASTEditor<T> extends StyleASTEditor<T> {
   ): HTMLElement | undefined;
 
   public abstract getEditorDecorationsForElement(
-    ast: Readonly<T>,
+    ast: Readonly<ASTType>,
     codeEntry: CodeEntry,
     lookupId: string
   ): monaco.editor.IModelDeltaDecoration[];
-  public abstract getEditorActionsForElement(
-    ast: Readonly<T>,
-    codeEntry: CodeEntry,
-    lookupId: string
-  ): void;
 }

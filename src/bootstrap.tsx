@@ -1,9 +1,10 @@
 import React, { FunctionComponent } from "react";
-import ModalContainer from "react-modal-promise";
 import { createMuiTheme, ThemeProvider } from "@material-ui/core";
 import blue from "@material-ui/core/colors/blue";
 import purple from "@material-ui/core/colors/purple";
 import { SnackbarProvider } from "notistack";
+
+import { ModalContainer } from "./components/PromiseModal";
 
 const darkTheme = createMuiTheme({
   palette: {

@@ -4,7 +4,8 @@ import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
 import { CodeEntry } from "../types/paint";
 import { parseAST } from "../utils/ast/ast-helpers";
-import { JSXASTEditor } from "../utils/ast/JSXASTEditor";
+import { JSXASTEditor } from "../utils/ast/editors/JSXASTEditor";
+import { JSXActionProvider } from "../utils/ast/providers/JSXActionProvider";
 import { setupLanguageService } from "../utils/moncao-helpers";
 import { getFileExtensionLanguage, getFriendlyName } from "../utils/utils";
 import { Tabs } from "./Tabs";
@@ -30,7 +31,7 @@ export const EditorPane: FunctionComponent<Props> = ({
   const editorRef = useRef<MonacoEditor>(null);
 
   // highlight the selected element in the editor
-  const activeHighlights = useRef<Record<string, string[] | undefined>>({}); // code id -> decoration map
+  const activeHighlights = useRef<string[]>([]);
   useEffect(() => {
     let decorations: monaco.editor.IModelDeltaDecoration[] = [];
     if (
@@ -62,10 +63,10 @@ export const EditorPane: FunctionComponent<Props> = ({
     }
 
     // update the highlight decorations on the editor
-    const oldDecorations = activeHighlights.current[activeCodeId] || [];
+    const oldDecorations = activeHighlights.current;
     if (oldDecorations.length !== 0 || decorations.length !== 0) {
       console.log("refreshing monaco decorations", activeCodeId);
-      activeHighlights.current[activeCodeId] =
+      activeHighlights.current =
         editorRef.current?.editor?.deltaDecorations(
           oldDecorations,
           decorations

@@ -1,6 +1,5 @@
 import React, { useRef, useState } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
-import { CircularProgress } from "@material-ui/core";
 import deepFreeze from "deep-freeze-strict";
 import gonzales from "gonzales-pe";
 import { produce } from "immer";
@@ -15,7 +14,6 @@ import { EditorPane } from "./components/EditorPane";
 import { InputModal } from "./components/InputModal";
 import { OverlayComponentView } from "./components/OverlayComponentView";
 import { SideBar } from "./components/SideBar";
-import { useDebounce } from "./hooks/useDebounce";
 import {
   CodeEntry,
   CodeEntryLookupDataMap,
@@ -30,9 +28,9 @@ import {
   prettyPrintStyleSheetAST,
   printAST,
 } from "./utils/ast/ast-helpers";
-import { JSXASTEditor } from "./utils/ast/JSXASTEditor";
-import { StyledASTEditor } from "./utils/ast/StyledASTEditor";
-import { StyleSheetASTEditor } from "./utils/ast/StyleSheetASTEditor";
+import { JSXASTEditor } from "./utils/ast/editors/JSXASTEditor";
+import { StyledASTEditor } from "./utils/ast/editors/StyledASTEditor";
+import { StyleSheetASTEditor } from "./utils/ast/editors/StyleSheetASTEditor";
 import { getBoilerPlateComponent, SelectModes } from "./utils/constants";
 import { getFriendlyName, isStyleEntry } from "./utils/utils";
 import "./App.scss";

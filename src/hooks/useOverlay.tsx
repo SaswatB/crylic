@@ -8,7 +8,7 @@ import {
   getComponentElementFromEvent,
 } from "../components/CompilerComponentView";
 import { onMoveResizeCallback, SelectedElement } from "../types/paint";
-import { JSXASTEditor } from "../utils/ast/JSXASTEditor";
+import { JSXASTEditor } from "../utils/ast/editors/JSXASTEditor";
 import { SelectModes } from "../utils/constants";
 
 let lastDragResizeHandled = 0;

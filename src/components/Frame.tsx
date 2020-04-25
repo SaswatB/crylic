@@ -15,7 +15,6 @@ import normalizeCss from "!!raw-loader!normalize.css/normalize.css";
 
 export interface FrameRef {
   frameElement: HTMLIFrameElement;
-  resetFrame: () => void;
 }
 
 export const Frame: FunctionComponent<
@@ -48,7 +47,13 @@ export const Frame: FunctionComponent<
     style.type = "text/css";
     style.appendChild(iframeDocument.createTextNode(normalizeCss));
   };
-  useEffect(resetFrame, []);
+  useEffect(() => {
+    resetFrame();
+    frame.current!.onload = resetFrame;
+    return () => {
+      frame.current!.onload = null;
+    };
+  }, []);
 
   useEffect(() => {
     if (root) {
@@ -62,7 +67,6 @@ export const Frame: FunctionComponent<
 
   useImperativeHandle(ref, () => ({
     frameElement: frame.current!,
-    resetFrame,
   }));
 
   // @ts-ignore ignore ref that's overridden by useImperativeHandle
