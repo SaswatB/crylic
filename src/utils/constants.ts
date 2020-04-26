@@ -1,7 +1,17 @@
-export enum SelectModes {
+export enum SelectModeType {
   SelectElement,
   AddElement,
 }
+
+export type SelectMode =
+  | {
+      type: SelectModeType.SelectElement;
+    }
+  | {
+      type: SelectModeType.AddElement;
+      tag: keyof HTMLElementTagNameMap;
+      attributes?: Record<string, unknown>;
+    };
 
 export enum CODE_ENTRY_TYPE {
   StyleSheet,
@@ -105,4 +115,11 @@ export const CSS_JUSTIFY_CONTENT_OPTIONS = [
   { name: "Stretch", value: "stretch" },
   { name: "Safe Center", value: "safe center" },
   { name: "Unsafe Center", value: "unsafe center" },
+];
+
+export const CSS_TEXT_ALIGN_OPTIONS = [
+  { name: "Left", value: "left" },
+  { name: "Right", value: "right" },
+  { name: "Center", value: "center" },
+  { name: "Justify", value: "justify" },
 ];

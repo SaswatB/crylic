@@ -31,7 +31,11 @@ import {
 import { JSXASTEditor } from "./utils/ast/editors/JSXASTEditor";
 import { StyledASTEditor } from "./utils/ast/editors/StyledASTEditor";
 import { StyleSheetASTEditor } from "./utils/ast/editors/StyleSheetASTEditor";
-import { getBoilerPlateComponent, SelectModes } from "./utils/constants";
+import {
+  getBoilerPlateComponent,
+  SelectMode,
+  SelectModeType,
+} from "./utils/constants";
 import { getFriendlyName, isStyleEntry } from "./utils/utils";
 import "./App.scss";
 
@@ -100,7 +104,7 @@ function App() {
     return transformedCode;
   };
 
-  const [selectMode, setSelectMode] = useState<SelectModes>(); // todo escape key
+  const [selectMode, setSelectMode] = useState<SelectMode>(); // todo escape key
   const [selectedElement, setSelectedElement] = useState<SelectedElement>();
 
   const selectElement = (componentElement: HTMLElement) => {
@@ -165,9 +169,9 @@ function App() {
     componentElement: HTMLElement,
     componentView: CompilerComponentViewRef
   ) => {
-    switch (selectMode) {
+    switch (selectMode?.type) {
       default:
-      case SelectModes.SelectElement:
+      case SelectModeType.SelectElement:
         console.log(
           "setting selected from manual selection",
           elementEditor.getLookupIdsFromHTMLElement(
@@ -176,7 +180,7 @@ function App() {
         );
         selectElement(componentElement);
         break;
-      case SelectModes.AddElement: {
+      case SelectModeType.AddElement: {
         const lookupId = elementEditor.getLookupIdsFromHTMLElement(
           componentElement
         )[0];
@@ -193,8 +197,8 @@ function App() {
           lookupData.ast,
           codeEntry,
           lookupId,
-          "div",
-          { style: { display: "flex" } }
+          selectMode.tag,
+          selectMode.attributes
         );
         const [newChildLookupId] = elementEditor.getRecentlyAddedElements(
           newAst,
@@ -406,7 +410,7 @@ function App() {
       <div className="btngrp-h">
         <button
           className="btn px-4 rounded-l-none rounded-tr-none"
-          onClick={() => setSelectMode(SelectModes.SelectElement)}
+          onClick={() => setSelectMode({ type: SelectModeType.SelectElement })}
         >
           Select Element
         </button>
@@ -455,7 +459,7 @@ function App() {
                   height: `${frameSize.height}px`,
                 },
               }}
-              selectMode={selectMode}
+              selectModeType={selectMode?.type}
               selectedElement={selectedElement}
               onSelectElement={onOverlaySelectElement}
               updateSelectedElementStyles={updateSelectedElementStyles}
@@ -468,7 +472,7 @@ function App() {
     <div className="flex flex-col items-stretch w-screen h-screen relative overflow-hidden text-white">
       <div className="flex flex-1 flex-row">
         <div
-          className="flex flex-col p-4 bg-gray-900 h-screen"
+          className="flex flex-col p-4 pb-0 bg-gray-900 h-screen"
           style={{ width: "300px" }}
         >
           {renderSideBar()}

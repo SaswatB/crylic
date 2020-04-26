@@ -9,13 +9,13 @@ import {
 } from "../components/CompilerComponentView";
 import { onMoveResizeCallback, SelectedElement } from "../types/paint";
 import { JSXASTEditor } from "../utils/ast/editors/JSXASTEditor";
-import { SelectModes } from "../utils/constants";
+import { SelectModeType } from "../utils/constants";
 
 let lastDragResizeHandled = 0;
 export function useOverlay(
   componentView: CompilerComponentViewRef | null | undefined,
   selectedElement?: SelectedElement,
-  selectMode?: SelectModes,
+  selectModeType?: SelectModeType,
   onSelect?: (componentElement: Element | null | undefined) => void,
   onMoveResizeSelection?: onMoveResizeCallback
 ) {
@@ -39,7 +39,10 @@ export function useOverlay(
   ) => {
     console.log("onOverlayClick", Date.now() - lastDragResizeHandled);
     // todo find a better way to prevent this misfire then this hack
-    if (selectMode === undefined && Date.now() - lastDragResizeHandled < 500) {
+    if (
+      selectModeType === undefined &&
+      Date.now() - lastDragResizeHandled < 500
+    ) {
       return;
     }
     lastDragResizeHandled = 0;
@@ -122,7 +125,7 @@ export function useOverlay(
     }
   };
 
-  const selectEnabled = selectMode !== undefined;
+  const selectEnabled = selectModeType !== undefined;
   const [draggingHighlight, setDraggingHighlight] = useState<DraggableData>();
   const previewDraggingHighlight = useRef({ dx: 0, dy: 0 });
   const renderOverlay = () => (

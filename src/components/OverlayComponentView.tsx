@@ -9,7 +9,7 @@ import { CircularProgress } from "@material-ui/core";
 import { useDebounce } from "../hooks/useDebounce";
 import { useOverlay } from "../hooks/useOverlay";
 import { SelectedElement, Styles } from "../types/paint";
-import { SelectModes } from "../utils/constants";
+import { SelectModeType } from "../utils/constants";
 import {
   CompilerComponentView,
   CompilerComponentViewProps,
@@ -20,7 +20,7 @@ interface Props {
   compilerProps: CompilerComponentViewProps &
     React.IframeHTMLAttributes<HTMLIFrameElement> &
     RefAttributes<CompilerComponentViewRef>;
-  selectMode: SelectModes | undefined;
+  selectModeType: SelectModeType | undefined;
   selectedElement: SelectedElement | undefined;
   onSelectElement: (
     element: HTMLElement,
@@ -31,7 +31,7 @@ interface Props {
 
 export const OverlayComponentView: FunctionComponent<Props> = ({
   compilerProps,
-  selectMode,
+  selectModeType,
   selectedElement,
   onSelectElement,
   updateSelectedElementStyles,
@@ -43,7 +43,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   const [renderOverlay] = useOverlay(
     componentView.current,
     selectedElement,
-    selectMode,
+    selectModeType,
     (componentElement) =>
       componentElement &&
       componentView.current &&
@@ -118,7 +118,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           compilerProps?.onCompileEnd?.(codeId, context);
         }}
       />
-      {(selectMode !== undefined || selectedElement) && renderOverlay()}
+      {(selectModeType !== undefined || selectedElement) && renderOverlay()}
       {debouncedLoading && (
         <div className="flex items-center justify-center absolute inset-0 z-20 dark-glass">
           <CircularProgress />

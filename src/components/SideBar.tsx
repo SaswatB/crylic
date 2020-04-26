@@ -1,5 +1,17 @@
 import React, { FunctionComponent, useEffect, useRef } from "react";
-import { faCog, faEdit, faPlus } from "@fortawesome/free-solid-svg-icons";
+import {
+  faBars,
+  faCaretSquareDown,
+  faCheckSquare,
+  faCog,
+  faDotCircle,
+  faEdit,
+  faFont,
+  faHeading,
+  faHSquare,
+  faPlus,
+  faPlusSquare,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { startCase } from "lodash";
 
@@ -19,7 +31,9 @@ import {
   CSS_FLEX_WRAP_OPTIONS,
   CSS_JUSTIFY_CONTENT_OPTIONS,
   CSS_POSITION_OPTIONS,
-  SelectModes,
+  CSS_TEXT_ALIGN_OPTIONS,
+  SelectMode,
+  SelectModeType,
 } from "../utils/constants";
 
 const renderSeparator = (title?: string) => (
@@ -57,7 +71,7 @@ interface Props {
   outline: OutlineElement[];
   codeEntries: CodeEntry[];
   selectedElement: SelectedElement | undefined;
-  onChangeSelectMode: (selectMode: SelectModes) => void;
+  onChangeSelectMode: (selectMode: SelectMode) => void;
   updateSelectedElementStyle: (
     styleProp: keyof CSSStyleDeclaration,
     newValue: string,
@@ -96,12 +110,18 @@ export const SideBar: FunctionComponent<Props> = ({
     "300"
   );
 
+  const onAddElement = (
+    tag: keyof HTMLElementTagNameMap,
+    attributes?: Record<string, unknown>
+  ) => onChangeSelectMode({ type: SelectModeType.AddElement, tag, attributes });
+
   const StylePropNameMap: { [index in keyof CSSStyleDeclaration]?: string } = {
     backgroundColor: "Fill",
     flexDirection: "Direction",
     flexWrap: "Wrap",
     alignItems: "Align",
     justifyContent: "Justify",
+    textAlign: "Align",
   };
   const useSelectedElementEditor = (
     styleProp: keyof CSSStyleDeclaration,
@@ -186,6 +206,10 @@ export const SideBar: FunctionComponent<Props> = ({
     "color",
     useColorPicker
   );
+  const [, renderSelectedElementTextAlignInput] = useSelectedElementEditor(
+    "textAlign",
+    useSelectInput.bind(undefined, CSS_TEXT_ALIGN_OPTIONS)
+  );
 
   const renderMainTab = () => (
     <>
@@ -216,15 +240,70 @@ export const SideBar: FunctionComponent<Props> = ({
     </>
   );
 
+  const gridClass = "grid grid-cols-2 row-gap-3 col-gap-2 py-2";
   const renderElementAdder = () => (
     <>
       {renderSeparator("Containers")}
-      <button
-        className="btn w-full"
-        onClick={() => onChangeSelectMode(SelectModes.AddElement)}
-      >
-        Block
-      </button>
+      <div className={gridClass}>
+        <button
+          className="btn w-full"
+          onClick={() => onAddElement("div", { style: { display: "flex" } })}
+        >
+          <FontAwesomeIcon icon={faBars} className="transform rotate-90" /> Row
+        </button>
+        <button
+          className="btn w-full"
+          onClick={() =>
+            onAddElement("div", {
+              style: { display: "flex", flexDirection: "column" },
+            })
+          }
+        >
+          <FontAwesomeIcon icon={faBars} /> Column
+        </button>
+      </div>
+      {renderSeparator("Text")}
+      <div className={gridClass}>
+        <button className="btn w-full" onClick={() => onAddElement("h1")}>
+          <FontAwesomeIcon icon={faHeading} /> Heading
+        </button>
+        <button className="btn w-full" onClick={() => onAddElement("span")}>
+          <FontAwesomeIcon icon={faFont} /> Text
+        </button>
+      </div>
+      {renderSeparator("Interactive")}
+      <div className={gridClass}>
+        <button className="btn w-full" onClick={() => onAddElement("button")}>
+          <FontAwesomeIcon icon={faPlusSquare} /> Button
+        </button>
+        <button className="btn w-full" onClick={() => onAddElement("a")}>
+          <FontAwesomeIcon icon={faCaretSquareDown} /> Link
+        </button>
+      </div>
+      {renderSeparator("Form")}
+      <div className={gridClass}>
+        <button
+          className="btn w-full"
+          onClick={() => onAddElement("input", { type: "text" })}
+        >
+          <FontAwesomeIcon icon={faHSquare} /> Textbox
+        </button>
+        <button className="btn w-full" onClick={() => onAddElement("select")}>
+          <FontAwesomeIcon icon={faCaretSquareDown} /> Select
+        </button>
+        <button
+          className="btn w-full"
+          onClick={() => onAddElement("input", { type: "checkbox" })}
+        >
+          <FontAwesomeIcon icon={faCheckSquare} /> Checkbox
+        </button>
+        <button
+          className="btn w-full"
+          onClick={() => onAddElement("input", { type: "radio" })}
+        >
+          <FontAwesomeIcon icon={faDotCircle} /> Radio
+        </button>
+      </div>
     </>
   );
 
@@ -232,7 +311,7 @@ export const SideBar: FunctionComponent<Props> = ({
     selectedElement && (
       <>
         {renderSeparator("Layout")}
-        <div className="grid grid-cols-2 row-gap-3 col-gap-2 py-2">
+        <div className={gridClass}>
           {renderSelectedElementWidthInput()}
           {renderSelectedElementHeightInput()}
           {renderSelectedElementPosition()}
@@ -249,13 +328,17 @@ export const SideBar: FunctionComponent<Props> = ({
           {/* todo padding + margin */}
         </div>
         {renderSeparator("Colors")}
-        <div className="grid grid-cols-2 row-gap-3 col-gap-2 py-2">
+        <div className={gridClass}>
           {renderSelectedElementOpacityInput()}
           {renderSelectedElementBackgroundColorInput()}
         </div>
         {/* todo border */}
         {renderSeparator("Text")}
-        {renderSelectedElementColorInput()}
+        <div className={gridClass}>
+          {renderSelectedElementColorInput()}
+          {selectedElementDisplay !== "flex" &&
+            renderSelectedElementTextAlignInput()}
+        </div>
         {selectedElementDisplay === "flex" && (
           <>
             {renderSeparator("Content")}
