@@ -32,6 +32,7 @@ export const EditorPane: FunctionComponent<Props> = ({
 
   // highlight the selected element in the editor
   const activeHighlights = useRef<string[]>([]);
+  const activeActions = useRef<string[]>([]);
   useEffect(() => {
     let decorations: monaco.editor.IModelDeltaDecoration[] = [];
     if (
@@ -72,6 +73,52 @@ export const EditorPane: FunctionComponent<Props> = ({
           decorations
         ) || [];
     }
+
+    editorRef.current?.editor?.changeViewZones((changeAccessor) => {
+      activeActions.current.forEach((viewZoneId) =>
+        changeAccessor.removeZone(viewZoneId)
+      );
+      activeActions.current = [];
+
+      try {
+        const actions = new JSXActionProvider().getEditorActions({
+          ...activeCodeEntry!,
+          code: activeCode,
+        });
+
+        actions.forEach((action) => {
+          const linkNode = document.createElement("a");
+          linkNode.className =
+            "absolute z-20 cursor-pointer opacity-75 text-xs hover:opacity-100 hover:underline";
+          linkNode.style.marginLeft = `${action.column * 7.7}px`;
+          linkNode.text = "Move style to style sheet";
+          linkNode.onclick = () => {
+            const changes = new JSXActionProvider().runEditorActionOnAST(
+              action,
+              codeEntries.map((codeEntry) => {
+                if (codeEntry.id === activeCodeId) {
+                  return { ...codeEntry, code: activeCode };
+                }
+                return codeEntry;
+              })
+            );
+            changes.forEach(({ id, code }) => onCodeChange(id, code));
+          };
+          const domNode = document.createElement("div");
+          domNode.appendChild(linkNode);
+
+          const viewZoneId = changeAccessor.addZone({
+            afterLineNumber: action.line - 1,
+            heightInLines: 1,
+            domNode: domNode,
+          });
+          activeActions.current.push(viewZoneId);
+        });
+      } catch (err) {
+        console.log(err);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCode, activeCodeEntry, activeCodeId, selectedElementId]);
 
   // try to select the element the editor cursor is at

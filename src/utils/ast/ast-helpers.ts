@@ -2,7 +2,7 @@ import { namedTypes as t } from "ast-types";
 import { LiteralKind } from "ast-types/gen/kinds";
 import { NodePath } from "ast-types/lib/node-path";
 import deepFreeze from "deep-freeze-strict";
-import { CSSASTNode } from "gonzales-pe";
+import { createNode, CSSASTNode, CSSASTNodeType } from "gonzales-pe";
 import { cloneDeep, isArray } from "lodash";
 import { parse, print, types, visit } from "recast";
 
@@ -46,6 +46,10 @@ export const ifJSXExpressionContainer = (
   node?.type === "JSXExpressionContainer"
     ? (node as t.JSXExpressionContainer)
     : undefined;
+export const ifJSXIdentifier = (
+  node: t.Node | null | undefined
+): t.JSXIdentifier | undefined =>
+  node?.type === "JSXIdentifier" ? (node as t.JSXIdentifier) : undefined;
 export const ifStringLiteral = (
   node: t.Node | null | undefined
 ): t.StringLiteral | undefined =>
@@ -208,4 +212,26 @@ export function registerUninheritedCSSProperty(
       inherits: false,
     });
   } catch (e) {}
+}
+
+// convenience builder wrapper over createNode
+export const CSSASTBuilder: {
+  [index in CSSASTNodeType]: (content: CSSASTNode["content"]) => CSSASTNode;
+} = new Proxy({} as any, {
+  get(target, type) {
+    return (content: CSSASTNode["content"]) =>
+      createNode({ type: type as CSSASTNodeType, content });
+  },
+});
+const cb = CSSASTBuilder;
+
+export function createCSSPropertyDeclaration(name: string, value: string) {
+  return [
+    cb.declaration([
+      cb.property([cb.ident(name)]),
+      cb.propertyDelimiter(":"),
+      cb.value([cb.ident(value)]),
+    ]),
+    cb.declarationDelimiter(";"),
+  ];
 }

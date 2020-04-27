@@ -1,9 +1,10 @@
 import { pipe } from "fp-ts/lib/pipeable";
-import { createNode, CSSASTNode, CSSASTNodeType } from "gonzales-pe";
+import { CSSASTNode } from "gonzales-pe";
 import { kebabCase } from "lodash";
 
 import { CodeEntry, Styles } from "../../../types/paint";
 import {
+  createCSSPropertyDeclaration,
   getContent,
   ifArray,
   ifString,
@@ -14,16 +15,6 @@ import { StyleASTEditor } from "./ASTEditor";
 
 export const STYLESHEET_LOOKUP_CSS_VAR_PREFIX = "--paint-stylesheetlookup-";
 
-// convenience builder wrapper over createNode
-const b: {
-  [index in CSSASTNodeType]: (content: CSSASTNode["content"]) => CSSASTNode;
-} = new Proxy({} as any, {
-  get(target, type) {
-    return (content: CSSASTNode["content"]) =>
-      createNode({ type: type as CSSASTNodeType, content });
-  },
-});
-
 export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
   private createdIds = new Set<string>();
 
@@ -33,7 +24,7 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
       const lookupId = this.createLookupId(codeEntry, index);
       const ruleBlock = this.getRuleBlock(path);
       if (ruleBlock) {
-        const lookupRule = this.createPropertyDeclaration(
+        const lookupRule = createCSSPropertyDeclaration(
           `${STYLESHEET_LOOKUP_CSS_VAR_PREFIX}${lookupId}`,
           "1"
         );
@@ -134,17 +125,6 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
       if (lookupId) return { lookupId, index };
     }
     return undefined;
-  }
-
-  protected createPropertyDeclaration(name: string, value: string) {
-    return [
-      b.declaration([
-        b.property([b.ident(name)]),
-        b.propertyDelimiter(":"),
-        b.value([b.ident(value)]),
-      ]),
-      b.declarationDelimiter(";"),
-    ];
   }
 
   protected editStyleSheetRuleSetByLookup(
