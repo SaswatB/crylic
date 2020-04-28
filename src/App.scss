@@ -2,8 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+.default-transition {
+  @apply transition duration-300 ease-out;
+}
+
 .btn {
-  @apply p-2 rounded bg-blue-800 text-white transition duration-300 ease-out;
+  @apply p-2 rounded bg-blue-800 text-white default-transition;
 
   &:hover {
     @apply bg-blue-700;
@@ -108,12 +112,27 @@
   border-radius: 10px;
 }
 
-div[role="tooltip"] {
-  z-index: 1;
+.editor-tabs {
+  .tabs {
+    min-height: min-content;
+  }
+
+  ::-webkit-scrollbar {
+    height: 5px;
+  }
+
+  ::-webkit-scrollbar-track {
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-left: unset;
+    background-clip: unset;
+    border-radius: unset;
+  }
 }
 
-.editor-tabs {
-  .tab-content {
-    min-height: 100%;
-  }
+div[role="tooltip"] {
+  z-index: 1;
 }

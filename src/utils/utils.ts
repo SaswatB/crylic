@@ -21,6 +21,8 @@ export function getFileExtensionLanguage({ filePath }: CodeEntry) {
     return "scss";
   } else if (filePath.match(/\.(less)$/)) {
     return "less";
+  } else if (filePath.match(/\.(svg|html)$/)) {
+    return "html";
   }
   return "";
 }

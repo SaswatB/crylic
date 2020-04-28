@@ -32,6 +32,8 @@ monaco.editor.defineTheme(
   darkVs as monaco.editor.IStandaloneThemeData
 );
 
+const modelCache: Record<string, monaco.editor.ITextModel | undefined> = {};
+
 export function setupLanguageService(
   editorMonaco: monaco.editor.IStandaloneCodeEditor,
   codeEntry: CodeEntry
@@ -45,7 +47,10 @@ export function setupLanguageService(
         .replace(/\\/g, "/")
         .replace(/\.jsx?$/, ".tsx")}`
     );
-    const model = monaco.editor.createModel(codeEntry.code, language, fileUrl);
+    const model =
+      modelCache[fileUrl.toString()] ||
+      monaco.editor.createModel(codeEntry.code, language, fileUrl);
+    modelCache[fileUrl.toString()] = model;
     editorMonaco.setModel(null);
     editorMonaco.setModel(model);
     monaco.languages.typescript.typescriptDefaults.addExtraLib(

@@ -12,7 +12,7 @@ import {
   CompilerComponentViewRef,
   GetElementByLookupId,
 } from "./components/CompilerComponentView";
-import { EditorPane } from "./components/EditorPane";
+import { EditorPane } from "./components/EditorPane/EditorPane";
 import { InputModal } from "./components/InputModal";
 import { OverlayComponentView } from "./components/OverlayComponentView";
 import { SideBar } from "./components/SideBar";
@@ -128,6 +128,16 @@ function App() {
         ).code = code;
       })
     );
+  const toggleCodeEntryEdit = (codeId: string) => {
+    setProject(
+      produce((draft: Project | undefined) => {
+        const codeEntry =
+          draft?.codeEntries.find((entry) => entry.id === codeId) ||
+          ({} as Partial<CodeEntry>);
+        codeEntry.edit = !codeEntry.edit;
+      })
+    );
+  };
   const addCodeEntry = (
     partialEntry: Parameters<typeof createCodeEntry>[0]
   ) => {
@@ -465,16 +475,7 @@ function App() {
           alert("please open a file before saving");
         }
       }}
-      toggleCodeEntryEdit={(codeId) => {
-        setProject(
-          produce((draft: Project | undefined) => {
-            const codeEntry =
-              draft?.codeEntries.find((entry) => entry.id === codeId) ||
-              ({} as Partial<CodeEntry>);
-            codeEntry.edit = !codeEntry.edit;
-          })
-        );
-      }}
+      toggleCodeEntryEdit={toggleCodeEntryEdit}
       toggleCodeEntryRender={(codeId) => {
         setProject(
           produce((draft: Project | undefined) => {
@@ -585,6 +586,7 @@ function App() {
             setSelectedElement(undefined);
             setCode(codeId, newCode);
           }}
+          onCloseCodeEntry={toggleCodeEntryEdit}
           selectedElementId={selectedElement?.lookupId}
           onSelectElement={(lookupId) => {
             const newSelectedComponent = Object.values(componentViews.current)

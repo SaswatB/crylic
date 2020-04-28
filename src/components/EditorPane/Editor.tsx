@@ -1,34 +1,38 @@
-import React, { FunctionComponent, useEffect, useRef, useState } from "react";
+import React, { FunctionComponent, useEffect, useRef } from "react";
 import MonacoEditor from "react-monaco-editor";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
-import { Project } from "../types/paint";
-import { parseAST } from "../utils/ast/ast-helpers";
-import { JSXASTEditor } from "../utils/ast/editors/JSXASTEditor";
-import { JSXActionProvider } from "../utils/ast/providers/JSXActionProvider";
-import { setupLanguageService } from "../utils/moncao-helpers";
-import { getFileExtensionLanguage, getFriendlyName } from "../utils/utils";
-import { Tabs } from "./Tabs";
+import { CodeEntry, Project } from "../../types/paint";
+import { parseAST } from "../../utils/ast/ast-helpers";
+import { JSXASTEditor } from "../../utils/ast/editors/JSXASTEditor";
+import { JSXActionProvider } from "../../utils/ast/providers/JSXActionProvider";
+import { setupLanguageService } from "../../utils/moncao-helpers";
+import { getFileExtensionLanguage, isScriptEntry } from "../../utils/utils";
 
 interface Props {
-  project: Project | undefined;
-  onCodeChange: (codeId: string, newCode: string) => void;
+  project: Project;
+  codeEntry: CodeEntry;
+  onCodeChange: (newCode: string) => void;
   selectedElementId: string | undefined;
   onSelectElement: (lookupId: string) => void;
+  isActiveEditor: boolean;
 }
 
-export const EditorPane: FunctionComponent<Props> = ({
+export const Editor: FunctionComponent<Props> = ({
   project,
+  codeEntry,
   onCodeChange,
   selectedElementId,
   onSelectElement,
+  isActiveEditor,
 }) => {
-  const [activeTab, setActiveTab] = useState(0);
-  const activeCodeEntry = project?.codeEntries[activeTab];
-  const activeCodeId = activeCodeEntry?.id;
-  const activeCode = activeCodeEntry?.code;
-
   const editorRef = useRef<MonacoEditor>(null);
+
+  useEffect(() => {
+    if (isActiveEditor) {
+      editorRef.current?.editor?.layout();
+    }
+  }, [isActiveEditor]);
 
   // highlight the selected element in the editor
   const activeHighlights = useRef<string[]>([]);
@@ -38,14 +42,14 @@ export const EditorPane: FunctionComponent<Props> = ({
     if (
       selectedElementId &&
       new JSXASTEditor().getCodeIdFromLookupId(selectedElementId) ===
-        activeCodeId
+        codeEntry.id
     ) {
       try {
-        const ast = parseAST(activeCode!);
+        const ast = parseAST(codeEntry.code);
         decorations = new JSXASTEditor().getEditorDecorationsForElement(
           ast,
           // todo sync code in entry?
-          activeCodeEntry!,
+          codeEntry,
           selectedElementId
         );
       } catch (err) {
@@ -66,7 +70,7 @@ export const EditorPane: FunctionComponent<Props> = ({
     // update the highlight decorations on the editor
     const oldDecorations = activeHighlights.current;
     if (oldDecorations.length !== 0 || decorations.length !== 0) {
-      console.log("refreshing monaco decorations", activeCodeId);
+      console.log("refreshing monaco decorations", codeEntry.id);
       activeHighlights.current =
         editorRef.current?.editor?.deltaDecorations(
           oldDecorations,
@@ -74,17 +78,16 @@ export const EditorPane: FunctionComponent<Props> = ({
         ) || [];
     }
 
+    // add in editor actions
     editorRef.current?.editor?.changeViewZones((changeAccessor) => {
       activeActions.current.forEach((viewZoneId) =>
         changeAccessor.removeZone(viewZoneId)
       );
       activeActions.current = [];
+      if (!isScriptEntry(codeEntry)) return;
 
       try {
-        const actions = new JSXActionProvider().getEditorActions({
-          ...activeCodeEntry!,
-          code: activeCode!,
-        });
+        const actions = new JSXActionProvider().getEditorActions(codeEntry);
 
         actions.forEach((action) => {
           const linkNode = document.createElement("a");
@@ -95,17 +98,9 @@ export const EditorPane: FunctionComponent<Props> = ({
           linkNode.onclick = () => {
             const changes = new JSXActionProvider().runEditorActionOnAST(
               action,
-              {
-                ...project!,
-                codeEntries: project!.codeEntries.map((codeEntry) => {
-                  if (codeEntry.id === activeCodeId) {
-                    return { ...codeEntry, code: activeCode! };
-                  }
-                  return codeEntry;
-                }),
-              }
+              project
             );
-            changes.forEach(({ id, code }) => onCodeChange(id, code));
+            changes.forEach(({ id, code }) => onCodeChange(code));
           };
           const domNode = document.createElement("div");
           domNode.appendChild(linkNode);
@@ -122,21 +117,21 @@ export const EditorPane: FunctionComponent<Props> = ({
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCode, activeCodeEntry, activeCodeId, selectedElementId]);
+  }, [codeEntry, selectedElementId]);
 
   // try to select the element the editor cursor is at
   useEffect(() => {
     return editorRef.current?.editor?.onDidChangeCursorPosition((e) => {
-      if (!activeCode || !editorRef.current?.editor?.hasTextFocus()) return;
+      if (!codeEntry.code || !editorRef.current?.editor?.hasTextFocus()) return;
 
       // try to find an element at the cursor location in the latest code ast
       let lookupId;
       try {
-        const ast = parseAST(activeCode);
+        const ast = parseAST(codeEntry.code);
         lookupId = new JSXASTEditor().getElementLookupIdAtCodePosition(
           ast,
           // todo sync code in entry?
-          activeCodeEntry!,
+          codeEntry,
           e.position.lineNumber,
           e.position.column
         );
@@ -151,49 +146,21 @@ export const EditorPane: FunctionComponent<Props> = ({
       }
     }).dispose;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCodeId, activeCode, selectedElementId]);
-
-  // switch to the editor that the selected element belongs to when it's selected
-  useEffect(() => {
-    if (selectedElementId) {
-      const codeId = new JSXASTEditor().getCodeIdFromLookupId(
-        selectedElementId
-      );
-      const codeIndex =
-        project?.codeEntries.findIndex((entry) => entry.id === codeId) ?? -1;
-      if (codeIndex !== -1 && codeIndex !== activeTab) {
-        setActiveTab(codeIndex);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedElementId]);
+  }, [codeEntry, selectedElementId]);
 
   return (
-    <Tabs
-      className="editor-tabs"
-      activeTab={activeTab}
-      onChange={setActiveTab}
-      tabs={project?.codeEntries
-        .filter((codeEntry) => codeEntry.edit)
-        .map((codeEntry) => ({
-          name: getFriendlyName(project, codeEntry.id),
-          render: () => (
-            <MonacoEditor
-              ref={editorRef}
-              language={getFileExtensionLanguage(codeEntry)}
-              theme="darkVsPlus"
-              width="600px"
-              value={codeEntry.code}
-              options={{
-                automaticLayout: true,
-              }}
-              onChange={(newCode) => onCodeChange(codeEntry.id, newCode)}
-              editorDidMount={(editorMonaco) =>
-                setupLanguageService(editorMonaco, codeEntry)
-              }
-            />
-          ),
-        }))}
+    <MonacoEditor
+      ref={editorRef}
+      language={getFileExtensionLanguage(codeEntry)}
+      theme="darkVsPlus"
+      value={codeEntry.code}
+      options={{
+        automaticLayout: true,
+      }}
+      onChange={(newCode) => onCodeChange(newCode)}
+      editorDidMount={(editorMonaco) =>
+        setupLanguageService(editorMonaco, codeEntry)
+      }
     />
   );
 };
