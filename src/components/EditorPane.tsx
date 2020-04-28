@@ -2,7 +2,7 @@ import React, { FunctionComponent, useEffect, useRef, useState } from "react";
 import MonacoEditor from "react-monaco-editor";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
-import { CodeEntry } from "../types/paint";
+import { Project } from "../types/paint";
 import { parseAST } from "../utils/ast/ast-helpers";
 import { JSXASTEditor } from "../utils/ast/editors/JSXASTEditor";
 import { JSXActionProvider } from "../utils/ast/providers/JSXActionProvider";
@@ -11,22 +11,22 @@ import { getFileExtensionLanguage, getFriendlyName } from "../utils/utils";
 import { Tabs } from "./Tabs";
 
 interface Props {
-  codeEntries: CodeEntry[];
+  project: Project | undefined;
   onCodeChange: (codeId: string, newCode: string) => void;
   selectedElementId: string | undefined;
   onSelectElement: (lookupId: string) => void;
 }
 
 export const EditorPane: FunctionComponent<Props> = ({
-  codeEntries,
+  project,
   onCodeChange,
   selectedElementId,
   onSelectElement,
 }) => {
   const [activeTab, setActiveTab] = useState(0);
-  const activeCodeEntry = codeEntries[activeTab];
-  const activeCodeId = codeEntries[activeTab]?.id;
-  const activeCode = codeEntries[activeTab]?.code;
+  const activeCodeEntry = project?.codeEntries[activeTab];
+  const activeCodeId = activeCodeEntry?.id;
+  const activeCode = activeCodeEntry?.code;
 
   const editorRef = useRef<MonacoEditor>(null);
 
@@ -41,7 +41,7 @@ export const EditorPane: FunctionComponent<Props> = ({
         activeCodeId
     ) {
       try {
-        const ast = parseAST(activeCode);
+        const ast = parseAST(activeCode!);
         decorations = new JSXASTEditor().getEditorDecorationsForElement(
           ast,
           // todo sync code in entry?
@@ -83,7 +83,7 @@ export const EditorPane: FunctionComponent<Props> = ({
       try {
         const actions = new JSXActionProvider().getEditorActions({
           ...activeCodeEntry!,
-          code: activeCode,
+          code: activeCode!,
         });
 
         actions.forEach((action) => {
@@ -95,12 +95,15 @@ export const EditorPane: FunctionComponent<Props> = ({
           linkNode.onclick = () => {
             const changes = new JSXActionProvider().runEditorActionOnAST(
               action,
-              codeEntries.map((codeEntry) => {
-                if (codeEntry.id === activeCodeId) {
-                  return { ...codeEntry, code: activeCode };
-                }
-                return codeEntry;
-              })
+              {
+                ...project!,
+                codeEntries: project!.codeEntries.map((codeEntry) => {
+                  if (codeEntry.id === activeCodeId) {
+                    return { ...codeEntry, code: activeCode! };
+                  }
+                  return codeEntry;
+                }),
+              }
             );
             changes.forEach(({ id, code }) => onCodeChange(id, code));
           };
@@ -124,7 +127,7 @@ export const EditorPane: FunctionComponent<Props> = ({
   // try to select the element the editor cursor is at
   useEffect(() => {
     return editorRef.current?.editor?.onDidChangeCursorPosition((e) => {
-      if (!editorRef.current?.editor?.hasTextFocus()) return;
+      if (!activeCode || !editorRef.current?.editor?.hasTextFocus()) return;
 
       // try to find an element at the cursor location in the latest code ast
       let lookupId;
@@ -156,7 +159,8 @@ export const EditorPane: FunctionComponent<Props> = ({
       const codeId = new JSXASTEditor().getCodeIdFromLookupId(
         selectedElementId
       );
-      const codeIndex = codeEntries.findIndex((entry) => entry.id === codeId);
+      const codeIndex =
+        project?.codeEntries.findIndex((entry) => entry.id === codeId) ?? -1;
       if (codeIndex !== -1 && codeIndex !== activeTab) {
         setActiveTab(codeIndex);
       }
@@ -169,25 +173,27 @@ export const EditorPane: FunctionComponent<Props> = ({
       className="editor-tabs"
       activeTab={activeTab}
       onChange={setActiveTab}
-      tabs={codeEntries.map((codeEntry, index) => ({
-        name: getFriendlyName(codeEntries, index),
-        render: () => (
-          <MonacoEditor
-            ref={editorRef}
-            language={getFileExtensionLanguage(codeEntry)}
-            theme="darkVsPlus"
-            width="600px"
-            value={codeEntry.code}
-            options={{
-              automaticLayout: true,
-            }}
-            onChange={(newCode) => onCodeChange(codeEntry.id, newCode)}
-            editorDidMount={(editorMonaco) =>
-              setupLanguageService(editorMonaco, codeEntry)
-            }
-          />
-        ),
-      }))}
+      tabs={project?.codeEntries
+        .filter((codeEntry) => codeEntry.edit)
+        .map((codeEntry) => ({
+          name: getFriendlyName(project, codeEntry.id),
+          render: () => (
+            <MonacoEditor
+              ref={editorRef}
+              language={getFileExtensionLanguage(codeEntry)}
+              theme="darkVsPlus"
+              width="600px"
+              value={codeEntry.code}
+              options={{
+                automaticLayout: true,
+              }}
+              onChange={(newCode) => onCodeChange(codeEntry.id, newCode)}
+              editorDidMount={(editorMonaco) =>
+                setupLanguageService(editorMonaco, codeEntry)
+              }
+            />
+          ),
+        }))}
     />
   );
 };

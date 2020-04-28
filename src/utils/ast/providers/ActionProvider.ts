@@ -1,4 +1,4 @@
-import { CodeEntry } from "../../../types/paint";
+import { CodeEntry, Project } from "../../../types/paint";
 
 export interface EditorAction<EditorActionPayload> {
   codeId: string;
@@ -20,6 +20,6 @@ export abstract class ActionProvider<EditorActionPayload> {
 
   public abstract runEditorActionOnAST(
     action: EditorAction<EditorActionPayload>,
-    codeEntries: CodeEntry[]
+    project: Project
   ): CodeChanges[];
 }

@@ -1,6 +1,8 @@
 import React, { useRef, useState } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import deepFreeze from "deep-freeze-strict";
+import { fold } from "fp-ts/lib/Either";
+import { pipe } from "fp-ts/lib/pipeable";
 import gonzales from "gonzales-pe";
 import { produce } from "immer";
 import { camelCase, cloneDeep, upperFirst } from "lodash";
@@ -18,6 +20,8 @@ import {
   CodeEntry,
   CodeEntryLookupDataMap,
   OutlineElement,
+  Project,
+  ProjectConfig,
   SelectedElement,
   Styles,
 } from "./types/paint";
@@ -32,18 +36,30 @@ import { JSXASTEditor } from "./utils/ast/editors/JSXASTEditor";
 import { StyledASTEditor } from "./utils/ast/editors/StyledASTEditor";
 import { StyleSheetASTEditor } from "./utils/ast/editors/StyleSheetASTEditor";
 import {
+  CONFIG_FILE_NAME,
   getBoilerPlateComponent,
   SelectMode,
   SelectModeType,
 } from "./utils/constants";
-import { getFriendlyName, isStyleEntry } from "./utils/utils";
+import { getFriendlyName, isScriptEntry, isStyleEntry } from "./utils/utils";
 import "./App.scss";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
+const path = __non_webpack_require__("path") as typeof import("path");
 
 const elementEditor = new JSXASTEditor();
 const styledEditor = new StyledASTEditor();
 const styleSheetEditor = new StyleSheetASTEditor();
+
+const createCodeEntry = (
+  partialEntry: Partial<CodeEntry> & { filePath: string }
+) => ({
+  id: hashString(partialEntry.filePath),
+  code: "",
+  edit: true,
+  render: true,
+  ...partialEntry,
+});
 
 function App() {
   const { enqueueSnackbar } = useSnackbar();
@@ -54,26 +70,70 @@ function App() {
     Record<string, CompilerComponentViewRef | null | undefined>
   >({});
 
-  const [codeEntries, setCodeEntries] = useState<CodeEntry[]>([]);
+  const [project, setProject] = useState<Project>();
+  const openProject = (folderPath: string) => {
+    let config;
+    const codeEntries: CodeEntry[] = [];
+
+    const configFilePath = path.join(folderPath, CONFIG_FILE_NAME);
+    if (fs.existsSync(configFilePath)) {
+      // todo use a more secure require/allow async
+      config = pipe(
+        configFilePath,
+        __non_webpack_require__ as (p: string) => any,
+        ProjectConfig.decode,
+        fold(
+          (e) => {
+            console.log(e);
+            return undefined;
+          },
+          (config) => config
+        )
+      );
+    }
+    const srcFilePath = path.join(folderPath, "src");
+    if (fs.existsSync(srcFilePath)) {
+      const read = (subFolderPath: string) =>
+        fs.readdirSync(subFolderPath).forEach((file) => {
+          const filePath = path.join(subFolderPath, file);
+          if (fs.statSync(filePath).isDirectory()) {
+            read(filePath);
+          } else if (!file.match(/.test.(j|t)sx?$/)) {
+            codeEntries.push(
+              createCodeEntry({
+                filePath,
+                code: fs.readFileSync(filePath, { encoding: "utf-8" }),
+                edit: false,
+                render: false,
+              })
+            );
+          }
+        });
+      // read all files under source
+      read(srcFilePath);
+    }
+
+    setProject({
+      path: folderPath,
+      config,
+      codeEntries: codeEntries,
+    });
+  };
   const setCode = (codeId: string, code: string) =>
-    setCodeEntries(
-      produce((draft: CodeEntry[]) => {
+    setProject(
+      produce((draft: Project | undefined) => {
         (
-          draft.find((entry) => entry.id === codeId) ||
+          draft?.codeEntries.find((entry) => entry.id === codeId) ||
           ({} as Partial<CodeEntry>)
         ).code = code;
       })
     );
   const addCodeEntry = (
-    partialEntry: Partial<CodeEntry> & { filePath: string }
+    partialEntry: Parameters<typeof createCodeEntry>[0]
   ) => {
-    setCodeEntries(
-      produce((draft: CodeEntry[]) => {
-        draft.push({
-          id: hashString(partialEntry.filePath),
-          code: "",
-          ...partialEntry,
-        });
+    setProject(
+      produce((draft: Project | undefined) => {
+        draft?.codeEntries.push(createCodeEntry(partialEntry));
       })
     );
   };
@@ -85,12 +145,14 @@ function App() {
       ({ ast } = styleSheetEditor.addLookupData(ast, codeEntry));
       transformedCode = ast.toString() || "";
       finalAst = ast;
-    } else {
+    } else if (isScriptEntry(codeEntry)) {
       let ast = parseAST(codeEntry.code);
       ({ ast } = elementEditor.addLookupData(ast, codeEntry));
       ({ ast } = styledEditor.addLookupData(ast, codeEntry));
       transformedCode = printAST(ast);
       finalAst = ast;
+    } else {
+      return codeEntry.code;
     }
 
     console.log("codeTransformer", finalAst);
@@ -187,7 +249,7 @@ function App() {
         if (!lookupId) break;
 
         const codeId = elementEditor.getCodeIdFromLookupId(lookupId);
-        const codeEntry = codeEntries.find(
+        const codeEntry = project?.codeEntries.find(
           (codeEntry) => codeEntry.id === codeId
         );
         const lookupData = codeEntriesLookupData[codeId];
@@ -259,7 +321,7 @@ function App() {
       const edittedCodeId = styledEditor.getCodeIdFromLookupId(
         selectedComponentStyleSheetLookupId
       );
-      edittedCodeEntry = codeEntries.find(
+      edittedCodeEntry = project?.codeEntries.find(
         (codeEntry) => codeEntry.id === edittedCodeId
       );
       const lookupData = codeEntriesLookupData[edittedCodeId];
@@ -275,7 +337,7 @@ function App() {
       const edittedCodeId = styledEditor.getCodeIdFromLookupId(
         selectedComponentStyledLookupId
       );
-      edittedCodeEntry = codeEntries.find(
+      edittedCodeEntry = project?.codeEntries.find(
         (codeEntry) => codeEntry.id === edittedCodeId
       );
       const lookupData = codeEntriesLookupData[edittedCodeId];
@@ -288,7 +350,7 @@ function App() {
         styles
       );
     } else {
-      edittedCodeEntry = codeEntries.find(
+      edittedCodeEntry = project?.codeEntries.find(
         (codeEntry) => codeEntry.id === selectedCodeId
       );
       const lookupData = codeEntriesLookupData[selectedCodeId];
@@ -351,7 +413,7 @@ function App() {
   const renderSideBar = () => (
     <SideBar
       outline={outline}
-      codeEntries={codeEntries}
+      project={project}
       selectedElement={selectedElement}
       onChangeSelectMode={setSelectMode}
       updateSelectedElementStyle={updateSelectedElementStyle}
@@ -388,19 +450,40 @@ function App() {
         addCodeEntry({ filePath });
         enqueueSnackbar("Started a new component!");
       }}
+      onOpenProject={openProject}
       onOpenFile={(filePath) => {
         // todo handle file not found or reopening an open file
         const code = fs.readFileSync(filePath, { encoding: "utf-8" });
         addCodeEntry({ filePath, code });
       }}
       onSaveFile={() => {
-        if (codeEntries.length) {
-          codeEntries.forEach(({ filePath, code }) =>
+        if (project?.codeEntries.length) {
+          project.codeEntries.forEach(({ filePath, code }) =>
             fs.writeFileSync(filePath, code)
           );
         } else {
           alert("please open a file before saving");
         }
+      }}
+      toggleCodeEntryEdit={(codeId) => {
+        setProject(
+          produce((draft: Project | undefined) => {
+            const codeEntry =
+              draft?.codeEntries.find((entry) => entry.id === codeId) ||
+              ({} as Partial<CodeEntry>);
+            codeEntry.edit = !codeEntry.edit;
+          })
+        );
+      }}
+      toggleCodeEntryRender={(codeId) => {
+        setProject(
+          produce((draft: Project | undefined) => {
+            const codeEntry =
+              draft?.codeEntries.find((entry) => entry.id === codeId) ||
+              ({} as Partial<CodeEntry>);
+            codeEntry.render = !codeEntry.render;
+          })
+        );
       }}
     />
   );
@@ -439,20 +522,20 @@ function App() {
   );
 
   const renderComponentViews = () =>
-    codeEntries
-      .filter((entry) => entry.filePath.match(/\.(jsx?|tsx?)$/))
+    project?.codeEntries
+      .filter((entry) => entry.render)
       .map((entry, index) => (
         <div className="flex flex-col m-10">
-          {getFriendlyName(codeEntries, index)}
+          {getFriendlyName(project, entry.id)}
           <div className="flex relative bg-white shadow-2xl">
             <OverlayComponentView
               compilerProps={{
                 ref(componentView) {
                   componentViews.current[entry.id] = componentView;
                 },
-                codeEntries: codeEntries,
+                project,
                 selectedCodeId: entry.id,
-                codeTransformer: codeTransformer,
+                codeTransformer,
                 onCompileEnd: onComponentViewCompiled,
                 style: {
                   width: `${frameSize.width}px`,
@@ -497,7 +580,7 @@ function App() {
           </TransformWrapper>
         </div>
         <EditorPane
-          codeEntries={codeEntries}
+          project={project}
           onCodeChange={(codeId, newCode) => {
             setSelectedElement(undefined);
             setCode(codeId, newCode);

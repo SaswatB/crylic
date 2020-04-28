@@ -4,7 +4,7 @@ import gonzales, { CSSASTNode } from "gonzales-pe";
 import { flatten } from "lodash";
 import { types } from "recast";
 
-import { CodeEntry } from "../../../types/paint";
+import { CodeEntry, Project } from "../../../types/paint";
 import { getFriendlyName, isStyleEntry } from "../../utils";
 import {
   createCSSPropertyDeclaration,
@@ -66,13 +66,12 @@ export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
 
   public runEditorActionOnAST(
     action: EditorAction<JSXASTEditorAction>,
-    codeEntries: CodeEntry[]
+    project: Project
   ) {
     if (action.action.type === "MoveStyleToStyleSheet") {
-      const codeEntryIndex = codeEntries.findIndex(
+      const codeEntry = project.codeEntries.find(
         (codeEntry) => codeEntry.id === action.codeId
-      );
-      const codeEntry = codeEntries[codeEntryIndex];
+      )!;
       const ast = parseAST(codeEntry.code);
       let styleClassName = "";
       let style: { name: string; value: string }[] = [];
@@ -115,8 +114,8 @@ export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
           );
           // todo allow the user to give the class name
           styleClassName = `st-${getFriendlyName(
-            codeEntries,
-            codeEntryIndex
+            project,
+            codeEntry.id
           ).toLowerCase()}-${elementName}-${index}`;
           path.node.openingElement.attributes = path.node.openingElement.attributes?.filter(
             (attr) => attr.type !== "JSXAttribute" || attr.name.name !== "style"
@@ -131,7 +130,7 @@ export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
         }
       });
       // todo allow the user to select a different style file
-      const styleCodeEntry = codeEntries.find((codeEntry) =>
+      const styleCodeEntry = project.codeEntries.find((codeEntry) =>
         isStyleEntry(codeEntry)
       )!;
       const styleAst = gonzales.parse(styleCodeEntry.code);

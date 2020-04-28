@@ -1,12 +1,25 @@
-import { namedTypes as t } from "ast-types";
+import * as it from "io-ts";
 
 export interface CodeEntry {
   id: string;
   filePath: string;
   code: string;
+  edit: boolean;
+  render: boolean;
 }
 
 export type CodeEntryLookupDataMap = Record<string, { ast: any } | undefined>;
+
+export const ProjectConfig = it.type({
+  bootstrap: it.string,
+});
+export type ProjectConfig = it.TypeOf<typeof ProjectConfig>;
+
+export interface Project {
+  path: string;
+  config?: ProjectConfig;
+  codeEntries: CodeEntry[];
+}
 
 export interface SelectedElement {
   lookupId: string;

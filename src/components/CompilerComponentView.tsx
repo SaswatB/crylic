@@ -12,7 +12,7 @@ import produce from "immer";
 
 import { useDebounce } from "../hooks/useDebounce";
 import { useUpdatingRef } from "../hooks/useUpdatingRef";
-import { CodeEntry, Styles } from "../types/paint";
+import { CodeEntry, Project, Styles } from "../types/paint";
 import { JSXASTEditor } from "../utils/ast/editors/JSXASTEditor";
 import { webpackRunCodeWithWorker } from "../utils/compilers/run-code-webpack-worker";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -44,7 +44,7 @@ export interface CompilerComponentViewRef {
 }
 
 export interface CompilerComponentViewProps {
-  codeEntries: CodeEntry[];
+  project: Project | undefined;
   selectedCodeId: string;
   codeTransformer: (codeEntry: CodeEntry) => string;
   onCompileStart?: () => void;
@@ -64,7 +64,7 @@ export const CompilerComponentView: FunctionComponent<
 > = forwardRef(
   (
     {
-      codeEntries,
+      project,
       selectedCodeId,
       codeTransformer,
       onCompileStart,
@@ -115,13 +115,13 @@ export const CompilerComponentView: FunctionComponent<
 
     const errorBoundary = useRef<ErrorBoundary>(null);
     const [CompiledElement, setCompiledElement] = useState<any>();
-    const [debouncedCodeEntries] = useDebounce(codeEntries, 150);
+    const [debouncedCodeEntries] = useDebounce(project?.codeEntries, 150);
     useEffect(() => {
       (async () => {
-        if (debouncedCodeEntries.length) {
+        if (debouncedCodeEntries?.length) {
           try {
             onCompileStart?.();
-            console.log("compiling");
+            console.log("compiling", selectedCodeId, project);
             const codeExports = await webpackRunCodeWithWorker(
               debouncedCodeEntries,
               selectedCodeId,

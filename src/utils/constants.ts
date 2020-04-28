@@ -1,3 +1,5 @@
+export const CONFIG_FILE_NAME = "paint.config.js";
+
 export enum SelectModeType {
   SelectElement,
   AddElement,

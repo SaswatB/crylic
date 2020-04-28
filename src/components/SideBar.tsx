@@ -23,7 +23,7 @@ import {
   useSelectInput,
   useTextInput,
 } from "../hooks/useInput";
-import { CodeEntry, OutlineElement, SelectedElement } from "../types/paint";
+import { OutlineElement, Project, SelectedElement } from "../types/paint";
 import {
   CSS_ALIGN_ITEMS_OPTIONS,
   CSS_DISPLAY_OPTIONS,
@@ -35,6 +35,7 @@ import {
   SelectMode,
   SelectModeType,
 } from "../utils/constants";
+import { getFriendlyName } from "../utils/utils";
 
 const renderSeparator = (title?: string) => (
   <div className="flex items-center">
@@ -69,7 +70,7 @@ type EditorHook = (
 
 interface Props {
   outline: OutlineElement[];
-  codeEntries: CodeEntry[];
+  project: Project | undefined;
   selectedElement: SelectedElement | undefined;
   onChangeSelectMode: (selectMode: SelectMode) => void;
   updateSelectedElementStyle: (
@@ -83,21 +84,27 @@ interface Props {
   ) => void;
   onNewComponent: () => void;
   onNewStyleSheet: () => void;
+  onOpenProject: (filePath: string) => void;
   onOpenFile: (filePath: string) => void;
   onSaveFile: () => void;
+  toggleCodeEntryEdit: (codeId: string) => void;
+  toggleCodeEntryRender: (codeId: string) => void;
 }
 
 export const SideBar: FunctionComponent<Props> = ({
   outline,
-  codeEntries,
+  project,
   selectedElement,
   onChangeSelectMode,
   updateSelectedElementStyle,
   onChangeFrameSize,
   onNewComponent,
   onNewStyleSheet,
+  onOpenProject,
   onOpenFile,
   onSaveFile,
+  toggleCodeEntryEdit,
+  toggleCodeEntryRender,
 }) => {
   const [, renderComponentViewWidthInput] = useTextInput(
     (newWidth) => onChangeFrameSize(newWidth, undefined),
@@ -215,21 +222,50 @@ export const SideBar: FunctionComponent<Props> = ({
     <>
       {renderSeparator("File Options")}
       <div className="btngrp-v">
-        <button className="btn w-full" onClick={onNewComponent}>
-          New Component
-        </button>
-        <button className="btn w-full" onClick={onNewStyleSheet}>
-          New Style Sheet
-        </button>
-        <button
-          className="btn w-full"
-          onClick={() => openFilePicker().then((f) => f && onOpenFile(f))}
-        >
-          Open
-        </button>
-        <button className="btn w-full" onClick={onSaveFile}>
-          Save
-        </button>
+        {project ? (
+          <>
+            <button className="btn w-full" onClick={onNewComponent}>
+              New Component
+            </button>
+            <button className="btn w-full" onClick={onNewStyleSheet}>
+              New Style Sheet
+            </button>
+            <button
+              className="btn w-full"
+              onClick={() => openFilePicker().then((f) => f && onOpenFile(f))}
+            >
+              Open
+            </button>
+            <button className="btn w-full" onClick={onSaveFile}>
+              Save
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              className="btn w-full"
+              onClick={() =>
+                openFilePicker({ properties: ["openDirectory"] }).then(
+                  (f) => f && onOpenProject(f)
+                )
+              }
+            >
+              Open Project
+            </button>
+            {/* <button
+              className="btn w-full"
+              onClick={() => openFilePicker().then((f) => f && onOpenFile(f))}
+            >
+              New Project
+            </button>
+            <button
+              className="btn w-full"
+              onClick={() => openFilePicker().then((f) => f && onOpenFile(f))}
+            >
+              Quick Design
+            </button> */}
+          </>
+        )}
       </div>
       {renderSeparator("Frame")}
       <div className="flex flex-row items-center justify-center">
@@ -237,6 +273,31 @@ export const SideBar: FunctionComponent<Props> = ({
         <div className="px-4">x</div>
         {renderComponentViewHeightInput()}
       </div>
+      {project && (
+        <>
+          {renderSeparator("Assets")}
+          <div className="grid grid-cols-3 py-2">
+            <span>Name</span>
+            <span>Edit</span>
+            <span>Render</span>
+            {project.codeEntries.map((codeEntry) => (
+              <React.Fragment key={codeEntry.filePath}>
+                <span>{getFriendlyName(project, codeEntry.id)}</span>
+                <input
+                  type="checkbox"
+                  checked={codeEntry.edit}
+                  onChange={() => toggleCodeEntryEdit(codeEntry.id)}
+                />
+                <input
+                  type="checkbox"
+                  checked={codeEntry.render}
+                  onChange={() => toggleCodeEntryRender(codeEntry.id)}
+                />
+              </React.Fragment>
+            ))}
+          </div>
+        </>
+      )}
     </>
   );
 
@@ -367,7 +428,8 @@ export const SideBar: FunctionComponent<Props> = ({
           name: <FontAwesomeIcon icon={faCog} />,
           render: renderMainTab,
         },
-        !!codeEntries.length && {
+        !!project?.codeEntries.filter((codeEntry) => codeEntry.render)
+          .length && {
           name: <FontAwesomeIcon icon={faPlus} />,
           render: renderElementAdder,
         },

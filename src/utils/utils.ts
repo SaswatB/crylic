@@ -1,12 +1,16 @@
 import { startCase } from "lodash";
 
-import { CodeEntry, OutlineElement } from "../types/paint";
+import { CodeEntry, OutlineElement, Project } from "../types/paint";
 import { JSXASTEditor } from "./ast/editors/JSXASTEditor";
 
 const STYLE_EXTENSION_REGEX = /\.(s?css|sass|less)$/;
+const SCRIPT_EXTENSION_REGEX = /\.[jt]sx?$/;
 
 export const isStyleEntry = (codeEntry: CodeEntry) =>
   !!codeEntry.filePath.match(STYLE_EXTENSION_REGEX);
+
+export const isScriptEntry = (codeEntry: CodeEntry) =>
+  !!codeEntry.filePath.match(SCRIPT_EXTENSION_REGEX);
 
 export function getFileExtensionLanguage({ filePath }: CodeEntry) {
   if (filePath.match(/\.(jsx?|tsx?)$/)) {
@@ -21,17 +25,19 @@ export function getFileExtensionLanguage({ filePath }: CodeEntry) {
   return "";
 }
 
-export function getFriendlyName(
-  codeEntries: CodeEntry[],
-  selectedIndex: number
-) {
+export function getFriendlyName({ codeEntries }: Project, codeId: string) {
+  const codeEntry = codeEntries.find(({ id }) => id === codeId)!;
+  const fileName = codeEntry.filePath
+    ?.replace(/^.*(\/|\\)/, "")
+    ?.replace(SCRIPT_EXTENSION_REGEX, "")
+    ?.replace(STYLE_EXTENSION_REGEX, "");
+  if (!isScriptEntry(codeEntry) && !isStyleEntry(codeEntry)) {
+    return fileName;
+  }
   // todo get a more specific name if this simple name conflicts with another code entry
-  return `${startCase(
-    codeEntries[selectedIndex]?.filePath
-      ?.replace(/^.*(\/|\\)/, "")
-      ?.replace(/\.(jsx?|tsx?)$/, "")
-      ?.replace(STYLE_EXTENSION_REGEX, "")
-  )}${isStyleEntry(codeEntries[selectedIndex]) ? " (stylesheet)" : ""}`;
+  return `${startCase(fileName)}${
+    isStyleEntry(codeEntry) ? " (stylesheet)" : ""
+  }`;
 }
 
 export const buildOutline = (element: Element): OutlineElement[] =>

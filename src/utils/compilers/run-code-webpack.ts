@@ -72,6 +72,26 @@ const WEBPACK_MODULES = {
       test: /\.less$/,
       use: ["style-loader", "css-loader", "less-loader"],
     },
+    {
+      test: /\.svg$/,
+      use: ["svg-url-loader"],
+    },
+    // {
+    //   loader: require.resolve("file-loader"),
+    //   // Exclude `js` files to keep "css" loader working as it injects
+    //   // its runtime that would otherwise be processed through "file" loader.
+    //   // Also exclude `html` and `json` extensions so they get processed
+    //   // by webpacks internal loaders.
+    //   exclude: [
+    //     /\.(js|mjs|jsx|ts|tsx)$/,
+    //     /\.html$/,
+    //     /\.json$/,
+    //     /\.(s?css|sass|less)$/,
+    //   ],
+    //   options: {
+    //     name: "static/media/[name].[hash:8].[ext]",
+    //   },
+    // },
   ],
 };
 

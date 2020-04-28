@@ -18,7 +18,7 @@ function createWindow() {
   });
 
   // and load the url of the app.
-  mainWindow.loadURL("http://localhost:3000");
+  mainWindow.loadURL("http://localhost:4000");
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()
