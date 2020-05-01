@@ -114,6 +114,7 @@ export const CompilerComponentView: FunctionComponent<
     const getInactiveFrame = () => (activeFrame === 1 ? frame2 : frame1);
 
     const errorBoundary = useRef<ErrorBoundary>(null);
+    const [BootstrapElement, setBootstrapElement] = useState<any>();
     const [CompiledElement, setCompiledElement] = useState<any>();
     const [debouncedCodeEntries] = useDebounce(project?.codeEntries, 150);
     useEffect(() => {
@@ -123,7 +124,7 @@ export const CompilerComponentView: FunctionComponent<
             onCompileStart?.();
             console.log("compiling", selectedCodeId, project);
             const codeExports = await webpackRunCodeWithWorker(
-              debouncedCodeEntries,
+              { ...project!, codeEntries: debouncedCodeEntries },
               selectedCodeId,
               codeTransformer,
               {
@@ -135,8 +136,13 @@ export const CompilerComponentView: FunctionComponent<
             if (!codeExports) return;
             console.log("codeExports", codeExports);
 
+            setBootstrapElement(() =>
+              Object.values(codeExports.bootstrap || {}).find(
+                (e): e is Function => typeof e === "function"
+              )
+            );
             setCompiledElement(() =>
-              Object.values(codeExports).find(
+              Object.values(codeExports.component).find(
                 (e): e is Function => typeof e === "function"
               )
             );
@@ -183,6 +189,7 @@ export const CompilerComponentView: FunctionComponent<
 
     useLayoutEffect(() => applyTempStyles(tempStyles));
 
+    const Wrapper = BootstrapElement || React.Fragment;
     const renderFrameContent = () => (
       <ErrorBoundary
         ref={errorBoundary}
@@ -190,7 +197,9 @@ export const CompilerComponentView: FunctionComponent<
           console.log(error, errorInfo);
         }}
       >
-        {CompiledElement && <CompiledElement />}
+        <Wrapper>
+          {CompiledElement && React.createElement(CompiledElement)}
+        </Wrapper>
       </ErrorBoundary>
     );
 

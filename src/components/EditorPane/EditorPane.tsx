@@ -49,6 +49,7 @@ export const EditorPane: FunctionComponent<Props> = ({
       tabs={editableEntries?.map((codeEntry, index) => ({
         key: codeEntry.id,
         name: getFriendlyName(project!, codeEntry.id),
+        title: codeEntry.filePath,
         render: () => (
           <Editor
             project={project!}

@@ -143,6 +143,11 @@ export const webpackRunCode = async (
           commonjs2: "react-dom",
           amd: "react-dom",
         },
+        "react-router-dom": {
+          commonjs: "react-router-dom",
+          commonjs2: "react-router-dom",
+          amd: "react-router-dom",
+        },
       },
       // plugins: [
       //   new webpack.ProgressPlugin({

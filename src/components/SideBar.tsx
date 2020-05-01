@@ -6,6 +6,7 @@ import {
   faCog,
   faDotCircle,
   faEdit,
+  faEye,
   faFont,
   faHeading,
   faHSquare,
@@ -13,6 +14,10 @@ import {
   faPlusSquare,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import ChevronRightIcon from "@material-ui/icons/ChevronRight";
+import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
+import TreeItem from "@material-ui/lab/TreeItem";
+import TreeView from "@material-ui/lab/TreeView";
 import { startCase } from "lodash";
 
 import { Tabs, TabsRef } from "../components/Tabs";
@@ -23,7 +28,12 @@ import {
   useSelectInput,
   useTextInput,
 } from "../hooks/useInput";
-import { OutlineElement, Project, SelectedElement } from "../types/paint";
+import {
+  CodeEntry,
+  OutlineElement,
+  Project,
+  SelectedElement,
+} from "../types/paint";
 import {
   CSS_ALIGN_ITEMS_OPTIONS,
   CSS_DISPLAY_OPTIONS,
@@ -35,7 +45,7 @@ import {
   SelectMode,
   SelectModeType,
 } from "../utils/constants";
-import { getFriendlyName } from "../utils/utils";
+import { isScriptEntry } from "../utils/utils";
 
 const renderSeparator = (title?: string) => (
   <div className="flex items-center">
@@ -218,6 +228,68 @@ export const SideBar: FunctionComponent<Props> = ({
     useSelectInput.bind(undefined, CSS_TEXT_ALIGN_OPTIONS)
   );
 
+  interface Tree {
+    id: string;
+    name: string;
+    children: Tree[];
+    codeEntry?: CodeEntry;
+  }
+  const projectTree: Tree = { id: "root", name: "", children: [] };
+  const projectPath = project?.path.replace(/\\/g, "/");
+  project?.codeEntries.forEach((codeEntry) => {
+    const path = codeEntry.filePath
+      .replace(/\\/g, "/")
+      .replace(projectPath!, "")
+      .replace(/^\//, "")
+      .split("/");
+    let node = projectTree;
+    path.forEach((pathPart, index) => {
+      let child = node.children.find(
+        (childNode) => childNode.name === pathPart
+      );
+      if (!child) {
+        child = {
+          id: path.slice(0, index + 1).join("/"),
+          name: pathPart,
+          children: [],
+        };
+        node.children.push(child);
+      }
+      node = child;
+    });
+    node.codeEntry = codeEntry;
+  });
+
+  const renderTreeLabel = ({ name, codeEntry }: Tree) =>
+    !codeEntry ? (
+      name
+    ) : (
+      <div className="flex">
+        {name}
+        <div className="flex-1" />
+        {isScriptEntry(codeEntry) && (
+          <button
+            className="mx-3"
+            onClick={() => toggleCodeEntryRender(codeEntry.id)}
+          >
+            <FontAwesomeIcon icon={faEye} />
+          </button>
+        )}
+        <button>
+          <FontAwesomeIcon
+            icon={faEdit}
+            onClick={() => toggleCodeEntryEdit(codeEntry.id)}
+          />
+        </button>
+      </div>
+    );
+
+  const renderTree = (node = projectTree) => (
+    <TreeItem key={node.id} nodeId={node.id} label={renderTreeLabel(node)}>
+      {node.children.map(renderTree)}
+    </TreeItem>
+  );
+
   const renderMainTab = () => (
     <>
       {renderSeparator("File Options")}
@@ -276,26 +348,13 @@ export const SideBar: FunctionComponent<Props> = ({
       {project && (
         <>
           {renderSeparator("Assets")}
-          <div className="grid grid-cols-3 py-2">
-            <span>Name</span>
-            <span>Edit</span>
-            <span>Render</span>
-            {project.codeEntries.map((codeEntry) => (
-              <React.Fragment key={codeEntry.filePath}>
-                <span>{getFriendlyName(project, codeEntry.id)}</span>
-                <input
-                  type="checkbox"
-                  checked={codeEntry.edit}
-                  onChange={() => toggleCodeEntryEdit(codeEntry.id)}
-                />
-                <input
-                  type="checkbox"
-                  checked={codeEntry.render}
-                  onChange={() => toggleCodeEntryRender(codeEntry.id)}
-                />
-              </React.Fragment>
-            ))}
-          </div>
+          <TreeView
+            defaultCollapseIcon={<ExpandMoreIcon />}
+            defaultExpandIcon={<ChevronRightIcon />}
+            defaultExpanded={projectTree.children.map((child) => child.id)}
+          >
+            {projectTree.children.map(renderTree)}
+          </TreeView>
         </>
       )}
     </>

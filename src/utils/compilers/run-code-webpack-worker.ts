@@ -1,7 +1,8 @@
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WebpackWorker from "worker-loader!./webpack-worker";
 
-import { CodeEntry } from "../../types/paint";
+import { CodeEntry, Project } from "../../types/paint";
+import { getReactRouterProxy } from "../react-router-proxy";
 
 const path = __non_webpack_require__("path") as typeof import("path");
 
@@ -25,7 +26,7 @@ let compileIdCounter = 0;
  * Runs `webpackRunCode` on a worker
  */
 export const webpackRunCodeWithWorker = async (
-  codeEntries: CodeEntry[],
+  project: Project,
   selectedCodeId: string,
   codeTransformer: (codeEntry: CodeEntry) => string,
   { window }: any
@@ -37,14 +38,39 @@ export const webpackRunCodeWithWorker = async (
   const workerCallback = new Promise<{ bundle: string }>((resolve) => {
     compileCallbacks[compileId] = resolve;
   });
+
+  const bundleCode = `
+  export const component = require("${
+    project.codeEntries.find(({ id }) => id === selectedCodeId)!.filePath
+  }")
+  ${
+    project.config?.bootstrap
+      ? `export const bootstrap = require("${path.join(
+          project.path,
+          project.config.bootstrap
+        )}");`
+      : ""
+  }
+  `.replace(/\\/g, "\\\\");
+
   // set a message to the worker for compiling code
   worker.postMessage({
     action: "compile",
-    codeEntries: codeEntries.map((codeEntry) => ({
-      ...codeEntry,
-      code: codeTransformer(codeEntry),
-    })),
-    selectedCodeId,
+    codeEntries: project.codeEntries
+      .map((codeEntry) => ({
+        ...codeEntry,
+        code: codeTransformer(codeEntry),
+      }))
+      .concat([
+        {
+          id: "bundle",
+          code: bundleCode,
+          filePath: "/index.tsx",
+          edit: false,
+          render: false,
+        },
+      ]),
+    selectedCodeId: "bundle",
     compileId,
   });
 
@@ -59,6 +85,7 @@ export const webpackRunCodeWithWorker = async (
   window.require = (name: string) => {
     if (name === "react") return require("react");
     if (name === "react-dom") return require("react-dom");
+    if (name === "react-router-dom") return getReactRouterProxy();
     return __non_webpack_require__(name);
     // throw new Error(`Unable to require "${name}"`)
   };

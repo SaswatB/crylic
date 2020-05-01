@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 interface Tab {
   key: string;
   name: ReactNode;
+  title: string;
   render: () => ReactNode;
   onClose: () => void;
 }
@@ -34,7 +35,7 @@ export const EditorTabs: FunctionComponent<Props> = ({
       style={{ width: "600px" }}
     >
       <div className="tabs flex flex-row overflow-x-auto">
-        {usableTabs.map(({ key, name, onClose }, index) => (
+        {usableTabs.map(({ key, name, title, onClose }, index) => (
           <button
             key={key}
             className="flex px-6 py-1 whitespace-no-wrap text-sm default-transition hover:bg-gray-700"
@@ -43,6 +44,7 @@ export const EditorTabs: FunctionComponent<Props> = ({
               undefined
             }
             onClick={() => onChange(index)}
+            title={title}
           >
             {name}
             <button className="ml-2" onClick={onClose}>
