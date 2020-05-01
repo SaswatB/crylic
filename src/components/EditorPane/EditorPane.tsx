@@ -54,7 +54,7 @@ export const EditorPane: FunctionComponent<Props> = ({
           <Editor
             project={project!}
             codeEntry={codeEntry}
-            onCodeChange={(newCode) => onCodeChange(codeEntry.id, newCode)}
+            onCodeChange={onCodeChange}
             selectedElementId={selectedElementId}
             onSelectElement={onSelectElement}
             isActiveEditor={activeTab === index}

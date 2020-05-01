@@ -12,7 +12,7 @@ import { getFileExtensionLanguage, isScriptEntry } from "../../utils/utils";
 interface Props {
   project: Project;
   codeEntry: CodeEntry;
-  onCodeChange: (newCode: string) => void;
+  onCodeChange: (codeId: string, newCode: string) => void;
   selectedElementId: string | undefined;
   onSelectElement: (lookupId: string) => void;
   isActiveEditor: boolean;
@@ -100,7 +100,7 @@ export const Editor: FunctionComponent<Props> = ({
               action,
               project
             );
-            changes.forEach(({ id, code }) => onCodeChange(code));
+            changes.forEach(({ id, code }) => onCodeChange(id, code));
           };
           const domNode = document.createElement("div");
           domNode.appendChild(linkNode);
@@ -121,6 +121,8 @@ export const Editor: FunctionComponent<Props> = ({
 
   // try to select the element the editor cursor is at
   useEffect(() => {
+    if (!isScriptEntry(codeEntry)) return undefined;
+
     return editorRef.current?.editor?.onDidChangeCursorPosition((e) => {
       if (!codeEntry.code || !editorRef.current?.editor?.hasTextFocus()) return;
 
@@ -157,7 +159,7 @@ export const Editor: FunctionComponent<Props> = ({
       options={{
         automaticLayout: true,
       }}
-      onChange={(newCode) => onCodeChange(newCode)}
+      onChange={(newCode) => onCodeChange(codeEntry.id, newCode)}
       editorDidMount={(editorMonaco) =>
         setupLanguageService(editorMonaco, codeEntry)
       }
