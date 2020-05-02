@@ -1,10 +1,11 @@
 import { namedTypes as t } from "ast-types";
 import { pipe } from "fp-ts/lib/pipeable";
-import gonzales, { CSSASTNode } from "gonzales-pe";
+import { CSSASTNode } from "gonzales-pe";
 import { flatten } from "lodash";
 import { types } from "recast";
 
-import { CodeEntry, Project } from "../../../types/paint";
+import { CodeEntry } from "../../../types/paint";
+import { Project } from "../../Project";
 import { getFriendlyName, isStyleEntry } from "../../utils";
 import {
   createCSSPropertyDeclaration,
@@ -14,6 +15,7 @@ import {
   ifJSXIdentifier,
   ifObjectExpression,
   parseAST,
+  parseStyleSheetAST,
   prettyPrintAST,
   prettyPrintStyleSheetAST,
   traverseJSXElements,
@@ -133,7 +135,7 @@ export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
       const styleCodeEntry = project.codeEntries.find((codeEntry) =>
         isStyleEntry(codeEntry)
       )!;
-      const styleAst = gonzales.parse(styleCodeEntry.code);
+      const styleAst = parseStyleSheetAST(styleCodeEntry);
       (styleAst.content as CSSASTNode[]).push(
         cb.ruleset([
           cb.selector([cb.class([cb.ident(styleClassName)])]),
@@ -146,8 +148,6 @@ export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
           ),
         ])
       );
-      // fill in a default syntax if the ast has none (which can happen for empty files)
-      styleAst.syntax = styleAst.syntax || "css";
 
       return [
         {

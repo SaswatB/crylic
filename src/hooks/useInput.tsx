@@ -8,6 +8,9 @@ import {
   TextField,
 } from "@material-ui/core";
 import Slider, { SliderProps } from "@material-ui/core/Slider";
+import Autocomplete, {
+  createFilterOptions,
+} from "@material-ui/lab/Autocomplete";
 import rgbHex from "rgb-hex";
 
 import { DebouncingColorPicker } from "../components/DebouncingColorPicker";
@@ -240,4 +243,52 @@ export function useColorPicker(
 
   const throttledValue = useThrottle(value, 300);
   return [throttledValue, render] as const;
+}
+
+export function useAutocomplete<T>(
+  options: { name: string; value: T }[],
+  onChange = (value: T | undefined) => {},
+  label = "",
+  initialValue: T | undefined = undefined
+) {
+  const [value, setValue] = useState(initialValue);
+  useEffect(() => setValue(initialValue), [initialValue]);
+  const filter = useRef(createFilterOptions<{ name: string; value: T }>());
+
+  return (
+    <Autocomplete
+      value={options.find((option) => option.value === value)}
+      onChange={(
+        event: React.ChangeEvent<{}>,
+        newValue: { name: string; value: T } | null
+      ) => {
+        setValue(newValue?.value);
+        onChange(newValue?.value);
+      }}
+      filterOptions={(options, params) => {
+        const filtered = filter.current(options, params);
+
+        // if (params.inputValue !== "") {
+        //   filtered.push({
+        //     name: `Add Style Sheet Rule "${params.inputValue}"`,
+        //   });
+        // }
+
+        return filtered;
+      }}
+      options={options}
+      getOptionLabel={(option) => {
+        return option.name;
+      }}
+      // groupBy={(option) => option.type}
+      selectOnFocus
+      clearOnBlur
+      disableClearable
+      renderOption={(option) => option.name}
+      // freeSolo
+      renderInput={(params) => (
+        <TextField {...params} label={label} variant="outlined" />
+      )}
+    />
+  );
 }

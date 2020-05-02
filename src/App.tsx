@@ -3,7 +3,6 @@ import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import deepFreeze from "deep-freeze-strict";
 import { fold } from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
-import gonzales from "gonzales-pe";
 import { produce } from "immer";
 import { camelCase, cloneDeep, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
@@ -20,36 +19,29 @@ import {
   CodeEntry,
   CodeEntryLookupDataMap,
   OutlineElement,
-  Project,
   ProjectConfig,
   SelectedElement,
   Styles,
 } from "./types/paint";
 import {
   hashString,
-  parseAST,
-  prettyPrintAST,
-  prettyPrintStyleSheetAST,
-  printAST,
+  parseCodeEntryAST,
+  prettyPrintCodeEntryAST,
+  printCodeEntryAST,
 } from "./utils/ast/ast-helpers";
-import { JSXASTEditor } from "./utils/ast/editors/JSXASTEditor";
-import { StyledASTEditor } from "./utils/ast/editors/StyledASTEditor";
-import { StyleSheetASTEditor } from "./utils/ast/editors/StyleSheetASTEditor";
+import { StyleGroup } from "./utils/ast/editors/ASTEditor";
 import {
   CONFIG_FILE_NAME,
   getBoilerPlateComponent,
   SelectMode,
   SelectModeType,
 } from "./utils/constants";
+import { Project } from "./utils/Project";
 import { getFriendlyName, isScriptEntry, isStyleEntry } from "./utils/utils";
 import "./App.scss";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 const path = __non_webpack_require__("path") as typeof import("path");
-
-const elementEditor = new JSXASTEditor();
-const styledEditor = new StyledASTEditor();
-const styleSheetEditor = new StyleSheetASTEditor();
 
 const createCodeEntry = (
   partialEntry: Partial<CodeEntry> & { filePath: string }
@@ -113,11 +105,7 @@ function App() {
       read(srcFilePath);
     }
 
-    setProject({
-      path: folderPath,
-      config,
-      codeEntries: codeEntries,
-    });
+    setProject(new Project(folderPath, codeEntries, config));
   };
   const setCode = (codeId: string, code: string) =>
     setProject(
@@ -148,45 +136,47 @@ function App() {
     );
   };
   const codeTransformer = (codeEntry: CodeEntry) => {
-    let finalAst: unknown;
-    let transformedCode;
-    if (isStyleEntry(codeEntry)) {
-      let ast = gonzales.parse(codeEntry.code);
-      ({ ast } = styleSheetEditor.addLookupData(ast, codeEntry));
-      transformedCode = ast.toString() || "";
-      finalAst = ast;
-    } else if (isScriptEntry(codeEntry)) {
-      let ast = parseAST(codeEntry.code);
-      ({ ast } = elementEditor.addLookupData(ast, codeEntry));
-      ({ ast } = styledEditor.addLookupData(ast, codeEntry));
-      transformedCode = printAST(ast);
-      finalAst = ast;
-    } else {
+    if (!isScriptEntry(codeEntry) && !isStyleEntry(codeEntry)) {
       return codeEntry.code;
     }
 
-    console.log("codeTransformer", finalAst);
+    let ast = parseCodeEntryAST(codeEntry);
+
+    project?.getEditorsForCodeEntry(codeEntry).forEach((editor) => {
+      ({ ast } = editor.addLookupData(ast, codeEntry));
+    });
+
+    console.log("codeTransformer", ast);
     setCodeEntriesLookupData(
       produce((draft) => {
         draft[codeEntry.id] = {
-          ast: deepFreeze(cloneDeep(finalAst)),
+          ast: deepFreeze(cloneDeep(ast)),
         };
       })
     );
-    return transformedCode;
+    return printCodeEntryAST(codeEntry, ast);
   };
 
   const [selectMode, setSelectMode] = useState<SelectMode>(); // todo escape key
   const [selectedElement, setSelectedElement] = useState<SelectedElement>();
 
   const selectElement = (componentElement: HTMLElement) => {
-    const [lookupId] = elementEditor.getLookupIdsFromHTMLElement(
+    const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
       componentElement
     );
     if (!lookupId) return;
 
+    const styleGroups: StyleGroup[] = [];
+
+    project?.editorEntries.forEach(({ editor }) => {
+      styleGroups.push(
+        ...editor.getStyleGroupsFromHTMLElement(componentElement)
+      );
+    });
+
     setSelectedElement({
       lookupId,
+      styleGroups,
       computedStyles: window.getComputedStyle(componentElement),
       inlineStyles: componentElement.style,
     });
@@ -209,12 +199,13 @@ function App() {
       getElementByLookupId: GetElementByLookupId;
     }
   ) => {
-    styledEditor.onASTRender(iframe);
-    styleSheetEditor.onASTRender(iframe);
+    project?.editorEntries.forEach(({ editor }) => editor.onASTRender(iframe));
 
     if (
       selectedElement &&
-      elementEditor.getCodeIdFromLookupId(selectedElement.lookupId) === codeId
+      project?.primaryElementEditor.getCodeIdFromLookupId(
+        selectedElement.lookupId
+      ) === codeId
     ) {
       const newSelectedComponent = getElementByLookupId(
         selectedElement.lookupId
@@ -246,36 +237,41 @@ function App() {
       case SelectModeType.SelectElement:
         console.log(
           "setting selected from manual selection",
-          elementEditor.getLookupIdsFromHTMLElement(
+          project?.primaryElementEditor.getLookupIdFromHTMLElement(
             componentElement as HTMLElement
-          )[0]
+          )
         );
         selectElement(componentElement);
         break;
       case SelectModeType.AddElement: {
-        const lookupId = elementEditor.getLookupIdsFromHTMLElement(
+        const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
           componentElement
-        )[0];
+        );
         if (!lookupId) break;
 
-        const codeId = elementEditor.getCodeIdFromLookupId(lookupId);
+        const codeId = project?.primaryElementEditor.getCodeIdFromLookupId(
+          lookupId
+        );
+        if (!codeId) break;
         const codeEntry = project?.codeEntries.find(
           (codeEntry) => codeEntry.id === codeId
         );
+        if (!codeEntry) break;
         const lookupData = codeEntriesLookupData[codeId];
-        if (!codeEntry || !lookupData) break;
+        if (!lookupData) break;
 
-        let newAst = elementEditor.addChildToElement(
+        let newAst = project?.primaryElementEditor.addChildToElement(
           lookupData.ast,
           codeEntry,
           lookupId,
           selectMode.tag,
           selectMode.attributes
         );
-        const [newChildLookupId] = elementEditor.getRecentlyAddedElements(
-          newAst,
-          codeEntry
-        );
+        const [newChildLookupId] =
+          project?.primaryElementEditor.getRecentlyAddedElements(
+            newAst,
+            codeEntry
+          ) || [];
 
         if (newChildLookupId !== undefined) {
           // try to select the newly added element when the CompilerComponentView next compiles
@@ -292,9 +288,10 @@ function App() {
           });
         }
 
-        newAst = elementEditor.removeLookupData(newAst, codeEntry);
-        newAst = styledEditor.removeLookupData(newAst, codeEntry);
-        setCode(codeId, prettyPrintAST(newAst));
+        project?.getEditorsForCodeEntry(codeEntry).forEach((editor) => {
+          newAst = editor.removeLookupData(newAst, codeEntry);
+        });
+        setCode(codeId, printCodeEntryAST(codeEntry, newAst));
         break;
       }
     }
@@ -302,12 +299,17 @@ function App() {
     setSelectMode(undefined);
   };
 
-  const updateSelectedElementStyles = (styles: Styles, preview?: boolean) => {
+  const updateSelectedElementStyles = (
+    styleGroup: StyleGroup,
+    styles: Styles,
+    preview?: boolean
+  ) => {
     if (!selectedElement) return;
 
-    const selectedCodeId = elementEditor.getCodeIdFromLookupId(
+    const selectedCodeId = project?.primaryElementEditor.getCodeIdFromLookupId(
       selectedElement.lookupId
     );
+    if (!selectedCodeId) return;
     const componentView = componentViews.current[selectedCodeId];
     componentView?.addTempStyles(selectedElement.lookupId, styles, !preview);
     // preview is a flag used to quickly show updates in the dom
@@ -315,81 +317,41 @@ function App() {
     // such as changing state or parsing ast
     if (preview) return;
 
-    const selectedComponent = componentView?.getElementByLookupId(
-      selectedElement.lookupId
+    // get the ast editor for the style group
+    const { editor } = styleGroup;
+
+    // get the code entry to edit from the lookup id
+    const editedCodeId = editor.getCodeIdFromLookupId(styleGroup.lookupId);
+    const editedCodeEntry = project?.codeEntries.find(
+      (codeEntry) => codeEntry.id === editedCodeId
     );
-    const selectedComponentStyleSheetLookupId =
-      selectedComponent &&
-      styleSheetEditor.getLookupIdsFromHTMLElement(selectedComponent)[0];
-    const selectedComponentStyledLookupId =
-      selectedComponent &&
-      styledEditor.getLookupIdsFromHTMLElement(selectedComponent)[0];
+    const lookupData = codeEntriesLookupData[editedCodeId];
+    if (!editedCodeEntry || !lookupData) return;
 
-    let edittedCodeEntry;
-    let newAst: any;
-    if (selectedComponentStyleSheetLookupId) {
-      const edittedCodeId = styledEditor.getCodeIdFromLookupId(
-        selectedComponentStyleSheetLookupId
-      );
-      edittedCodeEntry = project?.codeEntries.find(
-        (codeEntry) => codeEntry.id === edittedCodeId
-      );
-      const lookupData = codeEntriesLookupData[edittedCodeId];
-      if (!edittedCodeEntry || !lookupData) return;
+    // add styles to the ast
+    let newAst = editor.addStyles(
+      lookupData.ast,
+      editedCodeEntry,
+      styleGroup.lookupId,
+      styles
+    );
 
-      newAst = styleSheetEditor.addStyles(
-        lookupData.ast,
-        edittedCodeEntry,
-        selectedComponentStyleSheetLookupId,
-        styles
-      );
-    } else if (selectedComponentStyledLookupId) {
-      const edittedCodeId = styledEditor.getCodeIdFromLookupId(
-        selectedComponentStyledLookupId
-      );
-      edittedCodeEntry = project?.codeEntries.find(
-        (codeEntry) => codeEntry.id === edittedCodeId
-      );
-      const lookupData = codeEntriesLookupData[edittedCodeId];
-      if (!edittedCodeEntry || !lookupData) return;
-
-      newAst = styledEditor.addStyles(
-        lookupData.ast,
-        edittedCodeEntry,
-        selectedComponentStyledLookupId,
-        styles
-      );
-    } else {
-      edittedCodeEntry = project?.codeEntries.find(
-        (codeEntry) => codeEntry.id === selectedCodeId
-      );
-      const lookupData = codeEntriesLookupData[selectedCodeId];
-      if (!edittedCodeEntry || !lookupData) return;
-
-      newAst = elementEditor.addStyles(
-        lookupData.ast,
-        edittedCodeEntry,
-        selectedElement.lookupId,
-        styles
-      );
-    }
-
-    let transformedCode;
-    if (isStyleEntry(edittedCodeEntry)) {
-      newAst = styleSheetEditor.removeLookupData(newAst, edittedCodeEntry);
-      transformedCode = prettyPrintStyleSheetAST(newAst);
-    } else {
-      newAst = elementEditor.removeLookupData(newAst, edittedCodeEntry);
-      newAst = styledEditor.removeLookupData(newAst, edittedCodeEntry);
-      transformedCode = prettyPrintAST(newAst);
-    }
+    // remove lookup data from the ast and get the transformed code
+    project?.getEditorsForCodeEntry(editedCodeEntry).forEach((editor) => {
+      newAst = editor.removeLookupData(newAst, editedCodeEntry);
+    });
 
     console.log("updateSelectedElementStyle change", styles, newAst);
 
-    setCode(edittedCodeEntry.id, transformedCode);
+    // save the edited code
+    setCode(
+      editedCodeEntry.id,
+      prettyPrintCodeEntryAST(editedCodeEntry, newAst)
+    );
   };
 
   const updateSelectedElementStyle = (
+    styleGroup: StyleGroup,
     styleProp: keyof CSSStyleDeclaration,
     newValue: string,
     preview?: boolean
@@ -399,6 +361,7 @@ function App() {
       newValue !== selectedElement?.computedStyles[styleProp]
     ) {
       updateSelectedElementStyles(
+        styleGroup,
         [{ styleName: styleProp, styleValue: newValue }],
         preview
       );
@@ -597,9 +560,9 @@ function App() {
             if (newSelectedComponent) {
               console.log(
                 "setting selected element through editor cursor update",
-                elementEditor.getLookupIdsFromHTMLElement(
+                project?.primaryElementEditor.getLookupIdFromHTMLElement(
                   newSelectedComponent as HTMLElement
-                )[0]
+                )
               );
               selectElement(newSelectedComponent as HTMLElement);
             }

@@ -18,7 +18,7 @@ import {
   valueToASTLiteral,
   valueToJSXLiteral,
 } from "../ast-helpers";
-import { ElementASTEditor } from "./ASTEditor";
+import { ElementASTEditor, StyleGroup } from "./ASTEditor";
 
 const { builders: b } = types;
 
@@ -63,9 +63,21 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     });
   }
 
-  public getLookupIdsFromHTMLElement(element: HTMLElement) {
-    const lookupId = element.dataset?.[JSX_LOOKUP_DATA_ATTR];
-    return lookupId ? [lookupId] : [];
+  public getLookupIdFromHTMLElement(element: HTMLElement) {
+    return element.dataset?.[JSX_LOOKUP_DATA_ATTR];
+  }
+
+  public getStyleGroupsFromHTMLElement(element: HTMLElement): StyleGroup[] {
+    const lookupId = this.getLookupIdFromHTMLElement(element);
+    if (!lookupId) return [];
+    return [
+      {
+        category: "Inline",
+        name: "Element Style",
+        lookupId,
+        editor: this,
+      },
+    ];
   }
 
   protected addChildToElementInAST(

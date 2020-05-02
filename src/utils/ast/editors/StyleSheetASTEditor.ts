@@ -1,3 +1,4 @@
+import { fold } from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
 import { CSSASTNode } from "gonzales-pe";
 import { kebabCase } from "lodash";
@@ -5,13 +6,14 @@ import { kebabCase } from "lodash";
 import { CodeEntry, Styles } from "../../../types/paint";
 import {
   createCSSPropertyDeclaration,
+  eitherContent,
   getContent,
   ifArray,
   ifString,
   registerUninheritedCSSProperty,
   traverseStyleSheetRuleSets,
 } from "../ast-helpers";
-import { StyleASTEditor } from "./ASTEditor";
+import { StyleASTEditor, StyleGroup } from "./ASTEditor";
 
 export const STYLESHEET_LOOKUP_CSS_VAR_PREFIX = "--paint-stylesheetlookup-";
 
@@ -26,7 +28,7 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
       if (ruleBlock) {
         const lookupRule = createCSSPropertyDeclaration(
           `${STYLESHEET_LOOKUP_CSS_VAR_PREFIX}${lookupId}`,
-          "1"
+          this.getSelector(path) ?? lookupId
         );
         (ruleBlock.content as CSSASTNode[]).unshift(...lookupRule);
         lookupIds.push(lookupId);
@@ -63,16 +65,22 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
     );
   }
 
-  public getLookupIdsFromHTMLElement(element: HTMLElement) {
+  public getStyleGroupsFromHTMLElement(element: HTMLElement) {
     const computedStyles = window.getComputedStyle(element);
-    const lookupIds: string[] = [];
+    const styleGroups: StyleGroup[] = [];
     this.createdIds.forEach((lookupId) => {
       const varValue = computedStyles.getPropertyValue(
         `${STYLESHEET_LOOKUP_CSS_VAR_PREFIX}${lookupId}`
       );
-      if (varValue) lookupIds.push(lookupId);
+      if (varValue)
+        styleGroups.push({
+          category: "Style Sheet Rule",
+          name: varValue,
+          lookupId,
+          editor: this,
+        });
     });
-    return lookupIds;
+    return styleGroups;
   }
 
   protected addStylesToAST(
@@ -91,6 +99,36 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
   }
 
   // helpers
+
+  protected printSelector(selector: CSSASTNode) {
+    const children: string = pipe(
+      selector,
+      eitherContent,
+      fold(
+        (_) => _,
+        (_) => _.map(this.printSelector.bind(this)).join(" ")
+      )
+    );
+
+    switch (selector.type) {
+      case "class":
+        return `.${children}`;
+      case "id":
+        return `#${children}`;
+      default:
+        return children;
+    }
+  }
+
+  protected getSelector(ruleSet: CSSASTNode) {
+    return pipe(
+      ruleSet,
+      getContent,
+      ifArray,
+      (_) => _?.find((n) => n.type === "selector"),
+      (_) => (_ ? this.printSelector(_) : _)
+    );
+  }
 
   protected getRuleBlock(ruleSet: CSSASTNode) {
     return pipe(ruleSet, getContent, ifArray, (_) =>
@@ -185,7 +223,7 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
 
       // add rule to the end of the ruleset
       (ruleBlock.content as CSSASTNode[]).push(
-        ...this.createPropertyDeclaration(cssStyleName, styleValue)
+        ...createCSSPropertyDeclaration(cssStyleName, styleValue)
       );
     });
   };

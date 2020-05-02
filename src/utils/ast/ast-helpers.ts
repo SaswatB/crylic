@@ -2,10 +2,13 @@ import { namedTypes as t } from "ast-types";
 import { LiteralKind } from "ast-types/gen/kinds";
 import { NodePath } from "ast-types/lib/node-path";
 import deepFreeze from "deep-freeze-strict";
-import { createNode, CSSASTNode, CSSASTNodeType } from "gonzales-pe";
+import { Either, left, right } from "fp-ts/lib/Either";
+import gonzales, { createNode, CSSASTNode, CSSASTNodeType } from "gonzales-pe";
 import { cloneDeep, isArray } from "lodash";
 import { parse, print, types, visit } from "recast";
 
+import { CodeEntry } from "../../types/paint";
+import { getStyleEntryExtension, isStyleEntry } from "../utils";
 import { babelTsParser } from "./babel-ts";
 
 const { format } = __non_webpack_require__(
@@ -21,8 +24,38 @@ export const parseAST = (code: string): t.File =>
 export const printAST = (ast: t.File) => print(cloneDeep(ast)).code;
 export const prettyPrintAST = (ast: t.File) =>
   format(printAST(ast), { parser: "babel-ts" });
+
+export const parseStyleSheetAST = (codeEntry: CodeEntry) => {
+  const syntax = getStyleEntryExtension(codeEntry);
+  const ast = gonzales.parse(codeEntry.code, {
+    syntax,
+  });
+  // fill in a default syntax if the ast has none (which can happen for empty files)
+  ast.syntax = ast.syntax || syntax;
+  return ast;
+};
+export const printStyleSheetAST = (ast: CSSASTNode) => ast.toString();
 export const prettyPrintStyleSheetAST = (ast: CSSASTNode) =>
-  format(ast.toString(), { parser: "css" });
+  format(printStyleSheetAST(ast), { parser: "css" });
+
+export const parseCodeEntryAST = (codeEntry: CodeEntry) =>
+  isStyleEntry(codeEntry)
+    ? parseStyleSheetAST(codeEntry)
+    : parseAST(codeEntry.code);
+export const printCodeEntryAST = (
+  codeEntry: CodeEntry,
+  ast: CSSASTNode | t.File
+) =>
+  isStyleEntry(codeEntry)
+    ? printStyleSheetAST(ast as CSSASTNode)
+    : printAST(ast as t.File);
+export const prettyPrintCodeEntryAST = (
+  codeEntry: CodeEntry,
+  ast: CSSASTNode | t.File
+) =>
+  isStyleEntry(codeEntry)
+    ? prettyPrintStyleSheetAST(ast as CSSASTNode)
+    : prettyPrintAST(ast as t.File);
 
 export const ifIdentifier = (
   node: t.Node | null | undefined
@@ -234,4 +267,13 @@ export function createCSSPropertyDeclaration(name: string, value: string) {
     ]),
     cb.declarationDelimiter(";"),
   ];
+}
+
+export function eitherContent({
+  content,
+}: CSSASTNode): Either<string, CSSASTNode[]> {
+  if (ifArray(content)) {
+    return right(content as CSSASTNode[]);
+  }
+  return left(content as string);
 }

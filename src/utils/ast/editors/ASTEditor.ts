@@ -3,6 +3,13 @@ import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { CodeEntry, Styles } from "../../../types/paint";
 import { editAST } from "../ast-helpers";
 
+export interface StyleGroup {
+  category: string;
+  name: string;
+  lookupId: string;
+  editor: StyleASTEditor<any>;
+}
+
 abstract class ASTEditor<ASTType> {
   public addLookupData = editAST(this.addLookupDataToAST.bind(this));
   protected abstract addLookupDataToAST(
@@ -18,8 +25,6 @@ abstract class ASTEditor<ASTType> {
 
   public onASTRender(iframe: HTMLIFrameElement) {}
 
-  public abstract getLookupIdsFromHTMLElement(element: HTMLElement): string[];
-
   protected createLookupId(codeEntry: CodeEntry, elementIndex: number) {
     return `${codeEntry.id}-${elementIndex}`;
   }
@@ -32,6 +37,10 @@ abstract class ASTEditor<ASTType> {
 }
 
 export abstract class StyleASTEditor<ASTType> extends ASTEditor<ASTType> {
+  public abstract getStyleGroupsFromHTMLElement(
+    element: HTMLElement
+  ): StyleGroup[];
+
   public addStyles = editAST(this.addStylesToAST.bind(this));
   protected abstract addStylesToAST(
     ast: ASTType,
@@ -44,6 +53,10 @@ export abstract class StyleASTEditor<ASTType> extends ASTEditor<ASTType> {
 export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
   ASTType
 > {
+  public abstract getLookupIdFromHTMLElement(
+    element: HTMLElement
+  ): string | undefined;
+
   public addChildToElement = editAST(this.addChildToElementInAST.bind(this));
   protected abstract addChildToElementInAST(
     ast: ASTType,

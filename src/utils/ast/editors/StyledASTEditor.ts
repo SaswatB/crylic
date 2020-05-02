@@ -8,7 +8,7 @@ import {
   registerUninheritedCSSProperty,
   traverseStyledTemplatesElements,
 } from "../ast-helpers";
-import { StyleASTEditor } from "./ASTEditor";
+import { StyleASTEditor, StyleGroup } from "./ASTEditor";
 
 export const STYLED_LOOKUP_CSS_VAR_PREFIX = "--paint-styledlookup-";
 
@@ -18,6 +18,7 @@ const STYLED_LOOKUP_MATCHER = new RegExp(
 
 export class StyledASTEditor extends StyleASTEditor<t.File> {
   private createdIds = new Set<string>();
+  private lookupIdNameMap: Record<string, string | undefined> = {};
 
   protected addLookupDataToAST(ast: t.File, codeEntry: CodeEntry) {
     let lookupIds: string[] = [];
@@ -50,16 +51,24 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
     );
   }
 
-  public getLookupIdsFromHTMLElement(element: HTMLElement) {
+  public getStyleGroupsFromHTMLElement(element: HTMLElement) {
     const computedStyles = window.getComputedStyle(element);
-    const lookupIds: string[] = [];
+    const styleGroups: StyleGroup[] = [];
     this.createdIds.forEach((lookupId) => {
       const varValue = computedStyles.getPropertyValue(
         `${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookupId}`
       );
-      if (varValue) lookupIds.push(lookupId);
+      if (varValue) {
+        styleGroups.push({
+          category: "Styled Component",
+          // todo unique backup names if there's multiple components
+          name: this.lookupIdNameMap[lookupId] || "Styled Component Style",
+          lookupId,
+          editor: this,
+        });
+      }
     });
-    return lookupIds;
+    return styleGroups;
   }
 
   protected addStylesToAST(

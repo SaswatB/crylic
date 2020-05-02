@@ -2,11 +2,11 @@ import React, { FunctionComponent, useEffect, useRef } from "react";
 import MonacoEditor from "react-monaco-editor";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
-import { CodeEntry, Project } from "../../types/paint";
+import { CodeEntry } from "../../types/paint";
 import { parseAST } from "../../utils/ast/ast-helpers";
-import { JSXASTEditor } from "../../utils/ast/editors/JSXASTEditor";
 import { JSXActionProvider } from "../../utils/ast/providers/JSXActionProvider";
 import { setupLanguageService } from "../../utils/moncao-helpers";
+import { Project } from "../../utils/Project";
 import { getFileExtensionLanguage, isScriptEntry } from "../../utils/utils";
 
 interface Props {
@@ -41,12 +41,12 @@ export const Editor: FunctionComponent<Props> = ({
     let decorations: monaco.editor.IModelDeltaDecoration[] = [];
     if (
       selectedElementId &&
-      new JSXASTEditor().getCodeIdFromLookupId(selectedElementId) ===
+      project.primaryElementEditor.getCodeIdFromLookupId(selectedElementId) ===
         codeEntry.id
     ) {
       try {
         const ast = parseAST(codeEntry.code);
-        decorations = new JSXASTEditor().getEditorDecorationsForElement(
+        decorations = project.primaryElementEditor.getEditorDecorationsForElement(
           ast,
           // todo sync code in entry?
           codeEntry,
@@ -130,7 +130,7 @@ export const Editor: FunctionComponent<Props> = ({
       let lookupId;
       try {
         const ast = parseAST(codeEntry.code);
-        lookupId = new JSXASTEditor().getElementLookupIdAtCodePosition(
+        lookupId = project.primaryElementEditor.getElementLookupIdAtCodePosition(
           ast,
           // todo sync code in entry?
           codeEntry,

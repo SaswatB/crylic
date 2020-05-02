@@ -9,6 +9,7 @@ import { CircularProgress } from "@material-ui/core";
 import { useDebounce } from "../hooks/useDebounce";
 import { useOverlay } from "../hooks/useOverlay";
 import { SelectedElement, Styles } from "../types/paint";
+import { StyleGroup } from "../utils/ast/editors/ASTEditor";
 import { SelectModeType } from "../utils/constants";
 import {
   CompilerComponentView,
@@ -26,7 +27,11 @@ interface Props {
     element: HTMLElement,
     componentView: CompilerComponentViewRef
   ) => void;
-  updateSelectedElementStyles: (styles: Styles, preview?: boolean) => void;
+  updateSelectedElementStyles: (
+    styleGroup: StyleGroup,
+    styles: Styles,
+    preview?: boolean
+  ) => void;
 }
 
 export const OverlayComponentView: FunctionComponent<Props> = ({
@@ -41,6 +46,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   const componentView = useRef<CompilerComponentViewRef>();
 
   const [renderOverlay] = useOverlay(
+    compilerProps.project,
     componentView.current,
     selectedElement,
     selectModeType,
@@ -89,7 +95,12 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           styleName: "height",
           styleValue: height,
         });
-      updateSelectedElementStyles(styles, preview);
+      // todo take style group from sidebar
+      updateSelectedElementStyles(
+        selectedElement!.styleGroups[0],
+        styles,
+        preview
+      );
     }
   );
 

@@ -12,9 +12,9 @@ import produce from "immer";
 
 import { useDebounce } from "../hooks/useDebounce";
 import { useUpdatingRef } from "../hooks/useUpdatingRef";
-import { CodeEntry, Project, Styles } from "../types/paint";
-import { JSXASTEditor } from "../utils/ast/editors/JSXASTEditor";
+import { CodeEntry, Styles } from "../types/paint";
 import { webpackRunCodeWithWorker } from "../utils/compilers/run-code-webpack-worker";
+import { Project } from "../utils/Project";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { Frame } from "./Frame";
 
@@ -96,7 +96,10 @@ export const CompilerComponentView: FunctionComponent<
           .contentDocument;
         return (
           iframeDocument &&
-          new JSXASTEditor().getHTMLElementByLookupId(iframeDocument, lookupId)
+          project?.primaryElementEditor.getHTMLElementByLookupId(
+            iframeDocument,
+            lookupId
+          )
         );
       },
       addTempStyles(lookupId, styles, persistRender) {

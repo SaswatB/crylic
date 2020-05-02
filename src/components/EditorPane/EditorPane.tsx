@@ -1,7 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
 
-import { Project } from "../../types/paint";
-import { JSXASTEditor } from "../../utils/ast/editors/JSXASTEditor";
+import { Project } from "../../utils/Project";
 import { getFriendlyName } from "../../utils/utils";
 import { Editor } from "./Editor";
 import { EditorTabs } from "./EditorTabs";
@@ -30,7 +29,7 @@ export const EditorPane: FunctionComponent<Props> = ({
   // switch to the editor that the selected element belongs to when it's selected
   useEffect(() => {
     if (selectedElementId) {
-      const codeId = new JSXASTEditor().getCodeIdFromLookupId(
+      const codeId = project?.primaryElementEditor.getCodeIdFromLookupId(
         selectedElementId
       );
       const codeIndex =

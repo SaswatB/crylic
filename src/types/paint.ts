@@ -1,5 +1,7 @@
 import * as it from "io-ts";
 
+import { StyleGroup } from "../utils/ast/editors/ASTEditor";
+
 export interface CodeEntry {
   id: string;
   filePath: string;
@@ -15,14 +17,9 @@ export const ProjectConfig = it.type({
 });
 export type ProjectConfig = it.TypeOf<typeof ProjectConfig>;
 
-export interface Project {
-  path: string;
-  config?: ProjectConfig;
-  codeEntries: CodeEntry[];
-}
-
 export interface SelectedElement {
   lookupId: string;
+  styleGroups: StyleGroup[];
   computedStyles: CSSStyleDeclaration;
   inlineStyles: CSSStyleDeclaration;
 }

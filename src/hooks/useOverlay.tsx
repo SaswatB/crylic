@@ -8,11 +8,12 @@ import {
   getComponentElementFromEvent,
 } from "../components/CompilerComponentView";
 import { onMoveResizeCallback, SelectedElement } from "../types/paint";
-import { JSXASTEditor } from "../utils/ast/editors/JSXASTEditor";
 import { SelectModeType } from "../utils/constants";
+import { Project } from "../utils/Project";
 
 let lastDragResizeHandled = 0;
 export function useOverlay(
+  project: Project | undefined,
   componentView: CompilerComponentViewRef | null | undefined,
   selectedElement?: SelectedElement,
   selectModeType?: SelectModeType,
@@ -27,7 +28,9 @@ export function useOverlay(
 
     const lookupId =
       componentElement &&
-      new JSXASTEditor().getLookupIdsFromHTMLElement(componentElement)[0];
+      project?.primaryElementEditor.getLookupIdFromHTMLElement(
+        componentElement
+      );
     if (lookupId) {
       setHighlightBox(componentElement?.getBoundingClientRect());
     } else {
