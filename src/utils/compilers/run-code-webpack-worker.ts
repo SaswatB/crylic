@@ -1,24 +1,27 @@
 // eslint-disable-next-line import/no-webpack-loader-syntax
-import WebpackWorker from "worker-loader!./webpack-worker";
+// import WebpackWorker from "worker-loader!./webpack-worker";
 
-import { CodeEntry, Project } from "../../types/paint";
+import { CodeEntry } from "../../types/paint";
+import { Project } from "../Project";
 import { getReactRouterProxy } from "../react-router-proxy";
+import { webpackRunCode } from "./run-code-webpack";
 
 const path = __non_webpack_require__("path") as typeof import("path");
 
-// start the worker
-const worker = new WebpackWorker();
-const compileCallbacks: Record<number, Function> = {};
-worker.onmessage = (e) => {
-  compileCallbacks[e.data.compileId]?.(e.data);
-};
-// initialize the worker with the local node modules
-worker.postMessage({
-  action: "initialize",
-  nodeModulesPath: __non_webpack_require__
-    .resolve("webpack")
-    .replace(/node_modules[/\\].*$/, `node_modules${path.sep}`),
-});
+// todo add worker back in after figuring out node-sass issue
+// // start the worker
+// const worker = new WebpackWorker();
+// const compileCallbacks: Record<number, Function> = {};
+// worker.onmessage = (e) => {
+//   compileCallbacks[e.data.compileId]?.(e.data);
+// };
+// // initialize the worker with the local node modules
+// worker.postMessage({
+//   action: "initialize",
+//   nodeModulesPath: __non_webpack_require__
+//     .resolve("webpack")
+//     .replace(/node_modules[/\\].*$/, `node_modules${path.sep}`),
+// });
 
 let compileIdCounter = 0;
 
@@ -32,12 +35,12 @@ export const webpackRunCodeWithWorker = async (
   { window }: any
 ) => {
   const startTime = Date.now();
-  const compileId = ++compileIdCounter;
+  // const compileId = ++compileIdCounter;
 
-  // register a callback for then the worker completes
-  const workerCallback = new Promise<{ bundle: string }>((resolve) => {
-    compileCallbacks[compileId] = resolve;
-  });
+  // // register a callback for then the worker completes
+  // const workerCallback = new Promise<{ bundle: string }>((resolve) => {
+  //   compileCallbacks[compileId] = resolve;
+  // });
 
   const bundleCode = `
   export const component = require("${
@@ -53,29 +56,31 @@ export const webpackRunCodeWithWorker = async (
   }
   `.replace(/\\/g, "\\\\");
 
-  // set a message to the worker for compiling code
-  worker.postMessage({
-    action: "compile",
-    codeEntries: project.codeEntries
-      .map((codeEntry) => ({
-        ...codeEntry,
-        code: codeTransformer(codeEntry),
-      }))
-      .concat([
-        {
-          id: "bundle",
-          code: bundleCode,
-          filePath: "/index.tsx",
-          edit: false,
-          render: false,
-        },
-      ]),
-    selectedCodeId: "bundle",
-    compileId,
-  });
+  const codeEntries = project.codeEntries
+    .map((codeEntry) => ({
+      ...codeEntry,
+      code: codeTransformer(codeEntry),
+    }))
+    .concat([
+      {
+        id: "bundle",
+        code: bundleCode,
+        filePath: "/index.tsx",
+        edit: false,
+        render: false,
+      },
+    ]);
+  // // set a message to the worker for compiling code
+  // worker.postMessage({
+  //   action: "compile",
+  //   codeEntries,
+  //   selectedCodeId: "bundle",
+  //   compileId,
+  // });
+  const bundle = await webpackRunCode(codeEntries, "bundle");
 
   // wait for the worker to compile
-  const { bundle } = await workerCallback;
+  // const { bundle } = await workerCallback;
 
   const workerCallbackTime = Date.now();
 
@@ -91,7 +96,12 @@ export const webpackRunCodeWithWorker = async (
   };
   window.module = moduleExports;
   window.exports = exports;
-  window.eval(bundle);
+  try {
+    window.eval(bundle);
+  } catch (error) {
+    __non_webpack_require__("fs").writeFileSync("./bundle.js", bundle);
+    throw error;
+  }
 
   const endCallbackTime = Date.now();
 

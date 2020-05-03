@@ -142,7 +142,8 @@ export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
           cb.block(
             flatten(
               style.map(({ name, value }) =>
-                createCSSPropertyDeclaration(name, value)
+                // todo auto detect indentation in file
+                createCSSPropertyDeclaration(name, value, "  ", styleAst.syntax)
               )
             )
           ),

@@ -37,7 +37,13 @@ import {
   SelectModeType,
 } from "./utils/constants";
 import { Project } from "./utils/Project";
-import { getFriendlyName, isScriptEntry, isStyleEntry } from "./utils/utils";
+import {
+  getFriendlyName,
+  isScriptEntry,
+  isStyleEntry,
+  SCRIPT_EXTENSION_REGEX,
+  STYLE_EXTENSION_REGEX,
+} from "./utils/utils";
 import "./App.scss";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
@@ -90,7 +96,11 @@ function App() {
           const filePath = path.join(subFolderPath, file);
           if (fs.statSync(filePath).isDirectory()) {
             read(filePath);
-          } else if (!file.match(/.test.(j|t)sx?$/)) {
+          } else if (
+            (file.match(SCRIPT_EXTENSION_REGEX) ||
+              file.match(STYLE_EXTENSION_REGEX)) &&
+            !file.match(/\.test\.[jt]sx?$/)
+          ) {
             codeEntries.push(
               createCodeEntry({
                 filePath,
@@ -117,6 +127,7 @@ function App() {
       })
     );
   const toggleCodeEntryEdit = (codeId: string) => {
+    console.log("toggleCodeEntryEdit", codeId);
     setProject(
       produce((draft: Project | undefined) => {
         const codeEntry =
@@ -440,6 +451,7 @@ function App() {
       }}
       toggleCodeEntryEdit={toggleCodeEntryEdit}
       toggleCodeEntryRender={(codeId) => {
+        console.log("toggleCodeEntryRender", codeId);
         setProject(
           produce((draft: Project | undefined) => {
             const codeEntry =

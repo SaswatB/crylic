@@ -1,26 +1,55 @@
-import { createFsFromVolume, IFs, Volume } from "memfs";
-import joinPath from "memory-fs/lib/join";
-import { Union } from "unionfs";
-
 import { CodeEntry } from "../../types/paint";
 
-const path = __non_webpack_require__("path") as typeof import("path");
-const fs = __non_webpack_require__("fs") as typeof import("fs");
+type IFs = import("memfs").IFs;
+
+let path = __non_webpack_require__("path") as typeof import("path");
+let fs = __non_webpack_require__("fs") as typeof import("fs");
+
+let memfs: typeof import("memfs");
+let joinPath: typeof import("memory-fs/lib/join");
+let unionfs: typeof import("unionfs");
 let webpack: typeof import("webpack");
-let dartSass;
-let tailwindcss;
+let nodeSass: typeof import("node-sass");
+// @ts-ignore todo add types
+let tailwindcss: typeof import("tailwindcss");
+let express: typeof import("express");
+
+let staticFileServer: ReturnType<typeof import("express")>;
 
 export function initialize(nodeModulesPath = "") {
+  memfs = __non_webpack_require__(`${nodeModulesPath}memfs`);
+  joinPath = __non_webpack_require__(`${nodeModulesPath}memory-fs/lib/join`);
+  unionfs = __non_webpack_require__(`${nodeModulesPath}unionfs`);
   webpack = __non_webpack_require__(`${nodeModulesPath}webpack`);
-  dartSass = __non_webpack_require__(`${nodeModulesPath}dart-sass`);
+  nodeSass = __non_webpack_require__(`${nodeModulesPath}node-sass`);
   tailwindcss = __non_webpack_require__(`${nodeModulesPath}tailwindcss`);
+
+  express = __non_webpack_require__(
+    `${nodeModulesPath}express`
+  ) as typeof import("express");
+
+  // todo make this more secure
+  staticFileServer = express();
+  staticFileServer.get(`/files/:codeId/*`, (req, res) => {
+    const staticPath = `/public/${req.params[0]}`;
+    console.log("static file request at", staticPath);
+    res.contentType(
+      __non_webpack_require__("send").mime.lookup(staticPath) || ""
+    );
+    return res.end(
+      webpackCache[req.params.codeId]?.outputFs.readFileSync(staticPath)
+    );
+  });
+  staticFileServer.listen(5000, "localhost", () =>
+    console.log("Static file server is running...")
+  );
 }
 
 // supports ts, jsx, css, sass, less and
-const WEBPACK_MODULES = {
+const getWebpackModules = (codeEntry: CodeEntry) => ({
   rules: [
     {
-      test: /\.(j|t)sx?$/,
+      test: /\.[jt]sx?$/,
       use: {
         loader: "babel-loader",
         options: {
@@ -48,22 +77,21 @@ const WEBPACK_MODULES = {
       use: ["style-loader", "css-loader"],
     },
     {
-      test: /\.scss$/,
+      test: /\.s[ac]ss$/,
       use: [
         "style-loader",
         "css-loader",
-        {
-          loader: "sass-loader",
-          options: {
-            // use dart sass to avoid node compatibility issues
-            implementation: dartSass,
-          },
-        },
         {
           loader: "postcss-loader",
           options: {
             ident: "postcss",
             plugins: [tailwindcss],
+          },
+        },
+        {
+          loader: "sass-loader",
+          options: {
+            implementation: nodeSass,
           },
         },
       ],
@@ -73,27 +101,21 @@ const WEBPACK_MODULES = {
       use: ["style-loader", "css-loader", "less-loader"],
     },
     {
-      test: /\.svg$/,
-      use: ["svg-url-loader"],
+      loader: require.resolve("file-loader"),
+      exclude: [
+        /\.(js|mjs|jsx|ts|tsx)$/,
+        /\.html$/,
+        /\.json$/,
+        /\.(s?css|sass|less)$/,
+      ],
+      options: {
+        name: "static/media/[name].[hash:8].[ext]",
+        outputPath: "/public",
+        publicPath: `http://localhost:5000/files/${codeEntry.id}/`,
+      },
     },
-    // {
-    //   loader: require.resolve("file-loader"),
-    //   // Exclude `js` files to keep "css" loader working as it injects
-    //   // its runtime that would otherwise be processed through "file" loader.
-    //   // Also exclude `html` and `json` extensions so they get processed
-    //   // by webpacks internal loaders.
-    //   exclude: [
-    //     /\.(js|mjs|jsx|ts|tsx)$/,
-    //     /\.html$/,
-    //     /\.json$/,
-    //     /\.(s?css|sass|less)$/,
-    //   ],
-    //   options: {
-    //     name: "static/media/[name].[hash:8].[ext]",
-    //   },
-    // },
   ],
-};
+});
 
 const webpackCache: Record<
   string,
@@ -111,6 +133,8 @@ export const webpackRunCode = async (
   codeEntries: CodeEntry[],
   selectedCodeId: string
 ) => {
+  if (!webpack) initialize();
+
   const startTime = new Date().getTime();
   const primaryCodeEntry = codeEntries.find(
     (entry) => entry.id === selectedCodeId
@@ -128,7 +152,7 @@ export const webpackRunCode = async (
         filename: "[name].js",
         libraryTarget: "umd",
       },
-      module: WEBPACK_MODULES,
+      module: getWebpackModules(primaryCodeEntry),
       resolve: {
         extensions: [".jsx", ".json", ".js", ".ts", ".tsx"],
       },
@@ -157,8 +181,8 @@ export const webpackRunCode = async (
       //   }),
       // ],
     });
-    const ufs1 = new Union();
-    const inputFs = createFsFromVolume(new Volume());
+    const ufs1 = new unionfs.Union();
+    const inputFs = memfs.createFsFromVolume(new memfs.Volume());
 
     // @ts-ignore bad types
     ufs1.use(fs).use(inputFs);
@@ -170,7 +194,7 @@ export const webpackRunCode = async (
     // @ts-ignore bad types
     compiler.resolvers.loader.fileSystem = compiler.inputFileSystem;
 
-    const outputFs = createFsFromVolume(new Volume());
+    const outputFs = memfs.createFsFromVolume(new memfs.Volume());
     // @ts-ignore bug in typescript
     compiler.outputFileSystem = {
       join: joinPath,

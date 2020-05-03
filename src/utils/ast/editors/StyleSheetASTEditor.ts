@@ -24,11 +24,14 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
     let lookupIds: string[] = [];
     traverseStyleSheetRuleSets(ast, (path, index) => {
       const lookupId = this.createLookupId(codeEntry, index);
+      const selector = this.getSelector(path);
       const ruleBlock = this.getRuleBlock(path);
       if (ruleBlock) {
         const lookupRule = createCSSPropertyDeclaration(
           `${STYLESHEET_LOOKUP_CSS_VAR_PREFIX}${lookupId}`,
-          this.getSelector(path) ?? lookupId
+          (selector && this.printSelector(selector)) || lookupId,
+          this.getRuleIndentation(selector),
+          ruleBlock.syntax
         );
         (ruleBlock.content as CSSASTNode[]).unshift(...lookupRule);
         lookupIds.push(lookupId);
@@ -115,19 +118,24 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
         return `.${children}`;
       case "id":
         return `#${children}`;
+      case "universalSelector":
+        return `*${children}`;
       default:
         return children;
     }
   }
 
   protected getSelector(ruleSet: CSSASTNode) {
-    return pipe(
-      ruleSet,
-      getContent,
-      ifArray,
-      (_) => _?.find((n) => n.type === "selector"),
-      (_) => (_ ? this.printSelector(_) : _)
+    return pipe(ruleSet, getContent, ifArray, (_) =>
+      _?.find((n) => n.type === "selector")
     );
+  }
+
+  protected getRuleIndentation(selector: CSSASTNode | undefined) {
+    // add indentation to added rule, needed for sass
+    // todo don't hardcode 2 spaces for indentation
+    const indentationLength = (selector?.start.column || 1) + 2;
+    return new Array(indentationLength - 1).fill(" ").join("");
   }
 
   protected getRuleBlock(ruleSet: CSSASTNode) {
@@ -223,7 +231,12 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
 
       // add rule to the end of the ruleset
       (ruleBlock.content as CSSASTNode[]).push(
-        ...createCSSPropertyDeclaration(cssStyleName, styleValue)
+        ...createCSSPropertyDeclaration(
+          cssStyleName,
+          styleValue,
+          this.getRuleIndentation(this.getSelector(path)),
+          ruleBlock.syntax
+        )
       );
     });
   };

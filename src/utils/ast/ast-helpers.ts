@@ -3,7 +3,12 @@ import { LiteralKind } from "ast-types/gen/kinds";
 import { NodePath } from "ast-types/lib/node-path";
 import deepFreeze from "deep-freeze-strict";
 import { Either, left, right } from "fp-ts/lib/Either";
-import gonzales, { createNode, CSSASTNode, CSSASTNodeType } from "gonzales-pe";
+import gonzales, {
+  createNode,
+  CSSASTNode,
+  CSSASTNodeType,
+  CSSASTSyntax,
+} from "gonzales-pe";
 import { cloneDeep, isArray } from "lodash";
 import { parse, print, types, visit } from "recast";
 
@@ -258,15 +263,26 @@ export const CSSASTBuilder: {
 });
 const cb = CSSASTBuilder;
 
-export function createCSSPropertyDeclaration(name: string, value: string) {
-  return [
+export function createCSSPropertyDeclaration(
+  name: string,
+  value: string,
+  indentation: string,
+  syntax: CSSASTSyntax
+) {
+  const nodes = [
+    cb.space(indentation),
     cb.declaration([
       cb.property([cb.ident(name)]),
       cb.propertyDelimiter(":"),
+      cb.space(" "),
       cb.value([cb.ident(value)]),
     ]),
-    cb.declarationDelimiter(";"),
   ];
+  if (syntax !== "sass") {
+    nodes.push(cb.declarationDelimiter(";"));
+  }
+  nodes.push(cb.space("\n"));
+  return nodes;
 }
 
 export function eitherContent({

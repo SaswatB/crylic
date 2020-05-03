@@ -16,11 +16,9 @@ const darkTheme = createMuiTheme({
 
 export const Bootstrap: FunctionComponent = ({ children }) => (
   <SnackbarProvider maxSnack={3}>
-    <React.StrictMode>
-      <ThemeProvider theme={darkTheme}>
-        <ModalContainer />
-        {children}
-      </ThemeProvider>
-    </React.StrictMode>
+    <ThemeProvider theme={darkTheme}>
+      <ModalContainer />
+      {children}
+    </ThemeProvider>
   </SnackbarProvider>
 );

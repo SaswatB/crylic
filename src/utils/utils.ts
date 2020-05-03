@@ -3,8 +3,8 @@ import { startCase } from "lodash";
 import { CodeEntry, OutlineElement } from "../types/paint";
 import { Project } from "./Project";
 
-const STYLE_EXTENSION_REGEX = /\.(s?css|sass|less)$/;
-const SCRIPT_EXTENSION_REGEX = /\.[jt]sx?$/;
+export const STYLE_EXTENSION_REGEX = /\.(css|s[ac]ss|less)$/;
+export const SCRIPT_EXTENSION_REGEX = /\.[jt]sx?$/;
 
 export const isStyleEntry = (codeEntry: CodeEntry) =>
   !!codeEntry.filePath.match(STYLE_EXTENSION_REGEX);

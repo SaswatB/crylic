@@ -66,12 +66,12 @@ declare module "gonzales-pe" {
     | "variable"
     | "variablesList";
 
-  type Syntax = "css" | "less" | "sass" | "scss";
+  export type CSSASTSyntax = "css" | "less" | "sass" | "scss" | undefined;
 
   export interface CSSASTNode {
     type: CSSASTNodeType;
     content: CSSASTNode[] | string;
-    syntax: Syntax;
+    syntax: CSSASTSyntax;
     start: { line: number; column: number };
     end: { line: number; column: number };
 
@@ -106,6 +106,10 @@ declare module "gonzales-pe" {
   ): CSSASTNode;
   declare function parse(
     code: string,
-    options?: { syntax?: Syntax; context?: CSSASTNodeType; tabSize?: number }
+    options?: {
+      syntax?: CSSASTSyntax;
+      context?: CSSASTNodeType;
+      tabSize?: number;
+    }
   ): CSSASTNode;
 }
