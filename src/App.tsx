@@ -80,7 +80,7 @@ function App() {
           } else if (
             (file.match(SCRIPT_EXTENSION_REGEX) ||
               file.match(STYLE_EXTENSION_REGEX)) &&
-            !file.match(/\.test\.[jt]sx?$/)
+            !file.match(/\.(test|d)\.[jt]sx?$/)
           ) {
             fileCodeEntries.push({
               filePath,
@@ -384,15 +384,16 @@ function App() {
         enqueueSnackbar("Started a new component!");
       }}
       onOpenProject={openProject}
-      onSaveFile={() => {
-        if (project?.codeEntries.length) {
+      onSaveProject={() => {
+        if (project) {
           project.codeEntries.forEach(({ filePath, code }) =>
             fs.writeFileSync(filePath, code)
           );
         } else {
-          alert("please open a file before saving");
+          alert("please open a project before saving");
         }
       }}
+      onCloseProject={() => setProject(undefined)}
       toggleCodeEntryEdit={toggleCodeEntryEdit}
       toggleCodeEntryRender={toggleCodeEntryRender}
     />
@@ -488,30 +489,32 @@ function App() {
             )}
           </TransformWrapper>
         </div>
-        <EditorPane
-          project={project}
-          onCodeChange={(codeId, newCode) => {
-            setCode(codeId, newCode);
-          }}
-          onCloseCodeEntry={toggleCodeEntryEdit}
-          selectedElementId={selectedElement?.lookupId}
-          onSelectElement={(lookupId) => {
-            const newSelectedComponent = Object.values(componentViews.current)
-              .map((componentView) =>
-                componentView?.getElementByLookupId(lookupId)
-              )
-              .filter((e) => !!e)[0];
-            if (newSelectedComponent) {
-              console.log(
-                "setting selected element through editor cursor update",
-                project?.primaryElementEditor.getLookupIdFromHTMLElement(
-                  newSelectedComponent as HTMLElement
+        {project?.codeEntries.find(({ edit }) => edit) && (
+          <EditorPane
+            project={project}
+            onCodeChange={(codeId, newCode) => {
+              setCode(codeId, newCode);
+            }}
+            onCloseCodeEntry={toggleCodeEntryEdit}
+            selectedElementId={selectedElement?.lookupId}
+            onSelectElement={(lookupId) => {
+              const newSelectedComponent = Object.values(componentViews.current)
+                .map((componentView) =>
+                  componentView?.getElementByLookupId(lookupId)
                 )
-              );
-              selectElement(newSelectedComponent as HTMLElement);
-            }
-          }}
-        />
+                .filter((e) => !!e)[0];
+              if (newSelectedComponent) {
+                console.log(
+                  "setting selected element through editor cursor update",
+                  project?.primaryElementEditor.getLookupIdFromHTMLElement(
+                    newSelectedComponent as HTMLElement
+                  )
+                );
+                selectElement(newSelectedComponent as HTMLElement);
+              }
+            }}
+          />
+        )}
       </div>
       {selectMode !== undefined && renderSelectBar()}
     </div>

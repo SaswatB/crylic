@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  background-color: #1b1b1b;
+}
+
 .default-transition {
   @apply transition duration-300 ease-out;
 }

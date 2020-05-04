@@ -2,6 +2,8 @@ import React, { FunctionComponent, ReactNode, useEffect } from "react";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
+import { usePrevious } from "../../hooks/usePrevious";
+
 interface Tab {
   key: string;
   name: ReactNode;
@@ -22,8 +24,12 @@ export const EditorTabs: FunctionComponent<Props> = ({
 }) => {
   const usableTabs = tabs?.filter((tab): tab is Tab => !!tab) || [];
 
+  const previousUsableTabsLength = usePrevious(usableTabs.length);
   useEffect(() => {
-    if ((usableTabs.length || 0) <= activeTab && activeTab !== 0) {
+    if (
+      ((usableTabs.length || 0) <= activeTab && activeTab !== 0) ||
+      previousUsableTabsLength < usableTabs.length
+    ) {
       onChange((usableTabs.length || 1) - 1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

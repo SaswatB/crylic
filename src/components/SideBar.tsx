@@ -45,7 +45,12 @@ import {
   SelectModeType,
 } from "../utils/constants";
 import { Project } from "../utils/Project";
-import { isScriptEntry, isStyleEntry } from "../utils/utils";
+import {
+  isScriptEntry,
+  isStyleEntry,
+  SCRIPT_EXTENSION_REGEX,
+  STYLE_EXTENSION_REGEX,
+} from "../utils/utils";
 
 const renderSeparator = (title?: string, action?: React.ReactNode) => (
   <div className="flex items-center">
@@ -85,8 +90,9 @@ const useMainTab = ({
   project,
   onNewComponent,
   onNewStyleSheet,
-  onSaveFile,
   onOpenProject,
+  onSaveProject,
+  onCloseProject,
   onChangeFrameSize,
   toggleCodeEntryEdit,
   toggleCodeEntryRender,
@@ -114,7 +120,7 @@ const useMainTab = ({
     ],
     undefined,
     undefined,
-    "all"
+    "components"
   );
 
   interface Tree {
@@ -125,6 +131,7 @@ const useMainTab = ({
   }
 
   let codeEntries;
+  let extensionRegex: RegExp | undefined;
   switch (assetsFilter) {
     default:
     case "all":
@@ -132,19 +139,23 @@ const useMainTab = ({
       break;
     case "components":
       codeEntries = project?.codeEntries.filter(isScriptEntry);
+      extensionRegex = SCRIPT_EXTENSION_REGEX;
       break;
     case "styles":
       codeEntries = project?.codeEntries.filter(isStyleEntry);
+      extensionRegex = STYLE_EXTENSION_REGEX;
       break;
   }
   const projectTree: Tree = { id: "root", name: "", children: [] };
   const projectPath = project?.path.replace(/\\/g, "/");
   codeEntries?.forEach((codeEntry) => {
-    const path = codeEntry.filePath
+    let path = codeEntry.filePath
       .replace(/\\/g, "/")
       .replace(projectPath!, "")
       .replace(/^\//, "")
+      .replace(extensionRegex || "", "")
       .split("/");
+
     let node = projectTree;
     path.forEach((pathPart, index) => {
       let child = node.children.find(
@@ -207,9 +218,14 @@ const useMainTab = ({
                 + Style Sheet
               </button>
             </div>
-            <button className="btn w-full" onClick={onSaveFile}>
-              Save All
-            </button>
+            <div className="btngrp-h">
+              <button className="btn w-full" onClick={onSaveProject}>
+                Save All
+              </button>
+              <button className="btn w-full" onClick={onCloseProject}>
+                Close Project
+              </button>
+            </div>
           </>
         ) : (
           <>
@@ -422,12 +438,22 @@ const useSelectedElementEditorTab = ({
     "position",
     useSelectInput.bind(undefined, CSS_POSITION_OPTIONS)
   );
-  const [, renderSelectedElementTopInput] = useSelectedElementEditor("top");
-  const [, renderSelectedElementLeftInput] = useSelectedElementEditor("left");
-  const [, renderSelectedElementBottomInput] = useSelectedElementEditor(
-    "bottom"
+  const [, renderSelectedElementTopInput] = useSelectedElementEditor(
+    "top",
+    useBoundCSSLengthInput
   );
-  const [, renderSelectedElementRightInput] = useSelectedElementEditor("right");
+  const [, renderSelectedElementLeftInput] = useSelectedElementEditor(
+    "left",
+    useBoundCSSLengthInput
+  );
+  const [, renderSelectedElementBottomInput] = useSelectedElementEditor(
+    "bottom",
+    useBoundCSSLengthInput
+  );
+  const [, renderSelectedElementRightInput] = useSelectedElementEditor(
+    "right",
+    useBoundCSSLengthInput
+  );
   const [
     selectedElementDisplay,
     renderSelectedElementDisplay,
@@ -539,7 +565,8 @@ interface Props {
   onNewComponent: () => void;
   onNewStyleSheet: () => void;
   onOpenProject: (filePath: string) => void;
-  onSaveFile: () => void;
+  onSaveProject: () => void;
+  onCloseProject: () => void;
   toggleCodeEntryEdit: (codeId: string) => void;
   toggleCodeEntryRender: (codeId: string) => void;
 }
