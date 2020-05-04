@@ -9,6 +9,7 @@ import { useSnackbar } from "notistack";
 import {
   CompilerComponentViewRef,
   GetElementByLookupId,
+  OnCompileEndCallback,
 } from "./components/CompilerComponentView";
 import { EditorPane } from "./components/EditorPane/EditorPane";
 import { InputModal } from "./components/InputModal";
@@ -146,15 +147,9 @@ function App() {
       ((getElementByLookupId: GetElementByLookupId) => void)[] | undefined
     >
   >({});
-  const onComponentViewCompiled = (
-    codeId: string,
-    {
-      iframe,
-      getElementByLookupId,
-    }: {
-      iframe: HTMLIFrameElement;
-      getElementByLookupId: GetElementByLookupId;
-    }
+  const onComponentViewCompiled: OnCompileEndCallback = (
+    codeId,
+    { iframe, getElementByLookupId, onRoutesDefined, onRouteChange }
   ) => {
     project?.editorEntries.forEach(({ editor }) => editor.onASTRender(iframe));
 
@@ -183,6 +178,17 @@ function App() {
 
     compileTasks.current[codeId]?.forEach((task) => task(getElementByLookupId));
     compileTasks.current[codeId] = [];
+
+    const onRoutesDefinedSubscription = onRoutesDefined.subscribe((routes) =>
+      console.log("onRoutesDefined", routes)
+    );
+    const onRouteChangeSubscription = onRouteChange.subscribe((routes) =>
+      console.log("onRouteChange", routes)
+    );
+    return () => {
+      onRoutesDefinedSubscription.unsubscribe();
+      onRouteChangeSubscription.unsubscribe();
+    };
   };
 
   const onOverlaySelectElement = (

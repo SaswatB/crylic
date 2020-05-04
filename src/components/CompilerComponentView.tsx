@@ -9,6 +9,9 @@ import React, {
   useState,
 } from "react";
 import produce from "immer";
+import { isEqual } from "lodash";
+import { Observable, ReplaySubject } from "rxjs";
+import { distinctUntilChanged } from "rxjs/operators";
 
 import { useDebounce } from "../hooks/useDebounce";
 import { useUpdatingRef } from "../hooks/useUpdatingRef";
@@ -43,17 +46,21 @@ export interface CompilerComponentViewRef {
   ) => void;
 }
 
+export type OnCompileEndCallback = (
+  codeId: string,
+  context: {
+    iframe: HTMLIFrameElement;
+    getElementByLookupId: GetElementByLookupId;
+    onRoutesDefined: Observable<string[]>;
+    onRouteChange: Observable<string>;
+  }
+) => void;
+
 export interface CompilerComponentViewProps {
   project: Project | undefined;
   selectedCodeId: string;
   onCompileStart?: () => void;
-  onCompileEnd?: (
-    codeId: string,
-    context: {
-      iframe: HTMLIFrameElement;
-      getElementByLookupId: GetElementByLookupId;
-    }
-  ) => void;
+  onCompileEnd?: OnCompileEndCallback;
 }
 
 export const CompilerComponentView: FunctionComponent<
@@ -118,11 +125,19 @@ export const CompilerComponentView: FunctionComponent<
           try {
             onCompileStart?.();
             console.log("compiling", selectedCodeId, project);
+            const onRoutesDefinedSubject = new ReplaySubject<string[]>(1);
+            const onRouteChangeSubject = new ReplaySubject<string>(1);
             const codeExports = await webpackRunCodeWithWorker(
               project,
               selectedCodeId,
               {
                 window: getInactiveFrame().current?.frameElement.contentWindow,
+                onRoutesDefined(routes) {
+                  onRoutesDefinedSubject.next(routes);
+                },
+                onRouteChange(route) {
+                  onRouteChangeSubject.next(route);
+                },
               }
             );
             setTempStyles({});
@@ -152,6 +167,12 @@ export const CompilerComponentView: FunctionComponent<
                 onCompileEnd?.(selectedCodeId, {
                   iframe: getInactiveFrame().current!.frameElement,
                   getElementByLookupId: handleRef.current.getElementByLookupId,
+                  onRoutesDefined: onRoutesDefinedSubject.pipe(
+                    distinctUntilChanged(isEqual)
+                  ),
+                  onRouteChange: onRouteChangeSubject.pipe(
+                    distinctUntilChanged()
+                  ),
                 })
               )
             );

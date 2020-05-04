@@ -24,13 +24,21 @@ const path = __non_webpack_require__("path") as typeof import("path");
 //
 // let compileIdCounter = 0;
 
+interface RunnerContext {
+  window: Window & any;
+
+  // react router support
+  onRoutesDefined: (routes: string[]) => void;
+  onRouteChange: (route: string) => void;
+}
+
 /**
  * Runs `webpackRunCode` on a worker
  */
 export const webpackRunCodeWithWorker = async (
   project: Project,
   selectedCodeId: string,
-  { window }: any
+  { window, onRoutesDefined, onRouteChange }: RunnerContext
 ) => {
   const startTime = Date.now();
   // const compileId = ++compileIdCounter;
@@ -88,7 +96,8 @@ export const webpackRunCodeWithWorker = async (
   window.require = (name: string) => {
     if (name === "react") return require("react");
     if (name === "react-dom") return require("react-dom");
-    if (name === "react-router-dom") return getReactRouterProxy();
+    if (name === "react-router-dom")
+      return getReactRouterProxy(onRoutesDefined, onRouteChange);
     return __non_webpack_require__(name);
     // throw new Error(`Unable to require "${name}"`)
   };
