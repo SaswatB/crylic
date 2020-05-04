@@ -1,7 +1,8 @@
-import React, { FunctionComponent, useEffect, useRef, useState } from "react";
+import React, { FunctionComponent, useRef } from "react";
 import { debounce } from "lodash";
 import ColorPicker from "rc-color-picker";
 
+import { useBoundState } from "../hooks/useBoundState";
 import { useUpdatingRef } from "../hooks/useUpdatingRef";
 
 interface Props {
@@ -18,8 +19,7 @@ export const DebouncingColorPicker: FunctionComponent<Props> = ({
   const debounceOnChangeRef = useRef(
     debounce((c: string) => onChangeRef.current(c), 300)
   );
-  const [tempValue, setTempValue] = useState(value);
-  useEffect(() => setTempValue(value), [value]);
+  const [tempValue, setTempValue] = useBoundState(value);
 
   const onColorPickerChange = ({
     color,

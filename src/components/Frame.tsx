@@ -51,8 +51,10 @@ export const Frame: FunctionComponent<
     resetFrame();
     frame.current!.onload = resetFrame;
     return () => {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       frame.current!.onload = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

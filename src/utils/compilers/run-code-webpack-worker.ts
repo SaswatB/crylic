@@ -1,7 +1,6 @@
 // eslint-disable-next-line import/no-webpack-loader-syntax
 // import WebpackWorker from "worker-loader!./webpack-worker";
 
-import { CodeEntry } from "../../types/paint";
 import { Project } from "../Project";
 import { getReactRouterProxy } from "../react-router-proxy";
 import { webpackRunCode } from "./run-code-webpack";
@@ -31,7 +30,6 @@ const path = __non_webpack_require__("path") as typeof import("path");
 export const webpackRunCodeWithWorker = async (
   project: Project,
   selectedCodeId: string,
-  codeTransformer: (codeEntry: CodeEntry) => string,
   { window }: any
 ) => {
   const startTime = Date.now();
@@ -59,16 +57,15 @@ export const webpackRunCodeWithWorker = async (
   const bundleId = `bundle-${selectedCodeId}`;
   const codeEntries = project.codeEntries
     .map((codeEntry) => ({
-      ...codeEntry,
-      code: codeTransformer(codeEntry),
+      id: codeEntry.id,
+      filePath: codeEntry.filePath,
+      code: codeEntry.codeWithLookupData || codeEntry.code,
     }))
     .concat([
       {
         id: bundleId,
         code: bundleCode,
         filePath: "/index.tsx",
-        edit: false,
-        render: false,
       },
     ]);
   // // set a message to the worker for compiling code

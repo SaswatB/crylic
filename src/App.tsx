@@ -1,10 +1,9 @@
 import React, { useRef, useState } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
-import deepFreeze from "deep-freeze-strict";
 import { fold } from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
 import { produce } from "immer";
-import { camelCase, cloneDeep, upperFirst } from "lodash";
+import { camelCase, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
 
 import {
@@ -17,15 +16,12 @@ import { OverlayComponentView } from "./components/OverlayComponentView";
 import { SideBar } from "./components/SideBar";
 import {
   CodeEntry,
-  CodeEntryLookupDataMap,
   OutlineElement,
   ProjectConfig,
   SelectedElement,
   Styles,
 } from "./types/paint";
 import {
-  hashString,
-  parseCodeEntryAST,
   prettyPrintCodeEntryAST,
   printCodeEntryAST,
 } from "./utils/ast/ast-helpers";
@@ -39,8 +35,6 @@ import {
 import { Project } from "./utils/Project";
 import {
   getFriendlyName,
-  isScriptEntry,
-  isStyleEntry,
   SCRIPT_EXTENSION_REGEX,
   STYLE_EXTENSION_REGEX,
 } from "./utils/utils";
@@ -49,21 +43,8 @@ import "./App.scss";
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 const path = __non_webpack_require__("path") as typeof import("path");
 
-const createCodeEntry = (
-  partialEntry: Partial<CodeEntry> & { filePath: string }
-) => ({
-  id: hashString(partialEntry.filePath),
-  code: "",
-  edit: true,
-  render: true,
-  ...partialEntry,
-});
-
 function App() {
   const { enqueueSnackbar } = useSnackbar();
-  const [codeEntriesLookupData, setCodeEntriesLookupData] = useState<
-    CodeEntryLookupDataMap
-  >({});
   const componentViews = useRef<
     Record<string, CompilerComponentViewRef | null | undefined>
   >({});
@@ -71,7 +52,7 @@ function App() {
   const [project, setProject] = useState<Project>();
   const openProject = (folderPath: string) => {
     let config;
-    const codeEntries: CodeEntry[] = [];
+    const fileCodeEntries: { filePath: string; code: string }[] = [];
 
     const configFilePath = path.join(folderPath, CONFIG_FILE_NAME);
     if (fs.existsSync(configFilePath)) {
@@ -101,72 +82,37 @@ function App() {
               file.match(STYLE_EXTENSION_REGEX)) &&
             !file.match(/\.test\.[jt]sx?$/)
           ) {
-            codeEntries.push(
-              createCodeEntry({
-                filePath,
-                code: fs.readFileSync(filePath, { encoding: "utf-8" }),
-                edit: false,
-                render: false,
-              })
-            );
+            fileCodeEntries.push({
+              filePath,
+              code: fs.readFileSync(filePath, { encoding: "utf-8" }),
+            });
           }
         });
       // read all files under source
       read(srcFilePath);
     }
 
-    setProject(new Project(folderPath, codeEntries, config));
+    setProject(
+      new Project(folderPath, config).addCodeEntries(...fileCodeEntries)
+    );
   };
   const setCode = (codeId: string, code: string) =>
-    setProject(
-      produce((draft: Project | undefined) => {
-        (
-          draft?.codeEntries.find((entry) => entry.id === codeId) ||
-          ({} as Partial<CodeEntry>)
-        ).code = code;
+    setProject(project?.editCodeEntry(codeId, { code }));
+  const toggleCodeEntryEdit = (codeId: string) =>
+    setProject((project) =>
+      project?.editCodeEntry(codeId, {
+        edit: !project.getCodeEntry(codeId)?.edit,
       })
     );
-  const toggleCodeEntryEdit = (codeId: string) => {
-    console.log("toggleCodeEntryEdit", codeId);
-    setProject(
-      produce((draft: Project | undefined) => {
-        const codeEntry =
-          draft?.codeEntries.find((entry) => entry.id === codeId) ||
-          ({} as Partial<CodeEntry>);
-        codeEntry.edit = !codeEntry.edit;
+  const toggleCodeEntryRender = (codeId: string) =>
+    setProject((project) =>
+      project?.editCodeEntry(codeId, {
+        render: !project.getCodeEntry(codeId)?.render,
       })
     );
-  };
   const addCodeEntry = (
-    partialEntry: Parameters<typeof createCodeEntry>[0]
-  ) => {
-    setProject(
-      produce((draft: Project | undefined) => {
-        draft?.codeEntries.push(createCodeEntry(partialEntry));
-      })
-    );
-  };
-  const codeTransformer = (codeEntry: CodeEntry) => {
-    if (!isScriptEntry(codeEntry) && !isStyleEntry(codeEntry)) {
-      return codeEntry.code;
-    }
-
-    let ast = parseCodeEntryAST(codeEntry);
-
-    project?.getEditorsForCodeEntry(codeEntry).forEach((editor) => {
-      ({ ast } = editor.addLookupData(ast, codeEntry));
-    });
-
-    console.log("codeTransformer", codeEntry.filePath, ast);
-    setCodeEntriesLookupData(
-      produce((draft) => {
-        draft[codeEntry.id] = {
-          ast: deepFreeze(cloneDeep(ast)),
-        };
-      })
-    );
-    return printCodeEntryAST(codeEntry, ast);
-  };
+    partialEntry: Partial<CodeEntry> & { filePath: string }
+  ) => setProject((project) => project?.addCodeEntries(partialEntry));
 
   const [selectMode, setSelectMode] = useState<SelectMode>(); // todo escape key
   const [selectedElement, setSelectedElement] = useState<SelectedElement>();
@@ -268,11 +214,9 @@ function App() {
           (codeEntry) => codeEntry.id === codeId
         );
         if (!codeEntry) break;
-        const lookupData = codeEntriesLookupData[codeId];
-        if (!lookupData) break;
 
         let newAst = project?.primaryElementEditor.addChildToElement(
-          lookupData.ast,
+          codeEntry.ast,
           codeEntry,
           lookupId,
           selectMode.tag,
@@ -336,12 +280,11 @@ function App() {
     const editedCodeEntry = project?.codeEntries.find(
       (codeEntry) => codeEntry.id === editedCodeId
     );
-    const lookupData = codeEntriesLookupData[editedCodeId];
-    if (!editedCodeEntry || !lookupData) return;
+    if (!editedCodeEntry) return;
 
     // add styles to the ast
     let newAst = editor.addStyles(
-      lookupData.ast,
+      editedCodeEntry.ast,
       editedCodeEntry,
       styleGroup.lookupId,
       styles
@@ -422,7 +365,7 @@ function App() {
           `src/components/${name}.tsx`
         );
         const code = getBoilerPlateComponent(name);
-        addCodeEntry({ filePath, code });
+        addCodeEntry({ filePath, code, render: true, edit: true });
         enqueueSnackbar("Started a new component!");
       }}
       onNewStyleSheet={async () => {
@@ -437,15 +380,10 @@ function App() {
           project?.path || "/",
           `src/styles/${name}.css`
         );
-        addCodeEntry({ filePath });
+        addCodeEntry({ filePath, render: true, edit: true });
         enqueueSnackbar("Started a new component!");
       }}
       onOpenProject={openProject}
-      onOpenFile={(filePath) => {
-        // todo handle file not found or reopening an open file
-        const code = fs.readFileSync(filePath, { encoding: "utf-8" });
-        addCodeEntry({ filePath, code });
-      }}
       onSaveFile={() => {
         if (project?.codeEntries.length) {
           project.codeEntries.forEach(({ filePath, code }) =>
@@ -456,17 +394,7 @@ function App() {
         }
       }}
       toggleCodeEntryEdit={toggleCodeEntryEdit}
-      toggleCodeEntryRender={(codeId) => {
-        console.log("toggleCodeEntryRender", codeId);
-        setProject(
-          produce((draft: Project | undefined) => {
-            const codeEntry =
-              draft?.codeEntries.find((entry) => entry.id === codeId) ||
-              ({} as Partial<CodeEntry>);
-            codeEntry.render = !codeEntry.render;
-          })
-        );
-      }}
+      toggleCodeEntryRender={toggleCodeEntryRender}
     />
   );
 
@@ -517,7 +445,6 @@ function App() {
                 },
                 project,
                 selectedCodeId: entry.id,
-                codeTransformer,
                 onCompileEnd: onComponentViewCompiled,
                 style: {
                   width: `${frameSize.width}px`,
@@ -564,7 +491,6 @@ function App() {
         <EditorPane
           project={project}
           onCodeChange={(codeId, newCode) => {
-            setSelectedElement(undefined);
             setCode(codeId, newCode);
           }}
           onCloseCodeEntry={toggleCodeEntryEdit}

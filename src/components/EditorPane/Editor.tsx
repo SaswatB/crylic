@@ -2,8 +2,9 @@ import React, { FunctionComponent, useEffect, useRef } from "react";
 import MonacoEditor from "react-monaco-editor";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
+import { useBoundState } from "../../hooks/useBoundState";
+import { useDebounce } from "../../hooks/useDebounce";
 import { CodeEntry } from "../../types/paint";
-import { parseAST } from "../../utils/ast/ast-helpers";
 import { JSXActionProvider } from "../../utils/ast/providers/JSXActionProvider";
 import { setupLanguageService } from "../../utils/moncao-helpers";
 import { Project } from "../../utils/Project";
@@ -27,6 +28,14 @@ export const Editor: FunctionComponent<Props> = ({
   isActiveEditor,
 }) => {
   const editorRef = useRef<MonacoEditor>(null);
+  const [localValue, setLocalValue] = useBoundState(codeEntry.code);
+  const [debouncedLocalValue] = useDebounce(localValue, 500);
+  useEffect(() => {
+    if (debouncedLocalValue !== codeEntry.code) {
+      onCodeChange(codeEntry.id, debouncedLocalValue);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedLocalValue]);
 
   useEffect(() => {
     if (isActiveEditor) {
@@ -45,10 +54,8 @@ export const Editor: FunctionComponent<Props> = ({
         codeEntry.id
     ) {
       try {
-        const ast = parseAST(codeEntry.code);
         decorations = project.primaryElementEditor.getEditorDecorationsForElement(
-          ast,
-          // todo sync code in entry?
+          codeEntry.ast,
           codeEntry,
           selectedElementId
         );
@@ -129,10 +136,8 @@ export const Editor: FunctionComponent<Props> = ({
       // try to find an element at the cursor location in the latest code ast
       let lookupId;
       try {
-        const ast = parseAST(codeEntry.code);
         lookupId = project.primaryElementEditor.getElementLookupIdAtCodePosition(
-          ast,
-          // todo sync code in entry?
+          codeEntry.ast,
           codeEntry,
           e.position.lineNumber,
           e.position.column
@@ -155,11 +160,11 @@ export const Editor: FunctionComponent<Props> = ({
       ref={editorRef}
       language={getFileExtensionLanguage(codeEntry)}
       theme="darkVsPlus"
-      value={codeEntry.code}
+      value={localValue}
       options={{
         automaticLayout: true,
       }}
-      onChange={(newCode) => onCodeChange(codeEntry.id, newCode)}
+      onChange={setLocalValue}
       editorDidMount={(editorMonaco) =>
         setupLanguageService(editorMonaco, codeEntry)
       }

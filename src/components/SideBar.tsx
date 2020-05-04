@@ -85,7 +85,6 @@ const useMainTab = ({
   project,
   onNewComponent,
   onNewStyleSheet,
-  onOpenFile,
   onSaveFile,
   onOpenProject,
   onChangeFrameSize,
@@ -540,7 +539,6 @@ interface Props {
   onNewComponent: () => void;
   onNewStyleSheet: () => void;
   onOpenProject: (filePath: string) => void;
-  onOpenFile: (filePath: string) => void;
   onSaveFile: () => void;
   toggleCodeEntryEdit: (codeId: string) => void;
   toggleCodeEntryRender: (codeId: string) => void;

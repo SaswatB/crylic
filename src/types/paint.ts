@@ -8,9 +8,11 @@ export interface CodeEntry {
   code: string;
   edit: boolean;
   render: boolean;
-}
 
-export type CodeEntryLookupDataMap = Record<string, { ast: any } | undefined>;
+  // metadata generated from code
+  ast?: any;
+  codeWithLookupData?: string;
+}
 
 export const ProjectConfig = it.type({
   bootstrap: it.string,

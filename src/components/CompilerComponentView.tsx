@@ -12,7 +12,7 @@ import produce from "immer";
 
 import { useDebounce } from "../hooks/useDebounce";
 import { useUpdatingRef } from "../hooks/useUpdatingRef";
-import { CodeEntry, Styles } from "../types/paint";
+import { Styles } from "../types/paint";
 import { webpackRunCodeWithWorker } from "../utils/compilers/run-code-webpack-worker";
 import { Project } from "../utils/Project";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -46,7 +46,6 @@ export interface CompilerComponentViewRef {
 export interface CompilerComponentViewProps {
   project: Project | undefined;
   selectedCodeId: string;
-  codeTransformer: (codeEntry: CodeEntry) => string;
   onCompileStart?: () => void;
   onCompileEnd?: (
     codeId: string,
@@ -63,14 +62,7 @@ export const CompilerComponentView: FunctionComponent<
     RefAttributes<CompilerComponentViewRef>
 > = forwardRef(
   (
-    {
-      project,
-      selectedCodeId,
-      codeTransformer,
-      onCompileStart,
-      onCompileEnd,
-      ...props
-    },
+    { project, selectedCodeId, onCompileStart, onCompileEnd, ...props },
     ref
   ) => {
     const [tempStyles, setTempStyles] = useState<Record<string, Styles>>({});
@@ -122,14 +114,13 @@ export const CompilerComponentView: FunctionComponent<
     const [debouncedCodeEntries] = useDebounce(project?.codeEntries, 150);
     useEffect(() => {
       (async () => {
-        if (debouncedCodeEntries?.length) {
+        if (project && debouncedCodeEntries?.length) {
           try {
             onCompileStart?.();
             console.log("compiling", selectedCodeId, project);
             const codeExports = await webpackRunCodeWithWorker(
-              { ...project!, codeEntries: debouncedCodeEntries },
+              project,
               selectedCodeId,
-              codeTransformer,
               {
                 window: getInactiveFrame().current?.frameElement.contentWindow,
               }
@@ -169,13 +160,9 @@ export const CompilerComponentView: FunctionComponent<
             setActiveFrame(activeFrame === 1 ? 2 : 1);
           } catch (e) {
             console.log(e);
-            onCompileEnd?.(selectedCodeId, {
-              iframe: getActiveFrame().current!.frameElement,
-              getElementByLookupId: handleRef.current.getElementByLookupId,
-            });
           }
         }
-      })();
+      })().catch(console.log);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [debouncedCodeEntries]);
 

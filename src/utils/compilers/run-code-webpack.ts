@@ -1,5 +1,3 @@
-import { CodeEntry } from "../../types/paint";
-
 type IFs = import("memfs").IFs;
 
 let path = __non_webpack_require__("path") as typeof import("path");
@@ -46,7 +44,7 @@ export function initialize(nodeModulesPath = "") {
 }
 
 // supports ts, jsx, css, sass, less and
-const getWebpackModules = (codeEntry: CodeEntry) => ({
+const getWebpackModules = (codeId: string) => ({
   rules: [
     {
       test: /\.[jt]sx?$/,
@@ -111,7 +109,7 @@ const getWebpackModules = (codeEntry: CodeEntry) => ({
       options: {
         name: "static/media/[name].[hash:8].[ext]",
         outputPath: "/public",
-        publicPath: `http://localhost:5000/files/${codeEntry.id}/`,
+        publicPath: `http://localhost:5000/files/${codeId}/`,
       },
     },
   ],
@@ -130,7 +128,7 @@ const webpackCache: Record<
 > = {};
 
 export const webpackRunCode = async (
-  codeEntries: CodeEntry[],
+  codeEntries: { id: string; filePath: string; code: string }[],
   selectedCodeId: string
 ) => {
   if (!webpack) initialize();
@@ -152,7 +150,7 @@ export const webpackRunCode = async (
         filename: "[name].js",
         libraryTarget: "umd",
       },
-      module: getWebpackModules(primaryCodeEntry),
+      module: getWebpackModules(selectedCodeId),
       resolve: {
         extensions: [".jsx", ".json", ".js", ".ts", ".tsx"],
       },

@@ -17,6 +17,7 @@ import { isEqual } from "lodash";
 import rgbHex from "rgb-hex";
 
 import { DebouncingColorPicker } from "../components/DebouncingColorPicker";
+import { useBoundState } from "./useBoundState";
 import { useThrottle } from "./useThrottle";
 import "rc-color-picker/assets/index.css";
 
@@ -28,16 +29,11 @@ export function useTextInput(
   initialValue = "",
   bindInitialValue = false
 ) {
-  const [value, setValue] = useState<string>(initialValue);
   const [focused, setFocused] = useState(false);
-  useEffect(() => {
-    !focused && setValue(initialValue);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialValue]);
-  useEffect(() => {
-    bindInitialValue && !focused && setValue(initialValue);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focused]);
+  const [value, setValue] = useBoundState(
+    initialValue,
+    bindInitialValue && !focused
+  );
 
   const render = (
     props?: React.DetailedHTMLProps<
@@ -67,16 +63,11 @@ export function useCSSLengthInput(
   initialValue = "",
   bindInitialValue = false
 ) {
-  const [value, setValue] = useState<string>(initialValue);
   const [focused, setFocused] = useState(false);
-  useEffect(() => {
-    !focused && setValue(initialValue);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialValue]);
-  useEffect(() => {
-    bindInitialValue && !focused && setValue(initialValue);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focused]);
+  const [value, setValue] = useBoundState(
+    initialValue,
+    bindInitialValue && !focused
+  );
 
   const units = [
     { name: "px", value: "px" },
@@ -146,8 +137,7 @@ export function useSliderInput(
   label = "",
   initialValue = 0
 ) {
-  const [value, setValue] = useState<number>(initialValue);
-  useEffect(() => setValue(initialValue), [initialValue]);
+  const [value, setValue] = useBoundState(initialValue);
 
   const render = (props?: SliderProps) => (
     <Slider
@@ -169,8 +159,7 @@ export function useSelectInput(
   label = "",
   initialValue = ""
 ) {
-  const [value, setValue] = useState(initialValue);
-  useEffect(() => setValue(initialValue), [initialValue]);
+  const [value, setValue] = useBoundState(initialValue);
 
   const render = (
     props?: React.DetailedHTMLProps<
@@ -254,8 +243,7 @@ export function useAutocomplete<T>(
   label = "",
   initialValue: T | undefined = undefined
 ) {
-  const [value, setValue] = useState(initialValue);
-  useEffect(() => setValue(initialValue), [initialValue]);
+  const [value, setValue] = useBoundState(initialValue);
   const filter = useRef(createFilterOptions<{ name: string; value: T }>());
 
   return (
@@ -302,8 +290,7 @@ export function useMenuInput(
   label = "",
   initialValue = ""
 ) {
-  const [value, setValue] = useState<string>(initialValue);
-  useEffect(() => setValue(initialValue), [initialValue]);
+  const [value, setValue] = useBoundState<string>(initialValue);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const openMenu = (event: React.MouseEvent<HTMLElement>) => {
