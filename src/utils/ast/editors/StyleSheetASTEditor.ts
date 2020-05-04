@@ -44,16 +44,20 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
   protected removeLookupDataFromAST(ast: CSSASTNode) {
     traverseStyleSheetRuleSets(ast, (path) => {
       const ruleBlock = this.getRuleBlock(path);
-      const { lookupId, index: lookupRuleIndex } =
+      const { lookupId, index } =
         (ruleBlock && this.getRuleBlockLookupId(ruleBlock)) || {};
       if (ruleBlock && lookupId !== undefined) {
+        const ruleBlockContent = ruleBlock.content as CSSASTNode[];
         if (
-          (ruleBlock.content as CSSASTNode[])[lookupRuleIndex! + 1].type ===
-          "declarationDelimiter"
+          ruleBlockContent[index! + 1]?.type === "declarationDelimiter" ||
+          ruleBlockContent[index! + 1]?.type === "space"
         ) {
-          ruleBlock.removeChild(lookupRuleIndex! + 1);
+          ruleBlock.removeChild(index! + 1);
         }
-        ruleBlock.removeChild(lookupRuleIndex!);
+        ruleBlock.removeChild(index!);
+        if (ruleBlockContent[index! - 1]?.type === "space") {
+          ruleBlock.removeChild(index! - 1);
+        }
       }
     });
   }

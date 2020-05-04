@@ -40,8 +40,20 @@ export const parseStyleSheetAST = (codeEntry: CodeEntry) => {
   return ast;
 };
 export const printStyleSheetAST = (ast: CSSASTNode) => ast.toString();
-export const prettyPrintStyleSheetAST = (ast: CSSASTNode) =>
-  format(printStyleSheetAST(ast), { parser: "css" });
+export const prettyPrintStyleSheetAST = (
+  codeEntry: CodeEntry,
+  ast: CSSASTNode
+) => {
+  const syntax = getStyleEntryExtension(codeEntry);
+  const code = printStyleSheetAST(ast);
+
+  // prettier doesn't support sass https://github.com/prettier/prettier/issues/4948
+  if (syntax === "sass") {
+    return code;
+  }
+
+  return format(code, { parser: syntax });
+};
 
 export const parseCodeEntryAST = (codeEntry: CodeEntry) =>
   isStyleEntry(codeEntry)
@@ -59,7 +71,7 @@ export const prettyPrintCodeEntryAST = (
   ast: CSSASTNode | t.File
 ) =>
   isStyleEntry(codeEntry)
-    ? prettyPrintStyleSheetAST(ast as CSSASTNode)
+    ? prettyPrintStyleSheetAST(codeEntry, ast as CSSASTNode)
     : prettyPrintAST(ast as t.File);
 
 export const ifIdentifier = (

@@ -157,7 +157,7 @@ function App() {
       ({ ast } = editor.addLookupData(ast, codeEntry));
     });
 
-    console.log("codeTransformer", ast);
+    console.log("codeTransformer", codeEntry.filePath, ast);
     setCodeEntriesLookupData(
       produce((draft) => {
         draft[codeEntry.id] = {
@@ -417,7 +417,10 @@ function App() {
         if (!inputName) return;
         // todo add validation/duplicate checking to name
         const name = upperFirst(camelCase(inputName));
-        const filePath = `/src/components/${name}.tsx`;
+        const filePath = path.join(
+          project?.path || "/",
+          `src/components/${name}.tsx`
+        );
         const code = getBoilerPlateComponent(name);
         addCodeEntry({ filePath, code });
         enqueueSnackbar("Started a new component!");
@@ -430,7 +433,10 @@ function App() {
         if (!inputName) return;
         // todo add validation/duplicate checking to name
         const name = camelCase(inputName);
-        const filePath = `/src/styles/${name}.css`;
+        const filePath = path.join(
+          project?.path || "/",
+          `src/styles/${name}.css`
+        );
         addCodeEntry({ filePath });
         enqueueSnackbar("Started a new component!");
       }}

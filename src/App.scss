@@ -18,8 +18,18 @@
   }
 }
 
-.MuiCircularProgress-colorPrimary {
-  color: white !important;
+// material ui overrides
+body {
+  .MuiCircularProgress-colorPrimary {
+    color: white;
+  }
+
+  .MuiAutocomplete-groupLabel {
+    line-height: unset;
+    padding-top: 7px;
+    padding-bottom: 1px;
+    font-size: 0.68rem;
+  }
 }
 
 .react-transform-component {

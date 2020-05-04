@@ -26,6 +26,18 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
       const lookupId = this.createLookupId(codeEntry, index);
       const { value } = path.value.quasi.quasis[0];
       value.raw = `${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookupId}: 1;${value.raw}`;
+      // get a name for the component by the variable declaration
+      // todo support more scenarios
+      const parent: NodePath<types.namedTypes.ASTNode, t.ASTNode> | undefined =
+        path.parent;
+      if (
+        parent?.value.type === "VariableDeclarator" &&
+        parent.value.id.type === "Identifier"
+      ) {
+        this.lookupIdNameMap[lookupId] = parent.value.id.name;
+      } else {
+        this.lookupIdNameMap[lookupId] = undefined;
+      }
       lookupIds.push(lookupId);
     });
     lookupIds.forEach((lookupId) => this.createdIds.add(lookupId));

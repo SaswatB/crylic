@@ -3,6 +3,8 @@ import {
   FormControl,
   InputAdornment,
   InputLabel,
+  Menu,
+  MenuItem,
   OutlinedInput,
   Select,
   TextField,
@@ -11,6 +13,7 @@ import Slider, { SliderProps } from "@material-ui/core/Slider";
 import Autocomplete, {
   createFilterOptions,
 } from "@material-ui/lab/Autocomplete";
+import { isEqual } from "lodash";
 import rgbHex from "rgb-hex";
 
 import { DebouncingColorPicker } from "../components/DebouncingColorPicker";
@@ -246,7 +249,7 @@ export function useColorPicker(
 }
 
 export function useAutocomplete<T>(
-  options: { name: string; value: T }[],
+  options: { name: string; category?: string; value: T }[],
   onChange = (value: T | undefined) => {},
   label = "",
   initialValue: T | undefined = undefined
@@ -257,7 +260,7 @@ export function useAutocomplete<T>(
 
   return (
     <Autocomplete
-      value={options.find((option) => option.value === value)}
+      value={options.find((option) => isEqual(option.value, value)) || null}
       onChange={(
         event: React.ChangeEvent<{}>,
         newValue: { name: string; value: T } | null
@@ -280,7 +283,7 @@ export function useAutocomplete<T>(
       getOptionLabel={(option) => {
         return option.name;
       }}
-      // groupBy={(option) => option.type}
+      groupBy={(option) => option.category}
       selectOnFocus
       clearOnBlur
       disableClearable
@@ -291,4 +294,42 @@ export function useAutocomplete<T>(
       )}
     />
   );
+}
+
+export function useMenuInput(
+  options: { name: string; value: string }[],
+  onChange = (value: string) => {},
+  label = "",
+  initialValue = ""
+) {
+  const [value, setValue] = useState<string>(initialValue);
+  useEffect(() => setValue(initialValue), [initialValue]);
+
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const openMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const render = () => (
+    <Menu
+      anchorEl={anchorEl}
+      keepMounted
+      open={Boolean(anchorEl)}
+      onClose={() => setAnchorEl(null)}
+    >
+      {options.map((option) => (
+        <MenuItem
+          key={option.value}
+          selected={option.value === value}
+          onClick={() => {
+            setValue(option.value);
+            onChange(option.value);
+          }}
+        >
+          {option.name}
+        </MenuItem>
+      ))}
+    </Menu>
+  );
+  return [value, render, openMenu] as const;
 }

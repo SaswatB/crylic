@@ -8,7 +8,7 @@ import { webpackRunCode } from "./run-code-webpack";
 
 const path = __non_webpack_require__("path") as typeof import("path");
 
-// todo add worker back in after figuring out node-sass issue
+// todo add worker back in after figuring out sass issue
 // // start the worker
 // const worker = new WebpackWorker();
 // const compileCallbacks: Record<number, Function> = {};
@@ -22,8 +22,8 @@ const path = __non_webpack_require__("path") as typeof import("path");
 //     .resolve("webpack")
 //     .replace(/node_modules[/\\].*$/, `node_modules${path.sep}`),
 // });
-
-let compileIdCounter = 0;
+//
+// let compileIdCounter = 0;
 
 /**
  * Runs `webpackRunCode` on a worker
@@ -56,6 +56,7 @@ export const webpackRunCodeWithWorker = async (
   }
   `.replace(/\\/g, "\\\\");
 
+  const bundleId = `bundle-${selectedCodeId}`;
   const codeEntries = project.codeEntries
     .map((codeEntry) => ({
       ...codeEntry,
@@ -63,7 +64,7 @@ export const webpackRunCodeWithWorker = async (
     }))
     .concat([
       {
-        id: "bundle",
+        id: bundleId,
         code: bundleCode,
         filePath: "/index.tsx",
         edit: false,
@@ -74,10 +75,10 @@ export const webpackRunCodeWithWorker = async (
   // worker.postMessage({
   //   action: "compile",
   //   codeEntries,
-  //   selectedCodeId: "bundle",
+  //   selectedCodeId: bundleId,
   //   compileId,
   // });
-  const bundle = await webpackRunCode(codeEntries, "bundle");
+  const bundle = await webpackRunCode(codeEntries, bundleId);
 
   // wait for the worker to compile
   // const { bundle } = await workerCallback;

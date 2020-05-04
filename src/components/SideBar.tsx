@@ -7,6 +7,7 @@ import {
   faDotCircle,
   faEdit,
   faEye,
+  faFilter,
   faFont,
   faHeading,
   faHSquare,
@@ -26,6 +27,7 @@ import {
   useAutocomplete,
   useColorPicker,
   useCSSLengthInput,
+  useMenuInput,
   useSelectInput,
   useTextInput,
 } from "../hooks/useInput";
@@ -43,9 +45,9 @@ import {
   SelectModeType,
 } from "../utils/constants";
 import { Project } from "../utils/Project";
-import { isScriptEntry } from "../utils/utils";
+import { isScriptEntry, isStyleEntry } from "../utils/utils";
 
-const renderSeparator = (title?: string) => (
+const renderSeparator = (title?: string, action?: React.ReactNode) => (
   <div className="flex items-center">
     {title && (
       <span className="pb-1 mr-2 text-sm text-gray-500 whitespace-no-wrap">
@@ -53,6 +55,7 @@ const renderSeparator = (title?: string) => (
       </span>
     )}
     <div className="w-full my-5 border-gray-600 border-solid border-b" />
+    {action || null}
   </div>
 );
 
@@ -100,15 +103,44 @@ const useMainTab = ({
     "300"
   );
 
+  const [
+    assetsFilter,
+    renderAssetsFilterMenu,
+    openAssetsFilterMenu,
+  ] = useMenuInput(
+    [
+      { name: "All", value: "all" },
+      { name: "Components", value: "components" },
+      { name: "Styles", value: "styles" },
+    ],
+    undefined,
+    undefined,
+    "all"
+  );
+
   interface Tree {
     id: string;
     name: string;
     children: Tree[];
     codeEntry?: CodeEntry;
   }
+
+  let codeEntries;
+  switch (assetsFilter) {
+    default:
+    case "all":
+      codeEntries = project?.codeEntries;
+      break;
+    case "components":
+      codeEntries = project?.codeEntries.filter(isScriptEntry);
+      break;
+    case "styles":
+      codeEntries = project?.codeEntries.filter(isStyleEntry);
+      break;
+  }
   const projectTree: Tree = { id: "root", name: "", children: [] };
   const projectPath = project?.path.replace(/\\/g, "/");
-  project?.codeEntries.forEach((codeEntry) => {
+  codeEntries?.forEach((codeEntry) => {
     const path = codeEntry.filePath
       .replace(/\\/g, "/")
       .replace(projectPath!, "")
@@ -219,7 +251,16 @@ const useMainTab = ({
       </div>
       {project && (
         <>
-          {renderSeparator("Assets")}
+          {renderSeparator(
+            "Assets",
+            <button className="ml-2" onClick={openAssetsFilterMenu}>
+              <FontAwesomeIcon
+                icon={faFilter}
+                className="text-gray-500 hover:text-white default-transition"
+              />
+            </button>
+          )}
+          {renderAssetsFilterMenu()}
           <TreeView
             defaultCollapseIcon={<ExpandMoreIcon />}
             defaultExpandIcon={<ChevronRightIcon />}
@@ -323,6 +364,7 @@ const useSelectedElementEditorTab = ({
   const styleGroupOptions = (selectedElement?.styleGroups || []).map(
     (group) => ({
       name: `${group.name}`,
+      category: group.category,
       value: group,
     })
   );

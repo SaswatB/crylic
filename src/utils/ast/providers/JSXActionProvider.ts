@@ -157,7 +157,7 @@ export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
         },
         {
           id: styleCodeEntry.id,
-          code: prettyPrintStyleSheetAST(styleAst),
+          code: prettyPrintStyleSheetAST(styleCodeEntry, styleAst),
         },
       ];
     }
