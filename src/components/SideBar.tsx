@@ -200,20 +200,16 @@ const useMainTab = ({
       <div className="btngrp-v">
         {project ? (
           <>
-            <button className="btn w-full" onClick={onNewComponent}>
-              New Component
-            </button>
-            <button className="btn w-full" onClick={onNewStyleSheet}>
-              New Style Sheet
-            </button>
-            <button
-              className="btn w-full"
-              onClick={() => openFilePicker().then((f) => f && onOpenFile(f))}
-            >
-              Open
-            </button>
+            <div className="btngrp-h">
+              <button className="btn w-full" onClick={onNewComponent}>
+                + Component
+              </button>
+              <button className="btn w-full" onClick={onNewStyleSheet}>
+                + Style Sheet
+              </button>
+            </div>
             <button className="btn w-full" onClick={onSaveFile}>
-              Save
+              Save All
             </button>
           </>
         ) : (

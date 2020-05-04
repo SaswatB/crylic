@@ -313,6 +313,8 @@ export function useMenuInput(
   const render = () => (
     <Menu
       anchorEl={anchorEl}
+      getContentAnchorEl={null}
+      anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       keepMounted
       open={Boolean(anchorEl)}
       onClose={() => setAnchorEl(null)}
