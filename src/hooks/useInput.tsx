@@ -303,7 +303,7 @@ export function useMenuInput(
       getContentAnchorEl={null}
       anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       keepMounted
-      open={Boolean(anchorEl)}
+      open={!!anchorEl}
       onClose={() => setAnchorEl(null)}
     >
       {options.map((option) => (

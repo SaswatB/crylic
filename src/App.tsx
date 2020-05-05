@@ -34,11 +34,7 @@ import {
   SelectModeType,
 } from "./utils/constants";
 import { Project } from "./utils/Project";
-import {
-  getFriendlyName,
-  SCRIPT_EXTENSION_REGEX,
-  STYLE_EXTENSION_REGEX,
-} from "./utils/utils";
+import { SCRIPT_EXTENSION_REGEX, STYLE_EXTENSION_REGEX } from "./utils/utils";
 import "./App.scss";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
@@ -149,7 +145,7 @@ function App() {
   >({});
   const onComponentViewCompiled: OnCompileEndCallback = (
     codeId,
-    { iframe, getElementByLookupId, onRoutesDefined, onRouteChange }
+    { iframe, getElementByLookupId }
   ) => {
     project?.editorEntries.forEach(({ editor }) => editor.onASTRender(iframe));
 
@@ -178,17 +174,6 @@ function App() {
 
     compileTasks.current[codeId]?.forEach((task) => task(getElementByLookupId));
     compileTasks.current[codeId] = [];
-
-    const onRoutesDefinedSubscription = onRoutesDefined.subscribe((routes) =>
-      console.log("onRoutesDefined", routes)
-    );
-    const onRouteChangeSubscription = onRouteChange.subscribe((routes) =>
-      console.log("onRouteChange", routes)
-    );
-    return () => {
-      onRoutesDefinedSubscription.unsubscribe();
-      onRouteChangeSubscription.unsubscribe();
-    };
   };
 
   const onOverlaySelectElement = (
@@ -442,29 +427,24 @@ function App() {
     project?.codeEntries
       .filter((entry) => entry.render)
       .map((entry, index) => (
-        <div className="flex flex-col m-10">
-          {getFriendlyName(project, entry.id)}
-          <div className="flex relative bg-white shadow-2xl">
-            <OverlayComponentView
-              compilerProps={{
-                ref(componentView) {
-                  componentViews.current[entry.id] = componentView;
-                },
-                project,
-                selectedCodeId: entry.id,
-                onCompileEnd: onComponentViewCompiled,
-                style: {
-                  width: `${frameSize.width}px`,
-                  height: `${frameSize.height}px`,
-                },
-              }}
-              selectModeType={selectMode?.type}
-              selectedElement={selectedElement}
-              onSelectElement={onOverlaySelectElement}
-              updateSelectedElementStyles={updateSelectedElementStyles}
-            />
-          </div>
-        </div>
+        <OverlayComponentView
+          compilerProps={{
+            ref(componentView) {
+              componentViews.current[entry.id] = componentView;
+            },
+            project,
+            selectedCodeId: entry.id,
+            onCompileEnd: onComponentViewCompiled,
+            style: {
+              width: `${frameSize.width}px`,
+              height: `${frameSize.height}px`,
+            },
+          }}
+          selectModeType={selectMode?.type}
+          selectedElement={selectedElement}
+          onSelectElement={onOverlaySelectElement}
+          updateSelectedElementStyles={updateSelectedElementStyles}
+        />
       ));
 
   return (

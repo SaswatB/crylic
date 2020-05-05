@@ -1,4 +1,5 @@
 import React from "react";
+import { isArray } from "lodash";
 
 const LINK_DATA_ATTR = "paintlink";
 
@@ -37,8 +38,13 @@ export function getReactRouterProxy(
       // todo test ref
       const { Switch } = reactRouterDom;
       const routes: string[] = [];
+      const children = !props.children
+        ? []
+        : isArray(props.children)
+        ? props.children
+        : [props.children];
       // console.log("Switch", props);
-      props.children.forEach((child: any) => {
+      children.forEach((child: any) => {
         if (React.isValidElement(child) && "path" in (child.props as any)) {
           routes.push((child.props as any).path);
           // console.log("Switch Child", child.props);

@@ -4,17 +4,23 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { faLink } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { CircularProgress } from "@material-ui/core";
 
 import { useDebounce } from "../hooks/useDebounce";
+import { useMenuInput } from "../hooks/useInput";
+import { useObservable } from "../hooks/useObservable";
 import { useOverlay } from "../hooks/useOverlay";
 import { SelectedElement, Styles } from "../types/paint";
 import { StyleGroup } from "../utils/ast/editors/ASTEditor";
 import { SelectModeType } from "../utils/constants";
+import { getFriendlyName } from "../utils/utils";
 import {
   CompilerComponentView,
   CompilerComponentViewProps,
   CompilerComponentViewRef,
+  OnCompileEndCallback,
 } from "./CompilerComponentView";
 
 interface Props {
@@ -104,37 +110,74 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
     }
   );
 
+  const [viewContext, setViewContext] = useState<
+    Parameters<OnCompileEndCallback>[1]
+  >();
+
+  const availableRoutes = useObservable(viewContext?.onRoutesDefined);
+  const currentRoute = useObservable(viewContext?.onRouteChange);
+
+  const [, renderRouteMenu, openRouteMenu] = useMenuInput(
+    (availableRoutes || []).map((availableRoute) => ({
+      name: availableRoute,
+      value: availableRoute,
+    })),
+    (newRoute) =>
+      viewContext?.iframe.contentWindow?.history.pushState({}, "", newRoute),
+    undefined,
+    currentRoute
+  );
+
   return (
-    <>
-      <CompilerComponentView
-        {...compilerProps}
-        ref={(newComponentViewRef) => {
-          componentView.current = newComponentViewRef ?? undefined;
-          if (compilerProps.ref) {
-            if (typeof compilerProps.ref === "function") {
-              compilerProps.ref(newComponentViewRef);
-            } else {
-              // @ts-ignore ignore readonly error
-              compilerProps.ref.current = newComponentViewRef;
-            }
-          }
-        }}
-        onCompileStart={() => {
-          setLoading(true);
-          compilerProps?.onCompileStart?.();
-        }}
-        onCompileEnd={(codeId, context) => {
-          skipLoadingDebounce();
-          setLoading(false);
-          compilerProps?.onCompileEnd?.(codeId, context);
-        }}
-      />
-      {(selectModeType !== undefined || selectedElement) && renderOverlay()}
-      {debouncedLoading && (
-        <div className="flex items-center justify-center absolute inset-0 z-20 dark-glass">
-          <CircularProgress />
+    <div className="flex flex-col m-10">
+      <div className="flex relative">
+        {getFriendlyName(compilerProps.project!, compilerProps.selectedCodeId)}
+        <div className="flex-1" />
+        {/* {availableRoutes ? (
+          <button className="ml-2" onClick={openRouteMenu}>
+            <FontAwesomeIcon
+              icon={faLink}
+              className="text-gray-500 hover:text-white default-transition"
+            />
+          </button>
+        ) : null} */}
+        {renderRouteMenu()}
+        <div className="absolute inset-0 text-center pointer-events-none">
+          {currentRoute || null}
         </div>
-      )}
-    </>
+      </div>
+      <div className="flex relative bg-white shadow-2xl">
+        <CompilerComponentView
+          {...compilerProps}
+          ref={(newComponentViewRef) => {
+            componentView.current = newComponentViewRef ?? undefined;
+            if (compilerProps.ref) {
+              if (typeof compilerProps.ref === "function") {
+                compilerProps.ref(newComponentViewRef);
+              } else {
+                // @ts-ignore ignore readonly error
+                compilerProps.ref.current = newComponentViewRef;
+              }
+            }
+          }}
+          onCompileStart={() => {
+            setLoading(true);
+            compilerProps?.onCompileStart?.();
+          }}
+          onCompileEnd={(codeId, context) => {
+            skipLoadingDebounce();
+            setLoading(false);
+            setViewContext(context);
+            compilerProps?.onCompileEnd?.(codeId, context);
+          }}
+        />
+        {(selectModeType !== undefined || selectedElement) && renderOverlay()}
+        {debouncedLoading && (
+          <div className="flex items-center justify-center absolute inset-0 z-20 dark-glass">
+            <CircularProgress />
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
