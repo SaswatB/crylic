@@ -30,6 +30,8 @@ import {
 import { StyleGroup } from "./utils/ast/editors/ASTEditor";
 import {
   CONFIG_FILE_NAME,
+  DEFAULT_FRAME_HEIGHT,
+  DEFAULT_FRAME_WIDTH,
   getBoilerPlateComponent,
   SelectMode,
   SelectModeType,
@@ -375,7 +377,10 @@ function App() {
     </div>
   );
 
-  const [frameSize, setFrameSize] = useState({ width: 600, height: 300 });
+  const [frameSize, setFrameSize] = useState({
+    width: DEFAULT_FRAME_WIDTH,
+    height: DEFAULT_FRAME_HEIGHT,
+  });
   const renderSideBar = () => (
     <SideBar
       outline={outline}

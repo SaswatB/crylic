@@ -91,7 +91,8 @@ export function useCSSLengthInput(
     const res = /(\d+)(.+)/.exec(value);
     return res ? { numberValue: res[1], unit: res[2] } : { numberValue: value };
   }, [value]);
-  const updateValue = (newValue: string) => {
+  const updateValue = (newNumberValue = numberValue, newUnit = unit) => {
+    const newValue = `${newNumberValue}${newUnit}`;
     setValue(newValue);
     onChange(newValue);
   };
@@ -106,15 +107,29 @@ export function useCSSLengthInput(
       <InputLabel>{label}</InputLabel>
       <OutlinedInput
         value={numberValue}
-        onChange={(e) => updateValue(`${e.target.value}${unit}`)}
+        onChange={(e) => updateValue(`${e.target.value}`)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
+        onKeyDown={(event) => {
+          let increment = 0;
+          if (event.keyCode === 38) {
+            // increment value on up arrow
+            increment = 1;
+          } else if (event.keyCode === 40) {
+            // decrement value on down arrow
+            increment = -1;
+          }
+          try {
+            const numericalValue = parseFloat(numberValue);
+            updateValue(`${numericalValue + increment}`);
+          } catch (e) {}
+        }}
         endAdornment={
           <InputAdornment position="end">
             <Select
               native
               value={unit}
-              onChange={(e) => updateValue(`${numberValue}${e.target.value}`)}
+              onChange={(e) => updateValue(undefined, `${e.target.value}`)}
             >
               {units.map((o) => (
                 <option key={o.name} value={o.value}>

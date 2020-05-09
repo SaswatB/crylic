@@ -1,5 +1,8 @@
 export const CONFIG_FILE_NAME = "paint.config.js";
 
+export const DEFAULT_FRAME_WIDTH = 350;
+export const DEFAULT_FRAME_HEIGHT = 600;
+
 export enum SelectModeType {
   SelectElement,
   AddElement,

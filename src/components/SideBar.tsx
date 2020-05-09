@@ -41,6 +41,8 @@ import {
   CSS_JUSTIFY_CONTENT_OPTIONS,
   CSS_POSITION_OPTIONS,
   CSS_TEXT_ALIGN_OPTIONS,
+  DEFAULT_FRAME_HEIGHT,
+  DEFAULT_FRAME_WIDTH,
   SelectMode,
   SelectModeType,
 } from "../utils/constants";
@@ -100,12 +102,12 @@ const useMainTab = ({
   const [, renderComponentViewWidthInput] = useTextInput(
     (newWidth) => onChangeFrameSize(parseInt(newWidth), undefined),
     "Width",
-    "600"
+    `${DEFAULT_FRAME_WIDTH}`
   );
   const [, renderComponentViewHeightInput] = useTextInput(
     (newHeight) => onChangeFrameSize(undefined, parseInt(newHeight)),
     "Height",
-    "300"
+    `${DEFAULT_FRAME_HEIGHT}`
   );
 
   const [
@@ -394,6 +396,7 @@ const useSelectedElementEditorTab = ({
     alignItems: "Align",
     justifyContent: "Justify",
     textAlign: "Align",
+    fontSize: "Size",
   };
   const useSelectedElementEditor = (
     styleProp: keyof CSSStyleDeclaration,
@@ -494,6 +497,10 @@ const useSelectedElementEditorTab = ({
     "color",
     useColorPicker
   );
+  const [, renderSelectedElementTextSizeInput] = useSelectedElementEditor(
+    "fontSize",
+    useBoundCSSLengthInput
+  );
   const [, renderSelectedElementTextAlignInput] = useSelectedElementEditor(
     "textAlign",
     useSelectInput.bind(undefined, CSS_TEXT_ALIGN_OPTIONS)
@@ -529,6 +536,7 @@ const useSelectedElementEditorTab = ({
       {renderSeparator("Text")}
       <div className={gridClass}>
         {renderSelectedElementColorInput()}
+        {renderSelectedElementTextSizeInput()}
         {selectedElementDisplay !== "flex" &&
           renderSelectedElementTextAlignInput()}
       </div>
