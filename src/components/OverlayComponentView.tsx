@@ -27,6 +27,7 @@ interface Props {
   compilerProps: CompilerComponentViewProps &
     React.IframeHTMLAttributes<HTMLIFrameElement> &
     RefAttributes<CompilerComponentViewRef>;
+  frameSize: { width: number; height: number };
   selectModeType: SelectModeType | undefined;
   selectedElement: SelectedElement | undefined;
   onSelectElement: (
@@ -42,6 +43,7 @@ interface Props {
 
 export const OverlayComponentView: FunctionComponent<Props> = ({
   compilerProps,
+  frameSize,
   selectModeType,
   selectedElement,
   onSelectElement,
@@ -54,6 +56,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   const [renderOverlay] = useOverlay(
     compilerProps.project,
     componentView.current,
+    frameSize,
     selectedElement,
     selectModeType,
     (componentElement) =>
@@ -169,6 +172,11 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
             setLoading(false);
             setViewContext(context);
             compilerProps?.onCompileEnd?.(codeId, context);
+          }}
+          style={{
+            ...compilerProps.style,
+            width: `${frameSize.width}px`,
+            height: `${frameSize.height}px`,
           }}
         />
         {(selectModeType !== undefined || selectedElement) && renderOverlay()}

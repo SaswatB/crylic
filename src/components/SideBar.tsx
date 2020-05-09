@@ -98,12 +98,12 @@ const useMainTab = ({
   toggleCodeEntryRender,
 }: Props) => {
   const [, renderComponentViewWidthInput] = useTextInput(
-    (newWidth) => onChangeFrameSize(newWidth, undefined),
+    (newWidth) => onChangeFrameSize(parseInt(newWidth), undefined),
     "Width",
     "600"
   );
   const [, renderComponentViewHeightInput] = useTextInput(
-    (newHeight) => onChangeFrameSize(undefined, newHeight),
+    (newHeight) => onChangeFrameSize(undefined, parseInt(newHeight)),
     "Height",
     "300"
   );
@@ -300,7 +300,7 @@ const useAdderTab = ({ onChangeSelectMode }: Props) => {
           className="btn w-full"
           onClick={() => onAddElement("div", { style: { display: "flex" } })}
         >
-          <FontAwesomeIcon icon={faBars} className="transform rotate-90" /> Row
+          <FontAwesomeIcon icon={faBars} /> Row
         </button>
         <button
           className="btn w-full"
@@ -310,7 +310,8 @@ const useAdderTab = ({ onChangeSelectMode }: Props) => {
             })
           }
         >
-          <FontAwesomeIcon icon={faBars} /> Column
+          <FontAwesomeIcon icon={faBars} className="transform rotate-90" />{" "}
+          Column
         </button>
       </div>
       {renderSeparator("Text")}
@@ -559,8 +560,8 @@ interface Props {
     preview?: boolean
   ) => void;
   onChangeFrameSize: (
-    width: string | undefined,
-    height: string | undefined
+    width: number | undefined,
+    height: number | undefined
   ) => void;
   onNewComponent: () => void;
   onNewStyleSheet: () => void;

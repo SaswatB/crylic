@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { DraggableData, ResizableDelta, Rnd } from "react-rnd";
 import produce from "immer";
-import { cloneDeep } from "lodash";
 
 import {
   CompilerComponentViewRef,
   getComponentElementFromEvent,
 } from "../components/CompilerComponentView";
+import { Draggable } from "../components/Draggable";
 import { onMoveResizeCallback, SelectedElement } from "../types/paint";
 import { SelectModeType } from "../utils/constants";
 import { Project } from "../utils/Project";
@@ -15,6 +14,7 @@ let lastDragResizeHandled = 0;
 export function useOverlay(
   project: Project | undefined,
   componentView: CompilerComponentViewRef | null | undefined,
+  frameSize: { width: number; height: number },
   selectedElement?: SelectedElement,
   selectModeType?: SelectModeType,
   onSelect?: (componentElement: Element | null | undefined) => void,
@@ -71,16 +71,13 @@ export function useOverlay(
     const componentElement = componentView?.getElementByLookupId(
       selectedElement?.lookupId
     );
-    const pbcr =
-      selectedElement?.computedStyles.position === "static"
-        ? componentElement?.parentElement?.getBoundingClientRect()
-        : undefined;
+    const pbcr = (selectedElement?.computedStyles.position === "static" &&
+      componentElement?.parentElement?.getBoundingClientRect()) || {
+      top: 0,
+      left: 0,
+      ...frameSize,
+    };
     const bcr = componentElement?.getBoundingClientRect();
-    if (pbcr && bcr) {
-      bcr.x -= pbcr.x;
-      bcr.y -= pbcr.y;
-    }
-
     return {
       selectedElementParentBoundingBox: pbcr,
       selectedElementBoundingBox: bcr,
@@ -89,47 +86,24 @@ export function useOverlay(
   }, [selectedElement]);
 
   const onResizeSelection = (
-    ref: HTMLDivElement,
-    delta: ResizableDelta,
+    finalWidth: string,
+    finalHeight: string,
+    deltaWidth: number,
+    deltaHeight: number,
     preview?: boolean
   ) => {
-    if (delta.height) {
-      if (delta.width) {
-        onMoveResizeSelection?.(
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          ref.style.width,
-          ref.style.height,
-          preview
-        );
-      } else {
-        onMoveResizeSelection?.(
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          ref.style.height,
-          preview
-        );
-      }
-    } else {
-      onMoveResizeSelection?.(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        ref.style.width,
-        undefined,
-        preview
-      );
-    }
+    onMoveResizeSelection?.(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      deltaWidth ? finalWidth : undefined,
+      deltaHeight ? finalHeight : undefined,
+      preview
+    );
   };
 
   const selectEnabled = selectModeType !== undefined;
-  const [draggingHighlight, setDraggingHighlight] = useState<DraggableData>();
   const previewDraggingHighlight = useRef({ dx: 0, dy: 0 });
   const renderOverlay = () => (
     <div
@@ -150,120 +124,88 @@ export function useOverlay(
           }}
         />
       ) : (
-        selectedElementBoundingBox && (
-          <div
-            className="absolute"
-            style={
-              selectedElementParentBoundingBox
-                ? {
-                    top: selectedElementParentBoundingBox.top,
-                    left: selectedElementParentBoundingBox.left,
-                    width: selectedElementParentBoundingBox.width,
-                    height: selectedElementParentBoundingBox.height,
-                  }
-                : {
-                    top: 0,
-                    left: 0,
-                    bottom: 0,
-                    right: 0,
-                  }
-            }
-          >
-            <Rnd
-              className="border-2 border-blue-300 border-solid"
-              size={{
-                width: selectedElementBoundingBox.width + tempOffset.width,
-                height: selectedElementBoundingBox.height + tempOffset.height,
-              }}
-              position={{
-                x: selectedElementBoundingBox.x + tempOffset.x,
-                y: selectedElementBoundingBox.y + tempOffset.y,
-              }}
-              enableResizing={{
-                bottom: true,
-                right: true,
-                bottomRight: true,
-
-                top: false,
-                left: false,
-                topLeft: false,
-                topRight: false,
-                bottomLeft: false,
-              }}
-              bounds="parent"
-              onDragStart={(e, d) => {
-                setDraggingHighlight(cloneDeep(d));
-                previewDraggingHighlight.current.dx = 0;
-                previewDraggingHighlight.current.dy = 0;
-              }}
-              onDrag={(e, d) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const deltaX =
-                  d.x -
-                  (draggingHighlight?.x || 0) -
-                  previewDraggingHighlight.current.dx;
-                const deltaY =
-                  d.y -
-                  (draggingHighlight?.y || 0) -
-                  previewDraggingHighlight.current.dy;
-                onMoveResizeSelection?.(
-                  deltaX,
-                  undefined,
-                  deltaY,
-                  undefined,
-                  undefined,
-                  undefined,
-                  true
-                );
-                previewDraggingHighlight.current.dx += deltaX;
-                previewDraggingHighlight.current.dy += deltaY;
-              }}
-              onDragStop={(e, d) => {
-                console.log("onDragStop", draggingHighlight, d);
-                setDraggingHighlight(undefined);
-                const deltaX = d.x - (draggingHighlight?.x || 0);
-                const deltaY = d.y - (draggingHighlight?.y || 0);
-                if (deltaX || deltaY) {
-                  lastDragResizeHandled = Date.now();
-                  const offsetDeltaX =
-                    deltaX - previewDraggingHighlight.current.dx;
-                  const offsetDeltaY =
-                    deltaY - previewDraggingHighlight.current.dy;
-                  onMoveResizeSelection?.(
-                    offsetDeltaX,
-                    deltaX,
-                    offsetDeltaY,
-                    deltaY,
-                    undefined,
-                    undefined
-                  );
-                  setTempOffset(
-                    produce((draft) => {
-                      draft.x += deltaX;
-                      draft.y += deltaY;
-                    })
-                  );
-                }
-              }}
-              onResize={(e, direction, ref, delta, position) =>
-                onResizeSelection(ref, delta, true)
-              }
-              onResizeStop={(e, direction, ref, delta, position) => {
-                if (!delta.width && !delta.height) return;
-                console.log("onResizeStop");
-
+        selectedElementBoundingBox &&
+        selectedElementParentBoundingBox && (
+          <Draggable
+            className="border-2 border-blue-300 border-solid"
+            dimensions={{
+              top: selectedElementBoundingBox.y + tempOffset.y,
+              left: selectedElementBoundingBox.x + tempOffset.x,
+              width: selectedElementBoundingBox.width + tempOffset.width,
+              height: selectedElementBoundingBox.height + tempOffset.height,
+            }}
+            bounds={selectedElementParentBoundingBox}
+            onDragStart={() => {
+              previewDraggingHighlight.current.dx = 0;
+              previewDraggingHighlight.current.dy = 0;
+            }}
+            onDrag={({ deltaX, deltaY }) => {
+              onMoveResizeSelection?.(
+                deltaX - previewDraggingHighlight.current.dx,
+                undefined,
+                deltaY - previewDraggingHighlight.current.dy,
+                undefined,
+                undefined,
+                undefined,
+                true
+              );
+              previewDraggingHighlight.current.dx = deltaX;
+              previewDraggingHighlight.current.dy = deltaY;
+            }}
+            onDragStop={() => {
+              if (
+                previewDraggingHighlight.current.dx ||
+                previewDraggingHighlight.current.dy
+              ) {
                 lastDragResizeHandled = Date.now();
+                onMoveResizeSelection?.(
+                  0,
+                  previewDraggingHighlight.current.dx,
+                  0,
+                  previewDraggingHighlight.current.dy,
+                  undefined,
+                  undefined
+                );
                 setTempOffset(
                   produce((draft) => {
-                    draft.width += delta.width;
-                    draft.height += delta.height;
+                    draft.x += previewDraggingHighlight.current.dx;
+                    draft.y += previewDraggingHighlight.current.dy;
                   })
                 );
-                onResizeSelection(ref, delta);
-              }}
-            />
-          </div>
+              }
+            }}
+            onResize={({ finalWidth, finalHeight, deltaWidth, deltaHeight }) =>
+              onResizeSelection(
+                finalWidth,
+                finalHeight,
+                deltaWidth,
+                deltaHeight,
+                true
+              )
+            }
+            onResizeStop={({
+              finalWidth,
+              finalHeight,
+              deltaWidth,
+              deltaHeight,
+            }) => {
+              if (!deltaWidth && !deltaHeight) return;
+
+              lastDragResizeHandled = Date.now();
+              setTempOffset(
+                produce((draft) => {
+                  draft.width += deltaWidth;
+                  draft.height += deltaHeight;
+                })
+              );
+              onResizeSelection(
+                finalWidth,
+                finalHeight,
+                deltaWidth,
+                deltaHeight
+              );
+            }}
+          />
         )
       )}
     </div>

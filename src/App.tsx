@@ -341,7 +341,7 @@ function App() {
     </div>
   );
 
-  const [frameSize, setFrameSize] = useState({ width: "600", height: "300" });
+  const [frameSize, setFrameSize] = useState({ width: 600, height: 300 });
   const renderSideBar = () => (
     <SideBar
       outline={outline}
@@ -440,8 +440,9 @@ function App() {
   const renderComponentViews = () =>
     project?.codeEntries
       .filter((entry) => entry.render)
-      .map((entry, index) => (
+      .map((entry) => (
         <OverlayComponentView
+          key={entry.id}
           compilerProps={{
             ref(componentView) {
               componentViews.current[entry.id] = componentView;
@@ -449,11 +450,8 @@ function App() {
             project,
             selectedCodeId: entry.id,
             onCompileEnd: onComponentViewCompiled,
-            style: {
-              width: `${frameSize.width}px`,
-              height: `${frameSize.height}px`,
-            },
           }}
+          frameSize={frameSize}
           selectModeType={selectMode?.type}
           selectedElement={selectedElement}
           onSelectElement={onOverlaySelectElement}
