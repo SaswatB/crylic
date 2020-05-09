@@ -95,11 +95,35 @@ function App() {
     );
   };
   const codeChangeStack = useRef<{ id: string; code: string }[]>([]);
-  const setCode = (codeId: string, code: string, recordChange = true) =>
+  const codeRedoStack = useRef<{ id: string; code: string }[]>([]);
+  const setCode = (
+    codeId: string,
+    code: string,
+    isUndo = false,
+    isRedo = false
+  ) =>
     setProject((currentProject) => {
       const oldCode = currentProject?.getCodeEntry(codeId)?.code;
-      if (recordChange && oldCode !== undefined)
-        codeChangeStack.current.push({ id: codeId, code: oldCode });
+      if (oldCode === code) return project;
+
+      // keep track of undo/redo state
+      if (oldCode !== undefined) {
+        const changeEntry = { id: codeId, code: oldCode };
+        if (isUndo) {
+          // save the old state in the redo stack for undos
+          codeRedoStack.current.push(changeEntry);
+        } else {
+          // save changes in the undo stack
+          codeChangeStack.current.push(changeEntry);
+
+          // clear the redo stack if the change isn't an undo or redo
+          if (!isRedo) {
+            codeRedoStack.current = [];
+          }
+        }
+      }
+
+      // apply change
       return currentProject?.editCodeEntry(codeId, { code });
     });
   const toggleCodeEntryEdit = (codeId: string) =>
@@ -117,16 +141,26 @@ function App() {
   const addCodeEntry = (
     partialEntry: Partial<CodeEntry> & { filePath: string }
   ) => setProject((project) => project?.addCodeEntries(partialEntry));
+  // handle undo/redo hotkeys
   useHotkeys("ctrl+z", () => {
     const change = codeChangeStack.current.pop();
     console.log("undo", change);
     if (change) {
-      setCode(change.id, change.code, false);
+      setCode(change.id, change.code, true);
+    }
+  });
+  useHotkeys("ctrl+shift+z", () => {
+    const change = codeRedoStack.current.pop();
+    console.log("redo", change);
+    if (change) {
+      setCode(change.id, change.code, false, true);
     }
   });
 
-  const [selectMode, setSelectMode] = useState<SelectMode>(); // todo escape key
+  const [selectMode, setSelectMode] = useState<SelectMode>();
   const [selectedElement, setSelectedElement] = useState<SelectedElement>();
+  // clear select mode on escape hotkey
+  useHotkeys("escape", () => setSelectMode(undefined));
 
   const selectElement = (componentElement: HTMLElement) => {
     const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
