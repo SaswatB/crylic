@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import { fold } from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
@@ -93,8 +94,14 @@ function App() {
       new Project(folderPath, config).addCodeEntries(...fileCodeEntries)
     );
   };
-  const setCode = (codeId: string, code: string) =>
-    setProject(project?.editCodeEntry(codeId, { code }));
+  const codeChangeStack = useRef<{ id: string; code: string }[]>([]);
+  const setCode = (codeId: string, code: string, recordChange = true) =>
+    setProject((currentProject) => {
+      const oldCode = currentProject?.getCodeEntry(codeId)?.code;
+      if (recordChange && oldCode !== undefined)
+        codeChangeStack.current.push({ id: codeId, code: oldCode });
+      return currentProject?.editCodeEntry(codeId, { code });
+    });
   const toggleCodeEntryEdit = (codeId: string) =>
     setProject((project) =>
       project?.editCodeEntry(codeId, {
@@ -110,6 +117,13 @@ function App() {
   const addCodeEntry = (
     partialEntry: Partial<CodeEntry> & { filePath: string }
   ) => setProject((project) => project?.addCodeEntries(partialEntry));
+  useHotkeys("ctrl+z", () => {
+    const change = codeChangeStack.current.pop();
+    console.log("undo", change);
+    if (change) {
+      setCode(change.id, change.code, false);
+    }
+  });
 
   const [selectMode, setSelectMode] = useState<SelectMode>(); // todo escape key
   const [selectedElement, setSelectedElement] = useState<SelectedElement>();
