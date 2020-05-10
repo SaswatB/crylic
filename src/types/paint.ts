@@ -21,6 +21,7 @@ export type ProjectConfig = it.TypeOf<typeof ProjectConfig>;
 
 export interface SelectedElement {
   lookupId: string;
+  element: HTMLElement;
   styleGroups: StyleGroup[];
   computedStyles: CSSStyleDeclaration;
   inlineStyles: CSSStyleDeclaration;
@@ -29,6 +30,7 @@ export interface SelectedElement {
 export interface OutlineElement {
   tag: string;
   lookupId: string;
+  element: HTMLElement | undefined;
   children: OutlineElement[];
 }
 

@@ -37,7 +37,11 @@ import {
   SelectModeType,
 } from "./utils/constants";
 import { Project } from "./utils/Project";
-import { SCRIPT_EXTENSION_REGEX, STYLE_EXTENSION_REGEX } from "./utils/utils";
+import {
+  buildOutline,
+  SCRIPT_EXTENSION_REGEX,
+  STYLE_EXTENSION_REGEX,
+} from "./utils/utils";
 import "./App.scss";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
@@ -180,13 +184,16 @@ function App() {
 
     setSelectedElement({
       lookupId,
+      element: componentElement,
       styleGroups,
       computedStyles: window.getComputedStyle(componentElement),
       inlineStyles: componentElement.style,
     });
   };
 
-  const [outline] = useState<OutlineElement[]>([]);
+  const [outlineMap, setOutlineMap] = useState<
+    Record<string, OutlineElement[] | undefined>
+  >({});
   const compileTasks = useRef<
     Record<
       string,
@@ -195,7 +202,7 @@ function App() {
   >({});
   const onComponentViewCompiled: OnCompileEndCallback = (
     codeId,
-    { iframe, getElementByLookupId }
+    { iframe, getRootElement, getElementByLookupId }
   ) => {
     project?.editorEntries.forEach(({ editor }) => editor.onASTRender(iframe));
 
@@ -219,8 +226,14 @@ function App() {
       }
     }
 
-    // const root = getElementByLookupId(JSX_LOOKUP_ROOT);
-    // if (root) setOutline(buildOutline(root));
+    const root = getRootElement();
+    setOutlineMap(
+      produce((currentOutlineMap) => {
+        currentOutlineMap[codeId] = root
+          ? buildOutline(project!, root)
+          : undefined;
+      })
+    );
 
     compileTasks.current[codeId]?.forEach((task) => task(getElementByLookupId));
     compileTasks.current[codeId] = [];
@@ -383,8 +396,9 @@ function App() {
   });
   const renderSideBar = () => (
     <SideBar
-      outline={outline}
+      outlineMap={outlineMap}
       project={project}
+      selectElement={selectElement}
       selectedElement={selectedElement}
       onChangeSelectMode={setSelectMode}
       updateSelectedElementStyle={updateSelectedElementStyle}

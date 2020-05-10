@@ -64,6 +64,7 @@ export const buildOutline = (
           {
             tag: child.tagName,
             lookupId,
+            element: child as HTMLElement,
             children: buildOutline(project, child),
           },
         ];
@@ -71,3 +72,14 @@ export const buildOutline = (
       return buildOutline(project, child);
     })
     .reduce((p, c) => [...p, ...c], []);
+
+let reactInstanceKey: string | undefined;
+export const getReactDebugId = (element: HTMLElement) => {
+  if (!reactInstanceKey)
+    reactInstanceKey = Object.keys(element).find((key) =>
+      key.startsWith("__reactInternalInstance")
+    );
+  if (!reactInstanceKey) return undefined;
+
+  return (element as any)[reactInstanceKey]?._debugID;
+};

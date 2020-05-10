@@ -13,6 +13,7 @@ import {
   faHSquare,
   faPlus,
   faPlusSquare,
+  faStream,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
@@ -48,6 +49,8 @@ import {
 } from "../utils/constants";
 import { Project } from "../utils/Project";
 import {
+  getFriendlyName,
+  getReactDebugId,
   isScriptEntry,
   isStyleEntry,
   SCRIPT_EXTENSION_REGEX,
@@ -148,6 +151,7 @@ const useMainTab = ({
       extensionRegex = STYLE_EXTENSION_REGEX;
       break;
   }
+  const treeNodeIds = new Set<string>("root");
   const projectTree: Tree = { id: "root", name: "", children: [] };
   const projectPath = project?.path.replace(/\\/g, "/");
   codeEntries?.forEach((codeEntry) => {
@@ -164,12 +168,14 @@ const useMainTab = ({
         (childNode) => childNode.name === pathPart
       );
       if (!child) {
+        const id = path.slice(0, index + 1).join("/");
         child = {
-          id: path.slice(0, index + 1).join("/"),
+          id,
           name: pathPart,
           children: [],
         };
         node.children.push(child);
+        treeNodeIds.add(id);
       }
       node = child;
     });
@@ -277,7 +283,7 @@ const useMainTab = ({
           <TreeView
             defaultCollapseIcon={<ExpandMoreIcon />}
             defaultExpandIcon={<ChevronRightIcon />}
-            defaultExpanded={projectTree.children.map((child) => child.id)}
+            defaultExpanded={Array.from(treeNodeIds)}
           >
             {projectTree.children.map(renderTree)}
           </TreeView>
@@ -361,6 +367,59 @@ const useAdderTab = ({ onChangeSelectMode }: Props) => {
     </>
   );
   return renderElementAdder;
+};
+
+const useOutlineTab = ({
+  project,
+  outlineMap,
+  selectElement,
+  selectedElement,
+}: Props) => {
+  const outlines = Object.entries(outlineMap).filter(([key, value]) => !!value);
+
+  let treeNodeIds = new Set<string>();
+  const renderTree = (node: OutlineElement) => {
+    const id = `${
+      node.element ? getReactDebugId(node.element) : node.lookupId
+    }`;
+    treeNodeIds.add(id);
+    return (
+      <TreeItem
+        key={id}
+        nodeId={id}
+        label={node.tag}
+        onClick={() => node.element && selectElement(node.element)}
+      >
+        {node.children.map(renderTree)}
+      </TreeItem>
+    );
+  };
+
+  // render tree ahead of time to populate treeNodeIds
+  const renderedTree = outlines.map(([key, value]) =>
+    renderTree({
+      tag: (project && getFriendlyName(project, key)) || key,
+      lookupId: key,
+      element: undefined,
+      children: value!,
+    })
+  );
+
+  const renderOutlineTab = () => (
+    <div className="mt-4">
+      <TreeView
+        defaultCollapseIcon={<ExpandMoreIcon />}
+        defaultExpandIcon={<ChevronRightIcon />}
+        expanded={Array.from(treeNodeIds)}
+        selected={
+          selectedElement ? `${getReactDebugId(selectedElement.element)}` : ""
+        }
+      >
+        {renderedTree}
+      </TreeView>
+    </div>
+  );
+  return renderOutlineTab;
 };
 
 const useSelectedElementEditorTab = ({
@@ -557,8 +616,9 @@ const useSelectedElementEditorTab = ({
 };
 
 interface Props {
-  outline: OutlineElement[];
+  outlineMap: Record<string, OutlineElement[] | undefined>;
   project: Project | undefined;
+  selectElement: (componentElement: HTMLElement) => void;
   selectedElement: SelectedElement | undefined;
   onChangeSelectMode: (selectMode: SelectMode) => void;
   updateSelectedElementStyle: (
@@ -583,9 +643,13 @@ interface Props {
 export const SideBar: FunctionComponent<Props> = (props) => {
   const renderMainTab = useMainTab(props);
   const renderElementAdder = useAdderTab(props);
+  const renderOutlineTab = useOutlineTab(props);
   const renderSelectedElementEditor = useSelectedElementEditorTab(props);
 
   const { selectedElement, project } = props;
+  const isRendering = !!project?.codeEntries.find(
+    (codeEntry) => codeEntry.render
+  );
   const tabsRef = useRef<TabsRef>(null);
   useEffect(() => {
     if (selectedElement) tabsRef.current?.selectTab(2);
@@ -599,10 +663,13 @@ export const SideBar: FunctionComponent<Props> = (props) => {
           name: <FontAwesomeIcon icon={faCog} />,
           render: renderMainTab,
         },
-        !!project?.codeEntries.filter((codeEntry) => codeEntry.render)
-          .length && {
+        isRendering && {
           name: <FontAwesomeIcon icon={faPlus} />,
           render: renderElementAdder,
+        },
+        isRendering && {
+          name: <FontAwesomeIcon icon={faStream} />,
+          render: renderOutlineTab,
         },
         !!selectedElement && {
           name: <FontAwesomeIcon icon={faEdit} />,

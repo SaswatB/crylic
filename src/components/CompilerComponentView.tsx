@@ -36,7 +36,8 @@ export type GetElementByLookupId = (
 ) => HTMLElement | null | undefined;
 
 export interface CompilerComponentViewRef {
-  getElementAtPoint: (x: number, y: number) => HTMLElement | null | undefined;
+  getRootElement(): HTMLBodyElement | undefined;
+  getElementAtPoint: (x: number, y: number) => HTMLElement | undefined;
   getElementByLookupId: GetElementByLookupId;
   // cleared on next compile
   addTempStyles: (
@@ -50,10 +51,9 @@ export type OnCompileEndCallback = (
   codeId: string,
   context: {
     iframe: HTMLIFrameElement;
-    getElementByLookupId: GetElementByLookupId;
     onRoutesDefined: Observable<string[]>;
     onRouteChange: Observable<string>;
-  }
+  } & CompilerComponentViewRef
 ) => void;
 
 export interface CompilerComponentViewProps {
@@ -82,12 +82,16 @@ export const CompilerComponentView: FunctionComponent<
     }>(null);
 
     const handle: CompilerComponentViewRef = {
+      getRootElement() {
+        const iframeDocument = getActiveFrame().current?.frameElement
+          .contentDocument;
+        return iframeDocument?.querySelector("body") || undefined;
+      },
       getElementAtPoint(x, y) {
         const iframeDocument = getActiveFrame().current?.frameElement
           .contentDocument;
-        return iframeDocument?.elementFromPoint(x, y) as
+        return (iframeDocument?.elementFromPoint(x, y) || undefined) as
           | HTMLElement
-          | null
           | undefined;
       },
       getElementByLookupId(lookupId) {
@@ -165,8 +169,8 @@ export const CompilerComponentView: FunctionComponent<
             setTimeout(() =>
               requestAnimationFrame(() =>
                 onCompileEnd?.(selectedCodeId, {
+                  ...handleRef.current,
                   iframe: getInactiveFrame().current!.frameElement,
-                  getElementByLookupId: handleRef.current.getElementByLookupId,
                   onRoutesDefined: onRoutesDefinedSubject.pipe(
                     distinctUntilChanged(isEqual)
                   ),
