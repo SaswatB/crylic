@@ -1,4 +1,5 @@
 import React, {
+  CSSProperties,
   FunctionComponent,
   useEffect,
   useMemo,
@@ -42,9 +43,11 @@ import { CodeEntry, OutlineElement, SelectedElement } from "../types/paint";
 import { StyleGroup } from "../utils/ast/editors/ASTEditor";
 import {
   CSS_ALIGN_ITEMS_OPTIONS,
+  CSS_CURSOR_OPTIONS,
   CSS_DISPLAY_OPTIONS,
   CSS_FLEX_DIRECTION_OPTIONS,
   CSS_FLEX_WRAP_OPTIONS,
+  CSS_FONT_WEIGHT_OPTIONS,
   CSS_JUSTIFY_CONTENT_OPTIONS,
   CSS_POSITION_OPTIONS,
   CSS_TEXT_ALIGN_OPTIONS,
@@ -92,7 +95,7 @@ type EditorHook = (
   iv: string
 ) => readonly [
   string,
-  (props?: React.HTMLAttributes<HTMLElement>) => JSX.Element
+  (props?: { className?: string; style?: CSSProperties }) => JSX.Element
 ];
 
 const gridClass = "grid grid-cols-2 row-gap-3 col-gap-2 py-2";
@@ -469,7 +472,7 @@ const useSelectedElementEditorTab = ({
     [selectedElement]
   );
 
-  const [, renderSelectedElementTextContentInput] = useTextInput(
+  const [, renderTextContentInput] = useTextInput(
     (newTextContent) => updateSelectedElementText(newTextContent),
     "Text Content",
     selectedElement?.element.textContent ?? undefined,
@@ -501,7 +504,7 @@ const useSelectedElementEditorTab = ({
   };
   const useSelectedElementEditor = (
     styleProp: keyof CSSStyleDeclaration,
-    useEditorHook: EditorHook = useBoundTextInput
+    useEditorHook: EditorHook = useBoundCSSLengthInput
   ) => {
     const onChange = (newValue: string, preview?: boolean) =>
       updateSelectedElementStyle(
@@ -517,146 +520,130 @@ const useSelectedElementEditorTab = ({
       selectedElement?.computedStyles[styleProp] ||
       "";
 
-    const [
-      selectedElementValue,
-      renderSelectedElementValueInput,
-    ] = useEditorHook(onChange, label, `${initialValue}`);
+    const [selectedElementValue, renderValueInput] = useEditorHook(
+      onChange,
+      label,
+      `${initialValue}`
+    );
     return [
       selectedElementValue,
-      (props?: React.HTMLAttributes<HTMLElement>) =>
-        renderSelectedElementValueInput(props),
+      (props?: React.HTMLAttributes<HTMLElement>) => renderValueInput(props),
     ] as const;
   };
 
-  const [, renderSelectedElementWidthInput] = useSelectedElementEditor(
-    "width",
-    useBoundCSSLengthInput
-  );
-  const [, renderSelectedElementHeightInput] = useSelectedElementEditor(
-    "height",
-    useBoundCSSLengthInput
-  );
+  const [, renderWidthInput] = useSelectedElementEditor("width");
+  const [, renderHeightInput] = useSelectedElementEditor("height");
   const [
     selectedElementPosition,
-    renderSelectedElementPosition,
+    renderPositionInput,
   ] = useSelectedElementEditor(
     "position",
     useSelectInput.bind(undefined, CSS_POSITION_OPTIONS)
   );
-  const [, renderSelectedElementTopInput] = useSelectedElementEditor(
-    "top",
-    useBoundCSSLengthInput
-  );
-  const [, renderSelectedElementLeftInput] = useSelectedElementEditor(
-    "left",
-    useBoundCSSLengthInput
-  );
-  const [, renderSelectedElementBottomInput] = useSelectedElementEditor(
-    "bottom",
-    useBoundCSSLengthInput
-  );
-  const [, renderSelectedElementRightInput] = useSelectedElementEditor(
-    "right",
-    useBoundCSSLengthInput
-  );
-  const [
-    selectedElementDisplay,
-    renderSelectedElementDisplay,
-  ] = useSelectedElementEditor(
+  const [, renderTopInput] = useSelectedElementEditor("top");
+  const [, renderLeftInput] = useSelectedElementEditor("left");
+  const [, renderBottomInput] = useSelectedElementEditor("bottom");
+  const [, renderRightInput] = useSelectedElementEditor("right");
+  const [selectedElementDisplay, renderDisplayInput] = useSelectedElementEditor(
     "display",
     useSelectInput.bind(undefined, CSS_DISPLAY_OPTIONS)
   );
-  const [, renderSelectedElementFlexDirectionInput] = useSelectedElementEditor(
+  const [, renderFlexDirectionInput] = useSelectedElementEditor(
     "flexDirection",
     useSelectInput.bind(undefined, CSS_FLEX_DIRECTION_OPTIONS)
   );
-  const [, renderSelectedElementFlexWrapInput] = useSelectedElementEditor(
+  const [, renderFlexWrapInput] = useSelectedElementEditor(
     "flexWrap",
     useSelectInput.bind(undefined, CSS_FLEX_WRAP_OPTIONS)
   );
-  const [, renderSelectedElementAlignItemsInput] = useSelectedElementEditor(
+  const [, renderAlignItemsInput] = useSelectedElementEditor(
     "alignItems",
     useSelectInput.bind(undefined, CSS_ALIGN_ITEMS_OPTIONS)
   );
-  const [, renderSelectedElementJustifyContentInput] = useSelectedElementEditor(
+  const [, renderJustifyContentInput] = useSelectedElementEditor(
     "justifyContent",
     useSelectInput.bind(undefined, CSS_JUSTIFY_CONTENT_OPTIONS)
   );
-  const [, renderSelectedElementOpacityInput] = useSelectedElementEditor(
-    "opacity"
+  const [, renderOpacityInput] = useSelectedElementEditor(
+    "opacity",
+    useBoundTextInput
   );
-  const [, renderSelectedElementBorderRadiusInput] = useSelectedElementEditor(
-    "borderRadius",
-    useBoundCSSLengthInput
+  const [, renderBorderRadiusInput] = useSelectedElementEditor("borderRadius");
+  const [, renderBackgroundColorInput] = useSelectedElementEditor(
+    "backgroundColor",
+    useColorPicker
   );
-  const [
-    ,
-    renderSelectedElementBackgroundColorInput,
-  ] = useSelectedElementEditor("backgroundColor", useColorPicker);
 
-  const [, renderSelectedElementColorInput] = useSelectedElementEditor(
+  const [, renderColorInput] = useSelectedElementEditor(
     "color",
     useColorPicker
   );
-  const [, renderSelectedElementTextSizeInput] = useSelectedElementEditor(
-    "fontSize",
-    useBoundCSSLengthInput
+  const [, renderTextSizeInput] = useSelectedElementEditor("fontSize");
+  const [, renderTextWeightInput] = useSelectedElementEditor(
+    "fontWeight",
+    useSelectInput.bind(undefined, CSS_FONT_WEIGHT_OPTIONS)
   );
-  const [, renderSelectedElementTextAlignInput] = useSelectedElementEditor(
+  const [, renderTextAlignInput] = useSelectedElementEditor(
     "textAlign",
     useSelectInput.bind(undefined, CSS_TEXT_ALIGN_OPTIONS)
   );
 
-  const renderSelectedElementEditor = () => (
+  const [, renderCursorInput] = useSelectedElementEditor(
+    "cursor",
+    useSelectInput.bind(undefined, CSS_CURSOR_OPTIONS)
+  );
+
+  const renderEditor = () => (
     <>
       {renderSeparator("Style Group")}
       {renderedStyleGroupSelector}
       {renderSeparator("Layout")}
       <div className={gridClass}>
-        {renderSelectedElementWidthInput()}
-        {renderSelectedElementHeightInput()}
-        {renderSelectedElementPosition()}
-        {renderSelectedElementDisplay()}
+        {renderWidthInput()}
+        {renderHeightInput()}
+        {renderPositionInput()}
+        {renderDisplayInput()}
         {selectedElementPosition !== "static" && (
           <>
-            {renderSelectedElementTopInput()}
-            {renderSelectedElementLeftInput()}
-            {renderSelectedElementBottomInput()}
-            {renderSelectedElementRightInput()}
+            {renderTopInput()}
+            {renderLeftInput()}
+            {renderBottomInput()}
+            {renderRightInput()}
           </>
         )}
-        {renderSelectedElementBorderRadiusInput()}
+        {renderBorderRadiusInput()}
         {/* todo padding + margin */}
       </div>
       {renderSeparator("Colors")}
       <div className={gridClass}>
-        {renderSelectedElementOpacityInput()}
-        {renderSelectedElementBackgroundColorInput()}
+        {renderOpacityInput()}
+        {renderBackgroundColorInput()}
       </div>
       {/* todo border */}
       {renderSeparator("Text")}
       <div className={gridClass}>
-        {allowTextEdit &&
-          renderSelectedElementTextContentInput({ className: "col-span-2" })}
-        {renderSelectedElementColorInput()}
-        {renderSelectedElementTextSizeInput()}
-        {selectedElementDisplay !== "flex" &&
-          renderSelectedElementTextAlignInput()}
+        {allowTextEdit && renderTextContentInput({ className: "col-span-2" })}
+        {renderColorInput()}
+        {renderTextSizeInput()}
+        {renderTextWeightInput()}
+        {selectedElementDisplay !== "flex" && renderTextAlignInput()}
       </div>
       {selectedElementDisplay === "flex" && (
         <>
           {renderSeparator("Content")}
           <div className="grid grid-cols-2  row-gap-3 col-gap-2 pt-1 pb-2">
-            {renderSelectedElementFlexDirectionInput()}
-            {renderSelectedElementFlexWrapInput()}
-            {renderSelectedElementAlignItemsInput()}
-            {renderSelectedElementJustifyContentInput()}
+            {renderFlexDirectionInput()}
+            {renderFlexWrapInput()}
+            {renderAlignItemsInput()}
+            {renderJustifyContentInput()}
           </div>
         </>
       )}
+      {renderSeparator("Extras")}
+      <div className={gridClass}>{renderCursorInput()}</div>
     </>
   );
-  return renderSelectedElementEditor;
+  return renderEditor;
 };
 
 interface Props {

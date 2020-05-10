@@ -78,6 +78,11 @@ export function useOverlay(
       ...frameSize,
     };
     const bcr = componentElement?.getBoundingClientRect();
+    if (pbcr && bcr) {
+      bcr.x -= pbcr.left;
+      bcr.y -= pbcr.top;
+    }
+
     return {
       selectedElementParentBoundingBox: pbcr,
       selectedElementBoundingBox: bcr,

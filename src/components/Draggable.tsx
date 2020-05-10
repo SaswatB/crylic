@@ -178,8 +178,8 @@ export const Draggable: FunctionComponent<Props> = ({
         ref={divRef}
         className={className}
         style={{
-          top: dragTop,
-          left: dragLeft,
+          top: dragTop + bounds.top,
+          left: dragLeft + bounds.left,
           zIndex: 10,
           cursor: "move",
         }}
