@@ -145,6 +145,40 @@ export const CSS_FONT_WEIGHT_OPTIONS = [
   { name: "900", value: "900" },
 ];
 
+export const CSS_FONT_FAMILY_OPTIONS = [
+  { name: "Sans-Serif", value: "sans-serif", category: "Sans-Serif" },
+  { name: "Arial", value: '"Arial"', category: "Sans-Serif" },
+  { name: "Arial Black", value: '"Arial Black"', category: "Sans-Serif" },
+  { name: "Arial Narrow", value: '"Arial Narrow"', category: "Sans-Serif" },
+  {
+    name: "Arial Rounded MT Bold",
+    value: '"Arial Rounded MT Bold"',
+    category: "Sans-Serif",
+  },
+  { name: "Century Gothic", value: '"Century Gothic"', category: "Sans-Serif" },
+  { name: "Tahoma", value: '"Tahoma"', category: "Sans-Serif" },
+  { name: "Trebuchet MS", value: '"Trebuchet MS"', category: "Sans-Serif" },
+  { name: "Verdana", value: '"Verdana"', category: "Sans-Serif" },
+  { name: "Serif", value: "serif", category: "Serif" },
+  { name: "Georgia", value: '"Georgia"', category: "Serif" },
+  { name: "Lucida Bright", value: '"Lucida Bright"', category: "Serif" },
+  { name: "Palatino", value: '"Palatino"', category: "Serif" },
+  { name: "Baskerville", value: '"Baskerville"', category: "Serif" },
+  { name: "Times New Roman", value: '"Times New Roman"', category: "Serif" },
+  { name: "Monospaced", value: "monospaced", category: "Monospaced" },
+  { name: "Courier New", value: '"Courier New"', category: "Monospaced" },
+  {
+    name: "Lucida Sans Typewriter",
+    value: '"Lucida Sans Typewriter"',
+    category: "Monospaced",
+  },
+  { name: "Fantasy", value: "fantasy", category: "Fantasy" },
+  { name: "Copperplate", value: '"Copperplate"', category: "Fantasy" },
+  { name: "Papyrus", value: '"Papyrus"', category: "Fantasy" },
+  { name: "Script", value: "script", category: "Script" },
+  { name: "Brush Script MT", value: '"Brush Script MT"', category: "Script" },
+];
+
 export const CSS_CURSOR_OPTIONS = [
   { name: "Auto", value: "auto" },
   { name: "Default", value: "default" },

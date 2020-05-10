@@ -78,7 +78,7 @@ export function useOverlay(
       ...frameSize,
     };
     const bcr = componentElement?.getBoundingClientRect();
-    if (pbcr && bcr) {
+    if (bcr) {
       bcr.x -= pbcr.left;
       bcr.y -= pbcr.top;
     }

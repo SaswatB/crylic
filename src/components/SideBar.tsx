@@ -47,6 +47,7 @@ import {
   CSS_DISPLAY_OPTIONS,
   CSS_FLEX_DIRECTION_OPTIONS,
   CSS_FLEX_WRAP_OPTIONS,
+  CSS_FONT_FAMILY_OPTIONS,
   CSS_FONT_WEIGHT_OPTIONS,
   CSS_JUSTIFY_CONTENT_OPTIONS,
   CSS_POSITION_OPTIONS,
@@ -486,8 +487,9 @@ const useSelectedElementEditorTab = ({
       value: group,
     })
   );
-  const renderedStyleGroupSelector = useAutocomplete(
+  const [, renderStyleGroupSelector] = useAutocomplete(
     styleGroupOptions,
+    undefined,
     setSelectedStyleGroup,
     undefined,
     selectedStyleGroup
@@ -501,6 +503,8 @@ const useSelectedElementEditorTab = ({
     justifyContent: "Justify",
     textAlign: "Align",
     fontSize: "Size",
+    fontWeight: "Weight",
+    fontFamily: "Font",
   };
   const useSelectedElementEditor = (
     styleProp: keyof CSSStyleDeclaration,
@@ -583,6 +587,14 @@ const useSelectedElementEditorTab = ({
     "fontWeight",
     useSelectInput.bind(undefined, CSS_FONT_WEIGHT_OPTIONS)
   );
+  const [, renderTextFamilyInput] = useSelectedElementEditor(
+    "fontFamily",
+    // @ts-expect-error todo fix type error caused by generics
+    useAutocomplete.bind(undefined, CSS_FONT_FAMILY_OPTIONS, {
+      freeSolo: true,
+      widePopper: true,
+    })
+  );
   const [, renderTextAlignInput] = useSelectedElementEditor(
     "textAlign",
     useSelectInput.bind(undefined, CSS_TEXT_ALIGN_OPTIONS)
@@ -596,7 +608,7 @@ const useSelectedElementEditorTab = ({
   const renderEditor = () => (
     <>
       {renderSeparator("Style Group")}
-      {renderedStyleGroupSelector}
+      {renderStyleGroupSelector()}
       {renderSeparator("Layout")}
       <div className={gridClass}>
         {renderWidthInput()}
@@ -626,6 +638,7 @@ const useSelectedElementEditorTab = ({
         {renderColorInput()}
         {renderTextSizeInput()}
         {renderTextWeightInput()}
+        {renderTextFamilyInput()}
         {selectedElementDisplay !== "flex" && renderTextAlignInput()}
       </div>
       {selectedElementDisplay === "flex" && (

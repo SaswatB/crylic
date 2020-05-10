@@ -6,6 +6,8 @@ import {
   Menu,
   MenuItem,
   OutlinedInput,
+  Popper,
+  PopperProps,
   Select,
   TextField,
   TextFieldProps,
@@ -249,8 +251,20 @@ export function useColorPicker(
   return [throttledValue, render] as const;
 }
 
+const WidePopper = (props: PopperProps) => {
+  return (
+    <Popper
+      {...props}
+      style={{ ...props.style, width: 250 }}
+      placement="bottom-start"
+    />
+  );
+};
+
 export function useAutocomplete<T>(
   options: { name: string; category?: string; value: T }[],
+  // if freeSolo is true T is assumed to be a string
+  autoCompleteOptions?: { freeSolo?: boolean; widePopper?: boolean },
   onChange = (value: T | undefined) => {},
   label = "",
   initialValue: T | undefined = undefined
@@ -258,15 +272,29 @@ export function useAutocomplete<T>(
   const [value, setValue] = useBoundState(initialValue);
   const filter = useRef(createFilterOptions<{ name: string; value: T }>());
 
-  return (
+  const render = () => (
     <Autocomplete
-      value={options.find((option) => isEqual(option.value, value)) || null}
+      PopperComponent={autoCompleteOptions?.widePopper ? WidePopper : undefined}
+      multiple={false}
+      value={
+        options.find((option) => isEqual(option.value, value)) ||
+        (autoCompleteOptions?.freeSolo && value
+          ? {
+              name: `${value}`,
+              value,
+            }
+          : null)
+      }
       onChange={(
         event: React.ChangeEvent<{}>,
         newValue: { name: string; value: T } | null
       ) => {
-        setValue(newValue?.value);
-        onChange(newValue?.value);
+        const v =
+          newValue?.value ||
+          (autoCompleteOptions?.freeSolo && (newValue as T | null)) ||
+          undefined;
+        setValue(v);
+        onChange(v);
       }}
       filterOptions={(options, params) => {
         const filtered = filter.current(options, params);
@@ -283,17 +311,18 @@ export function useAutocomplete<T>(
       getOptionLabel={(option) => {
         return option.name;
       }}
-      groupBy={(option) => option.category}
+      groupBy={(option) => option.category || ""}
       selectOnFocus
       clearOnBlur
       disableClearable
       renderOption={(option) => option.name}
-      // freeSolo
+      freeSolo={autoCompleteOptions?.freeSolo}
       renderInput={(params) => (
         <TextField {...params} label={label} variant="outlined" />
       )}
     />
   );
+  return [value, render] as const;
 }
 
 export function useMenuInput(
