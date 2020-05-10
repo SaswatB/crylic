@@ -16,7 +16,8 @@ export interface CodeEntry {
 }
 
 export const ProjectConfig = it.type({
-  bootstrap: it.string,
+  bootstrap: it.union([it.string, it.undefined]),
+  sourceFolder: it.union([it.string, it.undefined]),
 });
 export type ProjectConfig = it.TypeOf<typeof ProjectConfig>;
 

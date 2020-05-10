@@ -61,11 +61,12 @@ import { Project } from "../utils/Project";
 import {
   getFriendlyName,
   getReactDebugId,
-  isScriptEntry,
   isStyleEntry,
   SCRIPT_EXTENSION_REGEX,
   STYLE_EXTENSION_REGEX,
 } from "../utils/utils";
+
+const path = __non_webpack_require__("path") as typeof import("path");
 
 const renderSeparator = (title?: string, action?: React.ReactNode) => (
   <div className="flex items-center">
@@ -186,7 +187,9 @@ const useMainTab = ({
   }
   const treeNodeIds = new Set<string>("root");
   const projectTree: Tree = { id: "root", name: "", children: [] };
-  const projectPath = project?.path.replace(/\\/g, "/");
+  const projectPath = path
+    .join(project?.path || "", project?.sourceFolderName || "")
+    .replace(/\\/g, "/");
   codeEntries?.forEach((codeEntry) => {
     let path = codeEntry.filePath
       .replace(/\\/g, "/")

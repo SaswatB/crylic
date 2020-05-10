@@ -32,6 +32,7 @@ import {
   CONFIG_FILE_NAME,
   DEFAULT_FRAME_HEIGHT,
   DEFAULT_FRAME_WIDTH,
+  DEFAULT_PROJECT_SOURCE_FOLDER,
   getBoilerPlateComponent,
   SelectMode,
   SelectModeType,
@@ -75,8 +76,9 @@ function App() {
         )
       );
     }
-    const srcFilePath = path.join(folderPath, "src");
-    if (fs.existsSync(srcFilePath)) {
+    const srcFolderName = config?.sourceFolder || DEFAULT_PROJECT_SOURCE_FOLDER;
+    const srcFolderPath = path.join(folderPath, srcFolderName);
+    if (fs.existsSync(srcFolderPath)) {
       const read = (subFolderPath: string) =>
         fs.readdirSync(subFolderPath).forEach((file) => {
           const filePath = path.join(subFolderPath, file);
@@ -94,11 +96,13 @@ function App() {
           }
         });
       // read all files under source
-      read(srcFilePath);
+      read(srcFolderPath);
     }
 
     setProject(
-      new Project(folderPath, config).addCodeEntries(...fileCodeEntries)
+      new Project(folderPath, srcFolderName, config).addCodeEntries(
+        ...fileCodeEntries
+      )
     );
   };
   const codeChangeStack = useRef<{ id: string; code: string }[]>([]);

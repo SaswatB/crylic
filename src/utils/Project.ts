@@ -31,6 +31,7 @@ export class Project {
 
   constructor(
     public readonly path: string,
+    public readonly sourceFolderName: string,
     public readonly config?: ProjectConfig
   ) {
     this.elementEditorEntries = [
