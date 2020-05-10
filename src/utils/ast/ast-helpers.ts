@@ -214,6 +214,28 @@ export const traverseJSXElements = (
   });
 };
 
+export const hasComponentExport = (ast: t.File) => {
+  const exportNodes = ast.program.body.filter((node) => {
+    switch (node.type) {
+      case "ExportAllDeclaration":
+      case "ExportDefaultDeclaration":
+      case "ExportNamedDeclaration":
+      case "ExportDeclaration":
+        return true;
+      default:
+        return false;
+    }
+  }) as (
+    | t.ExportAllDeclaration
+    | t.ExportDefaultDeclaration
+    | t.ExportNamedDeclaration
+    | t.ExportDeclaration
+  )[];
+
+  // todo do a better job for detecting components
+  return exportNodes.length > 0;
+};
+
 export const traverseStyleSheetRuleSets = (
   ast: CSSASTNode,
   visitor: (path: CSSASTNode, index: number) => void

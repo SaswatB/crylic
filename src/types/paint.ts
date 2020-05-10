@@ -12,6 +12,7 @@ export interface CodeEntry {
   // metadata generated from code
   ast?: any;
   codeWithLookupData?: string;
+  isComponent?: boolean;
 }
 
 export const ProjectConfig = it.type({

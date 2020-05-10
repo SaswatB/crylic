@@ -153,7 +153,9 @@ const useMainTab = ({
       codeEntries = project?.codeEntries;
       break;
     case "components":
-      codeEntries = project?.codeEntries.filter(isScriptEntry);
+      codeEntries = project?.codeEntries.filter(
+        (codeEntry) => codeEntry.isComponent
+      );
       extensionRegex = SCRIPT_EXTENSION_REGEX;
       break;
     case "styles":
@@ -199,7 +201,7 @@ const useMainTab = ({
       <div className="flex">
         {name}
         <div className="flex-1" />
-        {isScriptEntry(codeEntry) && (
+        {codeEntry.isComponent && (
           <button
             className="mx-3"
             onClick={() => toggleCodeEntryRender(codeEntry.id)}

@@ -4,6 +4,7 @@ import { cloneDeep } from "lodash";
 
 import { CodeEntry, ProjectConfig } from "../types/paint";
 import {
+  hasComponentExport,
   hashString,
   parseCodeEntryAST,
   printCodeEntryAST,
@@ -13,6 +14,8 @@ import { JSXASTEditor } from "./ast/editors/JSXASTEditor";
 import { StyledASTEditor } from "./ast/editors/StyledASTEditor";
 import { StyleSheetASTEditor } from "./ast/editors/StyleSheetASTEditor";
 import { isScriptEntry, isStyleEntry } from "./utils";
+
+const path = __non_webpack_require__("path") as typeof import("path");
 
 type EditorEntry<T> = {
   shouldApply: (entry: CodeEntry) => boolean;
@@ -109,16 +112,26 @@ export class Project {
       // parse ast data
       let ast = parseCodeEntryAST(codeEntry);
 
+      const isBootstrap =
+        this.config?.bootstrap &&
+        path.join(this.path, this.config.bootstrap) === codeEntry.filePath;
+      const isComponent =
+        isScriptEntry(codeEntry) &&
+        !isBootstrap &&
+        // todo add an option to disable this check (component files must start with an uppercase letter)
+        !!codeEntry.filePath.match(/(^|\\|\/)[A-Z][^/\\]*$/) &&
+        hasComponentExport(ast as any);
+
       // add lookup data from each editor to the ast
       this.getEditorsForCodeEntry(codeEntry).forEach((editor) => {
         ({ ast } = editor.addLookupData(ast, codeEntry));
       });
-
       // return the modified ast and code
       console.log("codeTransformer", codeEntry.filePath, ast);
       return {
         ast: deepFreeze(cloneDeep(ast)),
         codeWithLookupData: printCodeEntryAST(codeEntry, ast),
+        isComponent,
       };
     } catch (e) {
       console.log(e);

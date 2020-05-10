@@ -54,6 +54,7 @@ function App() {
   >({});
 
   const [project, setProject] = useState<Project>();
+  (window as any).project = project; // only for debugging purposes
   const openProject = (folderPath: string) => {
     let config;
     const fileCodeEntries: { filePath: string; code: string }[] = [];
