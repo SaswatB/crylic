@@ -147,6 +147,9 @@ const useMainTab = ({
 
   let codeEntries;
   let extensionRegex: RegExp | undefined;
+  let projectTreePostProcess:
+    | ((projectTree: Tree) => void)
+    | undefined = undefined;
   switch (assetsFilter) {
     default:
     case "all":
@@ -157,6 +160,24 @@ const useMainTab = ({
         (codeEntry) => codeEntry.isComponent
       );
       extensionRegex = SCRIPT_EXTENSION_REGEX;
+      projectTreePostProcess = (projectTree) => {
+        const flattenComponents = (node: Tree) => {
+          // flatten tree node entries where the component is the only file in its directory
+          // and its name matches the directory or is 'index'
+          if (
+            node.children.length === 1 &&
+            (node.name === node.children[0].name ||
+              node.children[0].name === "index") &&
+            node.children[0].children.length === 0
+          ) {
+            node.codeEntry = node.children[0].codeEntry;
+            node.children = [];
+            return;
+          }
+          node.children.forEach(flattenComponents);
+        };
+        flattenComponents(projectTree);
+      };
       break;
     case "styles":
       codeEntries = project?.codeEntries.filter(isStyleEntry);
@@ -193,6 +214,7 @@ const useMainTab = ({
     });
     node.codeEntry = codeEntry;
   });
+  projectTreePostProcess?.(projectTree);
 
   const renderTreeLabel = ({ name, codeEntry }: Tree) =>
     !codeEntry ? (
