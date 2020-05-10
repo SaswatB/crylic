@@ -132,6 +132,14 @@ function App() {
       // apply change
       return currentProject?.editCodeEntry(codeId, { code });
     });
+  const setCodeAstEdit = (editedAst: any, codeEntry: CodeEntry) => {
+    // remove lookup data from the ast and get the transformed code
+    project?.getEditorsForCodeEntry(codeEntry).forEach((editor) => {
+      editedAst = editor.removeLookupData(editedAst, codeEntry);
+    });
+    // save the edited code
+    setCode(codeEntry.id, prettyPrintCodeEntryAST(codeEntry, editedAst));
+  };
   const toggleCodeEntryEdit = (codeId: string) =>
     setProject((project) =>
       project?.editCodeEntry(codeId, {
@@ -331,31 +339,18 @@ function App() {
 
     // get the code entry to edit from the lookup id
     const editedCodeId = editor.getCodeIdFromLookupId(styleGroup.lookupId);
-    const editedCodeEntry = project?.codeEntries.find(
-      (codeEntry) => codeEntry.id === editedCodeId
-    );
+    const editedCodeEntry = project?.getCodeEntry(editedCodeId);
     if (!editedCodeEntry) return;
 
     // add styles to the ast
-    let newAst = editor.addStyles(
+    const newAst = editor.addStyles(
       editedCodeEntry.ast,
       editedCodeEntry,
       styleGroup.lookupId,
       styles
     );
 
-    // remove lookup data from the ast and get the transformed code
-    project?.getEditorsForCodeEntry(editedCodeEntry).forEach((editor) => {
-      newAst = editor.removeLookupData(newAst, editedCodeEntry);
-    });
-
-    console.log("updateSelectedElementStyle change", styles, newAst);
-
-    // save the edited code
-    setCode(
-      editedCodeEntry.id,
-      prettyPrintCodeEntryAST(editedCodeEntry, newAst)
-    );
+    setCodeAstEdit(newAst, editedCodeEntry);
   };
 
   const updateSelectedElementStyle = (
@@ -374,6 +369,27 @@ function App() {
         preview
       );
     }
+  };
+
+  const updateSelectedElementText = (newTextContent: string) => {
+    if (!selectedElement) return;
+
+    const selectedCodeId = project?.primaryElementEditor.getCodeIdFromLookupId(
+      selectedElement.lookupId
+    );
+    if (!selectedCodeId) return;
+    const codeEntry = project?.getCodeEntry(selectedCodeId);
+    if (!codeEntry) return;
+
+    // update text in ast
+    const newAst = project?.primaryElementEditor.updateElementText(
+      codeEntry.ast,
+      codeEntry,
+      selectedElement.lookupId,
+      newTextContent
+    );
+
+    setCodeAstEdit(newAst, codeEntry);
   };
 
   const renderSelectBar = () => (
@@ -402,6 +418,7 @@ function App() {
       selectedElement={selectedElement}
       onChangeSelectMode={setSelectMode}
       updateSelectedElementStyle={updateSelectedElementStyle}
+      updateSelectedElementText={updateSelectedElementText}
       onChangeFrameSize={(width, height) => {
         setFrameSize(
           produce((draft) => {
@@ -423,7 +440,7 @@ function App() {
           `src/components/${name}.tsx`
         );
         const code = getBoilerPlateComponent(name);
-        addCodeEntry({ filePath, code, render: true, edit: true });
+        addCodeEntry({ filePath, code, render: true, edit: false });
         enqueueSnackbar("Started a new component!");
       }}
       onNewStyleSheet={async () => {

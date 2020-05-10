@@ -1,4 +1,10 @@
-import React, { FunctionComponent, useEffect, useRef, useState } from "react";
+import React, {
+  FunctionComponent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   faBars,
   faCaretSquareDown,
@@ -422,9 +428,23 @@ const useOutlineTab = ({
   return renderOutlineTab;
 };
 
+const TEXT_TAGS = [
+  "span",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "p",
+  "button",
+  "a",
+];
+
 const useSelectedElementEditorTab = ({
   selectedElement,
   updateSelectedElementStyle,
+  updateSelectedElementText,
 }: Props) => {
   const [selectedStyleGroup, setSelectedStyleGroup] = useState(
     selectedElement?.styleGroups[0]
@@ -433,6 +453,28 @@ const useSelectedElementEditorTab = ({
     setSelectedStyleGroup(selectedElement?.styleGroups[0]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedElement?.lookupId]);
+
+  // don't allow text edits on elements with non-text nodes
+  // TODO: allow partial edits
+  // allow editing elements with text or elements that are supposed to have text
+  const allowTextEdit = useMemo(
+    () =>
+      !Array.from(selectedElement?.element.childNodes || []).find(
+        (node) => node.nodeType !== Node.TEXT_NODE
+      ) &&
+      (TEXT_TAGS.includes(
+        selectedElement?.element.tagName.toLowerCase() || ""
+      ) ||
+        (selectedElement?.element.textContent?.trim().length ?? 0) > 0),
+    [selectedElement]
+  );
+
+  const [, renderSelectedElementTextContentInput] = useTextInput(
+    (newTextContent) => updateSelectedElementText(newTextContent),
+    "Text Content",
+    selectedElement?.element.textContent ?? undefined,
+    true
+  );
 
   const styleGroupOptions = (selectedElement?.styleGroups || []).map(
     (group) => ({
@@ -594,6 +636,8 @@ const useSelectedElementEditorTab = ({
       {/* todo border */}
       {renderSeparator("Text")}
       <div className={gridClass}>
+        {allowTextEdit &&
+          renderSelectedElementTextContentInput({ className: "col-span-2" })}
         {renderSelectedElementColorInput()}
         {renderSelectedElementTextSizeInput()}
         {selectedElementDisplay !== "flex" &&
@@ -627,6 +671,7 @@ interface Props {
     newValue: string,
     preview?: boolean
   ) => void;
+  updateSelectedElementText: (newTextContent: string) => void;
   onChangeFrameSize: (
     width: number | undefined,
     height: number | undefined
@@ -652,7 +697,7 @@ export const SideBar: FunctionComponent<Props> = (props) => {
   );
   const tabsRef = useRef<TabsRef>(null);
   useEffect(() => {
-    if (selectedElement) tabsRef.current?.selectTab(2);
+    if (selectedElement) tabsRef.current?.selectTab(3);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedElement?.lookupId]);
   return (

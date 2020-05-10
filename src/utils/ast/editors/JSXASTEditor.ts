@@ -84,13 +84,13 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     ast: t.File,
     codeEntry: CodeEntry,
     parentLookupId: string,
-    elementTag: keyof HTMLElementTagNameMap,
-    elementAttributes?: Record<string, unknown>
+    childTag: keyof HTMLElementTagNameMap,
+    childAttributes?: Record<string, unknown>
   ) {
     let madeChange = false;
     this.editJSXElementByLookupId(ast, parentLookupId, (path) => {
-      this.addJSXChildToJSXElement(path.value, elementTag, {
-        ...elementAttributes,
+      this.addJSXChildToJSXElement(path.value, childTag, {
+        ...childAttributes,
         [`data-${JSX_RECENTLY_ADDED_DATA_ATTR}`]: JSX_RECENTLY_ADDED,
       });
       madeChange = true;
@@ -99,6 +99,30 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       throw new Error(
         `Could not find parent element by lookup id ${parentLookupId}`
       );
+  }
+
+  protected updateElementTextInAST(
+    ast: t.File,
+    codeEntry: CodeEntry,
+    lookupId: string,
+    newTextContent: string
+  ) {
+    let madeChange = false;
+    this.editJSXElementByLookupId(ast, lookupId, (path) => {
+      console.log(path);
+      const textNode = path.value.children?.find(
+        (child): child is t.JSXText => child.type === "JSXText"
+      );
+      if (textNode) {
+        textNode.value = newTextContent;
+      } else {
+        path.value.children = path.value.children || [];
+        path.value.children.push(b.jsxText(newTextContent));
+      }
+      madeChange = true;
+    });
+    if (!madeChange)
+      throw new Error(`Could not find element by lookup id ${lookupId}`);
   }
 
   public getRecentlyAddedElements(ast: Readonly<t.File>, codeEntry: CodeEntry) {

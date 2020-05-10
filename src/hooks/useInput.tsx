@@ -8,6 +8,7 @@ import {
   OutlinedInput,
   Select,
   TextField,
+  TextFieldProps,
 } from "@material-ui/core";
 import Slider, { SliderProps } from "@material-ui/core/Slider";
 import Autocomplete, {
@@ -35,13 +36,9 @@ export function useTextInput(
     bindInitialValue && !focused
   );
 
-  const render = (
-    props?: React.DetailedHTMLProps<
-      React.InputHTMLAttributes<HTMLInputElement>,
-      HTMLInputElement
-    >
-  ) => (
+  const render = (props?: TextFieldProps) => (
     <TextField
+      {...props}
       label={label}
       variant="outlined"
       value={value}

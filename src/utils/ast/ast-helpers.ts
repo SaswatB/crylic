@@ -100,6 +100,10 @@ export const ifJSXIdentifier = (
   node: t.Node | null | undefined
 ): t.JSXIdentifier | undefined =>
   node?.type === "JSXIdentifier" ? (node as t.JSXIdentifier) : undefined;
+export const ifJSXText = (
+  node: t.Node | null | undefined
+): t.JSXText | undefined =>
+  node?.type === "JSXText" ? (node as t.JSXText) : undefined;
 export const ifStringLiteral = (
   node: t.Node | null | undefined
 ): t.StringLiteral | undefined =>

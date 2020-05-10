@@ -62,8 +62,16 @@ export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
     ast: ASTType,
     codeEntry: CodeEntry,
     parentLookupId: string,
-    elementTag: keyof HTMLElementTagNameMap,
-    elementAttributes?: Record<string, unknown>
+    childTag: keyof HTMLElementTagNameMap,
+    childAttributes?: Record<string, unknown>
+  ): void;
+
+  public updateElementText = editAST(this.updateElementTextInAST.bind(this));
+  protected abstract updateElementTextInAST(
+    ast: ASTType,
+    codeEntry: CodeEntry,
+    lookupId: string,
+    newTextContent: string
   ): void;
 
   public abstract getRecentlyAddedElements(
