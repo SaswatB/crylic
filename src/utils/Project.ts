@@ -1,4 +1,6 @@
 import deepFreeze from "deep-freeze-strict";
+import { fold } from "fp-ts/lib/Either";
+import { pipe } from "fp-ts/lib/pipeable";
 import produce, { immerable } from "immer";
 import { cloneDeep } from "lodash";
 
@@ -13,8 +15,15 @@ import { ElementASTEditor, StyleASTEditor } from "./ast/editors/ASTEditor";
 import { JSXASTEditor } from "./ast/editors/JSXASTEditor";
 import { StyledASTEditor } from "./ast/editors/StyledASTEditor";
 import { StyleSheetASTEditor } from "./ast/editors/StyleSheetASTEditor";
-import { isScriptEntry, isStyleEntry } from "./utils";
+import { CONFIG_FILE_NAME, DEFAULT_PROJECT_SOURCE_FOLDER } from "./constants";
+import {
+  isScriptEntry,
+  isStyleEntry,
+  SCRIPT_EXTENSION_REGEX,
+  STYLE_EXTENSION_REGEX,
+} from "./utils";
 
+const fs = __non_webpack_require__("fs") as typeof import("fs");
 const path = __non_webpack_require__("path") as typeof import("path");
 
 type EditorEntry<T> = {
@@ -29,7 +38,7 @@ export class Project {
   public readonly elementEditorEntries: EditorEntry<ElementASTEditor<any>>[];
   public readonly styleEditorEntries: EditorEntry<StyleASTEditor<any>>[];
 
-  constructor(
+  private constructor(
     public readonly path: string,
     public readonly sourceFolderName: string,
     public readonly config?: ProjectConfig
@@ -41,6 +50,66 @@ export class Project {
       { editor: new StyledASTEditor(), shouldApply: isScriptEntry },
       { editor: new StyleSheetASTEditor(), shouldApply: isStyleEntry },
     ];
+  }
+
+  public static createProject(folderPath: string) {
+    let config;
+    const fileCodeEntries: { filePath: string; code: string }[] = [];
+
+    const configFilePath = path.join(folderPath, CONFIG_FILE_NAME);
+    if (fs.existsSync(configFilePath)) {
+      // todo use a more secure require/allow async
+      config = pipe(
+        configFilePath,
+        // require the config file
+        __non_webpack_require__ as (p: string) => any,
+        // parse the config file
+        ProjectConfig.decode,
+        fold(
+          // log any errors
+          (e) => {
+            console.log(e);
+            return undefined;
+          },
+          (config) => config
+        )
+      );
+    }
+    const srcFolderName = config?.sourceFolder || DEFAULT_PROJECT_SOURCE_FOLDER;
+    const srcFolderPath = path.join(folderPath, srcFolderName);
+    if (fs.existsSync(srcFolderPath)) {
+      // recursive function for creating code entries from a folder
+      const read = (subFolderPath: string) =>
+        fs.readdirSync(subFolderPath).forEach((file) => {
+          const filePath = path.join(subFolderPath, file);
+          if (fs.statSync(filePath).isDirectory()) {
+            // recurse through the directory's children
+            read(filePath);
+          } else if (
+            (file.match(SCRIPT_EXTENSION_REGEX) ||
+              file.match(STYLE_EXTENSION_REGEX)) &&
+            !file.match(/\.(test|d)\.[jt]sx?$/)
+          ) {
+            // add scripts/styles that aren't test or declaration files
+            fileCodeEntries.push({
+              filePath,
+              code: fs.readFileSync(filePath, { encoding: "utf-8" }),
+            });
+          }
+        });
+      // read all files within the source folder
+      read(srcFolderPath);
+    }
+
+    return new Project(folderPath, srcFolderName, config).addCodeEntries(
+      ...fileCodeEntries
+    );
+  }
+
+  public saveFiles() {
+    this.codeEntries.forEach(({ filePath, code }) =>
+      fs.writeFileSync(filePath, code)
+    );
   }
 
   public get editorEntries() {
@@ -59,6 +128,14 @@ export class Project {
 
   public getCodeEntry(codeId: string) {
     return this.codeEntries.find(({ id }) => id === codeId);
+  }
+
+  public getNewComponentPath(name: string) {
+    return path.join(this.path, `src/components/${name}.tsx`);
+  }
+
+  public getNewStyleSheetPath(name: string) {
+    return path.join(this.path, `src/styles/${name}.css`);
   }
 
   // Project is immutable so these functions return a new copy with modifications

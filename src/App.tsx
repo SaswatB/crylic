@@ -1,8 +1,6 @@
 import React, { useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
-import { fold } from "fp-ts/lib/Either";
-import { pipe } from "fp-ts/lib/pipeable";
 import { produce } from "immer";
 import { camelCase, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
@@ -19,7 +17,6 @@ import { SideBar } from "./components/SideBar";
 import {
   CodeEntry,
   OutlineElement,
-  ProjectConfig,
   SelectedElement,
   Styles,
 } from "./types/paint";
@@ -29,24 +26,15 @@ import {
 } from "./utils/ast/ast-helpers";
 import { StyleGroup } from "./utils/ast/editors/ASTEditor";
 import {
-  CONFIG_FILE_NAME,
   DEFAULT_FRAME_HEIGHT,
   DEFAULT_FRAME_WIDTH,
-  DEFAULT_PROJECT_SOURCE_FOLDER,
   getBoilerPlateComponent,
   SelectMode,
   SelectModeType,
 } from "./utils/constants";
 import { Project } from "./utils/Project";
-import {
-  buildOutline,
-  SCRIPT_EXTENSION_REGEX,
-  STYLE_EXTENSION_REGEX,
-} from "./utils/utils";
+import { buildOutline } from "./utils/utils";
 import "./App.scss";
-
-const fs = __non_webpack_require__("fs") as typeof import("fs");
-const path = __non_webpack_require__("path") as typeof import("path");
 
 function App() {
   const { enqueueSnackbar } = useSnackbar();
@@ -56,55 +44,6 @@ function App() {
 
   const [project, setProject] = useState<Project>();
   (window as any).project = project; // only for debugging purposes
-  const openProject = (folderPath: string) => {
-    let config;
-    const fileCodeEntries: { filePath: string; code: string }[] = [];
-
-    const configFilePath = path.join(folderPath, CONFIG_FILE_NAME);
-    if (fs.existsSync(configFilePath)) {
-      // todo use a more secure require/allow async
-      config = pipe(
-        configFilePath,
-        __non_webpack_require__ as (p: string) => any,
-        ProjectConfig.decode,
-        fold(
-          (e) => {
-            console.log(e);
-            return undefined;
-          },
-          (config) => config
-        )
-      );
-    }
-    const srcFolderName = config?.sourceFolder || DEFAULT_PROJECT_SOURCE_FOLDER;
-    const srcFolderPath = path.join(folderPath, srcFolderName);
-    if (fs.existsSync(srcFolderPath)) {
-      const read = (subFolderPath: string) =>
-        fs.readdirSync(subFolderPath).forEach((file) => {
-          const filePath = path.join(subFolderPath, file);
-          if (fs.statSync(filePath).isDirectory()) {
-            read(filePath);
-          } else if (
-            (file.match(SCRIPT_EXTENSION_REGEX) ||
-              file.match(STYLE_EXTENSION_REGEX)) &&
-            !file.match(/\.(test|d)\.[jt]sx?$/)
-          ) {
-            fileCodeEntries.push({
-              filePath,
-              code: fs.readFileSync(filePath, { encoding: "utf-8" }),
-            });
-          }
-        });
-      // read all files under source
-      read(srcFolderPath);
-    }
-
-    setProject(
-      new Project(folderPath, srcFolderName, config).addCodeEntries(
-        ...fileCodeEntries
-      )
-    );
-  };
   const codeChangeStack = useRef<{ id: string; code: string }[]>([]);
   const codeRedoStack = useRef<{ id: string; code: string }[]>([]);
   const setCode = (
@@ -440,10 +379,7 @@ function App() {
         if (!inputName) return;
         // todo add validation/duplicate checking to name
         const name = upperFirst(camelCase(inputName));
-        const filePath = path.join(
-          project?.path || "/",
-          `src/components/${name}.tsx`
-        );
+        const filePath = project!.getNewComponentPath(name);
         const code = getBoilerPlateComponent(name);
         addCodeEntry({ filePath, code, render: true, edit: false });
         enqueueSnackbar("Started a new component!");
@@ -456,23 +392,12 @@ function App() {
         if (!inputName) return;
         // todo add validation/duplicate checking to name
         const name = camelCase(inputName);
-        const filePath = path.join(
-          project?.path || "/",
-          `src/styles/${name}.css`
-        );
+        const filePath = project!.getNewStyleSheetPath(name);
         addCodeEntry({ filePath, render: true, edit: true });
         enqueueSnackbar("Started a new component!");
       }}
-      onOpenProject={openProject}
-      onSaveProject={() => {
-        if (project) {
-          project.codeEntries.forEach(({ filePath, code }) =>
-            fs.writeFileSync(filePath, code)
-          );
-        } else {
-          alert("please open a project before saving");
-        }
-      }}
+      onOpenProject={(p) => setProject(Project.createProject(p))}
+      onSaveProject={() => project?.saveFiles()}
       onCloseProject={() => setProject(undefined)}
       toggleCodeEntryEdit={toggleCodeEntryEdit}
       toggleCodeEntryRender={toggleCodeEntryRender}
