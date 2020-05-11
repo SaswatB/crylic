@@ -128,7 +128,7 @@ const webpackCache: Record<
 > = {};
 
 export const webpackRunCode = async (
-  codeEntries: { id: string; filePath: string; code: string }[],
+  codeEntries: { id: string; filePath: string; code?: string }[],
   selectedCodeId: string
 ) => {
   if (!webpack) initialize();
@@ -207,10 +207,13 @@ export const webpackRunCode = async (
     };
   }
   const { compiler, inputFs, outputFs } = webpackCache[primaryCodeEntry.id]!;
-  codeEntries.forEach((entry) => {
-    inputFs.mkdirpSync(path.dirname(entry.filePath));
-    inputFs.writeFileSync(entry.filePath, entry.code);
-  });
+  // todo handle deleted code entries
+  codeEntries
+    .filter((entry) => entry.code !== undefined)
+    .forEach((entry) => {
+      inputFs.mkdirpSync(path.dirname(entry.filePath));
+      inputFs.writeFileSync(entry.filePath, entry.code!);
+    });
 
   const runId = ++webpackCache[primaryCodeEntry.id]!.runId;
 

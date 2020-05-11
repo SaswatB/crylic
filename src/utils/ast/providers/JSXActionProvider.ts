@@ -31,7 +31,7 @@ type JSXASTEditorAction = {
 
 export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
   public getEditorActions(codeEntry: CodeEntry) {
-    const ast = parseAST(codeEntry.code);
+    const ast = parseAST(codeEntry.code || "");
     const actions: EditorAction<JSXASTEditorAction>[] = [];
     traverseJSXElements(ast, (path, index) => {
       const styleAttr = path.node.openingElement.attributes?.find(
@@ -74,7 +74,7 @@ export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
       const codeEntry = project.codeEntries.find(
         (codeEntry) => codeEntry.id === action.codeId
       )!;
-      const ast = parseAST(codeEntry.code);
+      const ast = parseAST(codeEntry.code || "");
       let styleClassName = "";
       let style: { name: string; value: string }[] = [];
       traverseJSXElements(ast, (path, index) => {

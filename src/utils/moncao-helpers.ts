@@ -49,12 +49,12 @@ export function setupLanguageService(
     );
     const model =
       modelCache[fileUrl.toString()] ||
-      monaco.editor.createModel(codeEntry.code, language, fileUrl);
+      monaco.editor.createModel(codeEntry.code || "", language, fileUrl);
     modelCache[fileUrl.toString()] = model;
     editorMonaco.setModel(null);
     editorMonaco.setModel(model);
     monaco.languages.typescript.typescriptDefaults.addExtraLib(
-      codeEntry.code,
+      codeEntry.code || "",
       fileUrl.toString()
     );
     // add react types

@@ -5,14 +5,15 @@ import { StyleGroup } from "../utils/ast/editors/ASTEditor";
 export interface CodeEntry {
   id: string;
   filePath: string;
-  code: string;
+  code: string | undefined;
   edit: boolean;
   render: boolean;
 
   // metadata generated from code
   ast?: any;
   codeWithLookupData?: string;
-  isComponent?: boolean;
+  isRenderable?: boolean;
+  isEditable?: boolean;
 }
 
 export const ProjectConfig = it.type({

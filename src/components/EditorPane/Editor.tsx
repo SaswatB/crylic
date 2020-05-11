@@ -32,7 +32,7 @@ export const Editor: FunctionComponent<Props> = ({
   const [debouncedLocalValue] = useDebounce(localValue, 500);
   useEffect(() => {
     if (debouncedLocalValue !== codeEntry.code) {
-      onCodeChange(codeEntry.id, debouncedLocalValue);
+      onCodeChange(codeEntry.id, debouncedLocalValue || "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedLocalValue]);

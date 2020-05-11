@@ -5,6 +5,7 @@ import { Project } from "./Project";
 
 export const STYLE_EXTENSION_REGEX = /\.(css|s[ac]ss|less)$/;
 export const SCRIPT_EXTENSION_REGEX = /\.[jt]sx?$/;
+export const IMAGE_EXTENSION_REGEX = /\.(jpe?g|png|gif|svg)$/;
 
 export const isStyleEntry = (codeEntry: CodeEntry) =>
   !!codeEntry.filePath.match(STYLE_EXTENSION_REGEX);
@@ -19,6 +20,9 @@ export const getStyleEntryExtension = (codeEntry: CodeEntry) =>
 
 export const isScriptEntry = (codeEntry: CodeEntry) =>
   !!codeEntry.filePath.match(SCRIPT_EXTENSION_REGEX);
+
+export const isImageEntry = (codeEntry: CodeEntry) =>
+  !!codeEntry.filePath.match(IMAGE_EXTENSION_REGEX);
 
 export function getFileExtensionLanguage({ filePath }: CodeEntry) {
   if (filePath.match(/\.[jt]sx?$/)) {

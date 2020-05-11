@@ -17,6 +17,8 @@ import { StyledASTEditor } from "./ast/editors/StyledASTEditor";
 import { StyleSheetASTEditor } from "./ast/editors/StyleSheetASTEditor";
 import { CONFIG_FILE_NAME, DEFAULT_PROJECT_SOURCE_FOLDER } from "./constants";
 import {
+  IMAGE_EXTENSION_REGEX,
+  isImageEntry,
   isScriptEntry,
   isStyleEntry,
   SCRIPT_EXTENSION_REGEX,
@@ -54,7 +56,10 @@ export class Project {
 
   public static createProject(folderPath: string) {
     let config;
-    const fileCodeEntries: { filePath: string; code: string }[] = [];
+    const fileCodeEntries: {
+      filePath: string;
+      code: string | undefined;
+    }[] = [];
 
     const configFilePath = path.join(folderPath, CONFIG_FILE_NAME);
     if (fs.existsSync(configFilePath)) {
@@ -86,14 +91,19 @@ export class Project {
             // recurse through the directory's children
             read(filePath);
           } else if (
-            (file.match(SCRIPT_EXTENSION_REGEX) ||
-              file.match(STYLE_EXTENSION_REGEX)) &&
-            !file.match(/\.(test|d)\.[jt]sx?$/)
+            file.match(SCRIPT_EXTENSION_REGEX) ||
+            file.match(STYLE_EXTENSION_REGEX)
           ) {
-            // add scripts/styles that aren't test or declaration files
+            // add scripts/styles as code entries
             fileCodeEntries.push({
               filePath,
               code: fs.readFileSync(filePath, { encoding: "utf-8" }),
+            });
+          } else if (file.match(IMAGE_EXTENSION_REGEX)) {
+            // add images as code entries without text code
+            fileCodeEntries.push({
+              filePath,
+              code: undefined,
             });
           }
         });
@@ -183,7 +193,7 @@ export class Project {
 
   private getCodeEntryMetaData(codeEntry: CodeEntry) {
     if (!isScriptEntry(codeEntry) && !isStyleEntry(codeEntry)) {
-      return {};
+      return { isRenderable: false, isEditable: isImageEntry(codeEntry) };
     }
 
     try {
@@ -193,11 +203,14 @@ export class Project {
       const isBootstrap =
         this.config?.bootstrap &&
         path.join(this.path, this.config.bootstrap) === codeEntry.filePath;
-      const isComponent =
+      // check if the file is a component
+      const isRenderable =
         isScriptEntry(codeEntry) &&
         !isBootstrap &&
         // todo add an option to disable this check (component files must start with an uppercase letter)
         !!codeEntry.filePath.match(/(^|\\|\/)[A-Z][^/\\]*$/) &&
+        // todo add an option to disable this check (test and declaration files are ignored)
+        !codeEntry.filePath.match(/\.(test|d)\.[jt]sx?$/) &&
         hasComponentExport(ast as any);
 
       // add lookup data from each editor to the ast
@@ -209,7 +222,9 @@ export class Project {
       return {
         ast: deepFreeze(cloneDeep(ast)),
         codeWithLookupData: printCodeEntryAST(codeEntry, ast),
-        isComponent,
+        isRenderable,
+        // this code entry has to be a script or style entry by this point so it's editable
+        isEditable: true,
       };
     } catch (e) {
       console.log(e);

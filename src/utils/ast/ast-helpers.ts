@@ -32,7 +32,7 @@ export const prettyPrintAST = (ast: t.File) =>
 
 export const parseStyleSheetAST = (codeEntry: CodeEntry) => {
   const syntax = getStyleEntryExtension(codeEntry);
-  const ast = gonzales.parse(codeEntry.code, {
+  const ast = gonzales.parse(codeEntry.code || "", {
     syntax,
   });
   // fill in a default syntax if the ast has none (which can happen for empty files)
@@ -58,7 +58,7 @@ export const prettyPrintStyleSheetAST = (
 export const parseCodeEntryAST = (codeEntry: CodeEntry) =>
   isStyleEntry(codeEntry)
     ? parseStyleSheetAST(codeEntry)
-    : parseAST(codeEntry.code);
+    : parseAST(codeEntry.code || "");
 export const printCodeEntryAST = (
   codeEntry: CodeEntry,
   ast: CSSASTNode | t.File
@@ -232,6 +232,7 @@ export const hasComponentExport = (ast: t.File) => {
     | t.ExportDeclaration
   )[];
 
+  // node.exportKind === 'value'
   // todo do a better job for detecting components
   return exportNodes.length > 0;
 };

@@ -1,9 +1,10 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
 
 import { Project } from "../../utils/Project";
-import { getFriendlyName } from "../../utils/utils";
+import { getFriendlyName, isImageEntry } from "../../utils/utils";
 import { Editor } from "./Editor";
 import { EditorTabs } from "./EditorTabs";
+import { ImageViewer } from "./ImageViewer";
 
 interface Props {
   project: Project | undefined;
@@ -49,16 +50,19 @@ export const EditorPane: FunctionComponent<Props> = ({
         key: codeEntry.id,
         name: getFriendlyName(project!, codeEntry.id),
         title: codeEntry.filePath,
-        render: () => (
-          <Editor
-            project={project!}
-            codeEntry={codeEntry}
-            onCodeChange={onCodeChange}
-            selectedElementId={selectedElementId}
-            onSelectElement={onSelectElement}
-            isActiveEditor={activeTab === index}
-          />
-        ),
+        render: () =>
+          isImageEntry(codeEntry) ? (
+            <ImageViewer codeEntry={codeEntry} />
+          ) : (
+            <Editor
+              project={project!}
+              codeEntry={codeEntry}
+              onCodeChange={onCodeChange}
+              selectedElementId={selectedElementId}
+              onSelectElement={onSelectElement}
+              isActiveEditor={activeTab === index}
+            />
+          ),
         onClose: () => onCloseCodeEntry(codeEntry.id),
       }))}
     />

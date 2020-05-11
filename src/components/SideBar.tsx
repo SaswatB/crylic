@@ -61,6 +61,8 @@ import { Project } from "../utils/Project";
 import {
   getFriendlyName,
   getReactDebugId,
+  IMAGE_EXTENSION_REGEX,
+  isImageEntry,
   isStyleEntry,
   SCRIPT_EXTENSION_REGEX,
   STYLE_EXTENSION_REGEX,
@@ -133,6 +135,7 @@ const useMainTab = ({
       { name: "All", value: "all" },
       { name: "Components", value: "components" },
       { name: "Styles", value: "styles" },
+      { name: "Images", value: "images" },
     ],
     undefined,
     undefined,
@@ -147,6 +150,7 @@ const useMainTab = ({
   }
 
   let codeEntries;
+  // todo add an option to keep showing extensions
   let extensionRegex: RegExp | undefined;
   let projectTreePostProcess:
     | ((projectTree: Tree) => void)
@@ -158,7 +162,7 @@ const useMainTab = ({
       break;
     case "components":
       codeEntries = project?.codeEntries.filter(
-        (codeEntry) => codeEntry.isComponent
+        (codeEntry) => codeEntry.isRenderable
       );
       extensionRegex = SCRIPT_EXTENSION_REGEX;
       projectTreePostProcess = (projectTree) => {
@@ -183,6 +187,11 @@ const useMainTab = ({
     case "styles":
       codeEntries = project?.codeEntries.filter(isStyleEntry);
       extensionRegex = STYLE_EXTENSION_REGEX;
+      break;
+    case "images":
+      codeEntries = project?.codeEntries.filter(isImageEntry);
+      // todo show extensions if there are duplicate names for different extensions
+      extensionRegex = IMAGE_EXTENSION_REGEX;
       break;
   }
   const treeNodeIds = new Set<string>("root");
@@ -226,7 +235,7 @@ const useMainTab = ({
       <div className="flex">
         {name}
         <div className="flex-1" />
-        {codeEntry.isComponent && (
+        {codeEntry.isRenderable && (
           <button
             className="mx-3"
             onClick={() => toggleCodeEntryRender(codeEntry.id)}
@@ -234,12 +243,14 @@ const useMainTab = ({
             <FontAwesomeIcon icon={faEye} />
           </button>
         )}
-        <button>
-          <FontAwesomeIcon
-            icon={faEdit}
-            onClick={() => toggleCodeEntryEdit(codeEntry.id)}
-          />
-        </button>
+        {codeEntry.isEditable && (
+          <button>
+            <FontAwesomeIcon
+              icon={faEdit}
+              onClick={() => toggleCodeEntryEdit(codeEntry.id)}
+            />
+          </button>
+        )}
       </div>
     );
 
