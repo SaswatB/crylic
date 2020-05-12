@@ -1,6 +1,7 @@
 import { namedTypes as t } from "ast-types";
 import { NodePath } from "ast-types/lib/node-path";
 import { pipe } from "fp-ts/lib/pipeable";
+import { startCase } from "lodash";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { types } from "recast";
 
@@ -19,6 +20,8 @@ import {
   valueToJSXLiteral,
 } from "../ast-helpers";
 import { ElementASTEditor, StyleGroup } from "./ASTEditor";
+
+const path = __non_webpack_require__("path") as typeof import("path");
 
 const { builders: b } = types;
 
@@ -87,18 +90,12 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     childTag: keyof HTMLElementTagNameMap,
     childAttributes?: Record<string, unknown>
   ) {
-    let madeChange = false;
     this.editJSXElementByLookupId(ast, parentLookupId, (path) => {
       this.addJSXChildToJSXElement(path.value, childTag, {
         ...childAttributes,
         [`data-${JSX_RECENTLY_ADDED_DATA_ATTR}`]: JSX_RECENTLY_ADDED,
       });
-      madeChange = true;
     });
-    if (!madeChange)
-      throw new Error(
-        `Could not find parent element by lookup id ${parentLookupId}`
-      );
   }
 
   protected updateElementTextInAST(
@@ -107,7 +104,6 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     lookupId: string,
     newTextContent: string
   ) {
-    let madeChange = false;
     this.editJSXElementByLookupId(ast, lookupId, (path) => {
       console.log(path);
       const textNode = path.value.children?.find(
@@ -119,10 +115,83 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
         path.value.children = path.value.children || [];
         path.value.children.push(b.jsxText(newTextContent));
       }
-      madeChange = true;
     });
-    if (!madeChange)
-      throw new Error(`Could not find element by lookup id ${lookupId}`);
+  }
+
+  protected updateElementImageInAST(
+    ast: t.File,
+    codeEntry: CodeEntry,
+    lookupId: string,
+    imageProp: "backgroundImage",
+    assetEntry: CodeEntry
+  ) {
+    // get the import path for the asset
+    const relativeAssetPath = path
+      .relative(path.dirname(codeEntry.filePath), assetEntry.filePath)
+      .replace(/\\/g, "/");
+
+    // try to find an existing import declaration
+    let assetImport = ast.program.body.find(
+      (node): node is t.ImportDeclaration =>
+        node.type === "ImportDeclaration" &&
+        node.source.type === "StringLiteral" &&
+        node.source.value === relativeAssetPath
+    );
+    // add an import declaration if none is found
+    if (!assetImport) {
+      let lastImportIndex = -1;
+      ast.program.body.forEach((node, index) => {
+        if (node.type === "ImportDeclaration") lastImportIndex = index;
+      });
+      assetImport = b.importDeclaration(
+        [
+          // identifier added below
+        ],
+        b.stringLiteral(relativeAssetPath)
+      );
+      ast.program.body.splice(lastImportIndex, 0, assetImport);
+    }
+    // try to find a default export on the import declaration
+    let assetIdentifier = assetImport!.specifiers?.find(
+      (node): node is t.ImportDefaultSpecifier =>
+        node.type === "ImportDefaultSpecifier"
+    );
+    // add a default import if none is found
+    if (!assetIdentifier) {
+      assetIdentifier = b.importDefaultSpecifier(
+        b.identifier(
+          `Asset${startCase(
+            path.basename(assetEntry.filePath).replace(/\..*$/, "")
+          ).replace(/\s+/g, "")}`
+        )
+      );
+      assetImport.specifiers = assetImport.specifiers || [];
+      assetImport.specifiers.push(assetIdentifier);
+    }
+
+    this.editJSXElementByLookupId(ast, lookupId, (path) => {
+      console.log(
+        "updateElementImageInAST",
+        path,
+        assetImport,
+        assetIdentifier
+      );
+      // edit the element style
+      this.applyJSXInlineStyleAttribute(path, [
+        {
+          styleName: imageProp,
+          // set the image through a template literal
+          styleValue: b.templateLiteral(
+            [
+              b.templateElement({ raw: "url(", cooked: "url(" }, false),
+              b.templateElement({ raw: ")", cooked: ")" }, true),
+            ],
+            // todo test if this cast is safe
+            [b.identifier(assetIdentifier!.local!.name)]
+          ),
+        },
+      ]);
+    });
   }
 
   public getRecentlyAddedElements(ast: Readonly<t.File>, codeEntry: CodeEntry) {
@@ -228,13 +297,15 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     lookupId: string,
     styles: Styles
   ) {
-    let madeChange = false;
-    this.editJSXElementByLookupId(ast, lookupId, (path) => {
-      this.applyJSXInlineStyleAttribute(path, styles);
-      madeChange = true;
-    });
-    if (!madeChange)
-      throw new Error(`Could not find element by lookup id ${lookupId}`);
+    this.editJSXElementByLookupId(ast, lookupId, (path) =>
+      this.applyJSXInlineStyleAttribute(
+        path,
+        styles.map((style) => ({
+          styleName: style.styleName,
+          styleValue: b.stringLiteral(style.styleValue),
+        }))
+      )
+    );
   }
 
   // helpers
@@ -252,6 +323,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     lookupId: string,
     apply: (path: NodePath<types.namedTypes.JSXElement, t.JSXElement>) => void
   ) {
+    let madeChange = false;
     traverseJSXElements(ast, (path) => {
       const lookupMatches = path.value.openingElement.attributes?.find(
         (attr) =>
@@ -259,8 +331,13 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
           pipe(attr, ifJSXAttribute, getValue, ifStringLiteral, getValue) ===
             lookupId
       );
-      if (lookupMatches) apply(path);
+      if (lookupMatches) {
+        madeChange = true;
+        apply(path);
+      }
     });
+    if (!madeChange)
+      throw new Error(`Could not find element by lookup id ${lookupId}`);
   }
 
   protected addJSXChildToJSXElement(
@@ -295,7 +372,10 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
 
   protected applyJSXInlineStyleAttribute(
     path: NodePath<types.namedTypes.JSXElement, t.JSXElement>,
-    styles: Styles
+    styles: {
+      styleName: keyof CSSStyleDeclaration;
+      styleValue: t.StringLiteral | t.TemplateLiteral;
+    }[]
   ) {
     let existingStyleAttr = path.value.openingElement.attributes?.find(
       (attr) => attr.type === "JSXAttribute" && attr.name.name === `style`
@@ -344,10 +424,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
         (_) => _?.properties
       );
       existingStylePropObject?.push(
-        b.objectProperty(
-          b.identifier(`${styleName}`),
-          valueToASTLiteral(styleValue)
-        )
+        b.objectProperty(b.identifier(`${styleName}`), styleValue)
       );
     });
   }

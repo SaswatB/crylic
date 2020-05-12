@@ -148,25 +148,19 @@ export class Project {
     return path.join(this.path, `src/styles/${name}.css`);
   }
 
+  public getNewAssetPath(fileName: string) {
+    return path.join(this.path, `src/assets/${fileName}`);
+  }
+
   // Project is immutable so these functions return a new copy with modifications
 
   public addCodeEntries(
     ...partialEntries: (Partial<CodeEntry> & { filePath: string })[]
   ) {
     return produce(this, (draft) => {
-      partialEntries.forEach((partialEntry) => {
-        const codeEntry = {
-          id: hashString(partialEntry.filePath),
-          code: "",
-          edit: false,
-          render: false,
-          ...partialEntry,
-        };
-        draft.codeEntries.push({
-          ...codeEntry,
-          ...this.getCodeEntryMetaData(codeEntry),
-        });
-      });
+      partialEntries.forEach((partialEntry) =>
+        draft.codeEntries.push(this.createCodeEntry(partialEntry))
+      );
     });
   }
 
@@ -189,6 +183,22 @@ export class Project {
         }
       });
     });
+  }
+
+  private createCodeEntry(
+    partialEntry: Partial<CodeEntry> & { filePath: string }
+  ) {
+    const codeEntry = {
+      id: hashString(partialEntry.filePath),
+      code: undefined,
+      edit: false,
+      render: false,
+      ...partialEntry,
+    };
+    return {
+      ...codeEntry,
+      ...this.getCodeEntryMetaData(codeEntry),
+    };
   }
 
   private getCodeEntryMetaData(codeEntry: CodeEntry) {
@@ -230,5 +240,28 @@ export class Project {
       console.log(e);
       return {};
     }
+  }
+
+  public addAsset(filePath: string) {
+    return produce(this, (draft) => {
+      const fileName = path.basename(filePath);
+      const assetPath = { path: this.getNewAssetPath(fileName) };
+      let counter = 1;
+      while (
+        this.codeEntries.find((entry) => entry.filePath === assetPath.path)
+      ) {
+        assetPath.path = this.getNewAssetPath(
+          fileName.replace(/\./, `-${counter++}.`)
+        );
+      }
+      fs.writeFileSync(
+        assetPath.path,
+        fs.readFileSync(filePath, { encoding: null }),
+        { encoding: null }
+      );
+      draft.codeEntries.push(
+        this.createCodeEntry({ filePath: assetPath.path })
+      );
+    });
   }
 }

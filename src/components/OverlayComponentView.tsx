@@ -125,6 +125,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
       name: availableRoute,
       value: availableRoute,
     })),
+    undefined,
     (newRoute) =>
       viewContext?.iframe.contentWindow?.history.pushState({}, "", newRoute),
     undefined,

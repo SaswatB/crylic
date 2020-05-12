@@ -98,6 +98,16 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
       throw new Error(`Could not find element by lookup id ${lookupId}`);
   }
 
+  protected updateElementImageInAST(
+    ast: t.File,
+    codeEntry: CodeEntry,
+    lookupId: string,
+    imageProp: "backgroundImage",
+    assetEntry: CodeEntry
+  ) {
+    // todo: implement
+  }
+
   // helpers
 
   protected editStyledTemplateByLookup(

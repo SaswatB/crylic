@@ -108,6 +108,7 @@ const useMainTab = ({
   project,
   onNewComponent,
   onNewStyleSheet,
+  onImportImage,
   onOpenProject,
   onSaveProject,
   onCloseProject,
@@ -130,6 +131,7 @@ const useMainTab = ({
     assetsFilter,
     renderAssetsFilterMenu,
     openAssetsFilterMenu,
+    closeAssetsFilterMenu,
   ] = useMenuInput(
     [
       { name: "All", value: "all" },
@@ -138,8 +140,34 @@ const useMainTab = ({
       { name: "Images", value: "images" },
     ],
     undefined,
+    () => closeAssetsFilterMenu(),
     undefined,
     "components"
+  );
+
+  const [, renderAddMenu, openAddMenu, closeAddMenu] = useMenuInput(
+    [
+      { name: "New Component", value: "component" },
+      { name: "New Style Sheet", value: "stylesheet" },
+      { name: "Import Image", value: "image" },
+    ],
+    { disableSelection: true },
+    (value) => {
+      closeAddMenu();
+      switch (value) {
+        case "component":
+          onNewComponent();
+          break;
+        case "stylesheet":
+          onNewStyleSheet();
+          break;
+        case "image":
+          onImportImage();
+          break;
+      }
+    },
+    undefined,
+    undefined
   );
 
   interface Tree {
@@ -266,22 +294,12 @@ const useMainTab = ({
       <div className="btngrp-v">
         {project ? (
           <>
-            <div className="btngrp-h">
-              <button className="btn w-full" onClick={onNewComponent}>
-                + Component
-              </button>
-              <button className="btn w-full" onClick={onNewStyleSheet}>
-                + Style Sheet
-              </button>
-            </div>
-            <div className="btngrp-h">
-              <button className="btn w-full" onClick={onSaveProject}>
-                Save All
-              </button>
-              <button className="btn w-full" onClick={onCloseProject}>
-                Close Project
-              </button>
-            </div>
+            <button className="btn w-full" onClick={onSaveProject}>
+              Save All
+            </button>
+            <button className="btn w-full" onClick={onCloseProject}>
+              Close Project
+            </button>
           </>
         ) : (
           <>
@@ -320,14 +338,23 @@ const useMainTab = ({
         <>
           {renderSeparator(
             "Assets",
-            <button className="ml-2" onClick={openAssetsFilterMenu}>
-              <FontAwesomeIcon
-                icon={faFilter}
-                className="text-gray-500 hover:text-white default-transition"
-              />
-            </button>
+            <>
+              <button className="ml-2" onClick={openAssetsFilterMenu}>
+                <FontAwesomeIcon
+                  icon={faFilter}
+                  className="text-gray-500 hover:text-white default-transition"
+                />
+              </button>
+              <button className="ml-2" onClick={openAddMenu}>
+                <FontAwesomeIcon
+                  icon={faPlus}
+                  className="text-gray-500 hover:text-white default-transition"
+                />
+              </button>
+            </>
           )}
           {renderAssetsFilterMenu()}
+          {renderAddMenu()}
           <TreeView
             defaultCollapseIcon={<ExpandMoreIcon />}
             defaultExpandIcon={<ChevronRightIcon />}
@@ -484,9 +511,11 @@ const TEXT_TAGS = [
 ];
 
 const useSelectedElementEditorTab = ({
+  project,
   selectedElement,
   updateSelectedElementStyle,
   updateSelectedElementText,
+  updateSelectedElementImage,
 }: Props) => {
   const [selectedStyleGroup, setSelectedStyleGroup] = useState(
     selectedElement?.styleGroups[0]
@@ -535,6 +564,7 @@ const useSelectedElementEditorTab = ({
 
   const StylePropNameMap: { [index in keyof CSSStyleDeclaration]?: string } = {
     backgroundColor: "Fill",
+    backgroundImage: "Fill Image",
     flexDirection: "Direction",
     flexWrap: "Wrap",
     alignItems: "Align",
@@ -616,6 +646,52 @@ const useSelectedElementEditorTab = ({
     useColorPicker
   );
 
+  const useSelectedElementImageEditor = (imageProp: "backgroundImage") => {
+    const onChange = (newValue: CodeEntry) =>
+      updateSelectedElementImage(selectedStyleGroup!, imageProp, newValue);
+    const label =
+      StylePropNameMap[imageProp] || startCase(`${imageProp || ""}`);
+    const initialValue =
+      selectedElement?.inlineStyles[imageProp] ||
+      selectedElement?.computedStyles[imageProp] ||
+      "";
+
+    const [, renderMenu, openMenu, closeMenu] = useMenuInput(
+      (project?.codeEntries || []).filter(isImageEntry).map((entry) => ({
+        name: path.basename(entry.filePath),
+        value: entry.id,
+      })),
+      { disableSelection: true },
+      (newCodeId: string) => {
+        closeMenu();
+        onChange(project!.getCodeEntry(newCodeId)!);
+      }
+    );
+
+    const [selectedElementValue, renderValueInput] = useBoundTextInput(
+      () => {},
+      label,
+      `${initialValue}`
+    );
+
+    return [
+      selectedElementValue,
+      (props?: {
+        className?: string | undefined;
+        style?: React.CSSProperties | undefined;
+      }) => (
+        <>
+          {renderValueInput({ ...props, onClick: openMenu })}
+          {renderMenu()}
+        </>
+      ),
+    ] as const;
+  };
+
+  const [selectedElementBackgroundImage, renderBackgroundImageInput] = useSelectedElementImageEditor(
+    "backgroundImage"
+  );
+
   const [, renderColorInput] = useSelectedElementEditor(
     "color",
     useColorPicker
@@ -668,6 +744,7 @@ const useSelectedElementEditorTab = ({
       <div className={gridClass}>
         {renderOpacityInput()}
         {renderBackgroundColorInput()}
+        {renderBackgroundImageInput()}
       </div>
       {/* todo border */}
       {renderSeparator("Text")}
@@ -710,12 +787,18 @@ interface Props {
     preview?: boolean
   ) => void;
   updateSelectedElementText: (newTextContent: string) => void;
+  updateSelectedElementImage: (
+    styleGroup: StyleGroup,
+    imageProp: "backgroundImage",
+    assetEntry: CodeEntry
+  ) => void;
   onChangeFrameSize: (
     width: number | undefined,
     height: number | undefined
   ) => void;
   onNewComponent: () => void;
   onNewStyleSheet: () => void;
+  onImportImage: () => void;
   onOpenProject: (filePath: string) => void;
   onSaveProject: () => void;
   onCloseProject: () => void;

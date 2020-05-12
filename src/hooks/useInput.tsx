@@ -327,6 +327,7 @@ export function useAutocomplete<T>(
 
 export function useMenuInput(
   options: { name: string; value: string }[],
+  menuOptions?: { disableSelection: boolean },
   onChange = (value: string) => {},
   label = "",
   initialValue = ""
@@ -334,9 +335,9 @@ export function useMenuInput(
   const [value, setValue] = useBoundState<string>(initialValue);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const openMenu = (event: React.MouseEvent<HTMLElement>) => {
+  const openMenu = (event: React.MouseEvent<HTMLElement>) =>
     setAnchorEl(event.currentTarget);
-  };
+  const closeMenu = () => setAnchorEl(null);
 
   const render = () => (
     <Menu
@@ -350,7 +351,7 @@ export function useMenuInput(
       {options.map((option) => (
         <MenuItem
           key={option.value}
-          selected={option.value === value}
+          selected={!menuOptions?.disableSelection && option.value === value}
           onClick={() => {
             setValue(option.value);
             onChange(option.value);
@@ -361,5 +362,5 @@ export function useMenuInput(
       ))}
     </Menu>
   );
-  return [value, render, openMenu] as const;
+  return [value, render, openMenu, closeMenu] as const;
 }

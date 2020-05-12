@@ -105,6 +105,16 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
       throw new Error(`Could not find element by lookup id ${lookupId}`);
   }
 
+  protected updateElementImageInAST(
+    ast: CSSASTNode,
+    codeEntry: CodeEntry,
+    lookupId: string,
+    imageProp: "backgroundImage",
+    assetEntry: CodeEntry
+  ) {
+    // todo: implement
+  }
+
   // helpers
 
   protected printSelector(selector: CSSASTNode) {

@@ -14,6 +14,7 @@ import { EditorPane } from "./components/EditorPane/EditorPane";
 import { InputModal } from "./components/InputModal";
 import { OverlayComponentView } from "./components/OverlayComponentView";
 import { SideBar } from "./components/SideBar";
+import { openFilePicker } from "./hooks/useFilePicker";
 import {
   CodeEntry,
   OutlineElement,
@@ -336,6 +337,38 @@ function App() {
     setCodeAstEdit(newAst, codeEntry);
   };
 
+  const updateSelectedElementImage = (
+    styleGroup: StyleGroup,
+    imageProp: "backgroundImage",
+    assetEntry: CodeEntry
+  ) => {
+    if (!selectedElement) return;
+
+    const selectedCodeId = project?.primaryElementEditor.getCodeIdFromLookupId(
+      selectedElement.lookupId
+    );
+    if (!selectedCodeId) return;
+
+    // get the ast editor for the style group
+    const { editor } = styleGroup;
+
+    // get the code entry to edit from the lookup id
+    const editedCodeId = editor.getCodeIdFromLookupId(styleGroup.lookupId);
+    const editedCodeEntry = project?.getCodeEntry(editedCodeId);
+    if (!editedCodeEntry) return;
+
+    // update image in ast
+    const newAst = editor.updateElementImage(
+      editedCodeEntry.ast,
+      editedCodeEntry,
+      selectedElement.lookupId,
+      imageProp,
+      assetEntry
+    );
+
+    setCodeAstEdit(newAst, editedCodeEntry);
+  };
+
   const renderSelectBar = () => (
     <div className="flex justify-center items-center absolute bottom-0 left-0 right-0 p-1 bg-blue-600 text-white text-sm text-center">
       <div className="flex-1" />
@@ -363,6 +396,7 @@ function App() {
       onChangeSelectMode={setSelectMode}
       updateSelectedElementStyle={updateSelectedElementStyle}
       updateSelectedElementText={updateSelectedElementText}
+      updateSelectedElementImage={updateSelectedElementImage}
       onChangeFrameSize={(width, height) => {
         setFrameSize(
           produce((draft) => {
@@ -395,6 +429,18 @@ function App() {
         const filePath = project!.getNewStyleSheetPath(name);
         addCodeEntry({ filePath, render: true, edit: true });
         enqueueSnackbar("Started a new component!");
+      }}
+      onImportImage={async () => {
+        const file = await openFilePicker({
+          filters: [
+            {
+              name: "Image (.jpg,.jpeg,.png,.gif,.svg)",
+              extensions: ["jpg", "jpeg", "png", "gif", "svg"],
+            },
+          ],
+        });
+        if (!file) return;
+        setProject(project?.addAsset(file));
       }}
       onOpenProject={(p) => setProject(Project.createProject(p))}
       onSaveProject={() => project?.saveFiles()}

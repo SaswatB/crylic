@@ -48,6 +48,15 @@ export abstract class StyleASTEditor<ASTType> extends ASTEditor<ASTType> {
     lookupId: string,
     styles: Styles
   ): void;
+
+  public updateElementImage = editAST(this.updateElementImageInAST.bind(this));
+  protected abstract updateElementImageInAST(
+    ast: ASTType,
+    codeEntry: CodeEntry,
+    lookupId: string,
+    imageProp: "backgroundImage",
+    assetEntry: CodeEntry
+  ): void;
 }
 
 export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
