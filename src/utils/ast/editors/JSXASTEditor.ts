@@ -411,7 +411,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       );
       console.log("existingStyleProp", existingStyleProp);
       if (existingStyleProp) {
-        existingStyleProp.value = valueToASTLiteral(styleValue);
+        existingStyleProp.value = styleValue;
         return;
       }
       const existingStylePropObject = pipe(

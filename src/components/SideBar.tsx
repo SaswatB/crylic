@@ -43,6 +43,7 @@ import { CodeEntry, OutlineElement, SelectedElement } from "../types/paint";
 import { StyleGroup } from "../utils/ast/editors/ASTEditor";
 import {
   CSS_ALIGN_ITEMS_OPTIONS,
+  CSS_BACKGROUND_SIZE_OPTIONS,
   CSS_CURSOR_OPTIONS,
   CSS_DISPLAY_OPTIONS,
   CSS_FLEX_DIRECTION_OPTIONS,
@@ -564,7 +565,8 @@ const useSelectedElementEditorTab = ({
 
   const StylePropNameMap: { [index in keyof CSSStyleDeclaration]?: string } = {
     backgroundColor: "Fill",
-    backgroundImage: "Fill Image",
+    backgroundImage: "Image",
+    backgroundSize: "Image Size",
     flexDirection: "Direction",
     flexWrap: "Wrap",
     alignItems: "Align",
@@ -688,8 +690,18 @@ const useSelectedElementEditorTab = ({
     ] as const;
   };
 
-  const [selectedElementBackgroundImage, renderBackgroundImageInput] = useSelectedElementImageEditor(
-    "backgroundImage"
+  const [
+    selectedElementBackgroundImage,
+    renderBackgroundImageInput,
+  ] = useSelectedElementImageEditor("backgroundImage");
+
+  const [, renderBackgroundSizeInput] = useSelectedElementEditor(
+    "backgroundSize",
+    // @ts-expect-error todo fix type error caused by generics
+    useAutocomplete.bind(undefined, CSS_BACKGROUND_SIZE_OPTIONS, {
+      freeSolo: true,
+      widePopper: true,
+    })
   );
 
   const [, renderColorInput] = useSelectedElementEditor(
@@ -745,6 +757,8 @@ const useSelectedElementEditorTab = ({
         {renderOpacityInput()}
         {renderBackgroundColorInput()}
         {renderBackgroundImageInput()}
+        {selectedElementBackgroundImage !== "none" &&
+          renderBackgroundSizeInput()}
       </div>
       {/* todo border */}
       {renderSeparator("Text")}

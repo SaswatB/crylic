@@ -219,3 +219,9 @@ export const CSS_CURSOR_OPTIONS = [
   { name: "Grab", value: "grab" },
   { name: "Grabbing", value: "grabbing" },
 ];
+
+export const CSS_BACKGROUND_SIZE_OPTIONS = [
+  { name: "Contain", value: "contain" },
+  { name: "Cover", value: "cover" },
+  { name: "Auto", value: "auto" },
+];
