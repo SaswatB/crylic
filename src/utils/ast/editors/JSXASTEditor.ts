@@ -16,7 +16,6 @@ import {
   ifObjectProperty,
   ifStringLiteral,
   traverseJSXElements,
-  valueToASTLiteral,
   valueToJSXLiteral,
 } from "../ast-helpers";
 import { ElementASTEditor, StyleGroup } from "./ASTEditor";
@@ -69,6 +68,9 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
   public getLookupIdFromHTMLElement(element: HTMLElement) {
     return element.dataset?.[JSX_LOOKUP_DATA_ATTR];
   }
+  public getLookupIdFromProps(props: any) {
+    return props?.[`data-${JSX_LOOKUP_DATA_ATTR}`];
+  }
 
   public getStyleGroupsFromHTMLElement(element: HTMLElement): StyleGroup[] {
     const lookupId = this.getLookupIdFromHTMLElement(element);
@@ -87,7 +89,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     ast: t.File,
     codeEntry: CodeEntry,
     parentLookupId: string,
-    childTag: keyof HTMLElementTagNameMap,
+    childTag: keyof HTMLElementTagNameMap | string,
     childAttributes?: Record<string, unknown>
   ) {
     this.editJSXElementByLookupId(ast, parentLookupId, (path) => {
@@ -342,7 +344,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
 
   protected addJSXChildToJSXElement(
     parentElement: t.JSXElement,
-    childElementTag: keyof HTMLElementTagNameMap,
+    childElementTag: keyof HTMLElementTagNameMap | string,
     childAttributes: Record<string, unknown> = {},
     childShouldBeSelfClosing = false
   ) {

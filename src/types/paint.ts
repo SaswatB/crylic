@@ -7,13 +7,18 @@ export interface CodeEntry {
   filePath: string;
   code: string | undefined;
   edit: boolean;
-  render: boolean;
 
   // metadata generated from code
   ast?: any;
   codeWithLookupData?: string;
   isRenderable?: boolean;
   isEditable?: boolean;
+}
+
+export interface RenderEntry {
+  id: string;
+  codeId: string;
+  route?: string;
 }
 
 export const ProjectConfig = it.type({
@@ -23,6 +28,7 @@ export const ProjectConfig = it.type({
 export type ProjectConfig = it.TypeOf<typeof ProjectConfig>;
 
 export interface SelectedElement {
+  renderId: string;
   lookupId: string;
   element: HTMLElement;
   styleGroups: StyleGroup[];
@@ -32,6 +38,7 @@ export interface SelectedElement {
 
 export interface OutlineElement {
   tag: string;
+  renderId: string;
   lookupId: string;
   element: HTMLElement | undefined;
   children: OutlineElement[];

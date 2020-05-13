@@ -2,9 +2,9 @@ import deepFreeze from "deep-freeze-strict";
 import { fold } from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
 import produce, { immerable } from "immer";
-import { cloneDeep } from "lodash";
+import { cloneDeep, uniqueId } from "lodash";
 
-import { CodeEntry, ProjectConfig } from "../types/paint";
+import { CodeEntry, ProjectConfig, RenderEntry } from "../types/paint";
 import {
   hasComponentExport,
   hashString,
@@ -37,6 +37,7 @@ export class Project {
   private [immerable] = true; // enable immer support
 
   public readonly codeEntries: CodeEntry[] = [];
+  public readonly renderEntries: RenderEntry[] = [];
   public readonly elementEditorEntries: EditorEntry<ElementASTEditor<any>>[];
   public readonly styleEditorEntries: EditorEntry<StyleASTEditor<any>>[];
 
@@ -117,9 +118,9 @@ export class Project {
   }
 
   public saveFiles() {
-    this.codeEntries.forEach(({ filePath, code }) =>
-      fs.writeFileSync(filePath, code)
-    );
+    this.codeEntries
+      .filter(({ code }) => code !== undefined)
+      .forEach(({ filePath, code }) => fs.writeFileSync(filePath, code));
   }
 
   public get editorEntries() {
@@ -157,7 +158,7 @@ export class Project {
   public addCodeEntries(
     ...partialEntries: (Partial<CodeEntry> & { filePath: string })[]
   ) {
-    return produce(this, (draft) => {
+    return produce(this, (draft: Project) => {
       partialEntries.forEach((partialEntry) =>
         draft.codeEntries.push(this.createCodeEntry(partialEntry))
       );
@@ -165,7 +166,7 @@ export class Project {
   }
 
   public editCodeEntry(codeId: string, updates: Partial<CodeEntry>) {
-    return produce(this, (draft) => {
+    return produce(this, (draft: Project) => {
       const codeEntry = draft?.codeEntries.find(({ id }) => id === codeId);
       if (!codeEntry) return;
 
@@ -243,7 +244,7 @@ export class Project {
   }
 
   public addAsset(filePath: string) {
-    return produce(this, (draft) => {
+    return produce(this, (draft: Project) => {
       const fileName = path.basename(filePath);
       const assetPath = { path: this.getNewAssetPath(fileName) };
       let counter = 1;
@@ -261,6 +262,39 @@ export class Project {
       );
       draft.codeEntries.push(
         this.createCodeEntry({ filePath: assetPath.path })
+      );
+    });
+  }
+
+  public addRenderEntry(codeEntry: CodeEntry) {
+    return produce(this, (draft: Project) => {
+      draft.renderEntries.push({
+        id: uniqueId(),
+        codeId: codeEntry.id,
+      });
+    });
+  }
+
+  public editRenderEntry(
+    renderId: string,
+    partialRenderEntry: Partial<Omit<RenderEntry, "id" | "codeId">>
+  ) {
+    return produce(this, (draft: Project) => {
+      const renderEntry = draft.renderEntries.find(
+        (entry) => entry.id === renderId
+      );
+      Object.entries(partialRenderEntry).forEach(([key, value]) => {
+        // @ts-ignore ignore type error
+        renderEntry[key] = value;
+      });
+    });
+  }
+
+  public removeRenderEntry(renderId: string) {
+    return produce(this, (draft: Project) => {
+      draft.renderEntries.splice(
+        draft.renderEntries.findIndex((entry) => entry.id === renderId),
+        1
       );
     });
   }

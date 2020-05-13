@@ -464,7 +464,9 @@ const useOutlineTab = ({
         key={id}
         nodeId={id}
         label={node.tag}
-        onClick={() => node.element && selectElement(node.element)}
+        onClick={() =>
+          node.element && selectElement(node.renderId, node.element)
+        }
       >
         {node.children.map(renderTree)}
       </TreeItem>
@@ -474,7 +476,18 @@ const useOutlineTab = ({
   // render tree ahead of time to populate treeNodeIds
   const renderedTree = outlines.map(([key, value]) =>
     renderTree({
-      tag: (project && getFriendlyName(project, key)) || key,
+      tag:
+        (project &&
+          (value?.length ?? 0) > 0 &&
+          // todo don't use this hack to get code id
+          getFriendlyName(
+            project,
+            project.primaryElementEditor.getCodeIdFromLookupId(
+              value![0].lookupId
+            )
+          )) ||
+        key,
+      renderId: key,
       lookupId: key,
       element: undefined,
       children: value!,
@@ -791,7 +804,7 @@ const useSelectedElementEditorTab = ({
 interface Props {
   outlineMap: Record<string, OutlineElement[] | undefined>;
   project: Project | undefined;
-  selectElement: (componentElement: HTMLElement) => void;
+  selectElement: (renderId: string, componentElement: HTMLElement) => void;
   selectedElement: SelectedElement | undefined;
   onChangeSelectMode: (selectMode: SelectMode) => void;
   updateSelectedElementStyle: (
@@ -827,9 +840,7 @@ export const SideBar: FunctionComponent<Props> = (props) => {
   const renderSelectedElementEditor = useSelectedElementEditorTab(props);
 
   const { selectedElement, project } = props;
-  const isRendering = !!project?.codeEntries.find(
-    (codeEntry) => codeEntry.render
-  );
+  const isRendering = !!project?.renderEntries.length;
   const tabsRef = useRef<TabsRef>(null);
   useEffect(() => {
     if (selectedElement) tabsRef.current?.selectTab(3);

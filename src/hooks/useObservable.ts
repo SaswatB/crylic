@@ -6,7 +6,10 @@ export function useObservable<T>(observable?: Observable<T>) {
   useEffect(() => {
     if (!observable) return undefined;
 
-    const subscription = observable.subscribe(setValue);
+    // use setTimeout to avoid setting state during a react render
+    const subscription = observable.subscribe((newValue) =>
+      setTimeout(() => setValue(newValue))
+    );
     return () => {
       subscription.unsubscribe();
       setValue(undefined);

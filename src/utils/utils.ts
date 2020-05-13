@@ -56,6 +56,7 @@ export function getFriendlyName({ codeEntries }: Project, codeId: string) {
 
 export const buildOutline = (
   project: Project,
+  renderId: string,
   element: Element
 ): OutlineElement[] =>
   Array.from(element.children)
@@ -67,13 +68,14 @@ export const buildOutline = (
         return [
           {
             tag: child.tagName,
+            renderId,
             lookupId,
             element: child as HTMLElement,
-            children: buildOutline(project, child),
+            children: buildOutline(project, renderId, child),
           },
         ];
       }
-      return buildOutline(project, child);
+      return buildOutline(project, renderId, child);
     })
     .reduce((p, c) => [...p, ...c], []);
 

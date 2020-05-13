@@ -1,10 +1,11 @@
 import React, {
   FunctionComponent,
   RefAttributes,
+  useEffect,
   useRef,
   useState,
 } from "react";
-import { faLink } from "@fortawesome/free-solid-svg-icons";
+import { faLink, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { CircularProgress } from "@material-ui/core";
 
@@ -15,6 +16,7 @@ import { useOverlay } from "../hooks/useOverlay";
 import { SelectedElement, Styles } from "../types/paint";
 import { StyleGroup } from "../utils/ast/editors/ASTEditor";
 import { SelectModeType } from "../utils/constants";
+import { RouteDefinition } from "../utils/react-router-proxy";
 import { getFriendlyName } from "../utils/utils";
 import {
   CompilerComponentView,
@@ -31,6 +33,7 @@ interface Props {
   selectModeType: SelectModeType | undefined;
   selectedElement: SelectedElement | undefined;
   onSelectElement: (
+    renderId: string,
     element: HTMLElement,
     componentView: CompilerComponentViewRef
   ) => void;
@@ -39,6 +42,7 @@ interface Props {
     styles: Styles,
     preview?: boolean
   ) => void;
+  onAddRoute: (routeDefinition: RouteDefinition) => void;
 }
 
 export const OverlayComponentView: FunctionComponent<Props> = ({
@@ -48,6 +52,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   selectedElement,
   onSelectElement,
   updateSelectedElementStyles,
+  onAddRoute,
 }) => {
   const [loading, setLoading] = useState(false);
   const [debouncedLoading, skipLoadingDebounce] = useDebounce(loading, 700);
@@ -62,7 +67,11 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
     (componentElement) =>
       componentElement &&
       componentView.current &&
-      onSelectElement(componentElement as HTMLElement, componentView.current),
+      onSelectElement(
+        compilerProps.renderEntry.id,
+        componentElement as HTMLElement,
+        componentView.current
+      ),
     (deltaX, totalDeltaX, deltaY, totalDeltaY, width, height, preview) => {
       if (
         !deltaX &&
@@ -117,17 +126,23 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
     Parameters<OnCompileEndCallback>[1]
   >();
 
-  const availableRoutes = useObservable(viewContext?.onRoutesDefined);
+  const routeDefinition = useObservable(viewContext?.onRoutesDefined);
   const currentRoute = useObservable(viewContext?.onRouteChange);
 
+  // if the render entry has a route set, apply the route on definition load
+  useEffect(() => {
+    if (routeDefinition?.history && compilerProps.renderEntry.route) {
+      routeDefinition.history.push(compilerProps.renderEntry.route);
+    }
+  }, [routeDefinition?.history, compilerProps.renderEntry.route]);
+
   const [, renderRouteMenu, openRouteMenu] = useMenuInput(
-    (availableRoutes || []).map((availableRoute) => ({
+    (routeDefinition?.routes || []).map((availableRoute) => ({
       name: availableRoute,
       value: availableRoute,
     })),
     undefined,
-    (newRoute) =>
-      viewContext?.iframe.contentWindow?.history.pushState({}, "", newRoute),
+    (newRoute) => routeDefinition?.history.push(newRoute),
     undefined,
     currentRoute
   );
@@ -135,16 +150,36 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   return (
     <div className="flex flex-col m-10">
       <div className="flex relative">
-        {getFriendlyName(compilerProps.project!, compilerProps.selectedCodeId)}
+        {getFriendlyName(
+          compilerProps.project!,
+          compilerProps.renderEntry.codeId
+        )}
         <div className="flex-1" />
-        {/* {availableRoutes ? (
-          <button className="ml-2" onClick={openRouteMenu}>
-            <FontAwesomeIcon
-              icon={faLink}
-              className="text-gray-500 hover:text-white default-transition"
-            />
-          </button>
-        ) : null} */}
+        {routeDefinition?.routes ? (
+          <>
+            <button
+              onClick={() => onAddRoute(routeDefinition)}
+              title="Add Routes"
+            >
+              <FontAwesomeIcon
+                icon={faPlus}
+                className="text-gray-500 hover:text-white default-transition"
+              />
+            </button>
+            <button className="ml-2" onClick={openRouteMenu}>
+              <FontAwesomeIcon
+                icon={faLink}
+                className="text-gray-500 hover:text-white default-transition"
+              />
+            </button>
+            {/* <button className="ml-2" onClick={openRouteMenu}>
+              <FontAwesomeIcon
+                icon={faTimes}
+                className="text-gray-500 hover:text-white default-transition"
+              />
+            </button> */}
+          </>
+        ) : null}
         {renderRouteMenu()}
         <div className="absolute inset-0 text-center pointer-events-none">
           {currentRoute || null}
@@ -168,11 +203,11 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
             setLoading(true);
             compilerProps?.onCompileStart?.();
           }}
-          onCompileEnd={(codeId, context) => {
+          onCompileEnd={(renderEntry, context) => {
             skipLoadingDebounce();
             setLoading(false);
             setViewContext(context);
-            compilerProps?.onCompileEnd?.(codeId, context);
+            compilerProps?.onCompileEnd?.(renderEntry, context);
           }}
           style={{
             ...compilerProps.style,

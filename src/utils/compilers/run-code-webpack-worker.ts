@@ -2,7 +2,7 @@
 // import WebpackWorker from "worker-loader!./webpack-worker";
 
 import { Project } from "../Project";
-import { getReactRouterProxy } from "../react-router-proxy";
+import { getReactRouterProxy, RouteDefinition } from "../react-router-proxy";
 import { webpackRunCode } from "./run-code-webpack";
 
 const path = __non_webpack_require__("path") as typeof import("path");
@@ -28,7 +28,7 @@ interface RunnerContext {
   window: Window & any;
 
   // react router support
-  onRoutesDefined: (routes: string[]) => void;
+  onRoutesDefined: (arg: RouteDefinition) => void;
   onRouteChange: (route: string) => void;
 }
 

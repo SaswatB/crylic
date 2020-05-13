@@ -15,9 +15,10 @@ import { distinctUntilChanged } from "rxjs/operators";
 
 import { useDebounce } from "../hooks/useDebounce";
 import { useUpdatingRef } from "../hooks/useUpdatingRef";
-import { Styles } from "../types/paint";
+import { RenderEntry, Styles } from "../types/paint";
 import { webpackRunCodeWithWorker } from "../utils/compilers/run-code-webpack-worker";
 import { Project } from "../utils/Project";
+import { RouteDefinition } from "../utils/react-router-proxy";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { Frame } from "./Frame";
 
@@ -48,17 +49,17 @@ export interface CompilerComponentViewRef {
 }
 
 export type OnCompileEndCallback = (
-  codeId: string,
+  renderEntry: RenderEntry,
   context: {
     iframe: HTMLIFrameElement;
-    onRoutesDefined: Observable<string[]>;
+    onRoutesDefined: Observable<RouteDefinition>;
     onRouteChange: Observable<string>;
   } & CompilerComponentViewRef
 ) => void;
 
 export interface CompilerComponentViewProps {
   project: Project | undefined;
-  selectedCodeId: string;
+  renderEntry: RenderEntry;
   onCompileStart?: () => void;
   onCompileEnd?: OnCompileEndCallback;
 }
@@ -68,10 +69,7 @@ export const CompilerComponentView: FunctionComponent<
     React.IframeHTMLAttributes<HTMLIFrameElement> &
     RefAttributes<CompilerComponentViewRef>
 > = forwardRef(
-  (
-    { project, selectedCodeId, onCompileStart, onCompileEnd, ...props },
-    ref
-  ) => {
+  ({ project, renderEntry, onCompileStart, onCompileEnd, ...props }, ref) => {
     const [tempStyles, setTempStyles] = useState<Record<string, Styles>>({});
     const [activeFrame, setActiveFrame] = useState(1);
     const frame1 = useRef<{
@@ -128,16 +126,18 @@ export const CompilerComponentView: FunctionComponent<
         if (project && debouncedCodeEntries?.length) {
           try {
             onCompileStart?.();
-            console.log("compiling", selectedCodeId, project);
-            const onRoutesDefinedSubject = new ReplaySubject<string[]>(1);
+            console.log("compiling", renderEntry.codeId, project);
+            const onRoutesDefinedSubject = new ReplaySubject<RouteDefinition>(
+              1
+            );
             const onRouteChangeSubject = new ReplaySubject<string>(1);
             const codeExports = await webpackRunCodeWithWorker(
               project,
-              selectedCodeId,
+              renderEntry.codeId,
               {
                 window: getInactiveFrame().current?.frameElement.contentWindow,
-                onRoutesDefined(routes) {
-                  onRoutesDefinedSubject.next(routes);
+                onRoutesDefined(arg) {
+                  onRoutesDefinedSubject.next(arg);
                 },
                 onRouteChange(route) {
                   onRouteChangeSubject.next(route);
@@ -168,7 +168,7 @@ export const CompilerComponentView: FunctionComponent<
             // wait until the dom is fully updated so that getElementByLookupId can work with the updated view
             setTimeout(() =>
               requestAnimationFrame(() =>
-                onCompileEnd?.(selectedCodeId, {
+                onCompileEnd?.(renderEntry, {
                   ...handleRef.current,
                   iframe: getInactiveFrame().current!.frameElement,
                   onRoutesDefined: onRoutesDefinedSubject.pipe(

@@ -1,15 +1,23 @@
 import React from "react";
-import { isArray } from "lodash";
+import { isArray, omit } from "lodash";
 
 const LINK_DATA_ATTR = "paintlink";
 
+export interface RouteDefinition {
+  routes: string[];
+  switchProps: object | undefined;
+  history: import("history").History;
+}
+
 export function getReactRouterProxy(
-  onRoutesDefined: (routes: string[]) => void,
+  onRoutesDefined: (arg: RouteDefinition) => void,
   onRouteChange: (route: string) => void
 ) {
   const reactRouterDom = require("react-router-dom") as typeof import("react-router-dom");
   const reactRouterDomProxy = {
     ...reactRouterDom,
+    BrowserRouter: reactRouterDom.MemoryRouter,
+    HashRouter: reactRouterDom.MemoryRouter,
     Link: (props: any) => {
       // todo test ref
       const { Link } = reactRouterDom;
@@ -36,7 +44,8 @@ export function getReactRouterProxy(
     // todo maybe stub switch from react-router itself?
     Switch: (props: any) => {
       // todo test ref
-      const { Switch } = reactRouterDom;
+      const { Switch, useHistory } = reactRouterDom;
+      const history = useHistory();
       const routes: string[] = [];
       const children = !props.children
         ? []
@@ -50,7 +59,11 @@ export function getReactRouterProxy(
           // console.log("Switch Child", child.props);
         }
       });
-      onRoutesDefined(routes);
+      onRoutesDefined({
+        routes,
+        switchProps: omit(props, "children"),
+        history,
+      });
       return <Switch {...props} />;
     },
   };

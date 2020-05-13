@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import { produce } from "immer";
-import { camelCase, upperFirst } from "lodash";
+import { camelCase, snakeCase, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
 
 import {
@@ -21,10 +21,7 @@ import {
   SelectedElement,
   Styles,
 } from "./types/paint";
-import {
-  prettyPrintCodeEntryAST,
-  printCodeEntryAST,
-} from "./utils/ast/ast-helpers";
+import { prettyPrintCodeEntryAST } from "./utils/ast/ast-helpers";
 import { StyleGroup } from "./utils/ast/editors/ASTEditor";
 import {
   DEFAULT_FRAME_HEIGHT,
@@ -93,9 +90,7 @@ function App() {
     );
   const toggleCodeEntryRender = (codeId: string) =>
     setProject((project) =>
-      project?.editCodeEntry(codeId, {
-        render: !project.getCodeEntry(codeId)?.render,
-      })
+      project?.addRenderEntry(project.getCodeEntry(codeId)!)
     );
   const addCodeEntry = (
     partialEntry: Partial<CodeEntry> & { filePath: string }
@@ -121,7 +116,7 @@ function App() {
   // clear select mode on escape hotkey
   useHotkeys("escape", () => setSelectMode(undefined));
 
-  const selectElement = (componentElement: HTMLElement) => {
+  const selectElement = (renderId: string, componentElement: HTMLElement) => {
     const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
       componentElement
     );
@@ -136,6 +131,7 @@ function App() {
     });
 
     setSelectedElement({
+      renderId,
       lookupId,
       element: componentElement,
       styleGroups,
@@ -154,7 +150,7 @@ function App() {
     >
   >({});
   const onComponentViewCompiled: OnCompileEndCallback = (
-    codeId,
+    renderEntry,
     { iframe, getRootElement, getElementByLookupId }
   ) => {
     project?.editorEntries.forEach(({ editor }) => editor.onASTRender(iframe));
@@ -163,7 +159,7 @@ function App() {
       selectedElement &&
       project?.primaryElementEditor.getCodeIdFromLookupId(
         selectedElement.lookupId
-      ) === codeId
+      ) === renderEntry.codeId
     ) {
       const newSelectedComponent = getElementByLookupId(
         selectedElement.lookupId
@@ -173,7 +169,7 @@ function App() {
           "setting selected element post-compile",
           selectedElement.lookupId
         );
-        selectElement(newSelectedComponent as HTMLElement);
+        selectElement(renderEntry.id, newSelectedComponent as HTMLElement);
       } else {
         setSelectedElement(undefined);
       }
@@ -182,17 +178,20 @@ function App() {
     const root = getRootElement();
     setOutlineMap(
       produce((currentOutlineMap) => {
-        currentOutlineMap[codeId] = root
-          ? buildOutline(project!, root)
+        currentOutlineMap[renderEntry.id] = root
+          ? buildOutline(project!, renderEntry.id, root)
           : undefined;
       })
     );
 
-    compileTasks.current[codeId]?.forEach((task) => task(getElementByLookupId));
-    compileTasks.current[codeId] = [];
+    compileTasks.current[renderEntry.id]?.forEach((task) =>
+      task(getElementByLookupId)
+    );
+    compileTasks.current[renderEntry.id] = [];
   };
 
   const onOverlaySelectElement = (
+    renderId: string,
     componentElement: HTMLElement,
     componentView: CompilerComponentViewRef
   ) => {
@@ -205,7 +204,7 @@ function App() {
             componentElement as HTMLElement
           )
         );
-        selectElement(componentElement);
+        selectElement(renderId, componentElement);
         break;
       case SelectModeType.AddElement: {
         const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
@@ -237,23 +236,20 @@ function App() {
 
         if (newChildLookupId !== undefined) {
           // try to select the newly added element when the CompilerComponentView next compiles
-          compileTasks.current[codeId] = compileTasks.current[codeId] || [];
-          compileTasks.current[codeId]!.push((getElementByLookupId) => {
+          compileTasks.current[renderId] = compileTasks.current[renderId] || [];
+          compileTasks.current[renderId]!.push((getElementByLookupId) => {
             const newChildComponent = getElementByLookupId(newChildLookupId!);
             if (newChildComponent) {
               console.log(
                 "setting selected element through post-child add",
                 newChildLookupId
               );
-              selectElement(newChildComponent as HTMLElement);
+              selectElement(renderId, newChildComponent as HTMLElement);
             }
           });
         }
 
-        project?.getEditorsForCodeEntry(codeEntry).forEach((editor) => {
-          newAst = editor.removeLookupData(newAst, codeEntry);
-        });
-        setCode(codeId, printCodeEntryAST(codeEntry, newAst));
+        setCodeAstEdit(newAst, codeEntry);
         break;
       }
     }
@@ -272,7 +268,7 @@ function App() {
       selectedElement.lookupId
     );
     if (!selectedCodeId) return;
-    const componentView = componentViews.current[selectedCodeId];
+    const componentView = componentViews.current[selectedElement.renderId];
     componentView?.addTempStyles(selectedElement.lookupId, styles, !preview);
     // preview is a flag used to quickly show updates in the dom
     // there shouldn't be any expensive calculations done when it's on
@@ -415,7 +411,8 @@ function App() {
         const name = upperFirst(camelCase(inputName));
         const filePath = project!.getNewComponentPath(name);
         const code = getBoilerPlateComponent(name);
-        addCodeEntry({ filePath, code, render: true, edit: false });
+        // todo render component on create
+        addCodeEntry({ filePath, code, edit: false });
         enqueueSnackbar("Started a new component!");
       }}
       onNewStyleSheet={async () => {
@@ -427,7 +424,7 @@ function App() {
         // todo add validation/duplicate checking to name
         const name = camelCase(inputName);
         const filePath = project!.getNewStyleSheetPath(name);
-        addCodeEntry({ filePath, render: true, edit: true });
+        addCodeEntry({ filePath, edit: true });
         enqueueSnackbar("Started a new component!");
       }}
       onImportImage={async () => {
@@ -440,7 +437,8 @@ function App() {
           ],
         });
         if (!file) return;
-        setProject(project?.addAsset(file));
+        setProject((currentProject) => currentProject?.addAsset(file));
+        enqueueSnackbar("Imported Image!");
       }}
       onOpenProject={(p) => setProject(Project.createProject(p))}
       onSaveProject={() => project?.saveFiles()}
@@ -484,26 +482,52 @@ function App() {
   );
 
   const renderComponentViews = () =>
-    project?.codeEntries
-      .filter((entry) => entry.render)
-      .map((entry) => (
-        <OverlayComponentView
-          key={entry.id}
-          compilerProps={{
-            ref(componentView) {
-              componentViews.current[entry.id] = componentView;
-            },
-            project,
-            selectedCodeId: entry.id,
-            onCompileEnd: onComponentViewCompiled,
-          }}
-          frameSize={frameSize}
-          selectModeType={selectMode?.type}
-          selectedElement={selectedElement}
-          onSelectElement={onOverlaySelectElement}
-          updateSelectedElementStyles={updateSelectedElementStyles}
-        />
-      ));
+    project?.renderEntries.map((entry) => (
+      <OverlayComponentView
+        key={entry.id}
+        compilerProps={{
+          ref(componentView) {
+            componentViews.current[entry.id] = componentView;
+          },
+          project,
+          renderEntry: entry,
+          onCompileEnd: onComponentViewCompiled,
+        }}
+        frameSize={frameSize}
+        selectModeType={selectMode?.type}
+        selectedElement={selectedElement}
+        onSelectElement={onOverlaySelectElement}
+        updateSelectedElementStyles={updateSelectedElementStyles}
+        onAddRoute={async (routeDefinition) => {
+          const inputName = await InputModal({
+            title: "New Route",
+            message: "Please enter a route name",
+          });
+          if (!inputName) return;
+          // todo show preview of name in dialog
+          const name = snakeCase(inputName.replace(/[^a-z0-9]/g, ""));
+          const path = `/${name}`;
+          const switchLookupId = project!.primaryElementEditor.getLookupIdFromProps(
+            routeDefinition.switchProps
+          )!;
+          const codeEntry = project.getCodeEntry(
+            project.primaryElementEditor.getCodeIdFromLookupId(switchLookupId)
+          );
+          // todo check if Route is imported
+          const newAst = project.primaryElementEditor.addChildToElement(
+            codeEntry!.ast,
+            codeEntry!,
+            switchLookupId,
+            "Route",
+            { path }
+          );
+          setCodeAstEdit(newAst, codeEntry!);
+          setProject((currentProject) =>
+            currentProject?.editRenderEntry(entry.id, { route: path })
+          );
+        }}
+      />
+    ));
 
   return (
     <div className="flex flex-col items-stretch w-screen h-screen relative overflow-hidden text-white">
@@ -554,7 +578,8 @@ function App() {
                     newSelectedComponent as HTMLElement
                   )
                 );
-                selectElement(newSelectedComponent as HTMLElement);
+                // todo reenable
+                // selectElement(newSelectedComponent as HTMLElement);
               }
             }}
           />

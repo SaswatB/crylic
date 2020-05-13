@@ -66,12 +66,14 @@ export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
     element: HTMLElement
   ): string | undefined;
 
+  public abstract getLookupIdFromProps(props: any): string | undefined;
+
   public addChildToElement = editAST(this.addChildToElementInAST.bind(this));
   protected abstract addChildToElementInAST(
     ast: ASTType,
     codeEntry: CodeEntry,
     parentLookupId: string,
-    childTag: keyof HTMLElementTagNameMap,
+    childTag: keyof HTMLElementTagNameMap | string,
     childAttributes?: Record<string, unknown>
   ): void;
 
