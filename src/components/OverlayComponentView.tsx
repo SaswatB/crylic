@@ -177,14 +177,14 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
                 className="text-gray-500 hover:text-white default-transition"
               />
             </button>
-            <button className="ml-2" onClick={onRemoveComponentView}>
-              <FontAwesomeIcon
-                icon={faTimes}
-                className="text-gray-500 hover:text-white default-transition"
-              />
-            </button>
           </>
         ) : null}
+        <button className="ml-2" onClick={onRemoveComponentView}>
+          <FontAwesomeIcon
+            icon={faTimes}
+            className="text-gray-500 hover:text-white default-transition"
+          />
+        </button>
         {renderRouteMenu()}
         <div className="absolute inset-0 text-center pointer-events-none">
           {currentRoute || null}
