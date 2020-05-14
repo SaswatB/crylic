@@ -11,6 +11,7 @@ import {
   getValue,
   ifIdentifier,
   ifJSXAttribute,
+  ifJSXElement,
   ifJSXExpressionContainer,
   ifObjectExpression,
   ifObjectProperty,
@@ -92,11 +93,26 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     childTag: keyof HTMLElementTagNameMap | string,
     childAttributes?: Record<string, unknown>
   ) {
-    this.editJSXElementByLookupId(ast, parentLookupId, (path) => {
-      this.addJSXChildToJSXElement(path.value, childTag, {
-        ...childAttributes,
-        [`data-${JSX_RECENTLY_ADDED_DATA_ATTR}`]: JSX_RECENTLY_ADDED,
+    // ensure the import for react-router-dom components
+    if (childTag === "Route" || childTag === "Link") {
+      childTag = this.getOrAddImport(ast, {
+        path: "react-router-dom",
+        name: childTag,
       });
+    }
+
+    this.editJSXElementByLookupId(ast, parentLookupId, (path) => {
+      this.addJSXChildToJSXElement(
+        path.value,
+        childTag,
+        {
+          ...childAttributes,
+          [`data-${JSX_RECENTLY_ADDED_DATA_ATTR}`]: JSX_RECENTLY_ADDED,
+        },
+        {
+          orderByPathProp: childTag === "Route",
+        }
+      );
     });
   }
 
@@ -127,57 +143,21 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     imageProp: "backgroundImage",
     assetEntry: CodeEntry
   ) {
-    // get the import path for the asset
+    // get the import for the asset
     const relativeAssetPath = path
       .relative(path.dirname(codeEntry.filePath), assetEntry.filePath)
       .replace(/\\/g, "/");
-
-    // try to find an existing import declaration
-    let assetImport = ast.program.body.find(
-      (node): node is t.ImportDeclaration =>
-        node.type === "ImportDeclaration" &&
-        node.source.type === "StringLiteral" &&
-        node.source.value === relativeAssetPath
-    );
-    // add an import declaration if none is found
-    if (!assetImport) {
-      let lastImportIndex = -1;
-      ast.program.body.forEach((node, index) => {
-        if (node.type === "ImportDeclaration") lastImportIndex = index;
-      });
-      assetImport = b.importDeclaration(
-        [
-          // identifier added below
-        ],
-        b.stringLiteral(relativeAssetPath)
-      );
-      ast.program.body.splice(lastImportIndex, 0, assetImport);
-    }
-    // try to find a default export on the import declaration
-    let assetIdentifier = assetImport!.specifiers?.find(
-      (node): node is t.ImportDefaultSpecifier =>
-        node.type === "ImportDefaultSpecifier"
-    );
-    // add a default import if none is found
-    if (!assetIdentifier) {
-      assetIdentifier = b.importDefaultSpecifier(
-        b.identifier(
-          `Asset${startCase(
-            path.basename(assetEntry.filePath).replace(/\..*$/, "")
-          ).replace(/\s+/g, "")}`
-        )
-      );
-      assetImport.specifiers = assetImport.specifiers || [];
-      assetImport.specifiers.push(assetIdentifier);
-    }
+    const assetDefaultName = `Asset${startCase(
+      path.basename(assetEntry.filePath).replace(/\..*$/, "")
+    ).replace(/\s+/g, "")}`;
+    const assetIdentifier = this.getOrAddImport(ast, {
+      path: relativeAssetPath,
+      name: assetDefaultName,
+      isDefault: true,
+    });
 
     this.editJSXElementByLookupId(ast, lookupId, (path) => {
-      console.log(
-        "updateElementImageInAST",
-        path,
-        assetImport,
-        assetIdentifier
-      );
+      console.log("updateElementImageInAST", path, assetIdentifier);
       // edit the element style
       this.applyJSXInlineStyleAttribute(path, [
         {
@@ -188,8 +168,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
               b.templateElement({ raw: "url(", cooked: "url(" }, false),
               b.templateElement({ raw: ")", cooked: ")" }, true),
             ],
-            // todo test if this cast is safe
-            [b.identifier(assetIdentifier!.local!.name)]
+            [b.identifier(assetIdentifier)]
           ),
         },
       ]);
@@ -312,13 +291,13 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
 
   // helpers
 
-  protected getJSXASTByLookupIndex = (ast: t.File, lookupIndex: number) => {
+  protected getJSXASTByLookupIndex(ast: t.File, lookupIndex: number) {
     let result: NodePath<types.namedTypes.JSXElement, t.JSXElement> | undefined;
     traverseJSXElements(ast, (path, index) => {
       if (index === lookupIndex) result = path;
     });
     return result;
-  };
+  }
 
   protected editJSXElementByLookupId(
     ast: t.File,
@@ -346,23 +325,58 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     parentElement: t.JSXElement,
     childElementTag: keyof HTMLElementTagNameMap | string,
     childAttributes: Record<string, unknown> = {},
-    childShouldBeSelfClosing = false
+    childOptions?: {
+      shouldBeSelfClosing?: boolean;
+      // `Route` specific ordering option
+      orderByPathProp?: boolean;
+    }
   ) {
-    parentElement.children = [
-      ...(parentElement.children || []),
-      b.jsxElement(
-        b.jsxOpeningElement(
-          b.jsxIdentifier(childElementTag),
-          Object.entries(childAttributes).map(([name, value]) =>
-            b.jsxAttribute(b.jsxIdentifier(name), valueToJSXLiteral(value))
-          ),
-          childShouldBeSelfClosing
+    const child = b.jsxElement(
+      b.jsxOpeningElement(
+        b.jsxIdentifier(childElementTag),
+        Object.entries(childAttributes).map(([name, value]) =>
+          b.jsxAttribute(b.jsxIdentifier(name), valueToJSXLiteral(value))
         ),
-        childShouldBeSelfClosing
-          ? undefined
-          : b.jsxClosingElement(b.jsxIdentifier(childElementTag))
+        childOptions?.shouldBeSelfClosing ?? false
       ),
-    ];
+      childOptions?.shouldBeSelfClosing
+        ? undefined
+        : b.jsxClosingElement(b.jsxIdentifier(childElementTag))
+    );
+
+    // add the child to the parent
+    parentElement.children = [...(parentElement.children || [])];
+    if (
+      childOptions?.orderByPathProp &&
+      typeof childAttributes.path === "string"
+    ) {
+      let insertIndex = -1;
+      // order based on path specificity
+      parentElement.children.forEach((existingChild, index) => {
+        const existingChildPath = pipe(
+          existingChild,
+          ifJSXElement,
+          (_) =>
+            _?.openingElement.attributes?.find(
+              (attr): attr is t.JSXAttribute =>
+                attr.type === "JSXAttribute" && attr.name.name === "path"
+            ),
+          getValue,
+          ifStringLiteral,
+          getValue
+        );
+        if (
+          existingChildPath &&
+          existingChildPath.includes(childAttributes.path as string)
+        ) {
+          insertIndex = index;
+        }
+      });
+      parentElement.children.splice(insertIndex + 1, 0, child);
+    } else {
+      parentElement.children.push(child);
+    }
+
     // if the parent was self closing, open it up
     if (parentElement.openingElement.selfClosing) {
       parentElement.closingElement = b.jsxClosingElement(
@@ -429,5 +443,52 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
         b.objectProperty(b.identifier(`${styleName}`), styleValue)
       );
     });
+  }
+
+  protected getOrAddImport(
+    ast: t.File,
+    importTarget: { path: string; name: string; isDefault?: boolean }
+  ) {
+    // try to find an existing import declaration
+    let assetImport = ast.program.body.find(
+      (node): node is t.ImportDeclaration =>
+        node.type === "ImportDeclaration" &&
+        node.source.type === "StringLiteral" &&
+        node.source.value === importTarget.path
+    );
+    // add an import declaration if none is found
+    if (!assetImport) {
+      let lastImportIndex = -1;
+      ast.program.body.forEach((node, index) => {
+        if (node.type === "ImportDeclaration") lastImportIndex = index;
+      });
+      assetImport = b.importDeclaration(
+        [
+          // identifier added below
+        ],
+        b.stringLiteral(importTarget.path)
+      );
+      ast.program.body.splice(lastImportIndex, 0, assetImport);
+    }
+    // try to find a default export on the import declaration
+    let assetImportIdentifier = assetImport!.specifiers?.find((node): node is
+      | t.ImportDefaultSpecifier
+      | t.ImportSpecifier =>
+      importTarget.isDefault
+        ? node.type === "ImportDefaultSpecifier"
+        : node.type === "ImportSpecifier" &&
+          node.imported.name === importTarget.name
+    );
+    // add a default import if none is found
+    if (!assetImportIdentifier) {
+      assetImportIdentifier = importTarget.isDefault
+        ? b.importDefaultSpecifier(b.identifier(importTarget.name))
+        : // todo add local if there's a name conflict
+          b.importSpecifier(b.identifier(importTarget.name));
+      assetImport.specifiers = assetImport.specifiers || [];
+      assetImport.specifiers.push(assetImportIdentifier);
+    }
+
+    return assetImportIdentifier.local!.name;
   }
 }

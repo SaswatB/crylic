@@ -98,8 +98,7 @@ export const webpackRunCodeWithWorker = async (
     if (name === "react-dom") return require("react-dom");
     if (name === "react-router-dom")
       return getReactRouterProxy(onRoutesDefined, onRouteChange);
-    return __non_webpack_require__(name);
-    // throw new Error(`Unable to require "${name}"`)
+    throw new Error(`Unable to require "${name}"`);
   };
   window.module = moduleExports;
   window.exports = exports;

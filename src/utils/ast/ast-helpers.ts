@@ -90,6 +90,10 @@ export const ifJSXAttribute = (
   node: t.Node | null | undefined
 ): t.JSXAttribute | undefined =>
   node?.type === "JSXAttribute" ? (node as t.JSXAttribute) : undefined;
+export const ifJSXElement = (
+  node: t.Node | null | undefined
+): t.JSXElement | undefined =>
+  node?.type === "JSXElement" ? (node as t.JSXElement) : undefined;
 export const ifJSXExpressionContainer = (
   node: t.Node | null | undefined
 ): t.JSXExpressionContainer | undefined =>
