@@ -43,6 +43,7 @@ interface Props {
     preview?: boolean
   ) => void;
   onAddRoute: (routeDefinition: RouteDefinition) => void;
+  onRemoveComponentView: () => void;
 }
 
 export const OverlayComponentView: FunctionComponent<Props> = ({
@@ -53,6 +54,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   onSelectElement,
   updateSelectedElementStyles,
   onAddRoute,
+  onRemoveComponentView,
 }) => {
   const [loading, setLoading] = useState(false);
   const [debouncedLoading, skipLoadingDebounce] = useDebounce(loading, 700);
@@ -136,13 +138,16 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
     }
   }, [routeDefinition?.history, compilerProps.renderEntry.route]);
 
-  const [, renderRouteMenu, openRouteMenu] = useMenuInput(
+  const [, renderRouteMenu, openRouteMenu, closeRouteMenu] = useMenuInput(
     (routeDefinition?.routes || []).map((availableRoute) => ({
       name: availableRoute,
       value: availableRoute,
     })),
-    undefined,
-    (newRoute) => routeDefinition?.history.push(newRoute),
+    { disableSelection: true },
+    (newRoute) => {
+      closeRouteMenu();
+      routeDefinition?.history.push(newRoute);
+    },
     undefined,
     currentRoute
   );
@@ -172,12 +177,12 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
                 className="text-gray-500 hover:text-white default-transition"
               />
             </button>
-            {/* <button className="ml-2" onClick={openRouteMenu}>
+            <button className="ml-2" onClick={onRemoveComponentView}>
               <FontAwesomeIcon
                 icon={faTimes}
                 className="text-gray-500 hover:text-white default-transition"
               />
-            </button> */}
+            </button>
           </>
         ) : null}
         {renderRouteMenu()}

@@ -526,6 +526,11 @@ function App() {
             currentProject?.editRenderEntry(entry.id, { route: path })
           );
         }}
+        onRemoveComponentView={() =>
+          setProject((currentProject) =>
+            currentProject?.removeRenderEntry(entry.id)
+          )
+        }
       />
     ));
 
