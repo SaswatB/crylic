@@ -17,6 +17,7 @@ import { StyledASTEditor } from "./ast/editors/StyledASTEditor";
 import { StyleSheetASTEditor } from "./ast/editors/StyleSheetASTEditor";
 import { CONFIG_FILE_NAME, DEFAULT_PROJECT_SOURCE_FOLDER } from "./constants";
 import {
+  getFriendlyName,
   IMAGE_EXTENSION_REGEX,
   isImageEntry,
   isScriptEntry,
@@ -268,8 +269,20 @@ export class Project {
 
   public addRenderEntry(codeEntry: CodeEntry) {
     return produce(this, (draft: Project) => {
+      let baseName = getFriendlyName(this, codeEntry.id);
+      const name = { current: baseName };
+      let index = 1;
+      while (
+        draft.renderEntries.find(
+          (renderEntry) => renderEntry.name === name.current
+        )
+      ) {
+        name.current = `${baseName} (${index++})`;
+      }
+
       draft.renderEntries.push({
         id: uniqueId(),
+        name: name.current,
         codeId: codeEntry.id,
       });
     });

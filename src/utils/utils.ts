@@ -67,7 +67,7 @@ export const buildOutline = (
       if (lookupId) {
         return [
           {
-            tag: child.tagName,
+            tag: child.tagName.toLowerCase(),
             renderId,
             lookupId,
             element: child as HTMLElement,

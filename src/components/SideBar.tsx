@@ -451,7 +451,12 @@ const useOutlineTab = ({
   selectElement,
   selectedElement,
 }: Props) => {
-  const outlines = Object.entries(outlineMap).filter(([key, value]) => !!value);
+  const outlines = Object.entries(outlineMap)
+    .map(([key, value]) => ({
+      outline: value!,
+      renderEntry: project?.renderEntries.find(({ id }) => id === key)!,
+    }))
+    .filter(({ outline, renderEntry }) => outline && renderEntry);
 
   let treeNodeIds = new Set<string>();
   const renderTree = (node: OutlineElement) => {
@@ -474,23 +479,13 @@ const useOutlineTab = ({
   };
 
   // render tree ahead of time to populate treeNodeIds
-  const renderedTree = outlines.map(([key, value]) =>
+  const renderedTree = outlines.map(({ outline, renderEntry }) =>
     renderTree({
-      tag:
-        (project &&
-          (value?.length ?? 0) > 0 &&
-          // todo don't use this hack to get code id
-          getFriendlyName(
-            project,
-            project.primaryElementEditor.getCodeIdFromLookupId(
-              value![0].lookupId
-            )
-          )) ||
-        key,
-      renderId: key,
-      lookupId: key,
+      tag: renderEntry.name,
+      renderId: renderEntry.id,
+      lookupId: renderEntry.id,
       element: undefined,
-      children: value!,
+      children: outline,
     })
   );
 

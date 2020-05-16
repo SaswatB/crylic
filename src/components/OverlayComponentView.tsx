@@ -155,10 +155,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   return (
     <div className="flex flex-col m-10">
       <div className="flex relative px-3 py-1 bg-blue-900 opacity-50 hover:opacity-100 default-transition">
-        {getFriendlyName(
-          compilerProps.project!,
-          compilerProps.renderEntry.codeId
-        )}
+        {compilerProps.renderEntry.name}
         <div className="flex-1" />
         {routeDefinition?.routes ? (
           <>

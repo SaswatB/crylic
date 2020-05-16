@@ -17,6 +17,7 @@ export interface CodeEntry {
 
 export interface RenderEntry {
   id: string;
+  name: string;
   codeId: string;
   route?: string;
 }
