@@ -154,7 +154,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
 
   return (
     <div className="flex flex-col m-10">
-      <div className="flex relative">
+      <div className="flex relative px-3 py-1 bg-blue-900 opacity-50 hover:opacity-100 default-transition">
         {getFriendlyName(
           compilerProps.project!,
           compilerProps.renderEntry.codeId
@@ -186,9 +186,16 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           />
         </button>
         {renderRouteMenu()}
-        <div className="absolute inset-0 text-center pointer-events-none">
-          {currentRoute || null}
-        </div>
+        {currentRoute && (
+          <div className="absolute inset-0 text-center pointer-events-none">
+            <div
+              className="inline-flex py-1 font-bold pointer-events-auto"
+              title="Route"
+            >
+              {currentRoute}
+            </div>
+          </div>
+        )}
       </div>
       <div className="flex relative bg-white shadow-2xl">
         <CompilerComponentView

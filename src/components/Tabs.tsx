@@ -47,21 +47,23 @@ export const Tabs: FunctionComponent<
 
   return (
     <div className={`${className || ""} tabs flex flex-col h-full`}>
-      <div className="btngrp-h">
-        {usableTabs.map(({ name }, index) => (
-          <button
-            key={index}
-            className="tab btn px-6"
-            style={
-              (activeTab === index && { backgroundColor: "#7895c1" }) ||
-              undefined
-            }
-            onClick={() => setActiveTab(index)}
-          >
-            {name}
-          </button>
-        ))}
-      </div>
+      {usableTabs.length > 1 && (
+        <div className="btngrp-h">
+          {usableTabs.map(({ name }, index) => (
+            <button
+              key={index}
+              className="tab btn px-6"
+              style={
+                (activeTab === index && { backgroundColor: "#7895c1" }) ||
+                undefined
+              }
+              onClick={() => setActiveTab(index)}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="tab-content overflow-y-auto">
         {usableTabs[activeTab]?.render() || null}
       </div>

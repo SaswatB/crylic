@@ -329,14 +329,14 @@ const useMainTab = ({
           </>
         )}
       </div>
-      {renderSeparator("Frame")}
-      <div className="flex flex-row items-center justify-center">
-        {renderComponentViewWidthInput()}
-        <div className="px-4">x</div>
-        {renderComponentViewHeightInput()}
-      </div>
       {project && (
         <>
+          {renderSeparator("Frame")}
+          <div className="flex flex-row items-center justify-center">
+            {renderComponentViewWidthInput()}
+            <div className="px-4">x</div>
+            {renderComponentViewHeightInput()}
+          </div>
           {renderSeparator(
             "Assets",
             <>
