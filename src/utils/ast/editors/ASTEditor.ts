@@ -10,18 +10,35 @@ export interface StyleGroup {
   editor: StyleASTEditor<any>;
 }
 
+export interface ReadContext<T> {
+  ast: Readonly<T>;
+  codeEntry: CodeEntry;
+}
+
+export interface EditContext<T> {
+  ast: T;
+  codeEntry: CodeEntry;
+  lookupId: string;
+}
+
 abstract class ASTEditor<ASTType> {
   public addLookupData = editAST(this.addLookupDataToAST.bind(this));
-  protected abstract addLookupDataToAST(
-    ast: ASTType,
-    codeEntry: CodeEntry
-  ): { lookupIds: string[] };
+  protected abstract addLookupDataToAST({
+    ast,
+    codeEntry,
+  }: {
+    ast: ASTType;
+    codeEntry: CodeEntry;
+  }): { lookupIds: string[] };
 
   public removeLookupData = editAST(this.removeLookupDataFromAST.bind(this));
-  protected abstract removeLookupDataFromAST(
-    ast: ASTType,
-    codeEntry: CodeEntry
-  ): void;
+  protected abstract removeLookupDataFromAST({
+    ast,
+    codeEntry,
+  }: {
+    ast: ASTType;
+    codeEntry: CodeEntry;
+  }): void;
 
   public onASTRender(iframe: HTMLIFrameElement) {}
 
@@ -43,17 +60,13 @@ export abstract class StyleASTEditor<ASTType> extends ASTEditor<ASTType> {
 
   public addStyles = editAST(this.addStylesToAST.bind(this));
   protected abstract addStylesToAST(
-    ast: ASTType,
-    codeEntry: CodeEntry,
-    lookupId: string,
+    editContext: EditContext<ASTType>,
     styles: Styles
   ): void;
 
   public updateElementImage = editAST(this.updateElementImageInAST.bind(this));
   protected abstract updateElementImageInAST(
-    ast: ASTType,
-    codeEntry: CodeEntry,
-    lookupId: string,
+    editContext: EditContext<ASTType>,
     imageProp: "backgroundImage",
     assetEntry: CodeEntry
   ): void;
@@ -70,29 +83,31 @@ export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
 
   public addChildToElement = editAST(this.addChildToElementInAST.bind(this));
   protected abstract addChildToElementInAST(
-    ast: ASTType,
-    codeEntry: CodeEntry,
-    parentLookupId: string,
+    editContext: EditContext<ASTType>,
     childTag: keyof HTMLElementTagNameMap | string,
     childAttributes?: Record<string, unknown>
   ): void;
 
+  public updateElementAttributes = editAST(
+    this.updateElementAttributesInAST.bind(this)
+  );
+  protected abstract updateElementAttributesInAST(
+    editContext: EditContext<ASTType>,
+    attributes: Record<string, unknown>
+  ): void;
+
   public updateElementText = editAST(this.updateElementTextInAST.bind(this));
   protected abstract updateElementTextInAST(
-    ast: ASTType,
-    codeEntry: CodeEntry,
-    lookupId: string,
+    editContext: EditContext<ASTType>,
     newTextContent: string
   ): void;
 
   public abstract getRecentlyAddedElements(
-    ast: Readonly<ASTType>,
-    codeEntry: CodeEntry
+    readContext: ReadContext<ASTType>
   ): string[];
 
   public abstract getElementLookupIdAtCodePosition(
-    ast: Readonly<ASTType>,
-    codeEntry: CodeEntry,
+    readContext: ReadContext<ASTType>,
     line: number,
     column: number
   ): string | undefined;
@@ -103,8 +118,7 @@ export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
   ): HTMLElement | undefined;
 
   public abstract getEditorDecorationsForElement(
-    ast: Readonly<ASTType>,
-    codeEntry: CodeEntry,
+    readContext: ReadContext<ASTType>,
     lookupId: string
   ): monaco.editor.IModelDeltaDecoration[];
 }

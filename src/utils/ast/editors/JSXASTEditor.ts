@@ -19,7 +19,12 @@ import {
   traverseJSXElements,
   valueToJSXLiteral,
 } from "../ast-helpers";
-import { ElementASTEditor, StyleGroup } from "./ASTEditor";
+import {
+  EditContext,
+  ElementASTEditor,
+  ReadContext,
+  StyleGroup,
+} from "./ASTEditor";
 
 const path = __non_webpack_require__("path") as typeof import("path");
 
@@ -39,7 +44,13 @@ const JSX_RECENTLY_ADDED_DATA_ATTR = "paintlookupidnew";
 const JSX_RECENTLY_ADDED = "new";
 
 export class JSXASTEditor extends ElementASTEditor<t.File> {
-  protected addLookupDataToAST(ast: t.File, codeEntry: CodeEntry) {
+  protected addLookupDataToAST({
+    ast,
+    codeEntry,
+  }: {
+    ast: t.File;
+    codeEntry: CodeEntry;
+  }) {
     let lookupIds: string[] = [];
     traverseJSXElements(ast, (path, index) => {
       const lookupId = this.createLookupId(codeEntry, index);
@@ -54,7 +65,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       lookupIds,
     };
   }
-  protected removeLookupDataFromAST(ast: t.File) {
+  protected removeLookupDataFromAST({ ast }: { ast: t.File }) {
     traverseJSXElements(ast, (path) => {
       const { openingElement } = path.value;
       openingElement.attributes = openingElement.attributes?.filter(
@@ -88,9 +99,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
   }
 
   protected addChildToElementInAST(
-    ast: t.File,
-    codeEntry: CodeEntry,
-    parentLookupId: string,
+    { ast, lookupId }: EditContext<t.File>,
     childTag: keyof HTMLElementTagNameMap | string,
     childAttributes?: Record<string, unknown>
   ) {
@@ -102,7 +111,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       });
     }
 
-    this.editJSXElementByLookupId(ast, parentLookupId, (path) => {
+    this.editJSXElementByLookupId(ast, lookupId, (path) => {
       this.addJSXChildToJSXElement(
         path.value,
         childTag,
@@ -117,14 +126,33 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     });
   }
 
+  protected updateElementAttributesInAST(
+    { ast, lookupId }: EditContext<t.File>,
+    attributes: Record<string, unknown>
+  ) {
+    this.editJSXElementByLookupId(ast, lookupId, (path) => {
+      Object.entries(attributes).forEach(([key, value]) => {
+        const { openingElement } = path.value;
+        let attr = openingElement.attributes?.find(
+          (attr): attr is t.JSXAttribute =>
+            attr.type === "JSXAttribute" && attr.name.name === key
+        );
+        if (!attr) {
+          openingElement.attributes = openingElement.attributes || [];
+          attr = b.jsxAttribute(b.jsxIdentifier(key), valueToJSXLiteral({}));
+          openingElement.attributes.push(attr);
+        }
+
+        attr.value = valueToJSXLiteral(value);
+      });
+    });
+  }
+
   protected updateElementTextInAST(
-    ast: t.File,
-    codeEntry: CodeEntry,
-    lookupId: string,
+    { ast, lookupId }: EditContext<t.File>,
     newTextContent: string
   ) {
     this.editJSXElementByLookupId(ast, lookupId, (path) => {
-      console.log(path);
       const textNode = path.value.children?.find(
         (child): child is t.JSXText => child.type === "JSXText"
       );
@@ -138,9 +166,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
   }
 
   protected updateElementImageInAST(
-    ast: t.File,
-    codeEntry: CodeEntry,
-    lookupId: string,
+    { ast, codeEntry, lookupId }: EditContext<t.File>,
     imageProp: "backgroundImage",
     assetEntry: CodeEntry
   ) {
@@ -158,7 +184,6 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     });
 
     this.editJSXElementByLookupId(ast, lookupId, (path) => {
-      console.log("updateElementImageInAST", path, assetIdentifier);
       // edit the element style
       this.applyJSXInlineStyleAttribute(path, [
         {
@@ -176,7 +201,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     });
   }
 
-  public getRecentlyAddedElements(ast: Readonly<t.File>, codeEntry: CodeEntry) {
+  public getRecentlyAddedElements({ ast, codeEntry }: ReadContext<t.File>) {
     let resultIndicies: number[] = [];
     traverseJSXElements(ast, (path, index) => {
       const hasRecentlyAddedDataAttr = path.value.openingElement.attributes?.find(
@@ -192,8 +217,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
   }
 
   public getElementLookupIdAtCodePosition(
-    ast: Readonly<t.File>,
-    codeEntry: CodeEntry,
+    { ast, codeEntry }: ReadContext<t.File>,
     line: number,
     column: number
   ) {
@@ -230,8 +254,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
   }
 
   public getEditorDecorationsForElement(
-    ast: Readonly<t.File>,
-    codeEntry: CodeEntry,
+    { ast }: ReadContext<t.File>,
     lookupId: string
   ) {
     const decorations: monaco.editor.IModelDeltaDecoration[] = [];
@@ -274,9 +297,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
   }
 
   protected addStylesToAST(
-    ast: t.File,
-    codeEntry: CodeEntry,
-    lookupId: string,
+    { ast, lookupId }: EditContext<t.File>,
     styles: Styles
   ) {
     this.editJSXElementByLookupId(ast, lookupId, (path) =>
@@ -439,7 +460,6 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
             (_) => _?.name
           ) === styleName
       );
-      console.log("existingStyleProp", existingStyleProp);
       if (existingStyleProp) {
         existingStyleProp.value = styleValue;
         return;

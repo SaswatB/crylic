@@ -251,14 +251,17 @@ export const traverseStyleSheetRuleSets = (
   });
 };
 
-export const editAST = <S, T extends object | void, U extends any[]>(
-  apply: (ast: S, ...rest: U) => T
-) => (ast: S, ...rest: U): T extends void ? S : T & { ast: S } => {
+export const editAST = <R, S, T extends object | void, U extends any[]>(
+  apply: (arg0: S & { ast: R }, ...rest: U) => T
+) => (
+  arg0: S & { ast: R },
+  ...rest: U
+): T extends void ? R : T & { ast: R } => {
   let applyResult: T | undefined = undefined;
-  const newAst = cloneDeep(ast);
+  const newAst = cloneDeep(arg0.ast);
   // const newAst = produce(ast, (draft) => {
   //   console.log('using draft')
-  applyResult = apply(newAst, ...rest);
+  applyResult = apply({ ...arg0, ast: newAst }, ...rest);
   //   console.log('finished draft')
   // });
   if (applyResult) {

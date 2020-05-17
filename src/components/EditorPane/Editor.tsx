@@ -55,8 +55,7 @@ export const Editor: FunctionComponent<Props> = ({
     ) {
       try {
         decorations = project.primaryElementEditor.getEditorDecorationsForElement(
-          codeEntry.ast,
-          codeEntry,
+          { ast: codeEntry.ast, codeEntry },
           selectedElementId
         );
       } catch (err) {
@@ -137,8 +136,7 @@ export const Editor: FunctionComponent<Props> = ({
       let lookupId;
       try {
         lookupId = project.primaryElementEditor.getElementLookupIdAtCodePosition(
-          codeEntry.ast,
-          codeEntry,
+          { ast: codeEntry.ast, codeEntry },
           e.position.lineNumber,
           e.position.column
         );

@@ -523,6 +523,7 @@ const useSelectedElementEditorTab = ({
   project,
   selectedElement,
   updateSelectedElementStyle,
+  updateSelectedElementAttributes,
   updateSelectedElementText,
   updateSelectedElementImage,
 }: Props) => {
@@ -553,6 +554,13 @@ const useSelectedElementEditorTab = ({
     (newTextContent) => updateSelectedElementText(newTextContent),
     "Text Content",
     selectedElement?.element.textContent ?? undefined,
+    true
+  );
+
+  const [, renderIDInput] = useTextInput(
+    (newID) => updateSelectedElementAttributes({ id: newID }),
+    "Identifier",
+    selectedElement?.element.id ?? undefined,
     true
   );
 
@@ -790,7 +798,10 @@ const useSelectedElementEditorTab = ({
         </>
       )}
       {renderSeparator("Extras")}
-      <div className={gridClass}>{renderCursorInput()}</div>
+      <div className={gridClass}>
+        {renderCursorInput()}
+        {renderIDInput()}
+      </div>
     </>
   );
   return renderEditor;
@@ -807,6 +818,9 @@ interface Props {
     styleProp: keyof CSSStyleDeclaration,
     newValue: string,
     preview?: boolean
+  ) => void;
+  updateSelectedElementAttributes: (
+    attributes: Record<string, unknown>
   ) => void;
   updateSelectedElementText: (newTextContent: string) => void;
   updateSelectedElementImage: (

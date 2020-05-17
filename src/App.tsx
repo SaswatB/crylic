@@ -22,7 +22,12 @@ import {
   Styles,
 } from "./types/paint";
 import { prettyPrintCodeEntryAST } from "./utils/ast/ast-helpers";
-import { StyleGroup } from "./utils/ast/editors/ASTEditor";
+import {
+  EditContext,
+  ElementASTEditor,
+  StyleASTEditor,
+  StyleGroup,
+} from "./utils/ast/editors/ASTEditor";
 import {
   DEFAULT_FRAME_HEIGHT,
   DEFAULT_FRAME_WIDTH,
@@ -77,7 +82,7 @@ function App() {
   const setCodeAstEdit = (editedAst: any, codeEntry: CodeEntry) => {
     // remove lookup data from the ast and get the transformed code
     project?.getEditorsForCodeEntry(codeEntry).forEach((editor) => {
-      editedAst = editor.removeLookupData(editedAst, codeEntry);
+      editedAst = editor.removeLookupData({ ast: editedAst, codeEntry });
     });
     // save the edited code
     setCode(codeEntry.id, prettyPrintCodeEntryAST(codeEntry, editedAst));
@@ -222,17 +227,15 @@ function App() {
         if (!codeEntry) break;
 
         let newAst = project?.primaryElementEditor.addChildToElement(
-          codeEntry.ast,
-          codeEntry,
-          lookupId,
+          { ast: codeEntry.ast, codeEntry, lookupId },
           selectMode.tag,
           selectMode.attributes
         );
         const [newChildLookupId] =
-          project?.primaryElementEditor.getRecentlyAddedElements(
-            newAst,
-            codeEntry
-          ) || [];
+          project?.primaryElementEditor.getRecentlyAddedElements({
+            ast: newAst,
+            codeEntry,
+          }) || [];
 
         if (newChildLookupId !== undefined) {
           // try to select the newly added element when the CompilerComponentView next compiles
@@ -257,6 +260,41 @@ function App() {
     setSelectMode(undefined);
   };
 
+  const updateStyleGroup = <T extends {}>(
+    styleGroup: StyleGroup,
+    apply: (editor: StyleASTEditor<T>, editContext: EditContext<T>) => T
+  ) => {
+    // gather prerequisites
+    const { editor, lookupId } = styleGroup;
+    const codeId = editor.getCodeIdFromLookupId(lookupId);
+    if (!codeId) return;
+    const codeEntry = project?.getCodeEntry(codeId);
+    if (!codeEntry) return;
+
+    // update ast
+    const newAst = apply(editor, { ast: codeEntry.ast, codeEntry, lookupId });
+
+    setCodeAstEdit(newAst, codeEntry);
+  };
+  const updateSelectedElement = <T extends {}>(
+    apply: (editor: ElementASTEditor<T>, editContext: EditContext<T>) => T
+  ) => {
+    // gather prerequisites
+    if (!selectedElement) return;
+    const editor = project?.primaryElementEditor;
+    if (!editor) return;
+    const { lookupId } = selectedElement;
+    const codeId = editor.getCodeIdFromLookupId(lookupId);
+    if (!codeId) return;
+    const codeEntry = project?.getCodeEntry(codeId);
+    if (!codeEntry) return;
+
+    // update ast
+    const newAst = apply(editor, { ast: codeEntry.ast, codeEntry, lookupId });
+
+    setCodeAstEdit(newAst, codeEntry);
+  };
+
   const updateSelectedElementStyles = (
     styleGroup: StyleGroup,
     styles: Styles,
@@ -264,10 +302,6 @@ function App() {
   ) => {
     if (!selectedElement) return;
 
-    const selectedCodeId = project?.primaryElementEditor.getCodeIdFromLookupId(
-      selectedElement.lookupId
-    );
-    if (!selectedCodeId) return;
     const componentView = componentViews.current[selectedElement.renderId];
     componentView?.addTempStyles(selectedElement.lookupId, styles, !preview);
     // preview is a flag used to quickly show updates in the dom
@@ -275,23 +309,9 @@ function App() {
     // such as changing state or parsing ast
     if (preview) return;
 
-    // get the ast editor for the style group
-    const { editor } = styleGroup;
-
-    // get the code entry to edit from the lookup id
-    const editedCodeId = editor.getCodeIdFromLookupId(styleGroup.lookupId);
-    const editedCodeEntry = project?.getCodeEntry(editedCodeId);
-    if (!editedCodeEntry) return;
-
-    // add styles to the ast
-    const newAst = editor.addStyles(
-      editedCodeEntry.ast,
-      editedCodeEntry,
-      styleGroup.lookupId,
-      styles
+    updateStyleGroup(styleGroup, (editor, editContext) =>
+      editor.addStyles(editContext, styles)
     );
-
-    setCodeAstEdit(newAst, editedCodeEntry);
   };
 
   const updateSelectedElementStyle = (
@@ -312,25 +332,18 @@ function App() {
     }
   };
 
+  const updateSelectedElementAttributes = (
+    attributes: Record<string, unknown>
+  ) => {
+    updateSelectedElement((editor, editContext) =>
+      editor.updateElementAttributes(editContext, attributes)
+    );
+  };
+
   const updateSelectedElementText = (newTextContent: string) => {
-    if (!selectedElement) return;
-
-    const selectedCodeId = project?.primaryElementEditor.getCodeIdFromLookupId(
-      selectedElement.lookupId
+    updateSelectedElement((editor, editContext) =>
+      editor.updateElementText(editContext, newTextContent)
     );
-    if (!selectedCodeId) return;
-    const codeEntry = project?.getCodeEntry(selectedCodeId);
-    if (!codeEntry) return;
-
-    // update text in ast
-    const newAst = project?.primaryElementEditor.updateElementText(
-      codeEntry.ast,
-      codeEntry,
-      selectedElement.lookupId,
-      newTextContent
-    );
-
-    setCodeAstEdit(newAst, codeEntry);
   };
 
   const updateSelectedElementImage = (
@@ -338,31 +351,9 @@ function App() {
     imageProp: "backgroundImage",
     assetEntry: CodeEntry
   ) => {
-    if (!selectedElement) return;
-
-    const selectedCodeId = project?.primaryElementEditor.getCodeIdFromLookupId(
-      selectedElement.lookupId
+    updateStyleGroup(styleGroup, (editor, editContext) =>
+      editor.updateElementImage(editContext, imageProp, assetEntry)
     );
-    if (!selectedCodeId) return;
-
-    // get the ast editor for the style group
-    const { editor } = styleGroup;
-
-    // get the code entry to edit from the lookup id
-    const editedCodeId = editor.getCodeIdFromLookupId(styleGroup.lookupId);
-    const editedCodeEntry = project?.getCodeEntry(editedCodeId);
-    if (!editedCodeEntry) return;
-
-    // update image in ast
-    const newAst = editor.updateElementImage(
-      editedCodeEntry.ast,
-      editedCodeEntry,
-      selectedElement.lookupId,
-      imageProp,
-      assetEntry
-    );
-
-    setCodeAstEdit(newAst, editedCodeEntry);
   };
 
   const renderSelectBar = () => (
@@ -391,6 +382,7 @@ function App() {
       selectedElement={selectedElement}
       onChangeSelectMode={setSelectMode}
       updateSelectedElementStyle={updateSelectedElementStyle}
+      updateSelectedElementAttributes={updateSelectedElementAttributes}
       updateSelectedElementText={updateSelectedElementText}
       updateSelectedElementImage={updateSelectedElementImage}
       onChangeFrameSize={(width, height) => {
@@ -513,11 +505,11 @@ function App() {
           const codeEntry = project.getCodeEntry(
             project.primaryElementEditor.getCodeIdFromLookupId(switchLookupId)
           );
+          if (!codeEntry) return;
+
           // todo check if Route is imported
           const newAst = project.primaryElementEditor.addChildToElement(
-            codeEntry!.ast,
-            codeEntry!,
-            switchLookupId,
+            { ast: codeEntry.ast, codeEntry, lookupId: switchLookupId },
             "Route",
             { path }
           );

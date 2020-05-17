@@ -13,14 +13,20 @@ import {
   registerUninheritedCSSProperty,
   traverseStyleSheetRuleSets,
 } from "../ast-helpers";
-import { StyleASTEditor, StyleGroup } from "./ASTEditor";
+import { EditContext, StyleASTEditor, StyleGroup } from "./ASTEditor";
 
 export const STYLESHEET_LOOKUP_CSS_VAR_PREFIX = "--paint-stylesheetlookup-";
 
 export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
   private createdIds = new Set<string>();
 
-  protected addLookupDataToAST(ast: CSSASTNode, codeEntry: CodeEntry) {
+  protected addLookupDataToAST({
+    ast,
+    codeEntry,
+  }: {
+    ast: CSSASTNode;
+    codeEntry: CodeEntry;
+  }) {
     let lookupIds: string[] = [];
     traverseStyleSheetRuleSets(ast, (path, index) => {
       const lookupId = this.createLookupId(codeEntry, index);
@@ -41,7 +47,7 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
     return { lookupIds };
   }
 
-  protected removeLookupDataFromAST(ast: CSSASTNode) {
+  protected removeLookupDataFromAST({ ast }: { ast: CSSASTNode }) {
     traverseStyleSheetRuleSets(ast, (path) => {
       const ruleBlock = this.getRuleBlock(path);
       const { lookupId, index } =
@@ -91,9 +97,7 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
   }
 
   protected addStylesToAST(
-    ast: CSSASTNode,
-    codeEntry: CodeEntry,
-    lookupId: string,
+    { ast, lookupId }: EditContext<CSSASTNode>,
     styles: Styles
   ): void {
     let madeChange = false;
@@ -106,9 +110,7 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
   }
 
   protected updateElementImageInAST(
-    ast: CSSASTNode,
-    codeEntry: CodeEntry,
-    lookupId: string,
+    { ast, lookupId }: EditContext<CSSASTNode>,
     imageProp: "backgroundImage",
     assetEntry: CodeEntry
   ) {

@@ -227,7 +227,7 @@ export class Project {
 
       // add lookup data from each editor to the ast
       this.getEditorsForCodeEntry(codeEntry).forEach((editor) => {
-        ({ ast } = editor.addLookupData(ast, codeEntry));
+        ({ ast } = editor.addLookupData({ ast, codeEntry }));
       });
       // return the modified ast and code
       console.log("codeTransformer", codeEntry.filePath, ast);

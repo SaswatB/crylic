@@ -8,7 +8,7 @@ import {
   registerUninheritedCSSProperty,
   traverseStyledTemplatesElements,
 } from "../ast-helpers";
-import { StyleASTEditor, StyleGroup } from "./ASTEditor";
+import { EditContext, StyleASTEditor, StyleGroup } from "./ASTEditor";
 
 export const STYLED_LOOKUP_CSS_VAR_PREFIX = "--paint-styledlookup-";
 
@@ -20,7 +20,13 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
   private createdIds = new Set<string>();
   private lookupIdNameMap: Record<string, string | undefined> = {};
 
-  protected addLookupDataToAST(ast: t.File, codeEntry: CodeEntry) {
+  protected addLookupDataToAST({
+    ast,
+    codeEntry,
+  }: {
+    ast: t.File;
+    codeEntry: CodeEntry;
+  }) {
     let lookupIds: string[] = [];
     traverseStyledTemplatesElements(ast, (path, index) => {
       const lookupId = this.createLookupId(codeEntry, index);
@@ -46,7 +52,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
     };
   }
 
-  protected removeLookupDataFromAST(ast: t.File) {
+  protected removeLookupDataFromAST({ ast }: { ast: t.File }) {
     traverseStyledTemplatesElements(ast, (path) => {
       const { value } = path.value.quasi.quasis[0];
       value.raw = value.raw.replace(STYLED_LOOKUP_MATCHER, "");
@@ -84,9 +90,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
   }
 
   protected addStylesToAST(
-    ast: t.File,
-    codeEntry: CodeEntry,
-    lookupId: string,
+    { ast, lookupId }: EditContext<t.File>,
     styles: Styles
   ): void {
     let madeChange = false;
@@ -99,9 +103,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
   }
 
   protected updateElementImageInAST(
-    ast: t.File,
-    codeEntry: CodeEntry,
-    lookupId: string,
+    { ast, lookupId }: EditContext<t.File>,
     imageProp: "backgroundImage",
     assetEntry: CodeEntry
   ) {
