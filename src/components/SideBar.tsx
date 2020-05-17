@@ -13,6 +13,7 @@ import {
   faCog,
   faDotCircle,
   faEdit,
+  faExternalLinkSquareAlt,
   faEye,
   faFilter,
   faFont,
@@ -60,7 +61,6 @@ import {
 } from "../utils/constants";
 import { Project } from "../utils/Project";
 import {
-  getFriendlyName,
   getReactDebugId,
   IMAGE_EXTENSION_REGEX,
   isImageEntry,
@@ -413,7 +413,7 @@ const useAdderTab = ({ onChangeSelectMode }: Props) => {
           <FontAwesomeIcon icon={faPlusSquare} /> Button
         </button>
         <button className="btn w-full" onClick={() => onAddElement("a")}>
-          <FontAwesomeIcon icon={faCaretSquareDown} /> Link
+          <FontAwesomeIcon icon={faExternalLinkSquareAlt} /> Link
         </button>
       </div>
       {renderSeparator("Form")}

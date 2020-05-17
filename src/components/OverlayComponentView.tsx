@@ -17,7 +17,6 @@ import { SelectedElement, Styles } from "../types/paint";
 import { StyleGroup } from "../utils/ast/editors/ASTEditor";
 import { SelectModeType } from "../utils/constants";
 import { RouteDefinition } from "../utils/react-router-proxy";
-import { getFriendlyName } from "../utils/utils";
 import {
   CompilerComponentView,
   CompilerComponentViewProps,
@@ -136,6 +135,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
     if (routeDefinition?.history && compilerProps.renderEntry.route) {
       routeDefinition.history.push(compilerProps.renderEntry.route);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeDefinition?.history, compilerProps.renderEntry.route]);
 
   const [, renderRouteMenu, openRouteMenu, closeRouteMenu] = useMenuInput(
@@ -161,14 +161,18 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           <>
             <button
               onClick={() => onAddRoute(routeDefinition)}
-              title="Add Routes"
+              title="Add Route"
             >
               <FontAwesomeIcon
                 icon={faPlus}
                 className="text-gray-500 hover:text-white default-transition"
               />
             </button>
-            <button className="ml-2" onClick={openRouteMenu}>
+            <button
+              className="ml-2"
+              onClick={openRouteMenu}
+              title="Switch Route"
+            >
               <FontAwesomeIcon
                 icon={faLink}
                 className="text-gray-500 hover:text-white default-transition"
@@ -176,7 +180,11 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
             </button>
           </>
         ) : null}
-        <button className="ml-2" onClick={onRemoveComponentView}>
+        <button
+          className="ml-2"
+          onClick={onRemoveComponentView}
+          title="Close Frame"
+        >
           <FontAwesomeIcon
             icon={faTimes}
             className="text-gray-500 hover:text-white default-transition"

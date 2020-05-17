@@ -70,6 +70,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     return element.dataset?.[JSX_LOOKUP_DATA_ATTR];
   }
   public getLookupIdFromProps(props: any) {
+    // todo only return if this is a string
     return props?.[`data-${JSX_LOOKUP_DATA_ATTR}`];
   }
 
@@ -110,7 +111,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
           [`data-${JSX_RECENTLY_ADDED_DATA_ATTR}`]: JSX_RECENTLY_ADDED,
         },
         {
-          orderByPathProp: childTag === "Route",
+          isNewRoute: childTag === "Route",
         }
       );
     });
@@ -327,8 +328,8 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     childAttributes: Record<string, unknown> = {},
     childOptions?: {
       shouldBeSelfClosing?: boolean;
-      // `Route` specific ordering option
-      orderByPathProp?: boolean;
+      // `Route` specific flag
+      isNewRoute?: boolean;
     }
   ) {
     const child = b.jsxElement(
@@ -346,10 +347,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
 
     // add the child to the parent
     parentElement.children = [...(parentElement.children || [])];
-    if (
-      childOptions?.orderByPathProp &&
-      typeof childAttributes.path === "string"
-    ) {
+    if (childOptions?.isNewRoute && typeof childAttributes.path === "string") {
       let insertIndex = -1;
       // order based on path specificity
       parentElement.children.forEach((existingChild, index) => {
@@ -372,6 +370,22 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
           insertIndex = index;
         }
       });
+      // add a div so the route can be added to
+      // TODO: generalize this behavior
+      child.children = [
+        b.jsxElement(
+          b.jsxOpeningElement(
+            b.jsxIdentifier("div"),
+            [
+              b.jsxAttribute(
+                b.jsxIdentifier("style"),
+                valueToJSXLiteral({ display: "flex", height: "100%" })
+              ),
+            ],
+            true
+          )
+        ),
+      ];
       parentElement.children.splice(insertIndex + 1, 0, child);
     } else {
       parentElement.children.push(child);
