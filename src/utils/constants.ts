@@ -131,6 +131,13 @@ export const CSS_TEXT_ALIGN_OPTIONS = [
   { name: "Justify", value: "justify" },
 ];
 
+export const CSS_TEXT_DECORATION_LINE_OPTIONS = [
+  { name: "None", value: "none" },
+  { name: "Underline", value: "underline" },
+  { name: "Overline", value: "overline" },
+  { name: "Strike Through", value: "line-through" },
+];
+
 export const CSS_FONT_WEIGHT_OPTIONS = [
   { name: "Normal", value: "normal" },
   { name: "Bold", value: "bold" },

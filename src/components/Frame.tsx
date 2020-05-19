@@ -72,5 +72,12 @@ export const Frame: FunctionComponent<
   }));
 
   // @ts-ignore ignore ref that's overridden by useImperativeHandle
-  return <iframe ref={frame} title="frame" {...props} />;
+  return (
+    <iframe
+      ref={frame}
+      title="frame"
+      sandbox="allow-same-origin allow-scripts"
+      {...props}
+    />
+  );
 });

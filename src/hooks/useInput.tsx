@@ -14,6 +14,7 @@ import {
 } from "@material-ui/core";
 import Slider, { SliderProps } from "@material-ui/core/Slider";
 import Autocomplete, {
+  AutocompleteProps,
   createFilterOptions,
 } from "@material-ui/lab/Autocomplete";
 import { isEqual } from "lodash";
@@ -272,8 +273,11 @@ export function useAutocomplete<T>(
   const [value, setValue] = useBoundState(initialValue);
   const filter = useRef(createFilterOptions<{ name: string; value: T }>());
 
-  const render = () => (
+  const render = (
+    props?: AutocompleteProps<{ name: string; category?: string; value: T }>
+  ) => (
     <Autocomplete
+      {...props}
       PopperComponent={autoCompleteOptions?.widePopper ? WidePopper : undefined}
       multiple={false}
       value={
@@ -285,10 +289,7 @@ export function useAutocomplete<T>(
             }
           : null)
       }
-      onChange={(
-        event: React.ChangeEvent<{}>,
-        newValue: { name: string; value: T } | null
-      ) => {
+      onChange={(event, newValue) => {
         const v =
           newValue?.value ||
           (autoCompleteOptions?.freeSolo && (newValue as T | null)) ||

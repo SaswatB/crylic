@@ -48,13 +48,15 @@ export interface CompilerComponentViewRef {
   ) => void;
 }
 
+export type ViewContext = {
+  iframe: HTMLIFrameElement;
+  onRoutesDefined: Observable<RouteDefinition>;
+  onRouteChange: Observable<string>;
+} & CompilerComponentViewRef;
+
 export type OnCompileEndCallback = (
   renderEntry: RenderEntry,
-  context: {
-    iframe: HTMLIFrameElement;
-    onRoutesDefined: Observable<RouteDefinition>;
-    onRouteChange: Observable<string>;
-  } & CompilerComponentViewRef
+  context: ViewContext
 ) => void;
 
 export interface CompilerComponentViewProps {

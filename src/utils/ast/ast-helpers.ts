@@ -3,6 +3,7 @@ import { LiteralKind } from "ast-types/gen/kinds";
 import { NodePath } from "ast-types/lib/node-path";
 import deepFreeze from "deep-freeze-strict";
 import { Either, left, right } from "fp-ts/lib/Either";
+import { pipe } from "fp-ts/lib/pipeable";
 import gonzales, {
   createNode,
   CSSASTNode,
@@ -16,6 +17,7 @@ import { CodeEntry } from "../../types/paint";
 import { getStyleEntryExtension, isStyleEntry } from "../utils";
 import { babelTsParser } from "./babel-ts";
 
+// webpack require needed due to prettier dep on dirname
 const { format } = __non_webpack_require__(
   "prettier"
 ) as typeof import("prettier");
@@ -156,6 +158,42 @@ export const valueToASTLiteral = (
   }
 };
 
+const LiteralKindTypes = [
+  "BigIntLiteral",
+  "BooleanLiteral",
+  "JSXText",
+  "Literal",
+  "NullLiteral",
+  "NumericLiteral",
+  "RegExpLiteral",
+  "StringLiteral",
+];
+
+export const astLiteralToValue = (value: LiteralKind | t.ObjectExpression) => {
+  if (LiteralKindTypes.includes(value.type)) {
+    return (value as LiteralKind).value;
+  } else if (value.type === "ObjectExpression") {
+    return value.properties
+      .map((prop) => {
+        if (prop.type === "ObjectProperty") {
+          if (LiteralKindTypes.includes(prop.value.type)) {
+            return {
+              key: pipe(prop.key, ifStringLiteral, getValue),
+              value: (prop.value as LiteralKind).value,
+            };
+          }
+        }
+        return undefined;
+      })
+      .filter((e) => e && e.key !== undefined)
+      .reduce((acc: Record<string, unknown>, cur) => {
+        acc[cur!.key!] = cur!.value;
+        return acc;
+      }, {});
+  }
+  throw new Error(`Unexpected value type ${value.type}`);
+};
+
 export const valueToJSXLiteral = (value: unknown) => {
   // jsx allows string literals for property values
   if (typeof value === "string") return b.stringLiteral(value);
@@ -163,6 +201,19 @@ export const valueToJSXLiteral = (value: unknown) => {
   if (value === true) return null;
   // wrap everything else in an expression container
   return b.jsxExpressionContainer(valueToASTLiteral(value));
+};
+
+export const jsxLiteralToValue = (
+  value: LiteralKind | t.JSXExpressionContainer
+) => {
+  if (value.type === "JSXExpressionContainer") {
+    if (value.expression.type === "ObjectExpression") {
+      return astLiteralToValue(value.expression);
+    }
+    // todo process more types of expressions
+    return undefined;
+  }
+  return astLiteralToValue(value);
 };
 
 export const copyJSXName = (
@@ -207,12 +258,13 @@ export const traverseJSXElements = (
   visitor: (
     path: NodePath<types.namedTypes.JSXElement, t.JSXElement>,
     index: number
-  ) => void
+  ) => boolean | void
 ) => {
   let count = 0;
   visit(ast, {
     visitJSXElement(path) {
-      visitor(path, count++);
+      const result = visitor(path, count++);
+      if (result === false) return false;
       this.traverse(path);
     },
   });

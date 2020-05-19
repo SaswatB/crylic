@@ -1,6 +1,6 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
-import { CodeEntry, Styles } from "../../../types/paint";
+import { CodeEntry, SourceMetadata, Styles } from "../../../types/paint";
 import { editAST } from "../ast-helpers";
 
 export interface StyleGroup {
@@ -96,6 +96,14 @@ export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
     attributes: Record<string, unknown>
   ): void;
 
+  public updateElementComponent = editAST(
+    this.updateElementComponentInAST.bind(this)
+  );
+  protected abstract updateElementComponentInAST(
+    editContext: EditContext<ASTType>,
+    component: string
+  ): void;
+
   public updateElementText = editAST(this.updateElementTextInAST.bind(this));
   protected abstract updateElementTextInAST(
     editContext: EditContext<ASTType>,
@@ -111,6 +119,11 @@ export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
     line: number,
     column: number
   ): string | undefined;
+
+  public abstract getSourceMetaDataFromLookupId(
+    readContext: ReadContext<ASTType>,
+    lookupId: string
+  ): SourceMetadata | undefined;
 
   public abstract getHTMLElementByLookupId(
     document: Document,

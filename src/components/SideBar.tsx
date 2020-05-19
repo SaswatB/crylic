@@ -40,8 +40,13 @@ import {
   useSelectInput,
   useTextInput,
 } from "../hooks/useInput";
+import { useObservable } from "../hooks/useObservable";
 import { CodeEntry, OutlineElement, SelectedElement } from "../types/paint";
-import { StyleGroup } from "../utils/ast/editors/ASTEditor";
+import {
+  EditContext,
+  ElementASTEditor,
+  StyleGroup,
+} from "../utils/ast/editors/ASTEditor";
 import {
   CSS_ALIGN_ITEMS_OPTIONS,
   CSS_BACKGROUND_SIZE_OPTIONS,
@@ -54,6 +59,7 @@ import {
   CSS_JUSTIFY_CONTENT_OPTIONS,
   CSS_POSITION_OPTIONS,
   CSS_TEXT_ALIGN_OPTIONS,
+  CSS_TEXT_DECORATION_LINE_OPTIONS,
   DEFAULT_FRAME_HEIGHT,
   DEFAULT_FRAME_WIDTH,
   SelectMode,
@@ -523,10 +529,17 @@ const useSelectedElementEditorTab = ({
   project,
   selectedElement,
   updateSelectedElementStyle,
-  updateSelectedElementAttributes,
-  updateSelectedElementText,
+  updateSelectedElement,
   updateSelectedElementImage,
 }: Props) => {
+  const updateSelectedElementAttributes = (
+    attributes: Record<string, unknown>
+  ) => {
+    updateSelectedElement((editor, editContext) =>
+      editor.updateElementAttributes(editContext, attributes)
+    );
+  };
+
   const [selectedStyleGroup, setSelectedStyleGroup] = useState(
     selectedElement?.styleGroups[0]
   );
@@ -551,7 +564,10 @@ const useSelectedElementEditorTab = ({
   );
 
   const [, renderTextContentInput] = useTextInput(
-    (newTextContent) => updateSelectedElementText(newTextContent),
+    (newTextContent) =>
+      updateSelectedElement((editor, editContext) =>
+        editor.updateElementText(editContext, newTextContent)
+      ),
     "Text Content",
     selectedElement?.element.textContent ?? undefined,
     true
@@ -562,6 +578,46 @@ const useSelectedElementEditorTab = ({
     "Identifier",
     selectedElement?.element.id ?? undefined,
     true
+  );
+
+  const routeDefinition = useObservable(
+    selectedElement?.viewContext?.onRoutesDefined
+  );
+  const selectedElementIsRouterLink =
+    !!routeDefinition &&
+    selectedElement?.sourceMetadata?.componentName === "Link";
+  const [, renderLinkTargetInput] = useAutocomplete(
+    (routeDefinition?.routes || []).map((availableRoute) => ({
+      name: availableRoute,
+      value: availableRoute,
+    })),
+    { freeSolo: true },
+    (newHref) => {
+      const shouldBeRouterLink =
+        !!routeDefinition &&
+        (newHref?.startsWith("/") || newHref?.startsWith("."));
+      updateSelectedElement((editor, editContext) => {
+        let ast = editContext.ast;
+        // rename the link component if it's better used as a router link
+        // todo add option to disable this
+        if (shouldBeRouterLink !== selectedElementIsRouterLink) {
+          ast = editor.updateElementComponent(
+            { ...editContext, ast },
+            shouldBeRouterLink ? "Link" : "a"
+          );
+        }
+        return editor.updateElementAttributes(
+          { ...editContext, ast },
+          shouldBeRouterLink ? { to: newHref } : { href: newHref }
+        );
+      });
+    },
+    "Link Target",
+    // todo support alias for Link
+    ((selectedElementIsRouterLink &&
+      `${selectedElement?.sourceMetadata?.directProps.to || ""}`) ||
+      (selectedElement?.element as HTMLLinkElement)?.getAttribute("href")) ??
+      undefined
   );
 
   const styleGroupOptions = (selectedElement?.styleGroups || []).map(
@@ -591,6 +647,7 @@ const useSelectedElementEditorTab = ({
     fontSize: "Size",
     fontWeight: "Weight",
     fontFamily: "Font",
+    textDecorationLine: "Decoration",
   };
   const useSelectedElementEditor = (
     styleProp: keyof CSSStyleDeclaration,
@@ -741,6 +798,11 @@ const useSelectedElementEditorTab = ({
     "textAlign",
     useSelectInput.bind(undefined, CSS_TEXT_ALIGN_OPTIONS)
   );
+  // todo support multiple selection
+  const [, renderTextDecorationLineInput] = useSelectedElementEditor(
+    "textDecorationLine",
+    useSelectInput.bind(undefined, CSS_TEXT_DECORATION_LINE_OPTIONS)
+  );
 
   const [, renderCursorInput] = useSelectedElementEditor(
     "cursor",
@@ -785,6 +847,7 @@ const useSelectedElementEditorTab = ({
         {renderTextWeightInput()}
         {renderTextFamilyInput()}
         {selectedElementDisplay !== "flex" && renderTextAlignInput()}
+        {renderTextDecorationLineInput()}
       </div>
       {selectedElementDisplay === "flex" && (
         <>
@@ -801,6 +864,9 @@ const useSelectedElementEditorTab = ({
       <div className={gridClass}>
         {renderCursorInput()}
         {renderIDInput()}
+        {/* this check also applies to router links as those render as a */}
+        {selectedElement?.element.tagName.toLowerCase() === "a" &&
+          renderLinkTargetInput({ className: "col-span-2" })}
       </div>
     </>
   );
@@ -819,10 +885,9 @@ interface Props {
     newValue: string,
     preview?: boolean
   ) => void;
-  updateSelectedElementAttributes: (
-    attributes: Record<string, unknown>
+  updateSelectedElement: <T extends {}>(
+    apply: (editor: ElementASTEditor<T>, editContext: EditContext<T>) => T
   ) => void;
-  updateSelectedElementText: (newTextContent: string) => void;
   updateSelectedElementImage: (
     styleGroup: StyleGroup,
     imageProp: "backgroundImage",

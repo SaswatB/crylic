@@ -1,5 +1,6 @@
 import * as it from "io-ts";
 
+import { ViewContext } from "../components/CompilerComponentView";
 import { StyleGroup } from "../utils/ast/editors/ASTEditor";
 
 export interface CodeEntry {
@@ -28,6 +29,11 @@ export const ProjectConfig = it.type({
 });
 export type ProjectConfig = it.TypeOf<typeof ProjectConfig>;
 
+export interface SourceMetadata {
+  componentName: string;
+  directProps: Record<string, unknown>;
+}
+
 export interface SelectedElement {
   renderId: string;
   lookupId: string;
@@ -35,6 +41,9 @@ export interface SelectedElement {
   styleGroups: StyleGroup[];
   computedStyles: CSSStyleDeclaration;
   inlineStyles: CSSStyleDeclaration;
+
+  sourceMetadata: SourceMetadata | undefined;
+  viewContext: ViewContext | undefined;
 }
 
 export interface OutlineElement {

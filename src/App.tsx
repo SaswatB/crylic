@@ -9,6 +9,7 @@ import {
   CompilerComponentViewRef,
   GetElementByLookupId,
   OnCompileEndCallback,
+  ViewContext,
 } from "./components/CompilerComponentView";
 import { EditorPane } from "./components/EditorPane/EditorPane";
 import { InputModal } from "./components/InputModal";
@@ -44,6 +45,7 @@ function App() {
   const componentViews = useRef<
     Record<string, CompilerComponentViewRef | null | undefined>
   >({});
+  const viewContextMap = useRef<Record<string, ViewContext | undefined>>({});
 
   const [project, setProject] = useState<Project>();
   (window as any).project = project; // only for debugging purposes
@@ -126,6 +128,12 @@ function App() {
       componentElement
     );
     if (!lookupId) return;
+    const codeId = project?.primaryElementEditor.getCodeIdFromLookupId(
+      lookupId
+    );
+    if (!codeId) return;
+    const codeEntry = project?.getCodeEntry(codeId);
+    if (!codeEntry) return;
 
     const styleGroups: StyleGroup[] = [];
 
@@ -138,6 +146,11 @@ function App() {
     setSelectedElement({
       renderId,
       lookupId,
+      sourceMetadata: project!.primaryElementEditor.getSourceMetaDataFromLookupId(
+        { ast: codeEntry.ast, codeEntry },
+        lookupId
+      ),
+      viewContext: viewContextMap.current[renderId],
       element: componentElement,
       styleGroups,
       computedStyles: window.getComputedStyle(componentElement),
@@ -156,8 +169,11 @@ function App() {
   >({});
   const onComponentViewCompiled: OnCompileEndCallback = (
     renderEntry,
-    { iframe, getRootElement, getElementByLookupId }
+    viewContext
   ) => {
+    viewContextMap.current[renderEntry.id] = viewContext;
+    const { iframe, getRootElement, getElementByLookupId } = viewContext;
+
     project?.editorEntries.forEach(({ editor }) => editor.onASTRender(iframe));
 
     if (
@@ -332,20 +348,6 @@ function App() {
     }
   };
 
-  const updateSelectedElementAttributes = (
-    attributes: Record<string, unknown>
-  ) => {
-    updateSelectedElement((editor, editContext) =>
-      editor.updateElementAttributes(editContext, attributes)
-    );
-  };
-
-  const updateSelectedElementText = (newTextContent: string) => {
-    updateSelectedElement((editor, editContext) =>
-      editor.updateElementText(editContext, newTextContent)
-    );
-  };
-
   const updateSelectedElementImage = (
     styleGroup: StyleGroup,
     imageProp: "backgroundImage",
@@ -382,8 +384,7 @@ function App() {
       selectedElement={selectedElement}
       onChangeSelectMode={setSelectMode}
       updateSelectedElementStyle={updateSelectedElementStyle}
-      updateSelectedElementAttributes={updateSelectedElementAttributes}
-      updateSelectedElementText={updateSelectedElementText}
+      updateSelectedElement={updateSelectedElement}
       updateSelectedElementImage={updateSelectedElementImage}
       onChangeFrameSize={(width, height) => {
         setFrameSize(

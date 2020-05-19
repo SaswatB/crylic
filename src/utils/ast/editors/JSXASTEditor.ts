@@ -5,7 +5,7 @@ import { startCase } from "lodash";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { types } from "recast";
 
-import { CodeEntry, Styles } from "../../../types/paint";
+import { CodeEntry, SourceMetadata, Styles } from "../../../types/paint";
 import {
   copyJSXName,
   getValue,
@@ -13,9 +13,11 @@ import {
   ifJSXAttribute,
   ifJSXElement,
   ifJSXExpressionContainer,
+  ifJSXIdentifier,
   ifObjectExpression,
   ifObjectProperty,
   ifStringLiteral,
+  jsxLiteralToValue,
   traverseJSXElements,
   valueToJSXLiteral,
 } from "../ast-helpers";
@@ -111,7 +113,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       });
     }
 
-    this.editJSXElementByLookupId(ast, lookupId, (path) => {
+    this.getJSXElementByLookupId(ast, lookupId, (path) => {
       this.addJSXChildToJSXElement(
         path.value,
         childTag,
@@ -130,7 +132,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     { ast, lookupId }: EditContext<t.File>,
     attributes: Record<string, unknown>
   ) {
-    this.editJSXElementByLookupId(ast, lookupId, (path) => {
+    this.getJSXElementByLookupId(ast, lookupId, (path) => {
       Object.entries(attributes).forEach(([key, value]) => {
         const { openingElement } = path.value;
         let attr = openingElement.attributes?.find(
@@ -148,11 +150,31 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     });
   }
 
+  protected updateElementComponentInAST(
+    { ast, lookupId }: EditContext<t.File>,
+    component: string
+  ) {
+    // ensure the import for react-router-dom components
+    if (component === "Route" || component === "Link") {
+      component = this.getOrAddImport(ast, {
+        path: "react-router-dom",
+        name: component,
+      });
+    }
+
+    this.getJSXElementByLookupId(ast, lookupId, (path) => {
+      path.value.openingElement.name = b.jsxIdentifier(component);
+      if (path.value.closingElement) {
+        path.value.closingElement.name = b.jsxIdentifier(component);
+      }
+    });
+  }
+
   protected updateElementTextInAST(
     { ast, lookupId }: EditContext<t.File>,
     newTextContent: string
   ) {
-    this.editJSXElementByLookupId(ast, lookupId, (path) => {
+    this.getJSXElementByLookupId(ast, lookupId, (path) => {
       const textNode = path.value.children?.find(
         (child): child is t.JSXText => child.type === "JSXText"
       );
@@ -183,7 +205,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       isDefault: true,
     });
 
-    this.editJSXElementByLookupId(ast, lookupId, (path) => {
+    this.getJSXElementByLookupId(ast, lookupId, (path) => {
       // edit the element style
       this.applyJSXInlineStyleAttribute(path, [
         {
@@ -203,6 +225,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
 
   public getRecentlyAddedElements({ ast, codeEntry }: ReadContext<t.File>) {
     let resultIndicies: number[] = [];
+    // find all jsx elements with recently added data attributes
     traverseJSXElements(ast, (path, index) => {
       const hasRecentlyAddedDataAttr = path.value.openingElement.attributes?.find(
         (attr) =>
@@ -213,6 +236,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
         resultIndicies.push(index);
       }
     });
+    // map those elements to lookup ids and return them
     return resultIndicies.map((index) => this.createLookupId(codeEntry, index));
   }
 
@@ -221,9 +245,9 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     line: number,
     column: number
   ) {
-    // let result: NodePath<types.namedTypes.JSXElement, t.JSXElement> | undefined;
     let resultId: number | undefined;
     let tokenCount: number | undefined;
+    // find the smallest jsx element (by token count) that has the target code position
     traverseJSXElements(ast, (path, index) => {
       const { start, end } = path?.value?.loc || {};
       if (
@@ -235,7 +259,6 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
         (tokenCount === undefined ||
           tokenCount > (end.token || 0) - (start.token || 0))
       ) {
-        // result = path;
         resultId = index;
         tokenCount = (end.token || 0) - (start.token || 0);
       }
@@ -243,6 +266,43 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     return resultId !== undefined
       ? this.createLookupId(codeEntry, resultId)
       : undefined;
+  }
+
+  public getSourceMetaDataFromLookupId(
+    { ast }: ReadContext<t.File>,
+    lookupId: string
+  ) {
+    let sourceMetadata: SourceMetadata | undefined;
+    this.getJSXElementByLookupId(ast, lookupId, (path) => {
+      sourceMetadata = {
+        // get the component name
+        // todo handle more cases
+        componentName:
+          pipe(
+            path.value.openingElement.name,
+            ifJSXIdentifier,
+            (_) => _?.name
+          ) || "",
+        // get the component props by best effort (won't match non literals)
+        directProps:
+          path.value.openingElement.attributes
+            ?.map((attr) =>
+              pipe(attr, ifJSXAttribute, (_) =>
+                _
+                  ? {
+                      key: pipe(_.name, ifJSXIdentifier, (__) => __?.name),
+                      value: _.value && jsxLiteralToValue(_.value),
+                    }
+                  : _
+              )
+            )
+            .reduce((acc: Record<string, unknown>, cur) => {
+              if (cur && cur.key !== undefined) acc[cur.key] = cur.value;
+              return acc;
+            }, {}) || {},
+      };
+    });
+    return sourceMetadata;
   }
 
   public getHTMLElementByLookupId(document: Document, lookupId: string) {
@@ -300,7 +360,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     { ast, lookupId }: EditContext<t.File>,
     styles: Styles
   ) {
-    this.editJSXElementByLookupId(ast, lookupId, (path) =>
+    this.getJSXElementByLookupId(ast, lookupId, (path) =>
       this.applyJSXInlineStyleAttribute(
         path,
         styles.map((style) => ({
@@ -321,12 +381,12 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     return result;
   }
 
-  protected editJSXElementByLookupId(
+  protected getJSXElementByLookupId(
     ast: t.File,
     lookupId: string,
     apply: (path: NodePath<types.namedTypes.JSXElement, t.JSXElement>) => void
   ) {
-    let madeChange = false;
+    let found = false;
     traverseJSXElements(ast, (path) => {
       const lookupMatches = path.value.openingElement.attributes?.find(
         (attr) =>
@@ -335,11 +395,13 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
             lookupId
       );
       if (lookupMatches) {
-        madeChange = true;
         apply(path);
+        found = true;
       }
+      // keep traversing until the element is found
+      return !found;
     });
-    if (!madeChange)
+    if (!found)
       throw new Error(`Could not find element by lookup id ${lookupId}`);
   }
 
@@ -523,6 +585,13 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       assetImport.specifiers.push(assetImportIdentifier);
     }
 
-    return assetImportIdentifier.local!.name;
+    const importedName =
+      assetImportIdentifier.local?.name ||
+      (assetImportIdentifier.type === "ImportSpecifier" &&
+        assetImportIdentifier.imported.name);
+    if (importedName === false) {
+      throw new Error("Failed to find import name");
+    }
+    return importedName;
   }
 }
