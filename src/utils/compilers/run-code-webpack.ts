@@ -11,8 +11,12 @@ let nodeSass: typeof import("node-sass");
 // @ts-ignore todo add types
 let tailwindcss: typeof import("tailwindcss");
 let express: typeof import("express");
+let crypto: typeof import("crypto");
 
 let staticFileServer: ReturnType<typeof import("express")>;
+
+const ASSET_PORT = 4526;
+let assetSecurityToken: string;
 
 export function initialize(nodeModulesPath = "") {
   memfs = __non_webpack_require__(`${nodeModulesPath}memfs`);
@@ -25,10 +29,23 @@ export function initialize(nodeModulesPath = "") {
   express = __non_webpack_require__(
     `${nodeModulesPath}express`
   ) as typeof import("express");
+  crypto = __non_webpack_require__(
+    `${nodeModulesPath}crypto`
+  ) as typeof import("crypto");
 
-  // todo make this more secure
+  assetSecurityToken = crypto
+    .randomBytes(32)
+    .toString("base64")
+    .replace(/[+/=]/g, "");
+
   staticFileServer = express();
   staticFileServer.get(`/files/:codeId/*`, (req, res) => {
+    // check against a generated security token to prevent outside access
+    if (req.query.token !== assetSecurityToken) {
+      console.log("unauthorized access blocked");
+      return res.status(401).send();
+    }
+
     const staticPath = `/public/${req.params[0]}`;
     console.log("static file request at", staticPath);
     res.contentType(
@@ -38,7 +55,7 @@ export function initialize(nodeModulesPath = "") {
       webpackCache[req.params.codeId]?.outputFs.readFileSync(staticPath)
     );
   });
-  staticFileServer.listen(5000, "localhost", () =>
+  staticFileServer.listen(ASSET_PORT, "localhost", () =>
     console.log("Static file server is running...")
   );
 }
@@ -109,7 +126,9 @@ const getWebpackModules = (codeId: string) => ({
       options: {
         name: "static/media/[name].[hash:8].[ext]",
         outputPath: "/public",
-        publicPath: `http://localhost:5000/files/${codeId}/`,
+        publicPath: `http://localhost:${ASSET_PORT}/files/${codeId}/`,
+        postTransformPublicPath: (p: string) =>
+          `"${p.replace(/"/g, "")}?token=${assetSecurityToken}"`,
       },
     },
   ],
