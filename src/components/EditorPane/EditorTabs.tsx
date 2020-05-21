@@ -42,9 +42,9 @@ export const EditorTabs: FunctionComponent<Props> = ({
     >
       <div className="tabs flex flex-row overflow-x-auto">
         {usableTabs.map(({ key, name, title, onClose }, index) => (
-          <button
+          <div
             key={key}
-            className="flex px-6 py-1 whitespace-no-wrap text-sm default-transition hover:bg-gray-700"
+            className="flex px-6 py-1 whitespace-no-wrap select-none cursor-pointer text-sm default-transition hover:bg-gray-700"
             style={
               (activeTab === index && { backgroundColor: "#373737" }) ||
               undefined
@@ -56,7 +56,7 @@ export const EditorTabs: FunctionComponent<Props> = ({
             <button className="ml-2" onClick={onClose}>
               <FontAwesomeIcon icon={faTimes} />
             </button>
-          </button>
+          </div>
         ))}
       </div>
       {usableTabs.map(({ key, render: renderTab }, index) => (
