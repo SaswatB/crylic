@@ -98,6 +98,8 @@ export const webpackRunCodeWithWorker = async (
     if (name === "react-dom") return require("react-dom");
     if (name === "react-router-dom")
       return getReactRouterProxy(onRoutesDefined, onRouteChange);
+    // normalize is injected into all frames by default, todo use this to override any setting that turns normalize off
+    if (name === "normalize.css") return {};
     throw new Error(`Unable to require "${name}"`);
   };
   window.module = moduleExports;

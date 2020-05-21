@@ -433,7 +433,12 @@ function App() {
         setProject((currentProject) => currentProject?.addAsset(file));
         enqueueSnackbar("Imported Image!");
       }}
-      onOpenProject={(p) => setProject(Project.createProject(p))}
+      onNewProject={async (p) =>
+        setProject(await Project.createNewProjectInDirectory(p))
+      }
+      onOpenProject={async (p) =>
+        setProject(await Project.createProjectFromDirectory(p))
+      }
       onSaveProject={() => project?.saveFiles()}
       onCloseProject={() => setProject(undefined)}
       toggleCodeEntryEdit={toggleCodeEntryEdit}

@@ -31,7 +31,7 @@ import TreeView from "@material-ui/lab/TreeView";
 import { startCase } from "lodash";
 
 import { Tabs, TabsRef } from "../components/Tabs";
-import { openFilePicker } from "../hooks/useFilePicker";
+import { openFilePicker, saveFilePicker } from "../hooks/useFilePicker";
 import {
   useAutocomplete,
   useColorPicker,
@@ -116,6 +116,7 @@ const useMainTab = ({
   onNewComponent,
   onNewStyleSheet,
   onImportImage,
+  onNewProject,
   onOpenProject,
   onSaveProject,
   onCloseProject,
@@ -313,6 +314,16 @@ const useMainTab = ({
             <button
               className="btn w-full"
               onClick={() =>
+                saveFilePicker({
+                  filters: [{ name: "Project", extensions: [""] }],
+                }).then((f) => f && onNewProject(f))
+              }
+            >
+              New Project
+            </button>
+            <button
+              className="btn w-full"
+              onClick={() =>
                 openFilePicker({ properties: ["openDirectory"] }).then(
                   (f) => f && onOpenProject(f)
                 )
@@ -321,12 +332,6 @@ const useMainTab = ({
               Open Project
             </button>
             {/* <button
-              className="btn w-full"
-              onClick={() => openFilePicker().then((f) => f && onOpenFile(f))}
-            >
-              New Project
-            </button>
-            <button
               className="btn w-full"
               onClick={() => openFilePicker().then((f) => f && onOpenFile(f))}
             >
@@ -900,6 +905,7 @@ interface Props {
   onNewComponent: () => void;
   onNewStyleSheet: () => void;
   onImportImage: () => void;
+  onNewProject: (filePath: string) => void;
   onOpenProject: (filePath: string) => void;
   onSaveProject: () => void;
   onCloseProject: () => void;

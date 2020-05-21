@@ -1,8 +1,11 @@
 import deepFreeze from "deep-freeze-strict";
 import { fold } from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
+import { MakeDirectoryOptions } from "fs";
 import produce, { immerable } from "immer";
 import { cloneDeep, uniqueId } from "lodash";
+import { Readable } from "stream";
+import yauzl from "yauzl";
 
 import { CodeEntry, ProjectConfig, RenderEntry } from "../types/paint";
 import {
@@ -23,8 +26,13 @@ import {
   isScriptEntry,
   isStyleEntry,
   SCRIPT_EXTENSION_REGEX,
+  streamToString,
   STYLE_EXTENSION_REGEX,
 } from "./utils";
+
+// @ts-ignore ignore binary loader import
+// eslint-disable-next-line import/no-webpack-loader-syntax
+import projectTemplate from "!!../../loaders/binaryLoader!../assets/project-template.zip";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 const path = __non_webpack_require__("path") as typeof import("path");
@@ -56,7 +64,93 @@ export class Project {
     ];
   }
 
-  public static createProject(folderPath: string) {
+  public static async createNewProjectInDirectory(folderPath: string) {
+    console.log(folderPath);
+    if (!fs.existsSync) fs.mkdirSync(folderPath, { recursive: true });
+
+    let canceled = false;
+    await new Promise((resolve, reject) => {
+      yauzl.fromBuffer(projectTemplate, {}, (err, zipFile) => {
+        if (err || !zipFile) throw new Error("Failed to read project template");
+
+        zipFile.on("error", (err) => {
+          canceled = true;
+          reject(err);
+        });
+
+        let readCount = 0;
+        zipFile.on("entry", async (entry) => {
+          if (canceled) return;
+          console.log("zip entry", entry);
+
+          try {
+            const dest = path.join(folderPath, entry.fileName);
+
+            // convert external file attr int into a fs stat mode int
+            const mode = (entry.externalFileAttributes >> 16) & 0xffff;
+            // check if it's a symlink or dir (using stat mode constants)
+            const IFMT = 61440;
+            const IFDIR = 16384;
+            const IFLNK = 40960;
+            const symlink = (mode & IFMT) === IFLNK;
+            let isDir = (mode & IFMT) === IFDIR;
+
+            // Failsafe, borrowed from jsZip
+            if (!isDir && entry.fileName.endsWith("/")) {
+              isDir = true;
+            }
+
+            // check for windows weird way of specifying a directory
+            // https://github.com/maxogden/extract-zip/issues/13#issuecomment-154494566
+            const madeBy = entry.versionMadeBy >> 8;
+            if (!isDir)
+              isDir = madeBy === 0 && entry.externalFileAttributes === 16;
+
+            // reverse umask first (~)
+            const umask = ~process.umask();
+            // & with processes umask to override invalid perms
+            const procMode = (mode || (isDir ? 0o755 : 0o644)) & umask;
+
+            // always ensure folders are created
+            const destDir = isDir ? dest : path.dirname(dest);
+
+            const mkdirOptions: MakeDirectoryOptions = { recursive: true };
+            if (isDir) {
+              mkdirOptions.mode = procMode;
+            }
+            fs.mkdirSync(destDir, mkdirOptions);
+            if (isDir) return;
+
+            const readStream = await new Promise<Readable>(
+              (subResolve, subReject) =>
+                zipFile.openReadStream(entry, (subErr, stream) => {
+                  if (subErr || !stream)
+                    subReject(new Error("Failed to read zip entry"));
+                  else subResolve(stream);
+                })
+            );
+
+            if (symlink) {
+              fs.symlinkSync(await streamToString(readStream), dest);
+            } else {
+              readStream.pipe(fs.createWriteStream(dest, { mode: procMode }));
+            }
+
+            if (++readCount === zipFile.entryCount) {
+              resolve();
+            }
+          } catch (err) {
+            canceled = true;
+            reject(err);
+          }
+        });
+      });
+    });
+
+    return Project.createProjectFromDirectory(folderPath);
+  }
+
+  public static async createProjectFromDirectory(folderPath: string) {
     let config;
     const fileCodeEntries: {
       filePath: string;

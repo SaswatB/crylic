@@ -13,6 +13,15 @@ export const openFilePicker = async (options?: Electron.OpenDialogOptions) => {
   return canceled ? null : filePaths[0];
 };
 
+export const saveFilePicker = async (options?: Electron.SaveDialogOptions) => {
+  const { canceled, filePath } = await dialog.showSaveDialog({
+    properties: ["createDirectory"],
+    ...options,
+  });
+
+  return canceled ? null : filePath;
+};
+
 export function useFilePicker() {
   const [filePath, setFilePath] = useState<string>();
   return [

@@ -170,6 +170,12 @@ export const webpackRunCode = async (
           commonjs2: "react-router-dom",
           amd: "react-router-dom",
         },
+        // this is externalized so that the default project template can be loaded without npm i
+        "normalize.css": {
+          commonjs: "normalize.css",
+          commonjs2: "normalize.css",
+          amd: "normalize.css",
+        },
       },
       // plugins: [
       //   new webpack.ProgressPlugin({
