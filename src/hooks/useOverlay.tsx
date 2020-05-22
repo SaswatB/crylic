@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  MutableRefObject,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import produce from "immer";
 
 import {
@@ -15,6 +21,7 @@ export function useOverlay(
   project: Project | undefined,
   componentView: CompilerComponentViewRef | null | undefined,
   frameSize: { width: number; height: number },
+  scaleRef: MutableRefObject<number>,
   selectedElement?: SelectedElement,
   selectModeType?: SelectModeType,
   onSelect?: (componentElement: Element | null | undefined) => void,
@@ -24,7 +31,11 @@ export function useOverlay(
   const onOverlayMove = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
-    const componentElement = getComponentElementFromEvent(event, componentView);
+    const componentElement = getComponentElementFromEvent(
+      event,
+      componentView,
+      scaleRef.current
+    );
 
     const lookupId =
       componentElement &&
@@ -49,7 +60,11 @@ export function useOverlay(
       return;
     }
     lastDragResizeHandled = 0;
-    const componentElement = getComponentElementFromEvent(event, componentView);
+    const componentElement = getComponentElementFromEvent(
+      event,
+      componentView,
+      scaleRef.current
+    );
     onSelect?.(componentElement);
   };
 

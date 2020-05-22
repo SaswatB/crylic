@@ -1,5 +1,6 @@
 import React, {
   FunctionComponent,
+  MutableRefObject,
   RefAttributes,
   useEffect,
   useRef,
@@ -29,6 +30,7 @@ interface Props {
     React.IframeHTMLAttributes<HTMLIFrameElement> &
     RefAttributes<CompilerComponentViewRef>;
   frameSize: { width: number; height: number };
+  scaleRef: MutableRefObject<number>;
   selectModeType: SelectModeType | undefined;
   selectedElement: SelectedElement | undefined;
   onSelectElement: (
@@ -48,6 +50,7 @@ interface Props {
 export const OverlayComponentView: FunctionComponent<Props> = ({
   compilerProps,
   frameSize,
+  scaleRef,
   selectModeType,
   selectedElement,
   onSelectElement,
@@ -63,6 +66,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
     compilerProps.project,
     componentView.current,
     frameSize,
+    scaleRef,
     selectedElement,
     selectModeType,
     (componentElement) =>

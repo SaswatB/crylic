@@ -372,6 +372,7 @@ function App() {
     </div>
   );
 
+  const scaleRef = useRef(1);
   const [frameSize, setFrameSize] = useState({
     width: DEFAULT_FRAME_WIDTH,
     height: DEFAULT_FRAME_HEIGHT,
@@ -492,6 +493,7 @@ function App() {
           onCompileEnd: onComponentViewCompiled,
         }}
         frameSize={frameSize}
+        scaleRef={scaleRef}
         selectModeType={selectMode?.type}
         selectedElement={selectedElement}
         onSelectElement={onOverlaySelectElement}
@@ -549,6 +551,9 @@ function App() {
               maxScale: 3,
               limitToBounds: false,
             }}
+            onZoomChange={({ scale }: { scale: number }) =>
+              (scaleRef.current = scale)
+            }
           >
             {(actions: any) => (
               <React.Fragment>

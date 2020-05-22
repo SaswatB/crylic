@@ -24,11 +24,12 @@ import { Frame } from "./Frame";
 
 export const getComponentElementFromEvent = (
   event: React.MouseEvent<HTMLDivElement, MouseEvent>,
-  componentView: CompilerComponentViewRef | null | undefined
+  componentView: CompilerComponentViewRef | null | undefined,
+  scale: number
 ) => {
   const boundingBox = (event.target as HTMLDivElement).getBoundingClientRect();
-  const x = event.clientX - boundingBox.x;
-  const y = event.clientY - boundingBox.y;
+  const x = (event.clientX - boundingBox.x) / scale;
+  const y = (event.clientY - boundingBox.y) / scale;
   return componentView?.getElementAtPoint(x, y);
 };
 
