@@ -526,11 +526,13 @@ function App() {
             currentProject?.editRenderEntry(entry.id, { route: path })
           );
         }}
-        onCurrentRouteChange={(currentRoute) =>
+        onCurrentRouteChange={(currentRoute) => {
           setProject((currentProject) =>
             currentProject?.editRenderEntry(entry.id, { route: currentRoute })
-          )
-        }
+          );
+          if (selectedElement?.renderId === entry.id)
+            setSelectedElement(undefined);
+        }}
         onRemoveComponentView={() =>
           setProject((currentProject) =>
             currentProject?.removeRenderEntry(entry.id)
