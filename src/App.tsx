@@ -19,6 +19,7 @@ import { openFilePicker } from "./hooks/useFilePicker";
 import {
   CodeEntry,
   OutlineElement,
+  RenderEntry,
   SelectedElement,
   Styles,
 } from "./types/paint";
@@ -161,6 +162,20 @@ function App() {
   const [outlineMap, setOutlineMap] = useState<
     Record<string, OutlineElement[] | undefined>
   >({});
+  const calculateOutline = (renderEntry: RenderEntry) => {
+    const { getRootElement } = viewContextMap.current[renderEntry.id] || {};
+    if (!getRootElement) return;
+
+    const root = getRootElement();
+    setOutlineMap(
+      produce((currentOutlineMap) => {
+        currentOutlineMap[renderEntry.id] = root
+          ? buildOutline(project!, renderEntry.id, root)
+          : undefined;
+      })
+    );
+  };
+
   const compileTasks = useRef<
     Record<
       string,
@@ -172,7 +187,7 @@ function App() {
     viewContext
   ) => {
     viewContextMap.current[renderEntry.id] = viewContext;
-    const { iframe, getRootElement, getElementByLookupId } = viewContext;
+    const { iframe, getElementByLookupId } = viewContext;
 
     project?.editorEntries.forEach(({ editor }) => editor.onASTRender(iframe));
 
@@ -196,14 +211,7 @@ function App() {
       }
     }
 
-    const root = getRootElement();
-    setOutlineMap(
-      produce((currentOutlineMap) => {
-        currentOutlineMap[renderEntry.id] = root
-          ? buildOutline(project!, renderEntry.id, root)
-          : undefined;
-      })
-    );
+    calculateOutline(renderEntry);
 
     compileTasks.current[renderEntry.id]?.forEach((task) =>
       task(getElementByLookupId)
@@ -530,6 +538,7 @@ function App() {
           setProject((currentProject) =>
             currentProject?.editRenderEntry(entry.id, { route: currentRoute })
           );
+          calculateOutline(entry);
           if (selectedElement?.renderId === entry.id)
             setSelectedElement(undefined);
         }}
