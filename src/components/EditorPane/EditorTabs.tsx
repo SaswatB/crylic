@@ -1,4 +1,4 @@
-import React, { FunctionComponent, ReactNode, useEffect } from "react";
+import React, { FunctionComponent, ReactNode, useEffect, useRef } from "react";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
@@ -22,6 +22,7 @@ export const EditorTabs: FunctionComponent<Props> = ({
   activeTab,
   onChange,
 }) => {
+  const tabScrollRef = useRef<HTMLDivElement>(null);
   const usableTabs = tabs?.filter((tab): tab is Tab => !!tab) || [];
 
   const previousUsableTabsLength = usePrevious(usableTabs.length);
@@ -30,7 +31,11 @@ export const EditorTabs: FunctionComponent<Props> = ({
       ((usableTabs.length || 0) <= activeTab && activeTab !== 0) ||
       previousUsableTabsLength < usableTabs.length
     ) {
+      // select last tab
       onChange((usableTabs.length || 1) - 1);
+      // scroll to end of tab list
+      if (tabScrollRef.current)
+        tabScrollRef.current.scrollLeft = tabScrollRef.current.scrollWidth;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usableTabs.length]);
@@ -40,7 +45,7 @@ export const EditorTabs: FunctionComponent<Props> = ({
       className="editor-tabs flex flex-col h-full"
       style={{ width: "600px" }}
     >
-      <div className="tabs flex flex-row overflow-x-auto">
+      <div ref={tabScrollRef} className="tabs flex flex-row overflow-x-auto">
         {usableTabs.map(({ key, name, title, onClose }, index) => (
           <div
             key={key}
