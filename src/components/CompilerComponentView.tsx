@@ -22,7 +22,7 @@ import { RouteDefinition } from "../utils/react-router-proxy";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { Frame } from "./Frame";
 
-export const getComponentElementFromEvent = (
+export const getComponentElementsFromEvent = (
   event: React.MouseEvent<HTMLDivElement, MouseEvent>,
   componentView: CompilerComponentViewRef | null | undefined,
   scale: number
@@ -30,7 +30,7 @@ export const getComponentElementFromEvent = (
   const boundingBox = (event.target as HTMLDivElement).getBoundingClientRect();
   const x = (event.clientX - boundingBox.x) / scale;
   const y = (event.clientY - boundingBox.y) / scale;
-  return componentView?.getElementAtPoint(x, y);
+  return componentView?.getElementsAtPoint(x, y) || [];
 };
 
 export type GetElementByLookupId = (
@@ -39,7 +39,7 @@ export type GetElementByLookupId = (
 
 export interface CompilerComponentViewRef {
   getRootElement(): HTMLBodyElement | undefined;
-  getElementAtPoint: (x: number, y: number) => HTMLElement | undefined;
+  getElementsAtPoint: (x: number, y: number) => HTMLElement[];
   getElementByLookupId: GetElementByLookupId;
   // cleared on next compile
   addTempStyles: (
@@ -88,12 +88,10 @@ export const CompilerComponentView: FunctionComponent<
           .contentDocument;
         return iframeDocument?.querySelector("body") || undefined;
       },
-      getElementAtPoint(x, y) {
+      getElementsAtPoint(x, y) {
         const iframeDocument = getActiveFrame().current?.frameElement
           .contentDocument;
-        return (iframeDocument?.elementFromPoint(x, y) || undefined) as
-          | HTMLElement
-          | undefined;
+        return (iframeDocument?.elementsFromPoint(x, y) || []) as HTMLElement[];
       },
       getElementByLookupId(lookupId) {
         const iframeDocument = getActiveFrame().current?.frameElement

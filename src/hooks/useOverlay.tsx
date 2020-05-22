@@ -9,7 +9,7 @@ import produce from "immer";
 
 import {
   CompilerComponentViewRef,
-  getComponentElementFromEvent,
+  getComponentElementsFromEvent,
 } from "../components/CompilerComponentView";
 import { Draggable } from "../components/Draggable";
 import { onMoveResizeCallback, SelectedElement } from "../types/paint";
@@ -31,22 +31,18 @@ export function useOverlay(
   const onOverlayMove = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
-    const componentElement = getComponentElementFromEvent(
+    const componentElements = getComponentElementsFromEvent(
       event,
       componentView,
       scaleRef.current
     );
 
-    const lookupId =
-      componentElement &&
-      project?.primaryElementEditor.getLookupIdFromHTMLElement(
-        componentElement
-      );
-    if (lookupId) {
-      setHighlightBox(componentElement?.getBoundingClientRect());
-    } else {
-      setHighlightBox(undefined);
-    }
+    // get the first element with a lookup id
+    const componentElement = componentElements.find((ce) =>
+      project?.primaryElementEditor.getLookupIdFromHTMLElement(ce)
+    );
+
+    setHighlightBox(componentElement?.getBoundingClientRect());
   };
   const onOverlayClick = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
@@ -60,11 +56,17 @@ export function useOverlay(
       return;
     }
     lastDragResizeHandled = 0;
-    const componentElement = getComponentElementFromEvent(
+    const componentElements = getComponentElementsFromEvent(
       event,
       componentView,
       scaleRef.current
     );
+
+    // get the first element with a lookup id
+    const componentElement = componentElements.find((ce) =>
+      project?.primaryElementEditor.getLookupIdFromHTMLElement(ce)
+    );
+
     onSelect?.(componentElement);
   };
 
