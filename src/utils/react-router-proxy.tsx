@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { isArray, omit } from "lodash";
 
 const LINK_DATA_ATTR = "paintlink";
@@ -10,6 +10,7 @@ export interface RouteDefinition {
 }
 
 export function getReactRouterProxy(
+  initialRoute: string | undefined,
   onRoutesDefined: (arg: RouteDefinition) => void,
   onRouteChange: (route: string) => void
 ) {
@@ -46,6 +47,17 @@ export function getReactRouterProxy(
       // todo test ref
       const { Switch, useHistory } = reactRouterDom;
       const history = useHistory();
+
+      // override history.location for the first render to properly set the initial route
+      // and avoid flashing the home route on load
+      const [initialLocation, setInitialLocation] = useState(initialRoute);
+      useEffect(() => {
+        if (initialRoute) {
+          history.push(initialRoute);
+          setInitialLocation(undefined);
+        }
+      }, [history]);
+
       const routes: string[] = [];
       const children = !props.children
         ? []
@@ -64,7 +76,17 @@ export function getReactRouterProxy(
         switchProps: omit(props, "children"),
         history,
       });
-      return <Switch {...props} />;
+
+      return (
+        <Switch
+          {...props}
+          location={
+            initialLocation
+              ? { pathname: initialLocation }
+              : props?.location || history.location
+          }
+        />
+      );
     },
   };
   return reactRouterDomProxy;

@@ -44,6 +44,7 @@ interface Props {
     preview?: boolean
   ) => void;
   onAddRoute: (routeDefinition: RouteDefinition) => void;
+  onCurrentRouteChange: (route: string) => void;
   onRemoveComponentView: () => void;
 }
 
@@ -56,6 +57,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   onSelectElement,
   updateSelectedElementStyles,
   onAddRoute,
+  onCurrentRouteChange,
   onRemoveComponentView,
 }) => {
   const [loading, setLoading] = useState(false);
@@ -134,13 +136,13 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   const routeDefinition = useObservable(viewContext?.onRoutesDefined);
   const currentRoute = useObservable(viewContext?.onRouteChange);
 
-  // if the render entry has a route set, apply the route on definition load
+  // persist any route changes to keep it between compilations
   useEffect(() => {
-    if (routeDefinition?.history && compilerProps.renderEntry.route) {
-      routeDefinition.history.push(compilerProps.renderEntry.route);
+    if (currentRoute && compilerProps.renderEntry.route !== currentRoute) {
+      onCurrentRouteChange(currentRoute);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeDefinition?.history, compilerProps.renderEntry.route]);
+  }, [currentRoute]);
 
   const [, renderRouteMenu, openRouteMenu, closeRouteMenu] = useMenuInput(
     (routeDefinition?.routes || []).map((availableRoute) => ({

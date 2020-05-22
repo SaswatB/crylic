@@ -136,7 +136,7 @@ export const CompilerComponentView: FunctionComponent<
             const onRouteChangeSubject = new ReplaySubject<string>(1);
             const codeExports = await webpackRunCodeWithWorker(
               project,
-              renderEntry.codeId,
+              renderEntry,
               {
                 window: getInactiveFrame().current?.frameElement.contentWindow,
                 onRoutesDefined(arg) {

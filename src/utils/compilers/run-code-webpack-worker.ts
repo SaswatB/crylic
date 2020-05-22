@@ -1,6 +1,7 @@
 // eslint-disable-next-line import/no-webpack-loader-syntax
 // import WebpackWorker from "worker-loader!./webpack-worker";
 
+import { RenderEntry } from "../../types/paint";
 import { Project } from "../Project";
 import { getReactRouterProxy, RouteDefinition } from "../react-router-proxy";
 import { webpackRunCode } from "./run-code-webpack";
@@ -37,7 +38,7 @@ interface RunnerContext {
  */
 export const webpackRunCodeWithWorker = async (
   project: Project,
-  selectedCodeId: string,
+  renderEntry: RenderEntry,
   { window, onRoutesDefined, onRouteChange }: RunnerContext
 ) => {
   const startTime = Date.now();
@@ -50,7 +51,7 @@ export const webpackRunCodeWithWorker = async (
 
   const bundleCode = `
   export const component = require("${
-    project.codeEntries.find(({ id }) => id === selectedCodeId)!.filePath
+    project.codeEntries.find(({ id }) => id === renderEntry.codeId)!.filePath
   }")
   ${
     project.config?.bootstrap
@@ -62,7 +63,7 @@ export const webpackRunCodeWithWorker = async (
   }
   `.replace(/\\/g, "\\\\");
 
-  const bundleId = `bundle-${selectedCodeId}`;
+  const bundleId = `bundle-${renderEntry.codeId}`;
   const codeEntries = project.codeEntries
     .map((codeEntry) => ({
       id: codeEntry.id,
@@ -97,7 +98,11 @@ export const webpackRunCodeWithWorker = async (
     if (name === "react") return require("react");
     if (name === "react-dom") return require("react-dom");
     if (name === "react-router-dom")
-      return getReactRouterProxy(onRoutesDefined, onRouteChange);
+      return getReactRouterProxy(
+        renderEntry.route,
+        onRoutesDefined,
+        onRouteChange
+      );
     // normalize is injected into all frames by default, todo use this to override any setting that turns normalize off
     if (name === "normalize.css") return {};
     throw new Error(`Unable to require "${name}"`);
