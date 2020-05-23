@@ -44,6 +44,11 @@ fieldset {
   &.active,
   &.superactive {
     background-color: rgb(117, 129, 146);
+
+    &:focus {
+      outline: none;
+      box-shadow: none;
+    }
   }
   &.superactive {
     animation: border-pulsate 2s infinite;
