@@ -7,20 +7,11 @@ import React, {
   useState,
 } from "react";
 import {
-  faBars,
-  faCaretSquareDown,
-  faCheckSquare,
   faCog,
-  faDotCircle,
   faEdit,
-  faExternalLinkSquareAlt,
   faEye,
   faFilter,
-  faFont,
-  faHeading,
-  faHSquare,
   faPlus,
-  faPlusSquare,
   faStream,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -63,7 +54,6 @@ import {
   DEFAULT_FRAME_HEIGHT,
   DEFAULT_FRAME_WIDTH,
   SelectMode,
-  SelectModeType,
 } from "../utils/constants";
 import { Project } from "../utils/Project";
 import {
@@ -71,23 +61,12 @@ import {
   IMAGE_EXTENSION_REGEX,
   isImageEntry,
   isStyleEntry,
+  renderSeparator,
   SCRIPT_EXTENSION_REGEX,
   STYLE_EXTENSION_REGEX,
 } from "../utils/utils";
 
 const path = __non_webpack_require__("path") as typeof import("path");
-
-const renderSeparator = (title?: string, action?: React.ReactNode) => (
-  <div className="flex items-center">
-    {title && (
-      <span className="pb-1 mr-2 text-sm text-gray-500 whitespace-no-wrap">
-        {title}
-      </span>
-    )}
-    <div className="w-full my-5 border-gray-600 border-solid border-b" />
-    {action || null}
-  </div>
-);
 
 const useBoundTextInput = (
   onChange: (v: string) => void,
@@ -108,8 +87,6 @@ type EditorHook = (
   string,
   (props?: { className?: string; style?: CSSProperties }) => JSX.Element
 ];
-
-const gridClass = "grid grid-cols-2 row-gap-3 col-gap-2 py-2";
 
 const useMainTab = ({
   project,
@@ -273,18 +250,20 @@ const useMainTab = ({
         <div className="flex-1" />
         {codeEntry.isRenderable && (
           <button
-            className="mx-3"
+            className="mx-3 text-gray-500 hover:text-white default-transition"
+            title="View"
             onClick={() => toggleCodeEntryRender(codeEntry.id)}
           >
             <FontAwesomeIcon icon={faEye} />
           </button>
         )}
         {codeEntry.isEditable && (
-          <button>
-            <FontAwesomeIcon
-              icon={faEdit}
-              onClick={() => toggleCodeEntryEdit(codeEntry.id)}
-            />
+          <button
+            className="text-gray-500 hover:text-white default-transition"
+            title="Edit Code"
+            onClick={() => toggleCodeEntryEdit(codeEntry.id)}
+          >
+            <FontAwesomeIcon icon={faEdit} />
           </button>
         )}
       </div>
@@ -351,13 +330,17 @@ const useMainTab = ({
           {renderSeparator(
             "Assets",
             <>
-              <button className="ml-2" onClick={openAssetsFilterMenu}>
+              <button
+                className="ml-2"
+                title="Filter Assets"
+                onClick={openAssetsFilterMenu}
+              >
                 <FontAwesomeIcon
                   icon={faFilter}
                   className="text-gray-500 hover:text-white default-transition"
                 />
               </button>
-              <button className="ml-2" onClick={openAddMenu}>
+              <button className="ml-2" title="Add Asset" onClick={openAddMenu}>
                 <FontAwesomeIcon
                   icon={faPlus}
                   className="text-gray-500 hover:text-white default-transition"
@@ -371,6 +354,7 @@ const useMainTab = ({
             defaultCollapseIcon={<ExpandMoreIcon />}
             defaultExpandIcon={<ChevronRightIcon />}
             defaultExpanded={Array.from(treeNodeIds)}
+            selected={null as any}
           >
             {projectTree.children.map(renderTree)}
           </TreeView>
@@ -379,81 +363,6 @@ const useMainTab = ({
     </>
   );
   return renderMainTab;
-};
-
-const useAdderTab = ({ onChangeSelectMode }: Props) => {
-  const onAddElement = (
-    tag: keyof HTMLElementTagNameMap,
-    attributes?: Record<string, unknown>
-  ) => onChangeSelectMode({ type: SelectModeType.AddElement, tag, attributes });
-
-  const renderElementAdder = () => (
-    <>
-      {renderSeparator("Containers")}
-      <div className={gridClass}>
-        <button
-          className="btn w-full"
-          onClick={() => onAddElement("div", { style: { display: "flex" } })}
-        >
-          <FontAwesomeIcon icon={faBars} /> Row
-        </button>
-        <button
-          className="btn w-full"
-          onClick={() =>
-            onAddElement("div", {
-              style: { display: "flex", flexDirection: "column" },
-            })
-          }
-        >
-          <FontAwesomeIcon icon={faBars} className="transform rotate-90" />{" "}
-          Column
-        </button>
-      </div>
-      {renderSeparator("Text")}
-      <div className={gridClass}>
-        <button className="btn w-full" onClick={() => onAddElement("h1")}>
-          <FontAwesomeIcon icon={faHeading} /> Heading
-        </button>
-        <button className="btn w-full" onClick={() => onAddElement("span")}>
-          <FontAwesomeIcon icon={faFont} /> Text
-        </button>
-      </div>
-      {renderSeparator("Interactive")}
-      <div className={gridClass}>
-        <button className="btn w-full" onClick={() => onAddElement("button")}>
-          <FontAwesomeIcon icon={faPlusSquare} /> Button
-        </button>
-        <button className="btn w-full" onClick={() => onAddElement("a")}>
-          <FontAwesomeIcon icon={faExternalLinkSquareAlt} /> Link
-        </button>
-      </div>
-      {renderSeparator("Form")}
-      <div className={gridClass}>
-        <button
-          className="btn w-full"
-          onClick={() => onAddElement("input", { type: "text" })}
-        >
-          <FontAwesomeIcon icon={faHSquare} /> Textbox
-        </button>
-        <button className="btn w-full" onClick={() => onAddElement("select")}>
-          <FontAwesomeIcon icon={faCaretSquareDown} /> Select
-        </button>
-        <button
-          className="btn w-full"
-          onClick={() => onAddElement("input", { type: "checkbox" })}
-        >
-          <FontAwesomeIcon icon={faCheckSquare} /> Checkbox
-        </button>
-        <button
-          className="btn w-full"
-          onClick={() => onAddElement("input", { type: "radio" })}
-        >
-          <FontAwesomeIcon icon={faDotCircle} /> Radio
-        </button>
-      </div>
-    </>
-  );
-  return renderElementAdder;
 };
 
 const useOutlineTab = ({
@@ -819,7 +728,7 @@ const useSelectedElementEditorTab = ({
       {renderSeparator("Style Group")}
       {renderStyleGroupSelector()}
       {renderSeparator("Layout")}
-      <div className={gridClass}>
+      <div className="grid2x">
         {renderWidthInput()}
         {renderHeightInput()}
         {renderPositionInput()}
@@ -836,7 +745,7 @@ const useSelectedElementEditorTab = ({
         {/* todo padding + margin */}
       </div>
       {renderSeparator("Colors")}
-      <div className={gridClass}>
+      <div className="grid2x">
         {renderOpacityInput()}
         {renderBackgroundColorInput()}
         {renderBackgroundImageInput()}
@@ -845,7 +754,7 @@ const useSelectedElementEditorTab = ({
       </div>
       {/* todo border */}
       {renderSeparator("Text")}
-      <div className={gridClass}>
+      <div className="grid2x">
         {allowTextEdit && renderTextContentInput({ className: "col-span-2" })}
         {renderColorInput()}
         {renderTextSizeInput()}
@@ -866,7 +775,7 @@ const useSelectedElementEditorTab = ({
         </>
       )}
       {renderSeparator("Extras")}
-      <div className={gridClass}>
+      <div className="grid2x">
         {renderCursorInput()}
         {renderIDInput()}
         {/* this check also applies to router links as those render as a */}
@@ -915,7 +824,6 @@ interface Props {
 
 export const SideBar: FunctionComponent<Props> = (props) => {
   const renderMainTab = useMainTab(props);
-  const renderElementAdder = useAdderTab(props);
   const renderOutlineTab = useOutlineTab(props);
   const renderSelectedElementEditor = useSelectedElementEditorTab(props);
 
@@ -923,7 +831,7 @@ export const SideBar: FunctionComponent<Props> = (props) => {
   const isRendering = !!project?.renderEntries.length;
   const tabsRef = useRef<TabsRef>(null);
   useEffect(() => {
-    if (selectedElement) tabsRef.current?.selectTab(3);
+    if (selectedElement) tabsRef.current?.selectTab(2);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedElement?.lookupId]);
   return (
@@ -932,18 +840,17 @@ export const SideBar: FunctionComponent<Props> = (props) => {
       tabs={[
         {
           name: <FontAwesomeIcon icon={faCog} />,
+          title: "Project",
           render: renderMainTab,
         },
         isRendering && {
-          name: <FontAwesomeIcon icon={faPlus} />,
-          render: renderElementAdder,
-        },
-        isRendering && {
           name: <FontAwesomeIcon icon={faStream} />,
+          title: "Outline",
           render: renderOutlineTab,
         },
         !!selectedElement && {
           name: <FontAwesomeIcon icon={faEdit} />,
+          title: "Edit Element",
           render: renderSelectedElementEditor,
         },
       ]}

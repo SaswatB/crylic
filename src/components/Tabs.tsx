@@ -10,6 +10,7 @@ import React, {
 
 interface Tab {
   name: ReactNode;
+  title: string;
   render: () => ReactNode;
 }
 
@@ -49,14 +50,11 @@ export const Tabs: FunctionComponent<
     <div className={`${className || ""} tabs flex flex-col h-full`}>
       {usableTabs.length > 1 && (
         <div className="btngrp-h">
-          {usableTabs.map(({ name }, index) => (
+          {usableTabs.map(({ name, title }, index) => (
             <button
               key={index}
-              className="tab btn px-6"
-              style={
-                (activeTab === index && { backgroundColor: "#7895c1" }) ||
-                undefined
-              }
+              className={`tab btn px-6 ${activeTab === index ? "active" : ""}`}
+              title={title}
               onClick={() => setActiveTab(index)}
             >
               {name}

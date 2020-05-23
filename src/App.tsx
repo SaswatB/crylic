@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import { produce } from "immer";
@@ -15,6 +15,7 @@ import { EditorPane } from "./components/EditorPane/EditorPane";
 import { InputModal } from "./components/InputModal";
 import { OverlayComponentView } from "./components/OverlayComponentView";
 import { SideBar } from "./components/SideBar";
+import { Toolbar } from "./components/Toolbar";
 import { openFilePicker } from "./hooks/useFilePicker";
 import {
   CodeEntry,
@@ -366,20 +367,6 @@ function App() {
     );
   };
 
-  const renderSelectBar = () => (
-    <div className="flex justify-center items-center absolute bottom-0 left-0 right-0 p-1 bg-blue-600 text-white text-sm text-center">
-      <div className="flex-1" />
-      Select Mode
-      <div className="flex-1" />
-      <button
-        className="btn py-1 px-4"
-        onClick={() => setSelectMode(undefined)}
-      >
-        Cancel
-      </button>
-    </div>
-  );
-
   const scaleRef = useRef(1);
   const [frameSize, setFrameSize] = useState({
     width: DEFAULT_FRAME_WIDTH,
@@ -455,37 +442,19 @@ function App() {
     />
   );
 
-  const renderToolbar = ({ zoomIn, zoomOut, resetTransform }: any) => (
-    <div className="flex absolute top-0 left-0 right-0 z-10">
-      <div className="btngrp-h">
-        <button
-          className="btn px-4 rounded-l-none rounded-tr-none"
-          onClick={() => setSelectMode({ type: SelectModeType.SelectElement })}
-        >
-          Select Element
-        </button>
-        {selectedElement && (
-          <button
-            className="btn px-4 rounded-tr-none"
-            onClick={() => setSelectedElement(undefined)}
-          >
-            Clear Selected Element
-          </button>
-        )}
-      </div>
-      <div className="flex-1" />
-      <div className="btngrp-h">
-        <button className="btn px-4 rounded-tl-none" onClick={zoomIn}>
-          +
-        </button>
-        <button className="btn px-4" onClick={zoomOut}>
-          -
-        </button>
-        <button className="btn px-4 rounded-r-none" onClick={resetTransform}>
-          x
-        </button>
-      </div>
-    </div>
+  const [resetTransform, setResetTransform] = useState(false);
+  useEffect(() => {
+    if (resetTransform) setResetTransform(false);
+  }, [resetTransform]);
+
+  const renderToolbar = () => (
+    <Toolbar
+      setResetTransform={setResetTransform}
+      selectMode={selectMode}
+      setSelectMode={setSelectMode}
+      selectedElement={selectedElement}
+      setSelectedElement={setSelectedElement}
+    />
   );
 
   const renderComponentViews = () =>
@@ -554,14 +523,25 @@ function App() {
     <div className="flex flex-col items-stretch w-screen h-screen relative overflow-hidden text-white">
       <div className="flex flex-1 flex-row">
         <div
-          className="flex flex-col p-4 pb-0 bg-gray-900 h-screen"
+          className="flex flex-col absolute p-4 pb-0 h-screen dark-glass z-10"
           style={{ width: "300px" }}
         >
           {renderSideBar()}
         </div>
-        <div className="flex flex-1 relative bg-gray-600 items-center justify-center overflow-hidden">
+        <div className="flex flex-col flex-1 relative bg-gray-600 items-center justify-center overflow-hidden">
+          {(project?.renderEntries.length ?? 0) > 0 && (
+            <div
+              className="toolbar flex absolute top-0 right-0 dark-glass z-10"
+              style={{ left: 300 }}
+            >
+              {renderToolbar()}
+            </div>
+          )}
           <TransformWrapper
             defaultScale={1}
+            scale={resetTransform ? 1 : undefined}
+            positionX={resetTransform ? 350 : undefined}
+            positionY={resetTransform ? 20 : undefined}
             options={{
               minScale: 0.01,
               maxScale: 3,
@@ -571,14 +551,7 @@ function App() {
               (scaleRef.current = scale)
             }
           >
-            {(actions: any) => (
-              <React.Fragment>
-                {renderToolbar(actions)}
-                <TransformComponent>
-                  {renderComponentViews()}
-                </TransformComponent>
-              </React.Fragment>
-            )}
+            <TransformComponent>{renderComponentViews()}</TransformComponent>
           </TransformWrapper>
         </div>
         {project?.codeEntries.find(({ edit }) => edit) && (
@@ -609,7 +582,6 @@ function App() {
           />
         )}
       </div>
-      {selectMode !== undefined && renderSelectBar()}
     </div>
   );
 }
