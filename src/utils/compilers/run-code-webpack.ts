@@ -1,17 +1,19 @@
 type IFs = import("memfs").IFs;
 
-let path = __non_webpack_require__("path") as typeof import("path");
-let fs = __non_webpack_require__("fs") as typeof import("fs");
+const path = __non_webpack_require__("path") as typeof import("path");
+const fs = __non_webpack_require__("fs") as typeof import("fs");
+const crypto = __non_webpack_require__("crypto") as typeof import("crypto");
 
 let memfs: typeof import("memfs");
 let joinPath: typeof import("memory-fs/lib/join");
 let unionfs: typeof import("unionfs");
 let webpack: typeof import("webpack");
-let nodeSass: typeof import("node-sass");
+// let nodeSass: typeof import("node-sass");
 // @ts-ignore todo add types
 let tailwindcss: typeof import("tailwindcss");
 let express: typeof import("express");
-let crypto: typeof import("crypto");
+// @ts-ignore todo add types
+let send: typeof import("send");
 
 let staticFileServer: ReturnType<typeof import("express")>;
 
@@ -23,15 +25,13 @@ export function initialize(nodeModulesPath = "") {
   joinPath = __non_webpack_require__(`${nodeModulesPath}memory-fs/lib/join`);
   unionfs = __non_webpack_require__(`${nodeModulesPath}unionfs`);
   webpack = __non_webpack_require__(`${nodeModulesPath}webpack`);
-  nodeSass = __non_webpack_require__(`${nodeModulesPath}node-sass`);
+  // nodeSass = __non_webpack_require__(`${nodeModulesPath}node-sass`);
   tailwindcss = __non_webpack_require__(`${nodeModulesPath}tailwindcss`);
 
   express = __non_webpack_require__(
     `${nodeModulesPath}express`
   ) as typeof import("express");
-  crypto = __non_webpack_require__(
-    `${nodeModulesPath}crypto`
-  ) as typeof import("crypto");
+  send = __non_webpack_require__(`${nodeModulesPath}send`);
 
   assetSecurityToken = crypto
     .randomBytes(32)
@@ -48,9 +48,7 @@ export function initialize(nodeModulesPath = "") {
 
     const staticPath = `/public/${req.params[0]}`;
     console.log("static file request at", staticPath);
-    res.contentType(
-      __non_webpack_require__("send").mime.lookup(staticPath) || ""
-    );
+    res.contentType(send.mime.lookup(staticPath) || "");
     return res.end(
       webpackCache[req.params.codeId]?.outputFs.readFileSync(staticPath)
     );
@@ -103,12 +101,13 @@ const getWebpackModules = (codeId: string) => ({
             plugins: [tailwindcss],
           },
         },
-        {
-          loader: "sass-loader",
-          options: {
-            implementation: nodeSass,
-          },
-        },
+        "sassjs-loader",
+        // {
+        //   loader: "sass-loader",
+        //   options: {
+        //     implementation: nodeSass,
+        //   },
+        // },
       ],
     },
     {
