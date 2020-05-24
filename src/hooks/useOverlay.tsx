@@ -130,6 +130,14 @@ export function useOverlay(
   const renderOverlay = () => (
     <div
       className="absolute inset-0"
+      style={{
+        cursor:
+          selectModeType === SelectModeType.AddElement
+            ? "copy"
+            : selectModeType === SelectModeType.SelectElement
+            ? "crosshair"
+            : undefined,
+      }}
       onMouseMove={selectEnabled ? onOverlayMove : undefined}
       onMouseLeave={() => setHighlightBox(undefined)}
       onClick={onOverlayClick}

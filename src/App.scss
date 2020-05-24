@@ -41,14 +41,18 @@ fieldset {
     border-color: white;
   }
 
+  &:active,
   &.active,
   &.superactive {
-    background-color: rgb(117, 129, 146);
-
     &:focus {
       outline: none;
       box-shadow: none;
     }
+  }
+
+  &.active,
+  &.superactive {
+    background-color: rgb(117, 129, 146);
   }
   &.superactive {
     animation: border-pulsate 2s infinite;

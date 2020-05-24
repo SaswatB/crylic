@@ -17,6 +17,7 @@ import { OverlayComponentView } from "./components/OverlayComponentView";
 import { SideBar } from "./components/SideBar";
 import { Toolbar } from "./components/Toolbar";
 import { openFilePicker } from "./hooks/useFilePicker";
+import { useUpdatingRef } from "./hooks/useUpdatingRef";
 import {
   CodeEntry,
   OutlineElement,
@@ -125,40 +126,42 @@ function App() {
   // clear select mode on escape hotkey
   useHotkeys("escape", () => setSelectMode(undefined));
 
-  const selectElement = (renderId: string, componentElement: HTMLElement) => {
-    const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
-      componentElement
-    );
-    if (!lookupId) return;
-    const codeId = project?.primaryElementEditor.getCodeIdFromLookupId(
-      lookupId
-    );
-    if (!codeId) return;
-    const codeEntry = project?.getCodeEntry(codeId);
-    if (!codeEntry) return;
-
-    const styleGroups: StyleGroup[] = [];
-
-    project?.editorEntries.forEach(({ editor }) => {
-      styleGroups.push(
-        ...editor.getStyleGroupsFromHTMLElement(componentElement)
+  const selectElement = useUpdatingRef(
+    (renderId: string, componentElement: HTMLElement) => {
+      const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
+        componentElement
       );
-    });
-
-    setSelectedElement({
-      renderId,
-      lookupId,
-      sourceMetadata: project!.primaryElementEditor.getSourceMetaDataFromLookupId(
-        { ast: codeEntry.ast, codeEntry },
+      if (!lookupId) return;
+      const codeId = project?.primaryElementEditor.getCodeIdFromLookupId(
         lookupId
-      ),
-      viewContext: viewContextMap.current[renderId],
-      element: componentElement,
-      styleGroups,
-      computedStyles: window.getComputedStyle(componentElement),
-      inlineStyles: componentElement.style,
-    });
-  };
+      );
+      if (!codeId) return;
+      const codeEntry = project?.getCodeEntry(codeId);
+      if (!codeEntry) return;
+
+      const styleGroups: StyleGroup[] = [];
+
+      project?.editorEntries.forEach(({ editor }) => {
+        styleGroups.push(
+          ...editor.getStyleGroupsFromHTMLElement(componentElement)
+        );
+      });
+
+      setSelectedElement({
+        renderId,
+        lookupId,
+        sourceMetadata: project!.primaryElementEditor.getSourceMetaDataFromLookupId(
+          { ast: codeEntry.ast, codeEntry },
+          lookupId
+        ),
+        viewContext: viewContextMap.current[renderId],
+        element: componentElement,
+        styleGroups,
+        computedStyles: window.getComputedStyle(componentElement),
+        inlineStyles: componentElement.style,
+      });
+    }
+  );
 
   const [outlineMap, setOutlineMap] = useState<
     Record<string, OutlineElement[] | undefined>
@@ -206,7 +209,10 @@ function App() {
           "setting selected element post-compile",
           selectedElement.lookupId
         );
-        selectElement(renderEntry.id, newSelectedComponent as HTMLElement);
+        selectElement.current(
+          renderEntry.id,
+          newSelectedComponent as HTMLElement
+        );
       } else {
         setSelectedElement(undefined);
       }
@@ -234,7 +240,7 @@ function App() {
             componentElement as HTMLElement
           )
         );
-        selectElement(renderId, componentElement);
+        selectElement.current(renderId, componentElement);
         break;
       case SelectModeType.AddElement: {
         const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
@@ -272,7 +278,7 @@ function App() {
                 "setting selected element through post-child add",
                 newChildLookupId
               );
-              selectElement(renderId, newChildComponent as HTMLElement);
+              selectElement.current(renderId, newChildComponent as HTMLElement);
             }
           });
         }
@@ -376,7 +382,7 @@ function App() {
     <SideBar
       outlineMap={outlineMap}
       project={project}
-      selectElement={selectElement}
+      selectElement={(r, c) => selectElement.current(r, c)}
       selectedElement={selectedElement}
       onChangeSelectMode={setSelectMode}
       updateSelectedElementStyle={updateSelectedElementStyle}
