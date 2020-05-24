@@ -17,13 +17,15 @@ fieldset {
 
 @keyframes border-pulsate {
   0% {
-    border-color: rgba(255, 255, 255, 1);
+    border-color: var(--border-light);
   }
+
   50% {
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: var(--border-dark);
   }
+
   100% {
-    border-color: rgba(255, 255, 255, 1);
+    border-color: var(--border-light);
   }
 }
 
@@ -54,9 +56,18 @@ fieldset {
   &.superactive {
     background-color: rgb(117, 129, 146);
   }
+
   &.superactive {
     animation: border-pulsate 2s infinite;
+    --border-light: rgba(255, 255, 255, 1);
+    --border-dark: rgba(255, 255, 255, 0.3);
   }
+}
+
+.pulsing-highlight {
+  animation: border-pulsate 3s infinite;
+  --border-light: #2196f3;
+  --border-dark: #0d47a1;
 }
 
 .toolbar .btn {
@@ -115,12 +126,13 @@ body {
   flex-shrink: 0;
   overflow-x: auto;
 
-  > .btn,
-  > .btngrp-v {
+  >.btn,
+  >.btngrp-v {
     flex-grow: 1;
     min-width: min-content;
 
     &:not(:last-child) {
+
       &,
       .btn {
         border-top-right-radius: 0;
@@ -129,6 +141,7 @@ body {
     }
 
     &:not(:first-child) {
+
       &,
       .btn {
         border-top-left-radius: 0;
@@ -144,12 +157,13 @@ body {
   flex-direction: column;
   overflow-y: auto;
 
-  > .btn,
-  > .btngrp-h {
+  >.btn,
+  >.btngrp-h {
     flex-grow: 1;
     min-height: min-content;
 
     &:not(:last-child) {
+
       &,
       .btn {
         border-bottom-left-radius: 0;
@@ -158,6 +172,7 @@ body {
     }
 
     &:not(:first-child) {
+
       &,
       .btn {
         border-top-left-radius: 0;

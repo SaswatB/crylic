@@ -157,7 +157,7 @@ export function useOverlay(
         selectedElementBoundingBox &&
         selectedElementParentBoundingBox && (
           <Draggable
-            className="border-2 border-blue-300 border-solid"
+            className="border-2 border-blue-600 border-solid pulsing-highlight"
             dimensions={{
               top: selectedElementBoundingBox.y + tempOffset.y,
               left: selectedElementBoundingBox.x + tempOffset.x,
