@@ -17,6 +17,7 @@ import { OverlayComponentView } from "./components/OverlayComponentView";
 import { SideBar } from "./components/SideBar";
 import { Toolbar } from "./components/Toolbar";
 import { openFilePicker } from "./hooks/useFilePicker";
+import { useProject } from "./hooks/useProject";
 import { useUpdatingRef } from "./hooks/useUpdatingRef";
 import {
   CodeEntry,
@@ -25,7 +26,6 @@ import {
   SelectedElement,
   Styles,
 } from "./types/paint";
-import { prettyPrintCodeEntryAST } from "./utils/ast/ast-helpers";
 import {
   EditContext,
   ElementASTEditor,
@@ -39,7 +39,6 @@ import {
   SelectMode,
   SelectModeType,
 } from "./utils/constants";
-import { Project } from "./utils/Project";
 import { buildOutline } from "./utils/utils";
 import "./App.scss";
 
@@ -50,76 +49,24 @@ function App() {
   >({});
   const viewContextMap = useRef<Record<string, ViewContext | undefined>>({});
 
-  const [project, setProject] = useState<Project>();
-  (window as any).project = project; // only for debugging purposes
-  const codeChangeStack = useRef<{ id: string; code: string }[]>([]);
-  const codeRedoStack = useRef<{ id: string; code: string }[]>([]);
-  const setCode = (
-    codeId: string,
-    code: string,
-    isUndo = false,
-    isRedo = false
-  ) =>
-    setProject((currentProject) => {
-      const oldCode = currentProject?.getCodeEntry(codeId)?.code;
-      if (oldCode === code) return project;
+  const {
+    project,
+    setProject,
+    newProject,
+    openProject,
+    closeProject,
+    undoCodeChange,
+    redoCodeChange,
+    addCodeEntry,
+    setCode,
+    setCodeAstEdit,
+    toggleCodeEntryEdit,
+    addRenderEntry,
+  } = useProject();
 
-      // keep track of undo/redo state
-      if (oldCode !== undefined) {
-        const changeEntry = { id: codeId, code: oldCode };
-        if (isUndo) {
-          // save the old state in the redo stack for undos
-          codeRedoStack.current.push(changeEntry);
-        } else {
-          // save changes in the undo stack
-          codeChangeStack.current.push(changeEntry);
-
-          // clear the redo stack if the change isn't an undo or redo
-          if (!isRedo) {
-            codeRedoStack.current = [];
-          }
-        }
-      }
-
-      // apply change
-      return currentProject?.editCodeEntry(codeId, { code });
-    });
-  const setCodeAstEdit = (editedAst: any, codeEntry: CodeEntry) => {
-    // remove lookup data from the ast and get the transformed code
-    project?.getEditorsForCodeEntry(codeEntry).forEach((editor) => {
-      editedAst = editor.removeLookupData({ ast: editedAst, codeEntry });
-    });
-    // save the edited code
-    setCode(codeEntry.id, prettyPrintCodeEntryAST(codeEntry, editedAst));
-  };
-  const toggleCodeEntryEdit = (codeId: string) =>
-    setProject((project) =>
-      project?.editCodeEntry(codeId, {
-        edit: !project.getCodeEntry(codeId)?.edit,
-      })
-    );
-  const toggleCodeEntryRender = (codeId: string) =>
-    setProject((project) =>
-      project?.addRenderEntry(project.getCodeEntry(codeId)!)
-    );
-  const addCodeEntry = (
-    partialEntry: Partial<CodeEntry> & { filePath: string }
-  ) => setProject((project) => project?.addCodeEntries(partialEntry));
   // handle undo/redo hotkeys
-  useHotkeys("ctrl+z", () => {
-    const change = codeChangeStack.current.pop();
-    console.log("undo", change);
-    if (change) {
-      setCode(change.id, change.code, true);
-    }
-  });
-  useHotkeys("ctrl+shift+z", () => {
-    const change = codeRedoStack.current.pop();
-    console.log("redo", change);
-    if (change) {
-      setCode(change.id, change.code, false, true);
-    }
-  });
+  useHotkeys("ctrl+z", undoCodeChange);
+  useHotkeys("ctrl+shift+z", redoCodeChange);
 
   const [selectMode, setSelectMode] = useState<SelectMode>();
   const [selectedElement, setSelectedElement] = useState<SelectedElement>();
@@ -380,8 +327,8 @@ function App() {
   });
   const renderSideBar = () => (
     <SideBar
-      outlineMap={outlineMap}
       project={project}
+      outlineMap={outlineMap}
       selectElement={(r, c) => selectElement.current(r, c)}
       selectedElement={selectedElement}
       onChangeSelectMode={setSelectMode}
@@ -435,16 +382,12 @@ function App() {
         setProject((currentProject) => currentProject?.addAsset(file));
         enqueueSnackbar("Imported Image!");
       }}
-      onNewProject={async (p) =>
-        setProject(await Project.createNewProjectInDirectory(p))
-      }
-      onOpenProject={async (p) =>
-        setProject(await Project.createProjectFromDirectory(p))
-      }
+      onNewProject={newProject}
+      onOpenProject={openProject}
       onSaveProject={() => project?.saveFiles()}
-      onCloseProject={() => setProject(undefined)}
+      onCloseProject={closeProject}
       toggleCodeEntryEdit={toggleCodeEntryEdit}
-      toggleCodeEntryRender={toggleCodeEntryRender}
+      addRenderEntry={addRenderEntry}
     />
   );
 

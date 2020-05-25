@@ -99,7 +99,7 @@ const useMainTab = ({
   onCloseProject,
   onChangeFrameSize,
   toggleCodeEntryEdit,
-  toggleCodeEntryRender,
+  addRenderEntry,
 }: Props) => {
   const [, renderComponentViewWidthInput] = useTextInput(
     (newWidth) => onChangeFrameSize(parseInt(newWidth), undefined),
@@ -252,7 +252,7 @@ const useMainTab = ({
           <button
             className="mx-3 text-gray-500 hover:text-white default-transition"
             title="View"
-            onClick={() => toggleCodeEntryRender(codeEntry.id)}
+            onClick={() => addRenderEntry(codeEntry)}
           >
             <FontAwesomeIcon icon={faEye} />
           </button>
@@ -819,7 +819,7 @@ interface Props {
   onSaveProject: () => void;
   onCloseProject: () => void;
   toggleCodeEntryEdit: (codeId: string) => void;
-  toggleCodeEntryRender: (codeId: string) => void;
+  addRenderEntry: (codeEntry: CodeEntry) => void;
 }
 
 export const SideBar: FunctionComponent<Props> = (props) => {
