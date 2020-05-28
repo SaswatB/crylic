@@ -114,6 +114,12 @@ export const ifStringLiteral = (
   node: t.Node | null | undefined
 ): t.StringLiteral | undefined =>
   node?.type === "StringLiteral" ? (node as t.StringLiteral) : undefined;
+export const ifVariableDeclarator = (
+  node: t.Node | null | undefined
+): t.VariableDeclarator | undefined =>
+  node?.type === "VariableDeclarator"
+    ? (node as t.VariableDeclarator)
+    : undefined;
 
 export const ifString = (value: unknown) =>
   typeof value === "string" ? value : undefined;
@@ -131,6 +137,10 @@ export const getValue = <S, T extends { value?: S }>(
 export const getContent = <S, T extends { content?: S }>(
   node: T | null | undefined
 ): ExtractPropType<T, "content"> | undefined => node?.content as any;
+
+export const getIdName = <T extends { id?: t.Node | null }>(
+  node: T | null | undefined
+): string | undefined => pipe(node?.id, ifIdentifier, (_) => _?.name);
 
 export const valueToASTLiteral = (
   value: unknown
@@ -270,7 +280,55 @@ export const traverseJSXElements = (
   });
 };
 
-export const hasComponentExport = (ast: t.File) => {
+const getBlockIdentifiers = (nodes: t.ASTNode[], parents: t.ASTNode[] = []) => {
+  const identifiers: {
+    name: string;
+    node: t.ASTNode;
+    parents: t.ASTNode[];
+  }[] = [];
+  nodes.forEach((node) => {
+    const newParents = [...parents, node];
+    // todo cover more cases
+    switch (node.type) {
+      case "Program":
+        identifiers.push(...getBlockIdentifiers(node.body, newParents));
+        break;
+      case "ImportDeclaration":
+        identifiers.push(
+          ...getBlockIdentifiers(node.specifiers || [], newParents)
+        );
+        break;
+      case "ExportDefaultDeclaration":
+      case "ExportNamedDeclaration":
+        if (node.declaration) {
+          identifiers.push(
+            ...getBlockIdentifiers([node.declaration], newParents)
+          );
+        }
+        break;
+      case "VariableDeclaration":
+        identifiers.push(...getBlockIdentifiers(node.declarations, newParents));
+        break;
+      case "VariableDeclarator":
+      case "FunctionDeclaration":
+        identifiers.push(...getBlockIdentifiers([node.id], newParents));
+        break;
+
+      case "Identifier":
+        identifiers.push({ name: node.name, node, parents });
+        break;
+    }
+  });
+  return identifiers;
+};
+
+export const getComponentExport = (
+  ast: t.File
+):
+  | { isDefault: true; name?: undefined }
+  | { isDefault: false; name: string }
+  | undefined => {
+  // get all export nodes at the top level of the program
   const exportNodes = ast.program.body.filter((node) => {
     switch (node.type) {
       case "ExportAllDeclaration":
@@ -288,9 +346,110 @@ export const hasComponentExport = (ast: t.File) => {
     | t.ExportDeclaration
   )[];
 
-  // node.exportKind === 'value'
-  // todo do a better job for detecting components
-  return exportNodes.length > 0;
+  // todo cover more cases from https://developer.mozilla.org/en-US/docs/web/javascript/reference/statements/export
+  // todo support marker comment that overrides static analysis
+  // todo try to check if the function returns jsx
+  // todo try to get the best export if multiple functions are defined
+
+  /**
+   * Checks whether the given variable name refers to a function
+   */
+  const hasFunctionIdentifier = (varName: string) => {
+    // get all the variables defined at the top level of the program
+    const astIdentifiers = getBlockIdentifiers([ast.program]); // todo cache after first run & filter out ones past the target line
+
+    // get the identifier for the given variable
+    const varIdentifier = astIdentifiers.find((ai) => ai.name === varName);
+    if (!varIdentifier) return false;
+
+    // get the identifier parent
+    const varParent = varIdentifier.parents[varIdentifier.parents.length - 1];
+
+    // check whether the parent is a function (not exhaustive)
+    return (
+      varParent.type === "FunctionDeclaration" ||
+      (varParent.type === "VariableDeclarator" &&
+        (varParent.init?.type === "ArrowFunctionExpression" ||
+          varParent.init?.type === "FunctionExpression"))
+    );
+  };
+
+  const exportedFunctions = exportNodes
+    .filter(
+      (node): node is t.ExportNamedDeclaration | t.ExportDefaultDeclaration =>
+        node.type === "ExportNamedDeclaration" ||
+        node.type === "ExportDefaultDeclaration"
+    )
+    .map((node) => {
+      let name: string | undefined;
+      switch (node.declaration?.type) {
+        case "FunctionDeclaration": {
+          if (node.type === "ExportDefaultDeclaration") {
+            // name doesn't matter (and may not exist) for default export
+            return { node };
+          }
+          name = getIdName(node.declaration);
+          break;
+        }
+        case "VariableDeclaration": {
+          // search all variable declarations for function definitions
+          name = node.declaration.declarations
+            .map((declaration) => {
+              if (declaration.type !== "VariableDeclarator") return undefined;
+              if (
+                declaration.init?.type !== "ArrowFunctionExpression" &&
+                declaration.init?.type !== "FunctionExpression"
+              )
+                return undefined;
+
+              const declarationName = getIdName(declaration);
+              return declarationName;
+            })
+            .filter((n) => n !== undefined)[0];
+          break;
+        }
+        case "ArrowFunctionExpression":
+        case "FunctionExpression":
+          if (node.type === "ExportDefaultDeclaration") {
+            // these declarations should only be possible for default exports
+            return { node };
+          }
+          break;
+        case "Identifier":
+          // if a default export is exporting a variable, check if that variable is a function (this is handled under specifiers for named exports)
+          if (
+            node.type === "ExportDefaultDeclaration" &&
+            hasFunctionIdentifier(node.declaration.name)
+          ) {
+            return { node };
+          }
+          break;
+      }
+      if (node.type === "ExportNamedDeclaration") {
+        // check whether any specifiers are functions
+        name =
+          node.specifiers?.map((specifier) => {
+            const varName =
+              getIdName({ id: specifier.local }) ||
+              getIdName({ id: specifier.exported });
+            return varName && hasFunctionIdentifier(varName)
+              ? varName
+              : undefined;
+          })[0] || name;
+      }
+      return name ? { name, node } : undefined;
+    })
+    .filter((n) => n !== undefined);
+
+  // return whether an export was found
+  if (exportedFunctions.length > 0) {
+    if (exportedFunctions[0]!.node.type === "ExportDefaultDeclaration") {
+      return { isDefault: true };
+    }
+    return { isDefault: false, name: exportedFunctions[0]!.name! };
+  }
+
+  return undefined;
 };
 
 export const traverseStyleSheetRuleSets = (

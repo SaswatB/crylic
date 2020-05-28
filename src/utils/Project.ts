@@ -3,13 +3,13 @@ import { fold } from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
 import { MakeDirectoryOptions } from "fs";
 import produce, { immerable } from "immer";
-import { cloneDeep, uniqueId } from "lodash";
+import { camelCase, cloneDeep, uniqueId, upperFirst } from "lodash";
 import { Readable } from "stream";
 import yauzl from "yauzl";
 
 import { CodeEntry, ProjectConfig, RenderEntry } from "../types/paint";
 import {
-  hasComponentExport,
+  getComponentExport,
   hashString,
   parseCodeEntryAST,
   printCodeEntryAST,
@@ -30,8 +30,6 @@ import {
   STYLE_EXTENSION_REGEX,
 } from "./utils";
 
-// @ts-ignore ignore binary loader import
-// eslint-disable-next-line import/no-webpack-loader-syntax
 import projectTemplate from "!!../../loaders/binaryLoader!../assets/project-template.zip";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
@@ -271,11 +269,21 @@ export class Project {
 
         // recalculate metadata on code change
         if (key === "code") {
-          const { ast, codeWithLookupData } = this.getCodeEntryMetaData(
-            codeEntry
-          );
+          const {
+            ast,
+            codeWithLookupData,
+            isRenderable,
+            isEditable,
+            exportName,
+            exportIsDefault,
+          } = this.getCodeEntryMetaData(codeEntry);
+
           codeEntry.ast = ast;
           codeEntry.codeWithLookupData = codeWithLookupData;
+          codeEntry.isRenderable = isRenderable;
+          codeEntry.isEditable = isEditable;
+          codeEntry.exportName = exportName;
+          codeEntry.exportIsDefault = exportIsDefault;
         }
       });
     });
@@ -310,14 +318,33 @@ export class Project {
         this.config?.bootstrap &&
         path.join(this.path, this.config.bootstrap) === codeEntry.filePath;
       // check if the file is a component
-      const isRenderable =
+      const isRenderableScript =
         isScriptEntry(codeEntry) &&
         !isBootstrap &&
         // todo add an option to disable this check (component files must start with an uppercase letter)
         !!codeEntry.filePath.match(/(^|\\|\/)[A-Z][^/\\]*$/) &&
         // todo add an option to disable this check (test and declaration files are ignored)
-        !codeEntry.filePath.match(/\.(test|d)\.[jt]sx?$/) &&
-        hasComponentExport(ast as any);
+        !codeEntry.filePath.match(/\.(test|d)\.[jt]sx?$/);
+
+      let isRenderable = false;
+      let exportName = undefined;
+      let exportIsDefault = undefined;
+      if (isRenderableScript) {
+        const componentExport = getComponentExport(ast as any);
+        if (componentExport) {
+          isRenderable = true;
+          exportName =
+            componentExport.name ||
+            upperFirst(
+              camelCase(
+                path
+                  .basename(codeEntry.filePath)
+                  .replace(SCRIPT_EXTENSION_REGEX, "")
+              )
+            );
+          exportIsDefault = componentExport.isDefault;
+        }
+      }
 
       // add lookup data from each editor to the ast
       this.getEditorsForCodeEntry(codeEntry).forEach((editor) => {
@@ -331,6 +358,8 @@ export class Project {
         isRenderable,
         // this code entry has to be a script or style entry by this point so it's editable
         isEditable: true,
+        exportName,
+        exportIsDefault,
       };
     } catch (e) {
       console.log(e);

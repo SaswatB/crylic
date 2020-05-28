@@ -54,6 +54,7 @@ import {
   DEFAULT_FRAME_HEIGHT,
   DEFAULT_FRAME_WIDTH,
   SelectMode,
+  SelectModeType,
 } from "../utils/constants";
 import { Project } from "../utils/Project";
 import {
@@ -97,6 +98,7 @@ const useMainTab = ({
   onOpenProject,
   onSaveProject,
   onCloseProject,
+  onChangeSelectMode,
   onChangeFrameSize,
   toggleCodeEntryEdit,
   addRenderEntry,
@@ -255,6 +257,23 @@ const useMainTab = ({
             onClick={() => addRenderEntry(codeEntry)}
           >
             <FontAwesomeIcon icon={faEye} />
+          </button>
+        )}
+        {codeEntry.isRenderable && (project?.renderEntries.length ?? 0) > 0 && (
+          <button
+            className="mr-3 text-gray-500 hover:text-white default-transition"
+            title="Add to Component"
+            onClick={() =>
+              // todo throw an error if exportName isn't set
+              onChangeSelectMode({
+                type: SelectModeType.AddElement,
+                tag: codeEntry.exportName!,
+                isDefaultImport: codeEntry.exportIsDefault,
+                path: codeEntry.filePath,
+              })
+            }
+          >
+            <FontAwesomeIcon icon={faPlus} />
           </button>
         )}
         {codeEntry.isEditable && (

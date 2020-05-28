@@ -274,7 +274,9 @@ export function useAutocomplete<T>(
   const filter = useRef(createFilterOptions<{ name: string; value: T }>());
 
   const render = (
-    props?: AutocompleteProps<{ name: string; category?: string; value: T }>
+    props?: Partial<
+      AutocompleteProps<{ name: string; category?: string; value: T }>
+    >
   ) => (
     <Autocomplete
       {...props}

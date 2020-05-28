@@ -84,8 +84,12 @@ export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
   public addChildToElement = editAST(this.addChildToElementInAST.bind(this));
   protected abstract addChildToElementInAST(
     editContext: EditContext<ASTType>,
-    childTag: keyof HTMLElementTagNameMap | string,
-    childAttributes?: Record<string, unknown>
+    child: {
+      tag: keyof HTMLElementTagNameMap | string;
+      path?: string;
+      isDefaultImport?: boolean;
+      attributes?: Record<string, unknown>;
+    }
   ): void;
 
   public updateElementAttributes = editAST(

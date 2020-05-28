@@ -9,8 +9,6 @@ import React, {
 } from "react";
 import ReactDOM from "react-dom";
 
-// @ts-ignore ignore raw loader import
-// eslint-disable-next-line import/no-webpack-loader-syntax
 import normalizeCss from "!!raw-loader!normalize.css/normalize.css";
 
 export interface FrameRef {

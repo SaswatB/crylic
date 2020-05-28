@@ -77,12 +77,12 @@
   "scripts": {
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
-    "test": "react-app-rewired test",
+    "test": "jest test",
     "eject": "react-app-rewired eject",
     "electron": "electron .",
     "postinstall": "patch-package && npx electron-rebuild -o node-sass,oniguruma",
-    "lint": "npx eslint --ext .ts,.tsx,.js .",
-    "lint:fix": "npx eslint --ext .ts,.tsx,.js --fix .",
+    "lint": "npx eslint --ext .ts,.tsx,.js src/.",
+    "lint:fix": "npx eslint --ext .ts,.tsx,.js --fix src/.",
     "pretty": "npx prettier --write .",
     "typecheck": "npx tsc --noEmit"
   },
@@ -114,8 +114,29 @@
             ]
           ]
         }
-      ]
+      ],
+      "import/no-webpack-loader-syntax": 0
     }
+  },
+  "jest": {
+    "roots": [
+      "<rootDir>/test/"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.{js,jsx,ts,tsx}",
+      "**/*.{spec,test}.{js,jsx,ts,tsx}"
+    ],
+    "setupFiles": [
+      "<rootDir>/test/setupTests.ts"
+    ],
+    "transform": {
+      ".*\\.fixture\\..*": "jest-raw-loader",
+      "^.+\\.[jt]sx?$": "react-app-rewired/scripts/utils/babelTransform.js"
+    },
+    "transformIgnorePatterns": [
+      "<rootDir>/node_modules/"
+    ],
+    "verbose": true
   },
   "browserslist": {
     "production": [
@@ -151,6 +172,7 @@
     "electron-rebuild": "^1.10.1",
     "eslint": "^6.8.0",
     "eslint-plugin-simple-import-sort": "^5.0.2",
+    "jest-raw-loader": "^1.0.1",
     "node-gyp": "^6.1.0"
   }
 }

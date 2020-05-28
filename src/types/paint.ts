@@ -14,6 +14,8 @@ export interface CodeEntry {
   codeWithLookupData?: string;
   isRenderable?: boolean;
   isEditable?: boolean;
+  exportName?: string;
+  exportIsDefault?: boolean;
 }
 
 export interface RenderEntry {

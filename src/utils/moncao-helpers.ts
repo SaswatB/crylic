@@ -6,11 +6,7 @@ import darkVs from "../lib/dark-vs.json";
 import { CodeEntry } from "../types/paint";
 import { getFileExtensionLanguage } from "./utils";
 
-// @ts-ignore ignore raw loader import
-// eslint-disable-next-line import/no-webpack-loader-syntax
 import TypeScriptReactTMLanguage from "!!raw-loader!../lib/TypeScriptReact.tmLanguage";
-// @ts-ignore ignore raw loader import
-// eslint-disable-next-line import/no-webpack-loader-syntax
 import reactTypes from "!!raw-loader!@types/react/index.d.ts";
 
 // setup a better typescript grammar for jsx syntax highlighting

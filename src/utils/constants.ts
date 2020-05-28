@@ -16,7 +16,9 @@ export type SelectMode =
     }
   | {
       type: SelectModeType.AddElement;
-      tag: keyof HTMLElementTagNameMap;
+      tag: keyof HTMLElementTagNameMap | string;
+      path?: string;
+      isDefaultImport?: boolean;
       attributes?: Record<string, unknown>;
     };
 

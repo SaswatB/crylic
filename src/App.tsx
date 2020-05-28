@@ -39,7 +39,7 @@ import {
   SelectMode,
   SelectModeType,
 } from "./utils/constants";
-import { buildOutline } from "./utils/utils";
+import { buildOutline, getRelativeImportPath } from "./utils/utils";
 import "./App.scss";
 
 function App() {
@@ -204,10 +204,28 @@ function App() {
         );
         if (!codeEntry) break;
 
+        // don't allow adding a component to itself
+        if (selectMode.path === codeEntry.filePath) {
+          enqueueSnackbar("Cannot add a component as a child of itself");
+          break;
+        }
+
+        // get the import path relative to the codeEntry being edited
+        let importPath =
+          selectMode.path && getRelativeImportPath(codeEntry, selectMode.path);
+
+        // if the relative path doesn't start with a '.', add one
+        if (importPath && !importPath.startsWith(".")) {
+          importPath = `./${importPath}`;
+        }
+        console.log("importPath", selectMode, codeEntry);
+
         let newAst = project?.primaryElementEditor.addChildToElement(
           { ast: codeEntry.ast, codeEntry, lookupId },
-          selectMode.tag,
-          selectMode.attributes
+          {
+            ...selectMode,
+            path: importPath,
+          }
         );
         const [newChildLookupId] =
           project?.primaryElementEditor.getRecentlyAddedElements({
@@ -444,8 +462,7 @@ function App() {
           // todo check if Route is imported
           const newAst = project.primaryElementEditor.addChildToElement(
             { ast: codeEntry.ast, codeEntry, lookupId: switchLookupId },
-            "Route",
-            { path }
+            { tag: "Route", path: "react-router-dom", attributes: { path } }
           );
           setCodeAstEdit(newAst, codeEntry!);
           setProject((currentProject) =>

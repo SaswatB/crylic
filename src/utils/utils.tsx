@@ -5,6 +5,8 @@ import { Readable } from "stream";
 import { CodeEntry, OutlineElement } from "../types/paint";
 import { Project } from "./Project";
 
+const path = __non_webpack_require__("path") as typeof import("path");
+
 export const STYLE_EXTENSION_REGEX = /\.(css|s[ac]ss|less)$/;
 export const SCRIPT_EXTENSION_REGEX = /\.[jt]sx?$/;
 export const IMAGE_EXTENSION_REGEX = /\.(jpe?g|png|gif|svg)$/;
@@ -112,3 +114,9 @@ export const renderSeparator = (title?: string, action?: React.ReactNode) => (
     {action || null}
   </div>
 );
+
+export const getRelativeImportPath = (codeEntry: CodeEntry, target: string) =>
+  path
+    .relative(path.dirname(codeEntry.filePath), target)
+    .replace(/\\/g, "/")
+    .replace(SCRIPT_EXTENSION_REGEX, "");

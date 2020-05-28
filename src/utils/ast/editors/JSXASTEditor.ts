@@ -6,6 +6,7 @@ import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { types } from "recast";
 
 import { CodeEntry, SourceMetadata, Styles } from "../../../types/paint";
+import { getRelativeImportPath } from "../../utils";
 import {
   copyJSXName,
   getValue,
@@ -102,14 +103,20 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
 
   protected addChildToElementInAST(
     { ast, lookupId }: EditContext<t.File>,
-    childTag: keyof HTMLElementTagNameMap | string,
-    childAttributes?: Record<string, unknown>
+    child: {
+      tag: keyof HTMLElementTagNameMap | string;
+      path?: string;
+      isDefaultImport?: boolean;
+      attributes?: Record<string, unknown>;
+    }
   ) {
-    // ensure the import for react-router-dom components
-    if (childTag === "Route" || childTag === "Link") {
+    let childTag = child.tag;
+    // ensure the import for components with a path
+    if (child.path) {
       childTag = this.getOrAddImport(ast, {
-        path: "react-router-dom",
         name: childTag,
+        path: child.path,
+        isDefault: child.isDefaultImport,
       });
     }
 
@@ -118,7 +125,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
         path.value,
         childTag,
         {
-          ...childAttributes,
+          ...child.attributes,
           [`data-${JSX_RECENTLY_ADDED_DATA_ATTR}`]: JSX_RECENTLY_ADDED,
         },
         {
@@ -193,9 +200,10 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     assetEntry: CodeEntry
   ) {
     // get the import for the asset
-    const relativeAssetPath = path
-      .relative(path.dirname(codeEntry.filePath), assetEntry.filePath)
-      .replace(/\\/g, "/");
+    const relativeAssetPath = getRelativeImportPath(
+      codeEntry,
+      assetEntry.filePath
+    );
     const assetDefaultName = `Asset${startCase(
       path.basename(assetEntry.filePath).replace(/\..*$/, "")
     ).replace(/\s+/g, "")}`;

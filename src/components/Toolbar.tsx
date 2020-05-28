@@ -156,7 +156,7 @@ export const Toolbar: FunctionComponent<Props> = ({
         </button>
         <button
           className={`btn ${
-            selectMode?.type === SelectModeType.AddElement ? "active" : ""
+            selectMode?.type === SelectModeType.AddElement ? "superactive" : ""
           }`}
           title="Add Element"
           {...bindTrigger(adderPopupState)}
