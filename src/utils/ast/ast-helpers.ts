@@ -11,16 +11,14 @@ import gonzales, {
   CSSASTSyntax,
 } from "gonzales-pe";
 import { cloneDeep, isArray } from "lodash";
+import prettierParserBabel from "prettier/parser-babel";
+import prettierParsesPostcss from "prettier/parser-postcss";
+import { format } from "prettier/standalone";
 import { parse, print, types, visit } from "recast";
 
 import { CodeEntry } from "../../types/paint";
 import { getStyleEntryExtension, isStyleEntry } from "../utils";
 import { babelTsParser } from "./babel-ts";
-
-// webpack require needed due to prettier dep on dirname
-const { format } = __non_webpack_require__(
-  "prettier"
-) as typeof import("prettier");
 
 const { builders: b } = types;
 
@@ -30,7 +28,7 @@ export const parseAST = (code: string): t.File =>
   });
 export const printAST = (ast: t.File) => print(cloneDeep(ast)).code;
 export const prettyPrintAST = (ast: t.File) =>
-  format(printAST(ast), { parser: "babel-ts" });
+  format(printAST(ast), { parser: "babel-ts", plugins: [prettierParserBabel] });
 
 export const parseStyleSheetAST = (codeEntry: CodeEntry) => {
   const syntax = getStyleEntryExtension(codeEntry);
@@ -54,7 +52,7 @@ export const prettyPrintStyleSheetAST = (
     return code;
   }
 
-  return format(code, { parser: syntax });
+  return format(code, { parser: syntax, plugins: [prettierParsesPostcss] });
 };
 
 export const parseCodeEntryAST = (codeEntry: CodeEntry) =>
