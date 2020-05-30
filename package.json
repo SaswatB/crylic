@@ -3,6 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "main": "src/electron-starter.js",
+  "scripts": {
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "jest test",
+    "eject": "react-app-rewired eject",
+    "electron": "electron .",
+    "postinstall": "patch-package && npx electron-rebuild -o node-sass,oniguruma",
+    "lint": "npx eslint --ext .ts,.tsx,.js src/.",
+    "lint:fix": "npx eslint --ext .ts,.tsx,.js --fix src/.",
+    "pretty": "npx prettier --write .",
+    "typecheck": "npx tsc --noEmit"
+  },
   "dependencies": {
     "@babel/core": "^7.9.0",
     "@babel/plugin-proposal-class-properties": "^7.8.3",
@@ -74,17 +86,30 @@
     "worker-loader": "^2.0.0",
     "yauzl": "^2.10.0"
   },
-  "scripts": {
-    "start": "react-app-rewired start",
-    "build": "react-app-rewired build",
-    "test": "jest test",
-    "eject": "react-app-rewired eject",
-    "electron": "electron .",
-    "postinstall": "patch-package && npx electron-rebuild -o node-sass,oniguruma",
-    "lint": "npx eslint --ext .ts,.tsx,.js src/.",
-    "lint:fix": "npx eslint --ext .ts,.tsx,.js --fix src/.",
-    "pretty": "npx prettier --write .",
-    "typecheck": "npx tsc --noEmit"
+  "devDependencies": {
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.3.0-beta.3",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "@types/babel__standalone": "^7.1.2",
+    "@types/express": "^4.17.6",
+    "@types/jest": "^24.0.0",
+    "@types/lodash": "^4.14.149",
+    "@types/memory-fs": "^0.3.2",
+    "@types/node": "^12.0.0",
+    "@types/node-sass": "^4.11.0",
+    "@types/prettier": "^2.0.0",
+    "@types/react": "^16.9.0",
+    "@types/react-color": "^3.0.1",
+    "@types/react-dom": "^16.9.0",
+    "@types/react-router-dom": "^5.1.5",
+    "@types/webpack": "^4.41.10",
+    "@types/yauzl": "^2.9.1",
+    "electron-rebuild": "^1.10.1",
+    "eslint": "^6.8.0",
+    "eslint-plugin-simple-import-sort": "^5.0.2",
+    "jest-raw-loader": "^1.0.1",
+    "node-gyp": "^6.1.0"
   },
   "eslintConfig": {
     "extends": "react-app",
@@ -149,30 +174,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "@pmmmwh/react-refresh-webpack-plugin": "^0.3.0-beta.3",
-    "@testing-library/jest-dom": "^4.2.4",
-    "@testing-library/react": "^9.3.2",
-    "@testing-library/user-event": "^7.1.2",
-    "@types/babel__standalone": "^7.1.2",
-    "@types/express": "^4.17.6",
-    "@types/jest": "^24.0.0",
-    "@types/lodash": "^4.14.149",
-    "@types/memory-fs": "^0.3.2",
-    "@types/node": "^12.0.0",
-    "@types/node-sass": "^4.11.0",
-    "@types/prettier": "^2.0.0",
-    "@types/react": "^16.9.0",
-    "@types/react-color": "^3.0.1",
-    "@types/react-dom": "^16.9.0",
-    "@types/react-router-dom": "^5.1.5",
-    "@types/webpack": "^4.41.10",
-    "@types/yauzl": "^2.9.1",
-    "electron-rebuild": "^1.10.1",
-    "eslint": "^6.8.0",
-    "eslint-plugin-simple-import-sort": "^5.0.2",
-    "jest-raw-loader": "^1.0.1",
-    "node-gyp": "^6.1.0"
   }
 }
