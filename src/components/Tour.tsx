@@ -6,6 +6,8 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 
+import { useLocalStorage } from "../hooks/useLocalStorage";
+
 export const TourContext = React.createContext({
   shownTourSteps: [] as string[],
   setShownTourSteps: (value: string[]) => {},
@@ -17,17 +19,21 @@ export const TourContext = React.createContext({
 });
 
 export const TourProvider: FunctionComponent = ({ children }) => {
-  const [shownTourSteps, setShownTourSteps] = useState<string[]>([]);
+  const [shownTourSteps, setShownTourSteps] = useLocalStorage<string[]>(
+    "shownTourSteps"
+  );
   const [isAFloaterVisible, setAFloaterVisible] = useState(false);
-  const [tourDisabled, setTourDisabled] = useState(false);
+  const [tourDisabled, setTourDisabled] = useLocalStorage<boolean>(
+    "tourDisabled"
+  );
   return (
     <TourContext.Provider
       value={{
-        shownTourSteps,
+        shownTourSteps: shownTourSteps || [],
         setShownTourSteps,
         isAFloaterVisible,
         setAFloaterVisible,
-        tourDisabled,
+        tourDisabled: tourDisabled || false,
         setTourDisabled,
         resetTour: () => setShownTourSteps([]),
       }}
