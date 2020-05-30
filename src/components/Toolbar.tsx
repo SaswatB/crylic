@@ -30,6 +30,7 @@ import {
 import { SelectedElement } from "../types/paint";
 import { SelectMode, SelectModeType } from "../utils/constants";
 import { renderSeparator } from "../utils/utils";
+import { Tour } from "./Tour";
 
 const useAdderTab = (
   selectMode: SelectMode | undefined,
@@ -123,13 +124,25 @@ export const Toolbar: FunctionComponent<Props> = ({
 
   return (
     <>
-      <div className="btngrp-h">
+      <div className="btngrp-h overflow-unset">
+        <Tour
+          name="interactive-mode"
+          beaconStyle={{
+            marginTop: 20,
+            marginLeft: 20,
+          }}
+        >
+          This button enables interactive mode. <br />
+          Interactive mode allows you to interact with your component similar to
+          how it would run in a browser in the component view below.
+        </Tour>
         <button
           className={`btn ${
             selectMode === undefined && selectedElement === undefined
               ? "active"
               : ""
           }`}
+          data-tour="interactive-mode"
           title="Interactive Mode"
           onClick={() => {
             setSelectedElement(undefined);
@@ -138,6 +151,18 @@ export const Toolbar: FunctionComponent<Props> = ({
         >
           <FontAwesomeIcon icon={faMousePointer} />
         </button>
+        <Tour
+          name="select-mode"
+          beaconStyle={{
+            marginTop: 20,
+            marginLeft: 20,
+          }}
+        >
+          This button enables select mode. <br />
+          Select mode allows you to select elements from the component view
+          below and edit them from the sidebar, as well as drag to move or
+          resize within the component view itself.
+        </Tour>
         <button
           className={`btn ${
             selectMode?.type === SelectModeType.SelectElement
@@ -146,6 +171,7 @@ export const Toolbar: FunctionComponent<Props> = ({
               ? "active"
               : ""
           }`}
+          data-tour="select-mode"
           title="Select Element"
           onClick={() => setSelectMode({ type: SelectModeType.SelectElement })}
         >
@@ -154,10 +180,22 @@ export const Toolbar: FunctionComponent<Props> = ({
             className="transform -rotate-90"
           />
         </button>
+        <Tour
+          name="add-mode"
+          beaconStyle={{
+            marginTop: 20,
+            marginLeft: 20,
+          }}
+        >
+          This button enables add mode. <br />
+          Add mode allows you to add elements to your components in the
+          component view below.
+        </Tour>
         <button
           className={`btn ${
             selectMode?.type === SelectModeType.AddElement ? "superactive" : ""
           }`}
+          data-tour="add-mode"
           title="Add Element"
           {...bindTrigger(adderPopupState)}
         >

@@ -4,6 +4,7 @@
 
 body {
   background-color: #1b1b1b;
+  overflow: hidden;
 }
 
 .default-transition {
@@ -70,9 +71,17 @@ fieldset {
   --border-dark: #0d47a1;
 }
 
-.toolbar .btn {
-  padding: 6px 12px;
-  border-radius: 0;
+.sidebar {
+  width: 300px;
+}
+
+.toolbar {
+  left: 300px;
+
+  .btn {
+    padding: 6px 12px;
+    border-radius: 0;
+  }
 }
 
 .grid2x {
@@ -220,4 +229,101 @@ body {
 
 div[role="tooltip"] {
   z-index: 1;
+}
+
+.overflow-unset {
+  overflow: unset;
+}
+
+@keyframes scale-animation {
+  0% {
+    transform: scale(1);
+  }
+
+  30% {
+    transform: scale(2);
+  }
+
+  60% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.tour-floater-background {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  mix-blend-mode: hard-light;
+
+  .tour-floater-spotlight {
+    position: absolute;
+    border-radius: 20px;
+    box-sizing: content-box;
+    pointer-events: none;
+    background-color: gray;
+  }
+}
+
+.tour-floater-container {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+
+  .tour-floater {
+    background-color: #102027;
+    color: white;
+    padding: 20px;
+    text-align: center;
+    z-index: 110;
+    max-width: 40vw;
+
+    .tour-floater-body {
+      margin-bottom: 20px;
+    }
+  }
+}
+
+.tour-beacon {
+  position: relative;
+  z-index: 50;
+  cursor: pointer;
+
+  .tour-beacon-content-container {
+    position: absolute;
+
+    .tour-beacon-border {
+      border: 1px solid #f04;
+      border-radius: 100%;
+      height: 16px;
+      width: 16px;
+
+      animation: scale-animation 4s infinite;
+    }
+
+    .tour-beacon-content {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: #f04;
+      border-radius: 100%;
+      margin: 5px;
+    }
+  }
 }

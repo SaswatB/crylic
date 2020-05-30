@@ -15,7 +15,7 @@ interface Tab {
 }
 
 export interface TabsRef {
-  selectTab: (index: number) => void;
+  selectTab: (title: string) => void;
 }
 
 interface Props {
@@ -41,8 +41,8 @@ export const Tabs: FunctionComponent<
   }, [usableTabs.length]);
 
   useImperativeHandle(ref, () => ({
-    selectTab(index) {
-      setActiveTab(index);
+    selectTab(title) {
+      setActiveTab(usableTabs.findIndex((tab) => tab.title === title));
     },
   }));
 
@@ -62,7 +62,7 @@ export const Tabs: FunctionComponent<
           ))}
         </div>
       )}
-      <div className="tab-content overflow-y-auto">
+      <div className="tab-content flex flex-col overflow-y-auto">
         {usableTabs[activeTab]?.render() || null}
       </div>
     </div>

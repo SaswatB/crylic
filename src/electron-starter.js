@@ -17,7 +17,10 @@ function createWindow() {
     },
   });
 
-  // and load the url of the app.
+  // hide the application menu
+  mainWindow.setMenuBarVisibility(false);
+
+  // load the url of the app.
   mainWindow.loadURL("http://localhost:4000");
 
   // Open the DevTools.

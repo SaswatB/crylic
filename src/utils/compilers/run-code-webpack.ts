@@ -115,7 +115,7 @@ const getWebpackModules = (codeId: string) => ({
       use: ["style-loader", "css-loader", "less-loader"],
     },
     {
-      loader: require.resolve("file-loader"),
+      loader: "file-loader",
       exclude: [
         /\.(js|mjs|jsx|ts|tsx)$/,
         /\.html$/,

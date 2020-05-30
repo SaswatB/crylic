@@ -16,6 +16,7 @@ import { InputModal } from "./components/InputModal";
 import { OverlayComponentView } from "./components/OverlayComponentView";
 import { SideBar } from "./components/SideBar";
 import { Toolbar } from "./components/Toolbar";
+import { Tour } from "./components/Tour";
 import { openFilePicker } from "./hooks/useFilePicker";
 import { useProject } from "./hooks/useProject";
 import { useUpdatingRef } from "./hooks/useUpdatingRef";
@@ -486,20 +487,29 @@ function App() {
     ));
 
   return (
-    <div className="flex flex-col items-stretch w-screen h-screen relative overflow-hidden text-white">
+    <div
+      className="flex flex-col items-stretch w-screen h-screen relative overflow-hidden text-white"
+      data-tour="start"
+    >
+      <Tour
+        name="start"
+        autoOpen
+        disableSpotlight
+        beaconStyle={{ position: "fixed", left: "50%", top: 20 }}
+      >
+        Welcome! <br />
+        To get you started, this tour will guide you through the basics of using
+        paint. <br />
+        <br />
+        Look around for beacons to get further instructions.
+      </Tour>
       <div className="flex flex-1 flex-row">
-        <div
-          className="flex flex-col absolute p-4 pb-0 h-screen dark-glass z-10"
-          style={{ width: "300px" }}
-        >
+        <div className="sidebar flex flex-col absolute p-4 pb-0 h-screen dark-glass z-10">
           {renderSideBar()}
         </div>
         <div className="flex flex-col flex-1 relative bg-gray-600 items-center justify-center overflow-hidden">
           {(project?.renderEntries.length ?? 0) > 0 && (
-            <div
-              className="toolbar flex absolute top-0 right-0 dark-glass z-10"
-              style={{ left: 300 }}
-            >
+            <div className="toolbar flex absolute top-0 right-0 dark-glass z-10">
               {renderToolbar()}
             </div>
           )}

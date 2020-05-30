@@ -5,6 +5,7 @@ import purple from "@material-ui/core/colors/purple";
 import { SnackbarProvider } from "notistack";
 
 import { ModalContainer } from "./components/PromiseModal";
+import { TourProvider } from "./components/Tour";
 
 const darkTheme = createMuiTheme({
   palette: {
@@ -17,8 +18,10 @@ const darkTheme = createMuiTheme({
 export const Bootstrap: FunctionComponent = ({ children }) => (
   <SnackbarProvider maxSnack={3}>
     <ThemeProvider theme={darkTheme}>
-      <ModalContainer />
-      {children}
+      <TourProvider>
+        <ModalContainer />
+        {children}
+      </TourProvider>
     </ThemeProvider>
   </SnackbarProvider>
 );

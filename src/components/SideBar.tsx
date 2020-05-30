@@ -1,6 +1,7 @@
 import React, {
   CSSProperties,
   FunctionComponent,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -15,6 +16,7 @@ import {
   faStream,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Checkbox, FormControlLabel } from "@material-ui/core";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import TreeItem from "@material-ui/lab/TreeItem";
@@ -66,6 +68,7 @@ import {
   SCRIPT_EXTENSION_REGEX,
   STYLE_EXTENSION_REGEX,
 } from "../utils/utils";
+import { Tour, TourContext } from "./Tour";
 
 const path = __non_webpack_require__("path") as typeof import("path");
 
@@ -113,6 +116,8 @@ const useMainTab = ({
     "Height",
     `${DEFAULT_FRAME_HEIGHT}`
   );
+
+  const { tourDisabled, setTourDisabled, resetTour } = useContext(TourContext);
 
   const [
     assetsFilter,
@@ -243,21 +248,55 @@ const useMainTab = ({
   });
   projectTreePostProcess?.(projectTree);
 
-  const renderTreeLabel = ({ name, codeEntry }: Tree) =>
-    !codeEntry ? (
-      name
-    ) : (
+  let renderedFirstEditableNode = false;
+  let renderedFirstRenderableNode = false;
+  const renderTreeLabel = ({ name, codeEntry }: Tree) => {
+    if (!codeEntry) return name;
+
+    let isFirstEditableNode = false;
+    if (!renderedFirstEditableNode && codeEntry.isEditable) {
+      isFirstEditableNode = true;
+      renderedFirstEditableNode = true;
+    }
+    let isFirstRenderableNode = false;
+    if (!renderedFirstRenderableNode && codeEntry.isRenderable) {
+      isFirstRenderableNode = true;
+      renderedFirstRenderableNode = true;
+    }
+
+    return (
       <div className="flex">
         {name}
         <div className="flex-1" />
         {codeEntry.isRenderable && (
-          <button
-            className="mx-3 text-gray-500 hover:text-white default-transition"
-            title="View"
-            onClick={() => addRenderEntry(codeEntry)}
-          >
-            <FontAwesomeIcon icon={faEye} />
-          </button>
+          <>
+            {isFirstRenderableNode && (
+              <Tour
+                name="asset-tree-render"
+                dependencies={["asset-tree"]}
+                beaconStyle={{
+                  marginTop: 10,
+                  marginLeft: 7,
+                }}
+              >
+                Here you get to unleash the power of Paint! <br />
+                Using this action, components can be shown on the main view,
+                where they can be interacted with and edited. <br />
+                <br />
+                Try it now!
+              </Tour>
+            )}
+            <button
+              className="mx-3 text-gray-500 hover:text-white default-transition"
+              data-tour={
+                isFirstRenderableNode ? "asset-tree-render" : undefined
+              }
+              title="View"
+              onClick={() => addRenderEntry(codeEntry)}
+            >
+              <FontAwesomeIcon icon={faEye} />
+            </button>
+          </>
         )}
         {codeEntry.isRenderable && (project?.renderEntries.length ?? 0) > 0 && (
           <button
@@ -277,16 +316,33 @@ const useMainTab = ({
           </button>
         )}
         {codeEntry.isEditable && (
-          <button
-            className="text-gray-500 hover:text-white default-transition"
-            title="Edit Code"
-            onClick={() => toggleCodeEntryEdit(codeEntry.id)}
-          >
-            <FontAwesomeIcon icon={faEdit} />
-          </button>
+          <>
+            {isFirstEditableNode && (
+              <Tour
+                name="asset-tree-edit"
+                dependencies={["asset-tree"]}
+                beaconStyle={{
+                  marginTop: 10,
+                  marginLeft: -8,
+                }}
+              >
+                Edit any asset in a code editor, changes are reflected
+                automatically within the component viewer.
+              </Tour>
+            )}
+            <button
+              className="text-gray-500 hover:text-white default-transition"
+              data-tour={isFirstRenderableNode ? "asset-tree-edit" : undefined}
+              title="Edit Code"
+              onClick={() => toggleCodeEntryEdit(codeEntry.id)}
+            >
+              <FontAwesomeIcon icon={faEdit} />
+            </button>
+          </>
         )}
       </div>
     );
+  };
 
   const renderTree = (node = projectTree) => (
     <TreeItem key={node.id} nodeId={node.id} label={renderTreeLabel(node)}>
@@ -311,6 +367,7 @@ const useMainTab = ({
           <>
             <button
               className="btn w-full"
+              data-tour="new-project"
               onClick={() =>
                 saveFilePicker({
                   filters: [{ name: "Project", extensions: [""] }],
@@ -319,8 +376,24 @@ const useMainTab = ({
             >
               New Project
             </button>
+            <Tour
+              name="new-project"
+              beaconStyle={{
+                marginTop: -8,
+                marginLeft: 10,
+              }}
+            >
+              Paint is project based, so to get started you will need to either
+              create a new project or open an existing one. <br />
+              <br />
+              Try creating a new project to start!
+              <br />
+              Existing React projects can also be opened, ones created with
+              create-react-app work the best.
+            </Tour>
             <button
               className="btn w-full"
+              data-tour="new-project"
               onClick={() =>
                 openFilePicker({ properties: ["openDirectory"] }).then(
                   (f) => f && onOpenProject(f)
@@ -331,6 +404,7 @@ const useMainTab = ({
             </button>
             {/* <button
               className="btn w-full"
+              data-tour="new-project"
               onClick={() => openFilePicker().then((f) => f && onOpenFile(f))}
             >
               Quick Design
@@ -338,6 +412,23 @@ const useMainTab = ({
           </>
         )}
       </div>
+      {renderSeparator("Tour Options")}
+      <FormControlLabel
+        className="self-center"
+        control={
+          <Checkbox
+            color="primary"
+            checked={!tourDisabled}
+            onChange={() => setTourDisabled(!tourDisabled)}
+          />
+        }
+        label="Show Tour"
+      />
+      {!tourDisabled && (
+        <button className="btn w-full" onClick={resetTour}>
+          Restart Tour
+        </button>
+      )}
       {project && (
         <>
           {renderSeparator("Frame")}
@@ -346,37 +437,70 @@ const useMainTab = ({
             <div className="px-4">x</div>
             {renderComponentViewHeightInput()}
           </div>
-          {renderSeparator(
-            "Assets",
-            <>
-              <button
-                className="ml-2"
-                title="Filter Assets"
-                onClick={openAssetsFilterMenu}
-              >
-                <FontAwesomeIcon
-                  icon={faFilter}
-                  className="text-gray-500 hover:text-white default-transition"
-                />
-              </button>
-              <button className="ml-2" title="Add Asset" onClick={openAddMenu}>
-                <FontAwesomeIcon
-                  icon={faPlus}
-                  className="text-gray-500 hover:text-white default-transition"
-                />
-              </button>
-            </>
-          )}
-          {renderAssetsFilterMenu()}
-          {renderAddMenu()}
-          <TreeView
-            defaultCollapseIcon={<ExpandMoreIcon />}
-            defaultExpandIcon={<ChevronRightIcon />}
-            defaultExpanded={Array.from(treeNodeIds)}
-            selected={null as any}
+          <Tour
+            name="asset-tree"
+            beaconStyle={{
+              marginTop: 20,
+              marginLeft: 35,
+            }}
           >
-            {projectTree.children.map(renderTree)}
-          </TreeView>
+            Congrats on starting on your project!
+            <br />
+            Here you can see all the assets within the project, such as
+            components, stylesheets, and images. <br />
+          </Tour>
+          <div data-tour="asset-tree">
+            {renderSeparator(
+              "Assets",
+              <>
+                <Tour name="asset-tree-filter" dependencies={["asset-tree"]}>
+                  By default the assets view only shows components, use this
+                  filter menu to view more.
+                </Tour>
+                <button
+                  className="mx-2"
+                  data-tour="asset-tree-filter"
+                  title="Filter Assets"
+                  onClick={openAssetsFilterMenu}
+                >
+                  <FontAwesomeIcon
+                    icon={faFilter}
+                    className="text-gray-500 hover:text-white default-transition"
+                  />
+                </button>
+                <Tour
+                  name="asset-tree-add"
+                  dependencies={["asset-tree"]}
+                  beaconStyle={{
+                    marginLeft: -10,
+                  }}
+                >
+                  Use this menu to add new components, stylesheets and images to
+                  your project!
+                </Tour>
+                <button
+                  data-tour="asset-tree-add"
+                  title="Add Asset"
+                  onClick={openAddMenu}
+                >
+                  <FontAwesomeIcon
+                    icon={faPlus}
+                    className="text-gray-500 hover:text-white default-transition"
+                  />
+                </button>
+              </>
+            )}
+            {renderAssetsFilterMenu()}
+            {renderAddMenu()}
+            <TreeView
+              defaultCollapseIcon={<ExpandMoreIcon />}
+              defaultExpandIcon={<ChevronRightIcon />}
+              defaultExpanded={Array.from(treeNodeIds)}
+              selected={null as any}
+            >
+              {projectTree.children.map(renderTree)}
+            </TreeView>
+          </div>
         </>
       )}
     </>
@@ -429,7 +553,7 @@ const useOutlineTab = ({
   );
 
   const renderOutlineTab = () => (
-    <div className="mt-4">
+    <div className="mt-4" data-tour="outline-tab">
       <TreeView
         defaultCollapseIcon={<ExpandMoreIcon />}
         defaultExpandIcon={<ChevronRightIcon />}
@@ -743,7 +867,7 @@ const useSelectedElementEditorTab = ({
   );
 
   const renderEditor = () => (
-    <>
+    <div data-tour="edit-element-tab">
       {renderSeparator("Style Group")}
       {renderStyleGroupSelector()}
       {renderSeparator("Layout")}
@@ -801,7 +925,7 @@ const useSelectedElementEditorTab = ({
         {selectedElement?.element.tagName.toLowerCase() === "a" &&
           renderLinkTargetInput({ className: "col-span-2" })}
       </div>
-    </>
+    </div>
   );
   return renderEditor;
 };
@@ -850,7 +974,7 @@ export const SideBar: FunctionComponent<Props> = (props) => {
   const isRendering = !!project?.renderEntries.length;
   const tabsRef = useRef<TabsRef>(null);
   useEffect(() => {
-    if (selectedElement) tabsRef.current?.selectTab(2);
+    if (selectedElement) tabsRef.current?.selectTab("Edit Element");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedElement?.lookupId]);
   return (
@@ -863,12 +987,47 @@ export const SideBar: FunctionComponent<Props> = (props) => {
           render: renderMainTab,
         },
         isRendering && {
-          name: <FontAwesomeIcon icon={faStream} />,
+          name: (
+            <>
+              <FontAwesomeIcon icon={faStream} />
+              <Tour
+                name="outline-tab"
+                beaconStyle={{
+                  marginTop: -19,
+                }}
+                onOpen={() => {
+                  tabsRef.current?.selectTab("Outline");
+                }}
+              >
+                This is the outline view, here you can see all the elements in
+                your component. <br />
+                Click on one to edit it!
+              </Tour>
+            </>
+          ),
           title: "Outline",
           render: renderOutlineTab,
         },
         !!selectedElement && {
-          name: <FontAwesomeIcon icon={faEdit} />,
+          name: (
+            <>
+              <FontAwesomeIcon icon={faEdit} />
+              <Tour
+                name="edit-element-tab"
+                beaconStyle={{
+                  marginTop: -19,
+                }}
+                onOpen={() => {
+                  tabsRef.current?.selectTab("Edit Element");
+                }}
+              >
+                This is the element editor, here you can change various
+                properties of elements, such as size and text color. Different
+                elements can have different properties to edit. <br />
+                Try changing the fill!
+              </Tour>
+            </>
+          ),
           title: "Edit Element",
           render: renderSelectedElementEditor,
         },
