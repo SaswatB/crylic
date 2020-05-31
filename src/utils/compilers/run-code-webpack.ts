@@ -20,10 +20,12 @@ let staticFileServer: ReturnType<typeof import("express")>;
 const ASSET_PORT = 4526;
 let assetSecurityToken: string;
 
-let loaderBasePath = "";
-
 export function initialize(nodeModulesPath = "") {
-  loaderBasePath = nodeModulesPath;
+  // needed to resolve loaders and babel plugins/presets
+  if (nodeModulesPath) {
+    __non_webpack_require__("process").chdir(path.dirname(nodeModulesPath));
+  }
+
   memfs = __non_webpack_require__(`${nodeModulesPath}memfs`);
   joinPath = __non_webpack_require__(`${nodeModulesPath}memory-fs/lib/join`);
   unionfs = __non_webpack_require__(`${nodeModulesPath}unionfs`);
@@ -67,46 +69,46 @@ const getWebpackModules = (codeId: string) => ({
     {
       test: /\.[jt]sx?$/,
       use: {
-        loader: `${loaderBasePath}babel-loader`,
+        loader: "babel-loader",
         options: {
           presets: [
             [
-              `${loaderBasePath}@babel/preset-env`,
+              "@babel/preset-env",
               {
                 targets: {
                   electron: "8",
                 },
               },
             ],
-            `${loaderBasePath}@babel/preset-react`,
-            `${loaderBasePath}@babel/preset-typescript`,
+            "@babel/preset-react",
+            "@babel/preset-typescript",
           ],
           plugins: [
-            `${loaderBasePath}@babel/plugin-proposal-class-properties`,
-            `${loaderBasePath}@babel/plugin-proposal-object-rest-spread`,
+            "@babel/proposal-class-properties",
+            "@babel/proposal-object-rest-spread",
           ],
         },
       },
     },
     {
       test: /\.css$/,
-      use: [`${loaderBasePath}style-loader`, `${loaderBasePath}css-loader`],
+      use: ["style-loader", "css-loader"],
     },
     {
       test: /\.s[ac]ss$/,
       use: [
-        `${loaderBasePath}style-loader`,
-        `${loaderBasePath}css-loader`,
+        "style-loader",
+        "css-loader",
         {
-          loader: `${loaderBasePath}postcss-loader`,
+          loader: "postcss-loader",
           options: {
             ident: "postcss",
             plugins: [tailwindcss],
           },
         },
-        `${loaderBasePath}sassjs-loader`,
+        "sassjs-loader",
         // {
-        //   loader: `${loaderBasePath}sass-loader`,
+        //   loader: "sass-loader",
         //   options: {
         //     implementation: nodeSass,
         //   },
@@ -115,14 +117,10 @@ const getWebpackModules = (codeId: string) => ({
     },
     {
       test: /\.less$/,
-      use: [
-        `${loaderBasePath}style-loader`,
-        `${loaderBasePath}css-loader`,
-        `${loaderBasePath}less-loader`,
-      ],
+      use: ["style-loader", "css-loader", "less-loader"],
     },
     {
-      loader: `${loaderBasePath}file-loader`,
+      loader: "file-loader",
       exclude: [
         /\.(js|mjs|jsx|ts|tsx)$/,
         /\.html$/,
