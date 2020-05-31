@@ -33,9 +33,7 @@ export function initialize(nodeModulesPath = "") {
   // nodeSass = __non_webpack_require__(`${nodeModulesPath}node-sass`);
   tailwindcss = __non_webpack_require__(`${nodeModulesPath}tailwindcss`);
 
-  express = __non_webpack_require__(
-    `${nodeModulesPath}express`
-  ) as typeof import("express");
+  express = __non_webpack_require__(`${nodeModulesPath}express`);
   send = __non_webpack_require__(`${nodeModulesPath}send`);
 
   assetSecurityToken = crypto
