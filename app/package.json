@@ -1,0 +1,37 @@
+{
+  "name": "paint",
+  "version": "0.1.0",
+  "private": true,
+  "author": "Saswat Bhattacharya",
+  "main": "build/electron.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@babel/core": "^7.10.2",
+    "@babel/plugin-proposal-class-properties": "^7.10.1",
+    "@babel/plugin-proposal-object-rest-spread": "^7.10.1",
+    "@babel/preset-env": "^7.10.2",
+    "@babel/preset-react": "^7.10.1",
+    "@babel/preset-typescript": "^7.10.1",
+    "babel-loader": "^8.1.0",
+    "css-loader": "^3.5.3",
+    "dotenv": "^8.2.0",
+    "electron-devtools-installer": "^3.0.0",
+    "electron-is-dev": "^1.2.0",
+    "express": "^4.17.1",
+    "file-loader": "^6.0.0",
+    "less-loader": "^6.1.0",
+    "memfs": "^3.2.0",
+    "memory-fs": "^0.5.0",
+    "oniguruma": "^7.2.1",
+    "postcss": "^7.0.31",
+    "postcss-loader": "^3.0.0",
+    "sassjs-loader": "^2.0.0",
+    "send": "^0.17.1",
+    "style-loader": "^1.2.1",
+    "tailwindcss": "^1.4.6",
+    "unionfs": "^4.4.0",
+    "webpack": "^4.42.0"
+  }
+}

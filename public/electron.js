@@ -6,6 +6,9 @@ const {
   REACT_DEVELOPER_TOOLS,
 } = require("electron-devtools-installer");
 
+const path = require("path");
+const isDev = require("electron-is-dev");
+
 function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -21,7 +24,11 @@ function createWindow() {
   mainWindow.setMenuBarVisibility(false);
 
   // load the url of the app.
-  mainWindow.loadURL("http://localhost:4000");
+  mainWindow.loadURL(
+    isDev
+      ? "http://localhost:4000"
+      : `file://${path.join(__dirname, "../build/index.html")}`
+  );
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()

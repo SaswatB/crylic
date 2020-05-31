@@ -280,6 +280,7 @@ const useMainTab = ({
                 }}
               >
                 Here you get to unleash the power of Paint! <br />
+                <br />
                 Using this action, components can be shown on the main view,
                 where they can be interacted with and edited. <br />
                 <br />

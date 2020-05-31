@@ -498,8 +498,8 @@ function App() {
         beaconStyle={{ position: "fixed", left: "50%", top: 20 }}
       >
         Welcome! <br />
-        To get you started, this tour will guide you through the basics of using
-        paint. <br />
+        To help get you started, this tour will guide you through the basics of
+        using paint. <br />
         <br />
         Look around for beacons to get further instructions.
       </Tour>
