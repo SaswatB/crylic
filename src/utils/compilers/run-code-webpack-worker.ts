@@ -10,12 +10,20 @@ const path = __non_webpack_require__("path") as typeof import("path");
 const WORKER_ENABLED = true;
 
 let worker: WebpackWorker;
+const progressCallbacks: Record<number, Function> = {};
 const compileCallbacks: Record<number, Function> = {};
 if (WORKER_ENABLED) {
   // start the worker
   worker = new WebpackWorker();
   worker.onmessage = (e) => {
-    compileCallbacks[e.data.compileId]?.(e.data);
+    switch (e.data.type) {
+      case "percent-update":
+        progressCallbacks[e.data.compileId]?.(e.data);
+        break;
+      case "compile-finished":
+        compileCallbacks[e.data.compileId]?.(e.data);
+        break;
+    }
   };
   // initialize the worker with the local node modules
   worker.postMessage({
@@ -30,6 +38,7 @@ let compileIdCounter = 0;
 
 interface RunnerContext {
   window: Window & any;
+  onProgress: (arg: { percentage: number; message: string }) => void;
 
   // react router support
   onRoutesDefined: (arg: RouteDefinition) => void;
@@ -42,18 +51,10 @@ interface RunnerContext {
 export const webpackRunCodeWithWorker = async (
   project: Project,
   renderEntry: RenderEntry,
-  { window, onRoutesDefined, onRouteChange }: RunnerContext
+  { window, onProgress, onRoutesDefined, onRouteChange }: RunnerContext
 ) => {
   const startTime = Date.now();
   const compileId = ++compileIdCounter;
-
-  let workerCallback: Promise<{ bundle: string }>;
-  if (WORKER_ENABLED) {
-    // register a callback for then the worker completes
-    workerCallback = new Promise<{ bundle: string }>((resolve) => {
-      compileCallbacks[compileId] = resolve;
-    });
-  }
 
   const bundleCode = `
   export const component = require("${
@@ -83,8 +84,15 @@ export const webpackRunCodeWithWorker = async (
         filePath: "/index.tsx",
       },
     ]);
+
   let bundle;
   if (WORKER_ENABLED) {
+    // register a callback for then the worker completes
+    const workerCallback = new Promise<{ bundle: string }>((resolve) => {
+      compileCallbacks[compileId] = resolve;
+    });
+    progressCallbacks[compileId] = onProgress;
+
     // set a message to the worker for compiling code
     worker.postMessage({
       action: "compile",
@@ -95,8 +103,11 @@ export const webpackRunCodeWithWorker = async (
 
     // wait for the worker to compile
     ({ bundle } = await workerCallback!);
+
+    delete compileCallbacks[compileId];
+    delete progressCallbacks[compileId];
   } else {
-    bundle = await webpackRunCode(codeEntries, bundleId);
+    bundle = await webpackRunCode(codeEntries, bundleId, onProgress);
   }
 
   const workerCallbackTime = Date.now();

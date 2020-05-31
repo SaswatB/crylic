@@ -9,8 +9,19 @@ self.addEventListener(
       initialize(e.data.nodeModulesPath);
     } else if (e.data.action === "compile") {
       const { codeEntries, selectedCodeId, compileId } = e.data;
-      const bundle = await webpackRunCode(codeEntries, selectedCodeId);
-      postMessage({ compileId, bundle });
+      const bundle = await webpackRunCode(
+        codeEntries,
+        selectedCodeId,
+        ({ percentage, message }) => {
+          postMessage({
+            type: "percent-update",
+            compileId,
+            percentage,
+            message,
+          });
+        }
+      );
+      postMessage({ type: "compile-finished", compileId, bundle });
     }
   },
   false

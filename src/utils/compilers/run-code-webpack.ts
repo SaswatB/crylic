@@ -150,7 +150,8 @@ const webpackCache: Record<
 
 export const webpackRunCode = async (
   codeEntries: { id: string; filePath: string; code?: string }[],
-  selectedCodeId: string
+  selectedCodeId: string,
+  onProgress: (arg: { percentage: number; message: string }) => void
 ) => {
   if (!webpack) initialize();
 
@@ -198,13 +199,13 @@ export const webpackRunCode = async (
           amd: "normalize.css",
         },
       },
-      // plugins: [
-      //   new webpack.ProgressPlugin({
-      //     handler(percentage, msg) {
-      //       console.log("wb progress", percentage, msg);
-      //     },
-      //   }),
-      // ],
+      plugins: [
+        new webpack.ProgressPlugin({
+          handler(percentage, message, ...args) {
+            onProgress({ percentage, message });
+          },
+        }),
+      ],
     });
     const ufs1 = new unionfs.Union();
     const inputFs = memfs.createFsFromVolume(new memfs.Volume());

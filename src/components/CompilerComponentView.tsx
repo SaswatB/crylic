@@ -49,6 +49,12 @@ export interface CompilerComponentViewRef {
   ) => void;
 }
 
+export type CompileContext = {
+  onProgress: Observable<{ percentage: number; message: string }>;
+};
+
+export type OnCompileStartCallback = (compileContext: CompileContext) => void;
+
 export type ViewContext = {
   iframe: HTMLIFrameElement;
   onRoutesDefined: Observable<RouteDefinition>;
@@ -63,7 +69,7 @@ export type OnCompileEndCallback = (
 export interface CompilerComponentViewProps {
   project: Project | undefined;
   renderEntry: RenderEntry;
-  onCompileStart?: () => void;
+  onCompileStart?: OnCompileStartCallback;
   onCompileEnd?: OnCompileEndCallback;
 }
 
@@ -126,17 +132,28 @@ export const CompilerComponentView: FunctionComponent<
       (async () => {
         if (project && debouncedCodeEntries?.length) {
           try {
-            onCompileStart?.();
             console.log("compiling", renderEntry.codeId, project);
+            const onProgressSubject = new ReplaySubject<{
+              percentage: number;
+              message: string;
+            }>(1);
             const onRoutesDefinedSubject = new ReplaySubject<RouteDefinition>(
               1
             );
             const onRouteChangeSubject = new ReplaySubject<string>(1);
+
+            onCompileStart?.({
+              onProgress: onProgressSubject.pipe(distinctUntilChanged(isEqual)),
+            });
+
             const codeExports = await webpackRunCodeWithWorker(
               project,
               renderEntry,
               {
                 window: getInactiveFrame().current?.frameElement.contentWindow,
+                onProgress(arg) {
+                  onProgressSubject.next(arg);
+                },
                 onRoutesDefined(arg) {
                   onRoutesDefinedSubject.next(arg);
                 },

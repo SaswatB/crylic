@@ -8,7 +8,6 @@ import React, {
 } from "react";
 import { faLink, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { CircularProgress } from "@material-ui/core";
 
 import { useDebounce } from "../hooks/useDebounce";
 import { useMenuInput } from "../hooks/useInput";
@@ -18,11 +17,13 @@ import { SelectedElement, Styles } from "../types/paint";
 import { StyleGroup } from "../utils/ast/editors/ASTEditor";
 import { SelectModeType } from "../utils/constants";
 import { RouteDefinition } from "../utils/react-router-proxy";
+import { BuildProgress } from "./BuildProgress";
 import {
+  CompileContext,
   CompilerComponentView,
   CompilerComponentViewProps,
   CompilerComponentViewRef,
-  OnCompileEndCallback,
+  ViewContext,
 } from "./CompilerComponentView";
 
 interface Props {
@@ -129,9 +130,8 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
     }
   );
 
-  const [viewContext, setViewContext] = useState<
-    Parameters<OnCompileEndCallback>[1]
-  >();
+  const [compileContext, setCompileContext] = useState<CompileContext>();
+  const [viewContext, setViewContext] = useState<ViewContext>();
 
   const routeDefinition = useObservable(viewContext?.onRoutesDefined);
   const currentRoute = useObservable(viewContext?.onRouteChange);
@@ -222,9 +222,10 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
               }
             }
           }}
-          onCompileStart={() => {
+          onCompileStart={(context) => {
             setLoading(true);
-            compilerProps?.onCompileStart?.();
+            setCompileContext(context);
+            compilerProps?.onCompileStart?.(context);
           }}
           onCompileEnd={(renderEntry, context) => {
             skipLoadingDebounce();
@@ -239,11 +240,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           }}
         />
         {(selectModeType !== undefined || selectedElement) && renderOverlay()}
-        {debouncedLoading && (
-          <div className="flex items-center justify-center absolute inset-0 z-20 dark-glass">
-            <CircularProgress />
-          </div>
-        )}
+        {debouncedLoading && <BuildProgress compileContext={compileContext} />}
       </div>
     </div>
   );
