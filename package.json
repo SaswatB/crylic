@@ -116,6 +116,7 @@
     "@types/react-router-dom": "^5.1.5",
     "@types/webpack": "^4.41.10",
     "@types/yauzl": "^2.9.1",
+    "archiver": "^4.0.1",
     "electron": "^8.2.0",
     "electron-builder": "^22.7.0",
     "electron-rebuild": "^1.10.1",
@@ -194,6 +195,9 @@
     "asar": false,
     "win": {
       "target": "portable"
+    },
+    "mac": {
+      "target": "dmg"
     },
     "directories": {
       "buildResources": "assets"

@@ -42,3 +42,36 @@ You don’t have to ever use `eject`. The curated feature set is suitable for sm
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
 To learn React, check out the [React documentation](https://reactjs.org/).
+
+## Release Process
+
+### Sentry
+
+Sentry is used for error reporting, make sure to run `sentry-cli login` before building.
+`npm run build` automatically uploads build artifacts to sentry under the git commit hash.
+
+### Local build
+
+```
+npm run build
+npm run package
+```
+
+### Agent build
+
+Locally
+
+```
+npm run build
+node scripts\buildpack.js
+```
+
+Remotely (after copying build.zip)
+
+```
+npm ci
+cd app
+npm ci
+cd ..
+npm run package
+```
