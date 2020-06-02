@@ -89,7 +89,9 @@ export function useCSSLengthInput(
 
   const { numberValue, unit } = useMemo(() => {
     const res = /(\d+)(.+)/.exec(value);
-    return res ? { numberValue: res[1], unit: res[2] } : { numberValue: value };
+    return res
+      ? { numberValue: res[1], unit: res[2] || "px" }
+      : { numberValue: value };
   }, [value]);
   const updateValue = (newNumberValue = numberValue, newUnit = unit) => {
     const newValue = `${newNumberValue}${newUnit}`;

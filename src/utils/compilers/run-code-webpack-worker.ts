@@ -14,6 +14,7 @@ const progressCallbacks: Record<number, Function> = {};
 const compileCallbacks: Record<number, Function> = {};
 if (WORKER_ENABLED) {
   // start the worker
+  console.log("starting webpack worker");
   worker = new WebpackWorker();
   worker.onmessage = (e) => {
     switch (e.data.type) {

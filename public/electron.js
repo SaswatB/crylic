@@ -1,4 +1,15 @@
 require("dotenv").config();
+const path = require("path");
+const isDev = require("electron-is-dev");
+
+const sentryPath = path.join(
+  __dirname,
+  isDev ? "sentry.js" : "../build/sentry.js"
+);
+
+// init sentry on the main process
+require(sentryPath);
+
 // Modules to control application life and create native browser window
 const { app, BrowserWindow } = require("electron");
 const {
@@ -6,8 +17,6 @@ const {
   REACT_DEVELOPER_TOOLS,
 } = require("electron-devtools-installer");
 
-const path = require("path");
-const isDev = require("electron-is-dev");
 const windowStateKeeper = require("electron-window-state");
 
 function createWindow() {
@@ -24,6 +33,8 @@ function createWindow() {
     width: mainWindowState.width,
     height: mainWindowState.height,
     webPreferences: {
+      // init sentry on the renderer processes
+      preload: sentryPath,
       nodeIntegration: true,
       nodeIntegrationInWorker: true,
     },

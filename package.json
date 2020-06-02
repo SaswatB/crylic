@@ -7,7 +7,7 @@
   "homepage": "./",
   "scripts": {
     "start": "react-app-rewired start",
-    "build": "npx rimraf app/build && react-app-rewired build && npx node-mv build app/build",
+    "build": "npx rimraf app/build && react-app-rewired build && npx node-mv build app/build && npx rimraf --glob ./app/build/**/*.map && node ./scripts/postbuild.js",
     "test": "jest test",
     "eject": "react-app-rewired eject",
     "electron": "electron .",
@@ -32,6 +32,7 @@
     "@material-ui/core": "^4.9.9",
     "@material-ui/icons": "^4.9.1",
     "@material-ui/lab": "^4.0.0-alpha.51",
+    "@sentry/electron": "^1.3.0",
     "autoprefixer": "^9.7.5",
     "babel-loader": "^8.1.0",
     "css-loader": "^3.5.3",
@@ -97,6 +98,7 @@
   },
   "devDependencies": {
     "@pmmmwh/react-refresh-webpack-plugin": "^0.3.0-beta.3",
+    "@sentry/webpack-plugin": "^1.11.1",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
