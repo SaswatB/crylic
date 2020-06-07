@@ -22,6 +22,7 @@ export interface RenderEntry {
   id: string;
   name: string;
   codeId: string;
+  publish?: boolean;
   route?: string;
 }
 

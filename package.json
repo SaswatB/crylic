@@ -61,6 +61,7 @@
     "normalize.css": "^8.0.1",
     "notistack": "^0.9.9",
     "oniguruma": "^7.2.1",
+    "open": "^7.0.4",
     "patch-package": "^6.2.2",
     "postcss": "^7.0.31",
     "postcss-cli": "^7.1.0",

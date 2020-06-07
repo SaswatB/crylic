@@ -1,5 +1,5 @@
 import React from "react";
-import { startCase } from "lodash";
+import { startCase, uniqueId } from "lodash";
 import { Readable } from "stream";
 
 import { CodeEntry, OutlineElement } from "../types/paint";
@@ -83,6 +83,7 @@ export const buildOutline = (
     })
     .reduce((p, c) => [...p, ...c], []);
 
+// this doesn't work in prod
 let reactInstanceKey: string | undefined;
 export const getReactDebugId = (element: HTMLElement) => {
   if (!reactInstanceKey)
@@ -92,6 +93,13 @@ export const getReactDebugId = (element: HTMLElement) => {
   if (!reactInstanceKey) return undefined;
 
   return (element as any)[reactInstanceKey]?._debugID;
+};
+
+export const getElementUniqueId = (element: HTMLElement): string => {
+  if (!(element as any).paintId) {
+    (element as any).paintId = uniqueId();
+  }
+  return (element as any).paintId;
 };
 
 export function streamToString(stream: Readable) {

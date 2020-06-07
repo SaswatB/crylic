@@ -71,6 +71,7 @@ export interface CompilerComponentViewProps {
   renderEntry: RenderEntry;
   onCompileStart?: OnCompileStartCallback;
   onCompileEnd?: OnCompileEndCallback;
+  onNewPublishUrl?: (url: string) => void;
 }
 
 export const CompilerComponentView: FunctionComponent<
@@ -78,7 +79,17 @@ export const CompilerComponentView: FunctionComponent<
     React.IframeHTMLAttributes<HTMLIFrameElement> &
     RefAttributes<CompilerComponentViewRef>
 > = forwardRef(
-  ({ project, renderEntry, onCompileStart, onCompileEnd, ...props }, ref) => {
+  (
+    {
+      project,
+      renderEntry,
+      onCompileStart,
+      onCompileEnd,
+      onNewPublishUrl,
+      ...props
+    },
+    ref
+  ) => {
     const [tempStyles, setTempStyles] = useState<Record<string, Styles>>({});
     const [activeFrame, setActiveFrame] = useState(1);
     const frame1 = useRef<{
@@ -124,6 +135,12 @@ export const CompilerComponentView: FunctionComponent<
     const getActiveFrame = () => (activeFrame === 1 ? frame1 : frame2);
     const getInactiveFrame = () => (activeFrame === 1 ? frame2 : frame1);
 
+    const lastPublishUrl = useRef<string>();
+    if (!renderEntry.publish && lastPublishUrl.current) {
+      // clear publish url if the render entry isn't published
+      lastPublishUrl.current = undefined;
+    }
+
     const errorBoundary = useRef<ErrorBoundary>(null);
     const [BootstrapElement, setBootstrapElement] = useState<any>();
     const [CompiledElement, setCompiledElement] = useState<any>();
@@ -153,6 +170,12 @@ export const CompilerComponentView: FunctionComponent<
                 window: getInactiveFrame().current?.frameElement.contentWindow,
                 onProgress(arg) {
                   onProgressSubject.next(arg);
+                },
+                onPublish(url) {
+                  if (url !== lastPublishUrl.current) {
+                    lastPublishUrl.current = url;
+                    onNewPublishUrl?.(url);
+                  }
                 },
                 onRoutesDefined(arg) {
                   onRoutesDefinedSubject.next(arg);
@@ -207,7 +230,7 @@ export const CompilerComponentView: FunctionComponent<
         }
       })().catch(console.log);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [debouncedCodeEntries]);
+    }, [debouncedCodeEntries, renderEntry.publish]);
 
     const applyTempStyles = (newTempStyles: typeof tempStyles) => {
       Object.entries(newTempStyles).forEach(([lookupId, styles]) => {

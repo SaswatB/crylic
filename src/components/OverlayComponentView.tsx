@@ -6,7 +6,12 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { faLink, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
+import {
+  faGlobe,
+  faLink,
+  faPlus,
+  faTimes,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { useDebounce } from "../hooks/useDebounce";
@@ -46,6 +51,7 @@ interface Props {
   ) => void;
   onAddRoute: (routeDefinition: RouteDefinition) => void;
   onCurrentRouteChange: (route: string) => void;
+  onTogglePublish: () => void;
   onRemoveComponentView: () => void;
 }
 
@@ -59,6 +65,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   updateSelectedElementStyles,
   onAddRoute,
   onCurrentRouteChange,
+  onTogglePublish,
   onRemoveComponentView,
 }) => {
   const [loading, setLoading] = useState(false);
@@ -186,6 +193,16 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
             </button>
           </>
         ) : null}
+        <button
+          className="ml-2"
+          onClick={onTogglePublish}
+          title="View in Browser"
+        >
+          <FontAwesomeIcon
+            icon={faGlobe}
+            className="text-gray-500 hover:text-white default-transition"
+          />
+        </button>
         <button
           className="ml-2"
           onClick={onRemoveComponentView}

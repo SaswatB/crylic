@@ -2,6 +2,7 @@ import WebpackWorker from "worker-loader!./webpack-worker";
 
 import { RenderEntry } from "../../types/paint";
 import { Project } from "../Project";
+import { publishComponent, unpublishComponent } from "../publish-component";
 import { getReactRouterProxy, RouteDefinition } from "../react-router-proxy";
 import { webpackRunCode } from "./run-code-webpack";
 
@@ -40,6 +41,7 @@ let compileIdCounter = 0;
 interface RunnerContext {
   window: Window & any;
   onProgress: (arg: { percentage: number; message: string }) => void;
+  onPublish: (url: string) => void;
 
   // react router support
   onRoutesDefined: (arg: RouteDefinition) => void;
@@ -52,7 +54,13 @@ interface RunnerContext {
 export const webpackRunCodeWithWorker = async (
   project: Project,
   renderEntry: RenderEntry,
-  { window, onProgress, onRoutesDefined, onRouteChange }: RunnerContext
+  {
+    window,
+    onProgress,
+    onPublish,
+    onRoutesDefined,
+    onRouteChange,
+  }: RunnerContext
 ) => {
   const startTime = Date.now();
   const compileId = ++compileIdCounter;
@@ -136,6 +144,13 @@ export const webpackRunCodeWithWorker = async (
   } catch (error) {
     __non_webpack_require__("fs").writeFileSync("./bundle.js", bundle);
     throw error;
+  }
+  if (renderEntry.publish) {
+    const url = await publishComponent(renderEntry.codeId, bundle!);
+    console.log("published:", url);
+    onPublish(url);
+  } else {
+    unpublishComponent(renderEntry.codeId);
   }
 
   const endCallbackTime = Date.now();

@@ -27,6 +27,7 @@
     "memfs": "^3.2.0",
     "memory-fs": "^0.5.0",
     "oniguruma": "^7.2.1",
+    "open": "^7.0.4",
     "postcss": "^7.0.31",
     "postcss-loader": "^3.0.0",
     "sassjs-loader": "^2.0.0",

@@ -60,7 +60,7 @@ import {
 } from "../utils/constants";
 import { Project } from "../utils/Project";
 import {
-  getReactDebugId,
+  getElementUniqueId,
   IMAGE_EXTENSION_REGEX,
   isImageEntry,
   isStyleEntry,
@@ -169,7 +169,7 @@ const useMainTab = ({
     codeEntry?: CodeEntry;
   }
 
-  let codeEntries;
+  let codeEntries: CodeEntry[] | undefined;
   // todo add an option to keep showing extensions
   let extensionRegex: RegExp | undefined;
   let projectTreePostProcess:
@@ -220,7 +220,7 @@ const useMainTab = ({
     .join(project?.path || "", project?.sourceFolderName || "")
     .replace(/\\/g, "/");
   codeEntries?.forEach((codeEntry) => {
-    let path = codeEntry.filePath
+    const path = codeEntry.filePath
       .replace(/\\/g, "/")
       .replace(projectPath!, "")
       .replace(/^\//, "")
@@ -228,17 +228,31 @@ const useMainTab = ({
       .split("/");
 
     let node = projectTree;
+    let error = false;
     path.forEach((pathPart, index) => {
-      let child = node.children.find(
-        (childNode) => childNode.name === pathPart
-      );
+      if (error) return;
+
+      const id = path.slice(0, index + 1).join("/");
+      let child = node.children.find((childNode) => childNode.id === id);
       if (!child) {
-        const id = path.slice(0, index + 1).join("/");
         child = {
           id,
           name: pathPart,
           children: [],
         };
+
+        // it's very important not to render duplicate node ids https://github.com/mui-org/material-ui/issues/20832
+        if (treeNodeIds.has(id)) {
+          console.error(
+            "duplicate node id",
+            id,
+            treeNodeIds,
+            codeEntries?.map(({ filePath }) => filePath)
+          );
+          error = true;
+          return;
+        }
+
         node.children.push(child);
         treeNodeIds.add(id);
       }
@@ -525,8 +539,15 @@ const useOutlineTab = ({
   let treeNodeIds = new Set<string>();
   const renderTree = (node: OutlineElement) => {
     const id = `${
-      node.element ? getReactDebugId(node.element) : node.lookupId
+      node.element ? getElementUniqueId(node.element) : node.lookupId
     }`;
+
+    // it's very important not to render duplicate node ids https://github.com/mui-org/material-ui/issues/20832
+    if (treeNodeIds.has(id)) {
+      console.error("duplicate node id", id, treeNodeIds, outlines);
+      return null;
+    }
+
     treeNodeIds.add(id);
     return (
       <TreeItem
@@ -560,7 +581,9 @@ const useOutlineTab = ({
         defaultExpandIcon={<ChevronRightIcon />}
         expanded={Array.from(treeNodeIds)}
         selected={
-          selectedElement ? `${getReactDebugId(selectedElement.element)}` : ""
+          selectedElement
+            ? `${getElementUniqueId(selectedElement.element)}`
+            : ""
         }
       >
         {renderedTree}

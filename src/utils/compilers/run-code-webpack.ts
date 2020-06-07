@@ -17,7 +17,7 @@ let send: typeof import("send");
 
 let staticFileServer: ReturnType<typeof import("express")>;
 
-const ASSET_PORT = 4526;
+let assetPort = 0;
 let assetSecurityToken: string;
 
 export function initialize(nodeModulesPath = "") {
@@ -56,9 +56,10 @@ export function initialize(nodeModulesPath = "") {
       webpackCache[req.params.codeId]?.outputFs.readFileSync(staticPath)
     );
   });
-  staticFileServer.listen(ASSET_PORT, "localhost", () =>
-    console.log("Static file server is running...")
-  );
+  const serverInstance = staticFileServer.listen(assetPort, "localhost", () => {
+    assetPort = (serverInstance.address() as { port: number }).port;
+    console.log("Static file server is running...", assetPort);
+  });
 }
 
 // supports ts, jsx, css, sass, less and
@@ -128,7 +129,7 @@ const getWebpackModules = (codeId: string) => ({
       options: {
         name: "static/media/[name].[hash:8].[ext]",
         outputPath: "/public",
-        publicPath: `http://localhost:${ASSET_PORT}/files/${codeId}/`,
+        publicPath: `http://localhost:${assetPort}/files/${codeId}/`,
         postTransformPublicPath: (p: string) =>
           `"${p.replace(/"/g, "")}?token=${assetSecurityToken}"`,
       },
@@ -170,6 +171,7 @@ export const webpackRunCode = async (
       output: {
         path: "/static",
         filename: "[name].js",
+        library: "paintbundle",
         libraryTarget: "umd",
       },
       module: getWebpackModules(selectedCodeId),
@@ -181,16 +183,19 @@ export const webpackRunCode = async (
           commonjs: "react",
           commonjs2: "react",
           amd: "react",
+          root: "React",
         },
         "react-dom": {
           commonjs: "react-dom",
           commonjs2: "react-dom",
           amd: "react-dom",
+          root: "ReactDOM",
         },
         "react-router-dom": {
           commonjs: "react-router-dom",
           commonjs2: "react-router-dom",
           amd: "react-router-dom",
+          root: "ReactRouterDOM",
         },
         // this is externalized so that the default project template can be loaded without npm i
         "normalize.css": {

@@ -43,6 +43,8 @@ import {
 import { buildOutline, getRelativeImportPath } from "./utils/utils";
 import "./App.scss";
 
+const open = __non_webpack_require__("open") as typeof import("open");
+
 function App() {
   const { enqueueSnackbar } = useSnackbar();
   const componentViews = useRef<
@@ -436,6 +438,10 @@ function App() {
           project,
           renderEntry: entry,
           onCompileEnd: onComponentViewCompiled,
+          onNewPublishUrl(url) {
+            // open a published component in a brower whenever it gets a new url
+            open(url);
+          },
         }}
         frameSize={frameSize}
         scaleRef={scaleRef}
@@ -477,6 +483,14 @@ function App() {
           calculateOutline(entry);
           if (selectedElement?.renderId === entry.id)
             setSelectedElement(undefined);
+        }}
+        onTogglePublish={() => {
+          console.log("onTogglePublish");
+          setProject((currentProject) =>
+            currentProject?.editRenderEntry(entry.id, {
+              publish: !entry.publish,
+            })
+          );
         }}
         onRemoveComponentView={() =>
           setProject((currentProject) =>
