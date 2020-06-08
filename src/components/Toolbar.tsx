@@ -45,7 +45,7 @@ const useAdderTab = (
     name: string,
     icon: IconProp,
     tag: keyof HTMLElementTagNameMap,
-    attributes?: Record<string, unknown> | undefined,
+    attributes?: Record<string, unknown>,
     iconProps?: Omit<FontAwesomeIconProps, "icon">
   ) => (
     <button
@@ -77,8 +77,10 @@ const useAdderTab = (
       </div>
       {renderSeparator("Text")}
       <div className="grid2x">
-        {renderAddOption("Heading", faHeading, "h1")}
-        {renderAddOption("Text", faFont, "span")}
+        {renderAddOption("Heading", faHeading, "h1", {
+          textContent: "Heading",
+        })}
+        {renderAddOption("Text", faFont, "span", { textContent: "Text" })}
       </div>
       {renderSeparator("Interactive")}
       <div className="grid2x">

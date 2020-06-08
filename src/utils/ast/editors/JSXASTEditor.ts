@@ -1,7 +1,7 @@
 import { namedTypes as t } from "ast-types";
 import { NodePath } from "ast-types/lib/node-path";
 import { pipe } from "fp-ts/lib/pipeable";
-import { startCase } from "lodash";
+import { omit, startCase } from "lodash";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { types } from "recast";
 
@@ -423,17 +423,29 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       isNewRoute?: boolean;
     }
   ) {
+    // add a text attribute as a child
+    const grandChildren =
+      "textContent" in childAttributes
+        ? [b.jsxText(childAttributes.textContent as string)]
+        : [];
+    const selfClosing =
+      grandChildren.length === 0 &&
+      (childOptions?.shouldBeSelfClosing ?? false);
+
     const child = b.jsxElement(
       b.jsxOpeningElement(
         b.jsxIdentifier(childElementTag),
-        Object.entries(childAttributes).map(([name, value]) =>
+        Object.entries(
+          omit(childAttributes, "textContent")
+        ).map(([name, value]) =>
           b.jsxAttribute(b.jsxIdentifier(name), valueToJSXLiteral(value))
         ),
-        childOptions?.shouldBeSelfClosing ?? false
+        selfClosing
       ),
-      childOptions?.shouldBeSelfClosing
+      selfClosing
         ? undefined
-        : b.jsxClosingElement(b.jsxIdentifier(childElementTag))
+        : b.jsxClosingElement(b.jsxIdentifier(childElementTag)),
+      grandChildren
     );
 
     // add the child to the parent
