@@ -196,11 +196,20 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
         <button
           className="ml-2"
           onClick={onTogglePublish}
-          title="View in Browser"
+          title={
+            compilerProps.renderEntry.publish
+              ? "Stop browser viewer"
+              : "View in Browser"
+          }
         >
           <FontAwesomeIcon
             icon={faGlobe}
             className="text-gray-500 hover:text-white default-transition"
+            style={
+              compilerProps.renderEntry.publish
+                ? { color: "#43a047" }
+                : undefined
+            }
           />
         </button>
         <button
