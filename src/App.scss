@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+// todo enable for keyboard use
+* {
+  outline: none !important;
+}
+
 body {
   background-color: #1b1b1b;
   overflow: hidden;
@@ -48,7 +53,6 @@ fieldset {
   &.active,
   &.superactive {
     &:focus {
-      outline: none;
       box-shadow: none;
     }
   }

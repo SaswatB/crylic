@@ -53,8 +53,6 @@ import {
   CSS_POSITION_OPTIONS,
   CSS_TEXT_ALIGN_OPTIONS,
   CSS_TEXT_DECORATION_LINE_OPTIONS,
-  DEFAULT_FRAME_HEIGHT,
-  DEFAULT_FRAME_WIDTH,
   SelectMode,
   SelectModeType,
 } from "../utils/constants";
@@ -68,6 +66,8 @@ import {
   SCRIPT_EXTENSION_REGEX,
   STYLE_EXTENSION_REGEX,
 } from "../utils/utils";
+import { Collapsible } from "./Collapsible";
+import { IconButton } from "./IconButton";
 import { Tour, TourContext } from "./Tour";
 
 const path = __non_webpack_require__("path") as typeof import("path");
@@ -102,21 +102,9 @@ const useMainTab = ({
   onSaveProject,
   onCloseProject,
   onChangeSelectMode,
-  onChangeFrameSize,
   toggleCodeEntryEdit,
   addRenderEntry,
 }: Props) => {
-  const [, renderComponentViewWidthInput] = useTextInput(
-    (newWidth) => onChangeFrameSize(parseInt(newWidth), undefined),
-    "Width",
-    `${DEFAULT_FRAME_WIDTH}`
-  );
-  const [, renderComponentViewHeightInput] = useTextInput(
-    (newHeight) => onChangeFrameSize(undefined, parseInt(newHeight)),
-    "Height",
-    `${DEFAULT_FRAME_HEIGHT}`
-  );
-
   const { tourDisabled, setTourDisabled, resetTour } = useContext(TourContext);
 
   const [
@@ -301,22 +289,22 @@ const useMainTab = ({
                 Try it now!
               </Tour>
             )}
-            <button
-              className="mx-3 text-gray-500 hover:text-white default-transition"
+            <IconButton
               data-tour={
                 isFirstRenderableNode ? "asset-tree-render" : undefined
               }
               title="View"
+              className="mx-3"
+              icon={faEye}
               onClick={() => addRenderEntry(codeEntry)}
-            >
-              <FontAwesomeIcon icon={faEye} />
-            </button>
+            />
           </>
         )}
         {codeEntry.isRenderable && (project?.renderEntries.length ?? 0) > 0 && (
-          <button
-            className="mr-3 text-gray-500 hover:text-white default-transition"
+          <IconButton
+            className="mr-3"
             title="Add to Component"
+            icon={faPlus}
             onClick={() =>
               // todo throw an error if exportName isn't set
               onChangeSelectMode({
@@ -326,9 +314,7 @@ const useMainTab = ({
                 path: codeEntry.filePath,
               })
             }
-          >
-            <FontAwesomeIcon icon={faPlus} />
-          </button>
+          />
         )}
         {codeEntry.isEditable && (
           <>
@@ -345,14 +331,12 @@ const useMainTab = ({
                 automatically within the component viewer.
               </Tour>
             )}
-            <button
-              className="text-gray-500 hover:text-white default-transition"
+            <IconButton
               data-tour={isFirstRenderableNode ? "asset-tree-edit" : undefined}
               title="Edit Code"
+              icon={faEdit}
               onClick={() => toggleCodeEntryEdit(codeEntry.id)}
-            >
-              <FontAwesomeIcon icon={faEdit} />
-            </button>
+            />
           </>
         )}
       </div>
@@ -367,91 +351,87 @@ const useMainTab = ({
 
   const renderMainTab = () => (
     <>
-      {renderSeparator("File Options")}
-      <div className="btngrp-v">
-        {project ? (
-          <>
-            <button className="btn w-full" onClick={onSaveProject}>
-              Save All
-            </button>
-            <button className="btn w-full" onClick={onCloseProject}>
-              Close Project
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              className="btn w-full"
-              data-tour="new-project"
-              onClick={() =>
-                saveFilePicker({
-                  filters: [{ name: "Project", extensions: [""] }],
-                }).then((f) => f && onNewProject(f))
-              }
-            >
-              New Project
-            </button>
-            <Tour
-              name="new-project"
-              beaconStyle={{
-                marginTop: -8,
-                marginLeft: 10,
-              }}
-            >
-              Paint is project based, so to get started you will need to either
-              create a new project or open an existing one. <br />
-              <br />
-              Try creating a new project to start!
-              <br />
-              Existing React projects can also be opened, ones created with
-              create-react-app work the best.
-            </Tour>
-            <button
-              className="btn w-full"
-              data-tour="new-project"
-              onClick={() =>
-                openFilePicker({ properties: ["openDirectory"] }).then(
-                  (f) => f && onOpenProject(f)
-                )
-              }
-            >
-              Open Project
-            </button>
-            {/* <button
-              className="btn w-full"
-              data-tour="new-project"
-              onClick={() => openFilePicker().then((f) => f && onOpenFile(f))}
-            >
-              Quick Design
-            </button> */}
-          </>
+      <Collapsible title="File Options">
+        <div className="btngrp-v">
+          {project ? (
+            <>
+              <button className="btn w-full" onClick={onSaveProject}>
+                Save All
+              </button>
+              <button className="btn w-full" onClick={onCloseProject}>
+                Close Project
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className="btn w-full"
+                data-tour="new-project"
+                onClick={() =>
+                  saveFilePicker({
+                    filters: [{ name: "Project", extensions: [""] }],
+                  }).then((f) => f && onNewProject(f))
+                }
+              >
+                New Project
+              </button>
+              <Tour
+                name="new-project"
+                beaconStyle={{
+                  marginTop: -8,
+                  marginLeft: 10,
+                }}
+              >
+                Paint is project based, so to get started you will need to
+                either create a new project or open an existing one. <br />
+                <br />
+                Try creating a new project to start!
+                <br />
+                Existing React projects can also be opened, ones created with
+                create-react-app work the best.
+              </Tour>
+              <button
+                className="btn w-full"
+                data-tour="new-project"
+                onClick={() =>
+                  openFilePicker({ properties: ["openDirectory"] }).then(
+                    (f) => f && onOpenProject(f)
+                  )
+                }
+              >
+                Open Project
+              </button>
+              {/* <button
+                className="btn w-full"
+                data-tour="new-project"
+                onClick={() => openFilePicker().then((f) => f && onOpenFile(f))}
+              >
+                Quick Design
+              </button> */}
+            </>
+          )}
+        </div>
+      </Collapsible>
+      <Collapsible title="Tour Options" defaultCollapsed>
+        <FormControlLabel
+          className="self-center"
+          control={
+            <Checkbox
+              color="primary"
+              checked={!tourDisabled}
+              onChange={() => setTourDisabled(!tourDisabled)}
+            />
+          }
+          label="Show Tour"
+        />
+        {!tourDisabled && (
+          <button className="btn w-full" onClick={resetTour}>
+            Restart Tour
+          </button>
         )}
-      </div>
-      {renderSeparator("Tour Options")}
-      <FormControlLabel
-        className="self-center"
-        control={
-          <Checkbox
-            color="primary"
-            checked={!tourDisabled}
-            onChange={() => setTourDisabled(!tourDisabled)}
-          />
-        }
-        label="Show Tour"
-      />
-      {!tourDisabled && (
-        <button className="btn w-full" onClick={resetTour}>
-          Restart Tour
-        </button>
-      )}
+      </Collapsible>
       {project && (
         <>
-          {renderSeparator("Frame")}
-          <div className="flex flex-row items-center justify-center">
-            {renderComponentViewWidthInput()}
-            <div className="px-4">x</div>
-            {renderComponentViewHeightInput()}
-          </div>
           <Tour
             name="asset-tree"
             beaconStyle={{
@@ -472,17 +452,13 @@ const useMainTab = ({
                   By default the assets view only shows components, use this
                   filter menu to view more.
                 </Tour>
-                <button
-                  className="mx-2"
+                <IconButton
                   data-tour="asset-tree-filter"
+                  className="mx-2"
                   title="Filter Assets"
+                  icon={faFilter}
                   onClick={openAssetsFilterMenu}
-                >
-                  <FontAwesomeIcon
-                    icon={faFilter}
-                    className="text-gray-500 hover:text-white default-transition"
-                  />
-                </button>
+                />
                 <Tour
                   name="asset-tree-add"
                   dependencies={["asset-tree"]}
@@ -493,16 +469,12 @@ const useMainTab = ({
                   Use this menu to add new components, stylesheets and images to
                   your project!
                 </Tour>
-                <button
+                <IconButton
                   data-tour="asset-tree-add"
                   title="Add Asset"
+                  icon={faPlus}
                   onClick={openAddMenu}
-                >
-                  <FontAwesomeIcon
-                    icon={faPlus}
-                    className="text-gray-500 hover:text-white default-transition"
-                  />
-                </button>
+                />
               </>
             )}
             {renderAssetsFilterMenu()}
@@ -894,61 +866,66 @@ const useSelectedElementEditorTab = ({
     <div data-tour="edit-element-tab">
       {renderSeparator("Style Group")}
       {renderStyleGroupSelector()}
-      {renderSeparator("Layout")}
-      <div className="grid2x">
-        {renderWidthInput()}
-        {renderHeightInput()}
-        {renderPositionInput()}
-        {renderDisplayInput()}
-        {selectedElementPosition !== "static" && (
-          <>
-            {renderTopInput()}
-            {renderLeftInput()}
-            {renderBottomInput()}
-            {renderRightInput()}
-          </>
-        )}
-        {renderBorderRadiusInput()}
-        {/* todo padding + margin */}
-      </div>
-      {renderSeparator("Colors")}
-      <div className="grid2x">
-        {renderOpacityInput()}
-        {renderBackgroundColorInput()}
-        {renderBackgroundImageInput()}
-        {selectedElementBackgroundImage !== "none" &&
-          renderBackgroundSizeInput()}
-      </div>
+      <Collapsible title="Layout">
+        <div className="grid2x">
+          {renderWidthInput()}
+          {renderHeightInput()}
+          {renderPositionInput()}
+          {renderDisplayInput()}
+          {selectedElementPosition !== "static" && (
+            <>
+              {renderTopInput()}
+              {renderLeftInput()}
+              {renderBottomInput()}
+              {renderRightInput()}
+            </>
+          )}
+          {renderBorderRadiusInput()}
+          {/* todo padding + margin */}
+        </div>
+      </Collapsible>
+      <Collapsible title="Colors">
+        <div className="grid2x">
+          {renderOpacityInput()}
+          {renderBackgroundColorInput()}
+          {renderBackgroundImageInput()}
+          {selectedElementBackgroundImage !== "none" &&
+            renderBackgroundSizeInput()}
+        </div>
+      </Collapsible>
       {/* todo border */}
-      {renderSeparator("Text")}
-      <div className="grid2x">
-        {allowTextEdit && renderTextContentInput({ className: "col-span-2" })}
-        {renderColorInput()}
-        {renderTextSizeInput()}
-        {renderTextWeightInput()}
-        {renderTextFamilyInput()}
-        {selectedElementDisplay !== "flex" && renderTextAlignInput()}
-        {renderTextDecorationLineInput()}
-      </div>
+      <Collapsible title="Text">
+        <div className="grid2x">
+          {allowTextEdit && renderTextContentInput({ className: "col-span-2" })}
+          {renderColorInput()}
+          {renderTextSizeInput()}
+          {renderTextWeightInput()}
+          {renderTextFamilyInput()}
+          {selectedElementDisplay !== "flex" && renderTextAlignInput()}
+          {renderTextDecorationLineInput()}
+        </div>
+      </Collapsible>
       {selectedElementDisplay === "flex" && (
         <>
-          {renderSeparator("Content")}
-          <div className="grid grid-cols-2  row-gap-3 col-gap-2 pt-1 pb-2">
-            {renderFlexDirectionInput()}
-            {renderFlexWrapInput()}
-            {renderAlignItemsInput()}
-            {renderJustifyContentInput()}
-          </div>
+          <Collapsible title="Content">
+            <div className="grid grid-cols-2 row-gap-3 col-gap-2 pt-1 pb-2">
+              {renderFlexDirectionInput()}
+              {renderFlexWrapInput()}
+              {renderAlignItemsInput()}
+              {renderJustifyContentInput()}
+            </div>
+          </Collapsible>
         </>
       )}
-      {renderSeparator("Extras")}
-      <div className="grid2x">
-        {renderCursorInput()}
-        {renderIDInput()}
-        {/* this check also applies to router links as those render as a */}
-        {selectedElement?.element.tagName.toLowerCase() === "a" &&
-          renderLinkTargetInput({ className: "col-span-2" })}
-      </div>
+      <Collapsible title="Extras">
+        <div className="grid2x">
+          {renderCursorInput()}
+          {renderIDInput()}
+          {/* this check also applies to router links as those render as a */}
+          {selectedElement?.element.tagName.toLowerCase() === "a" &&
+            renderLinkTargetInput({ className: "col-span-2" })}
+        </div>
+      </Collapsible>
     </div>
   );
   return renderEditor;
@@ -973,10 +950,6 @@ interface Props {
     styleGroup: StyleGroup,
     imageProp: "backgroundImage",
     assetEntry: CodeEntry
-  ) => void;
-  onChangeFrameSize: (
-    width: number | undefined,
-    height: number | undefined
   ) => void;
   onNewComponent: () => void;
   onNewStyleSheet: () => void;

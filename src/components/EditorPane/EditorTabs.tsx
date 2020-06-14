@@ -1,8 +1,8 @@
 import React, { FunctionComponent, ReactNode, useEffect, useRef } from "react";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { usePrevious } from "../../hooks/usePrevious";
+import { IconButton } from "../IconButton";
 
 interface Tab {
   key: string;
@@ -58,9 +58,7 @@ export const EditorTabs: FunctionComponent<Props> = ({
             title={title}
           >
             {name}
-            <button className="ml-2" onClick={onClose}>
-              <FontAwesomeIcon icon={faTimes} />
-            </button>
+            <IconButton className="ml-2" icon={faTimes} onClick={onClose} />
           </div>
         ))}
       </div>

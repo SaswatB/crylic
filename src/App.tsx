@@ -34,8 +34,6 @@ import {
   StyleGroup,
 } from "./utils/ast/editors/ASTEditor";
 import {
-  DEFAULT_FRAME_HEIGHT,
-  DEFAULT_FRAME_WIDTH,
   getBoilerPlateComponent,
   SelectMode,
   SelectModeType,
@@ -342,10 +340,6 @@ function App() {
   };
 
   const scaleRef = useRef(1);
-  const [frameSize, setFrameSize] = useState({
-    width: DEFAULT_FRAME_WIDTH,
-    height: DEFAULT_FRAME_HEIGHT,
-  });
   const renderSideBar = () => (
     <SideBar
       project={project}
@@ -356,14 +350,6 @@ function App() {
       updateSelectedElementStyle={updateSelectedElementStyle}
       updateSelectedElement={updateSelectedElement}
       updateSelectedElementImage={updateSelectedElementImage}
-      onChangeFrameSize={(width, height) => {
-        setFrameSize(
-          produce((draft) => {
-            if (width) draft.width = width;
-            if (height) draft.height = height;
-          })
-        );
-      }}
       onNewComponent={async () => {
         const inputName = await InputModal({
           title: "New Component",
@@ -443,7 +429,6 @@ function App() {
             open(url);
           },
         }}
-        frameSize={frameSize}
         scaleRef={scaleRef}
         selectModeType={selectMode?.type}
         selectedElement={selectedElement}

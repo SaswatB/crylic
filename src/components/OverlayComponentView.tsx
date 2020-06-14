@@ -7,12 +7,12 @@ import React, {
   useState,
 } from "react";
 import {
+  faExpandAlt,
   faGlobe,
   faLink,
   faPlus,
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { useDebounce } from "../hooks/useDebounce";
 import { useMenuInput } from "../hooks/useInput";
@@ -20,7 +20,11 @@ import { useObservable } from "../hooks/useObservable";
 import { useOverlay } from "../hooks/useOverlay";
 import { SelectedElement, Styles } from "../types/paint";
 import { StyleGroup } from "../utils/ast/editors/ASTEditor";
-import { SelectModeType } from "../utils/constants";
+import {
+  DEFAULT_FRAME_HEIGHT,
+  DEFAULT_FRAME_WIDTH,
+  SelectModeType,
+} from "../utils/constants";
 import { RouteDefinition } from "../utils/react-router-proxy";
 import { BuildProgress } from "./BuildProgress";
 import {
@@ -30,12 +34,13 @@ import {
   CompilerComponentViewRef,
   ViewContext,
 } from "./CompilerComponentView";
+import { IconButton } from "./IconButton";
+import { ResizeModal } from "./ResizeModal";
 
 interface Props {
   compilerProps: CompilerComponentViewProps &
     React.IframeHTMLAttributes<HTMLIFrameElement> &
     RefAttributes<CompilerComponentViewRef>;
-  frameSize: { width: number; height: number };
   scaleRef: MutableRefObject<number>;
   selectModeType: SelectModeType | undefined;
   selectedElement: SelectedElement | undefined;
@@ -57,7 +62,6 @@ interface Props {
 
 export const OverlayComponentView: FunctionComponent<Props> = ({
   compilerProps,
-  frameSize,
   scaleRef,
   selectModeType,
   selectedElement,
@@ -71,6 +75,11 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   const [loading, setLoading] = useState(false);
   const [debouncedLoading, skipLoadingDebounce] = useDebounce(loading, 700);
   const componentView = useRef<CompilerComponentViewRef>();
+
+  const [frameSize, setFrameSize] = useState({
+    width: DEFAULT_FRAME_WIDTH,
+    height: DEFAULT_FRAME_HEIGHT,
+  });
 
   const [renderOverlay] = useOverlay(
     compilerProps.project,
@@ -172,56 +181,52 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
         <div className="flex-1" />
         {routeDefinition?.routes ? (
           <>
-            <button
-              onClick={() => onAddRoute(routeDefinition)}
+            <IconButton
               title="Add Route"
-            >
-              <FontAwesomeIcon
-                icon={faPlus}
-                className="text-gray-500 hover:text-white default-transition"
-              />
-            </button>
-            <button
-              className="ml-2"
-              onClick={openRouteMenu}
+              icon={faPlus}
+              onClick={() => onAddRoute(routeDefinition)}
+            />
+            <IconButton
               title="Switch Route"
-            >
-              <FontAwesomeIcon
-                icon={faLink}
-                className="text-gray-500 hover:text-white default-transition"
-              />
-            </button>
+              className="ml-2"
+              icon={faLink}
+              onClick={openRouteMenu}
+            />
           </>
         ) : null}
-        <button
-          className="ml-2"
-          onClick={onTogglePublish}
+        <IconButton
           title={
             compilerProps.renderEntry.publish
               ? "Stop browser viewer"
               : "View in Browser"
           }
-        >
-          <FontAwesomeIcon
-            icon={faGlobe}
-            className="text-gray-500 hover:text-white default-transition"
-            style={
-              compilerProps.renderEntry.publish
-                ? { color: "#43a047" }
-                : undefined
-            }
-          />
-        </button>
-        <button
           className="ml-2"
-          onClick={onRemoveComponentView}
+          icon={faGlobe}
+          iconProps={{
+            style: compilerProps.renderEntry.publish
+              ? { color: "#43a047" }
+              : undefined,
+          }}
+          onClick={onTogglePublish}
+        />
+        <IconButton
+          title="Resize Frame"
+          className="ml-2"
+          icon={faExpandAlt}
+          onClick={() =>
+            ResizeModal({
+              title: "Resize Frame",
+              defaultWidth: frameSize.width,
+              defaultHeight: frameSize.height,
+            }).then((newSize) => newSize && setFrameSize(newSize))
+          }
+        />
+        <IconButton
           title="Close Frame"
-        >
-          <FontAwesomeIcon
-            icon={faTimes}
-            className="text-gray-500 hover:text-white default-transition"
-          />
-        </button>
+          className="ml-2"
+          icon={faTimes}
+          onClick={onRemoveComponentView}
+        />
         {renderRouteMenu()}
         {currentRoute && (
           <div className="absolute inset-0 text-center pointer-events-none">
