@@ -11,9 +11,12 @@ let webpack: typeof import("webpack");
 // let nodeSass: typeof import("node-sass");
 // @ts-ignore todo add types
 let tailwindcss: typeof import("tailwindcss");
+let ReactRefreshPlugin: typeof import("@pmmmwh/react-refresh-webpack-plugin");
 let express: typeof import("express");
 // @ts-ignore todo add types
 let send: typeof import("send");
+
+const ENABLE_FAST_REFRESH = false;
 
 let staticFileServer: ReturnType<typeof import("express")>;
 
@@ -32,6 +35,9 @@ export function initialize(nodeModulesPath = "") {
   webpack = __non_webpack_require__(`${nodeModulesPath}webpack`);
   // nodeSass = __non_webpack_require__(`${nodeModulesPath}node-sass`);
   tailwindcss = __non_webpack_require__(`${nodeModulesPath}tailwindcss`);
+  ReactRefreshPlugin = __non_webpack_require__(
+    `${nodeModulesPath}@pmmmwh/react-refresh-webpack-plugin`
+  );
 
   express = __non_webpack_require__(`${nodeModulesPath}express`);
   send = __non_webpack_require__(`${nodeModulesPath}send`);
@@ -62,7 +68,7 @@ export function initialize(nodeModulesPath = "") {
   });
 }
 
-// supports ts, jsx, css, sass, less and
+// supports ts(x), js(x), css, sass, less and everything else as static files
 const getWebpackModules = (codeId: string) => ({
   rules: [
     {
@@ -85,7 +91,8 @@ const getWebpackModules = (codeId: string) => ({
           plugins: [
             "@babel/proposal-class-properties",
             "@babel/proposal-object-rest-spread",
-          ],
+            ENABLE_FAST_REFRESH && "react-refresh/babel",
+          ].filter((r) => !!r),
         },
       },
     },
@@ -210,7 +217,8 @@ export const webpackRunCode = async (
             onProgress({ percentage, message });
           },
         }),
-      ],
+        ENABLE_FAST_REFRESH && new ReactRefreshPlugin(),
+      ].filter((p): p is typeof webpack.Plugin => !!p),
     });
     const ufs1 = new unionfs.Union();
     const inputFs = memfs.createFsFromVolume(new memfs.Volume());
