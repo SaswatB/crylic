@@ -38,7 +38,8 @@ import {
   SelectMode,
   SelectModeType,
 } from "./utils/constants";
-import { buildOutline, getRelativeImportPath } from "./utils/utils";
+import { routeComponent } from "./utils/defs/react-router-dom";
+import { buildOutline } from "./utils/utils";
 import "./App.scss";
 
 const open = __non_webpack_require__("open") as typeof import("open");
@@ -205,28 +206,18 @@ function App() {
         );
         if (!codeEntry) break;
 
+        const componentPath =
+          !selectMode.isHTMLElement && selectMode.component.import.path;
+
         // don't allow adding a component to itself
-        if (selectMode.path === codeEntry.filePath) {
+        if (componentPath === codeEntry.filePath) {
           enqueueSnackbar("Cannot add a component as a child of itself");
           break;
         }
 
-        // get the import path relative to the codeEntry being edited
-        let importPath =
-          selectMode.path && getRelativeImportPath(codeEntry, selectMode.path);
-
-        // if the relative path doesn't start with a '.', add one
-        if (importPath && !importPath.startsWith(".")) {
-          importPath = `./${importPath}`;
-        }
-        console.log("importPath", selectMode, codeEntry);
-
         let newAst = project?.primaryElementEditor.addChildToElement(
           { ast: codeEntry.ast, codeEntry, lookupId },
-          {
-            ...selectMode,
-            path: importPath,
-          }
+          selectMode
         );
         const [newChildLookupId] =
           project?.primaryElementEditor.getRecentlyAddedElements({
@@ -451,10 +442,12 @@ function App() {
           );
           if (!codeEntry) return;
 
-          // todo check if Route is imported
           const newAst = project.primaryElementEditor.addChildToElement(
             { ast: codeEntry.ast, codeEntry, lookupId: switchLookupId },
-            { tag: "Route", path: "react-router-dom", attributes: { path } }
+            {
+              component: routeComponent,
+              attributes: { path },
+            }
           );
           setCodeAstEdit(newAst, codeEntry!);
           setProject((currentProject) =>

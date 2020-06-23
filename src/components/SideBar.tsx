@@ -56,6 +56,7 @@ import {
   SelectMode,
   SelectModeType,
 } from "../utils/constants";
+import { linkComponent } from "../utils/defs/react-router-dom";
 import { Project } from "../utils/Project";
 import {
   getElementUniqueId,
@@ -309,9 +310,14 @@ const useMainTab = ({
               // todo throw an error if exportName isn't set
               onChangeSelectMode({
                 type: SelectModeType.AddElement,
-                tag: codeEntry.exportName!,
-                isDefaultImport: codeEntry.exportIsDefault,
-                path: codeEntry.filePath,
+                component: {
+                  name,
+                  import: {
+                    name: codeEntry.exportName!,
+                    path: codeEntry.filePath,
+                    isDefault: codeEntry.exportIsDefault,
+                  },
+                },
               })
             }
           />
@@ -656,7 +662,12 @@ const useSelectedElementEditorTab = ({
         if (shouldBeRouterLink !== selectedElementIsRouterLink) {
           ast = editor.updateElementComponent(
             { ...editContext, ast },
-            shouldBeRouterLink ? "Link" : "a"
+            shouldBeRouterLink
+              ? { component: linkComponent }
+              : {
+                  isHTMLElement: true,
+                  tag: "a",
+                }
           );
         }
         return editor.updateElementAttributes(

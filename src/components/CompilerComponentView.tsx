@@ -196,7 +196,7 @@ export const CompilerComponentView: FunctionComponent<
               )
             );
             setCompiledElement(() =>
-              Object.values(codeExports.component).find(
+              Object.values(codeExports.component || {}).find(
                 (e): e is Function => typeof e === "function"
               )
             );
@@ -208,17 +208,19 @@ export const CompilerComponentView: FunctionComponent<
 
             // wait until the dom is fully updated so that getElementByLookupId can work with the updated view
             setTimeout(() =>
-              requestAnimationFrame(() =>
-                onCompileEnd?.(renderEntry, {
-                  ...handleRef.current,
-                  iframe: getInactiveFrame().current!.frameElement,
-                  onRoutesDefined: onRoutesDefinedSubject.pipe(
-                    distinctUntilChanged(isEqual)
-                  ),
-                  onRouteChange: onRouteChangeSubject.pipe(
-                    distinctUntilChanged()
-                  ),
-                })
+              requestAnimationFrame(
+                () =>
+                  getInactiveFrame().current &&
+                  onCompileEnd?.(renderEntry, {
+                    ...handleRef.current,
+                    iframe: getInactiveFrame().current!.frameElement,
+                    onRoutesDefined: onRoutesDefinedSubject.pipe(
+                      distinctUntilChanged(isEqual)
+                    ),
+                    onRouteChange: onRouteChangeSubject.pipe(
+                      distinctUntilChanged()
+                    ),
+                  })
               )
             );
 

@@ -123,8 +123,17 @@ export const renderSeparator = (title?: string, action?: React.ReactNode) => (
   </div>
 );
 
-export const getRelativeImportPath = (codeEntry: CodeEntry, target: string) =>
-  path
+export const getRelativeImportPath = (codeEntry: CodeEntry, target: string) => {
+  if (!target.startsWith("/") && !target.includes(":")) return target;
+
+  // make absolute paths relative
+  let newPath = path
     .relative(path.dirname(codeEntry.filePath), target)
     .replace(/\\/g, "/")
     .replace(SCRIPT_EXTENSION_REGEX, "");
+
+  if (!newPath.startsWith(".")) {
+    newPath = `./${newPath}`;
+  }
+  return newPath;
+};

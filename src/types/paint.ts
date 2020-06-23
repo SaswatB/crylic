@@ -71,3 +71,32 @@ export type Styles = {
   styleName: keyof CSSStyleDeclaration;
   styleValue: string;
 }[];
+
+export interface CustomComponentDefinition {
+  name: string;
+  import: {
+    path: string; // absolute path or node module, todo support path relative to project root
+    name?: string; // defaults to name
+    isDefault?: boolean;
+    preferredAlias?: string;
+  };
+  // defaultChildren?: ComponentDefinition[]; // todo implement
+}
+
+export type ComponentDefinition = (
+  | {
+      isHTMLElement: true;
+      tag: keyof HTMLElementTagNameMap;
+    }
+  | {
+      isHTMLElement?: false;
+      component: CustomComponentDefinition;
+    }
+) & {
+  attributes?: Record<string, unknown>;
+};
+
+export interface CustomComponentConfig {
+  name: string;
+  components: CustomComponentDefinition[];
+}

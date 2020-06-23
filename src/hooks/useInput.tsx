@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   FormControl,
+  FormControlProps,
   InputAdornment,
   InputLabel,
   Menu,
@@ -178,13 +179,8 @@ export function useSelectInput(
 ) {
   const [value, setValue] = useBoundState(initialValue);
 
-  const render = (
-    props?: React.DetailedHTMLProps<
-      React.SelectHTMLAttributes<HTMLSelectElement>,
-      HTMLSelectElement
-    >
-  ) => (
-    <FormControl fullWidth variant="outlined">
+  const render = (props?: FormControlProps) => (
+    <FormControl fullWidth variant="outlined" {...props}>
       <InputLabel>{label}</InputLabel>
       <Select
         native

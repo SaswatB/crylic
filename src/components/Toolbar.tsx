@@ -27,6 +27,8 @@ import {
   usePopupState,
 } from "material-ui-popup-state/hooks";
 
+import { useGlobalConfig } from "../hooks/useGlobalConfig";
+import { useSelectInput } from "../hooks/useInput";
 import { SelectedElement } from "../types/paint";
 import { SelectMode, SelectModeType } from "../utils/constants";
 import { renderSeparator } from "../utils/utils";
@@ -36,12 +38,25 @@ const useAdderTab = (
   selectMode: SelectMode | undefined,
   setSelectMode: (mode: SelectMode | undefined) => void
 ) => {
-  const onAddElement = (
-    tag: keyof HTMLElementTagNameMap,
-    attributes?: Record<string, unknown>
-  ) => setSelectMode({ type: SelectModeType.AddElement, tag, attributes });
+  const { config } = useGlobalConfig();
 
-  const renderAddOption = (
+  const [
+    selectedComponentConfigIndex,
+    renderSelectComponentConfig,
+  ] = useSelectInput(
+    [
+      { name: "Default", value: "-1" },
+      ...config.componentConfigs.map((config, index) => ({
+        name: config.name,
+        value: `${index}`,
+      })),
+    ],
+    undefined,
+    "Component Library",
+    "-1"
+  );
+
+  const renderHTMLAddOption = (
     name: string,
     icon: IconProp,
     tag: keyof HTMLElementTagNameMap,
@@ -51,23 +66,33 @@ const useAdderTab = (
     <button
       className={`btn w-full ${
         selectMode?.type === SelectModeType.AddElement &&
+        selectMode.isHTMLElement &&
         selectMode.tag === tag &&
         isEqual(selectMode.attributes, attributes)
           ? "active"
           : ""
       }`}
-      onClick={() => onAddElement(tag, attributes)}
+      onClick={() =>
+        setSelectMode({
+          type: SelectModeType.AddElement,
+          isHTMLElement: true,
+          tag,
+          attributes,
+        })
+      }
     >
       <FontAwesomeIcon icon={icon} {...iconProps} /> {name}
     </button>
   );
 
-  const renderElementAdder = () => (
+  const renderDefaultElementAdder = () => (
     <>
       {renderSeparator("Containers")}
       <div className="grid2x">
-        {renderAddOption("Row", faBars, "div", { style: { display: "flex" } })}
-        {renderAddOption(
+        {renderHTMLAddOption("Row", faBars, "div", {
+          style: { display: "flex" },
+        })}
+        {renderHTMLAddOption(
           "Column",
           faBars,
           "div",
@@ -77,28 +102,67 @@ const useAdderTab = (
       </div>
       {renderSeparator("Text")}
       <div className="grid2x">
-        {renderAddOption("Heading", faHeading, "h1", {
+        {renderHTMLAddOption("Heading", faHeading, "h1", {
           textContent: "Heading",
         })}
-        {renderAddOption("Text", faFont, "span", { textContent: "Text" })}
+        {renderHTMLAddOption("Text", faFont, "span", { textContent: "Text" })}
       </div>
       {renderSeparator("Interactive")}
       <div className="grid2x">
-        {renderAddOption("Button", faPlusSquare, "button")}
-        {renderAddOption("Link", faExternalLinkSquareAlt, "a")}
+        {renderHTMLAddOption("Button", faPlusSquare, "button")}
+        {renderHTMLAddOption("Link", faExternalLinkSquareAlt, "a")}
       </div>
       {renderSeparator("Form")}
       <div className="grid2x">
-        {renderAddOption("Textbox", faHSquare, "input", { type: "text" })}
-        {renderAddOption("Select", faCaretSquareDown, "select")}
-        {renderAddOption("Checkbox", faCheckSquare, "input", {
+        {renderHTMLAddOption("Textbox", faHSquare, "input", { type: "text" })}
+        {renderHTMLAddOption("Select", faCaretSquareDown, "select")}
+        {renderHTMLAddOption("Checkbox", faCheckSquare, "input", {
           type: "checkbox",
         })}
-        {renderAddOption("Radio", faDotCircle, "input", { type: "radio" })}
+        {renderHTMLAddOption("Radio", faDotCircle, "input", { type: "radio" })}
       </div>
     </>
   );
-  return renderElementAdder;
+
+  const renderConfigElementAdder = () => {
+    const componentConfig =
+      config.componentConfigs[parseInt(selectedComponentConfigIndex)];
+    if (!componentConfig) return null; // todo error
+
+    return (
+      <div className="btngrp-v flex flex-col mt-2 w-64">
+        {componentConfig.components.map((component, index) => (
+          <button
+            key={index}
+            className={`btn ${
+              selectMode?.type === SelectModeType.AddElement &&
+              !selectMode.isHTMLElement &&
+              selectMode.component === component
+                ? "active"
+                : ""
+            }`}
+            onClick={() =>
+              setSelectMode({
+                type: SelectModeType.AddElement,
+                component,
+              })
+            }
+          >
+            {component.name}
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  return () => (
+    <>
+      {renderSelectComponentConfig({ style: { marginTop: 10 } })}
+      {selectedComponentConfigIndex === "-1"
+        ? renderDefaultElementAdder()
+        : renderConfigElementAdder()}
+    </>
+  );
 };
 
 interface Props {

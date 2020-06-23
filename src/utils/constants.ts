@@ -1,3 +1,5 @@
+import { ComponentDefinition } from "../types/paint";
+
 export const CONFIG_FILE_NAME = "paint.config.js";
 
 export const DEFAULT_FRAME_WIDTH = 350;
@@ -14,13 +16,9 @@ export type SelectMode =
   | {
       type: SelectModeType.SelectElement;
     }
-  | {
+  | ({
       type: SelectModeType.AddElement;
-      tag: keyof HTMLElementTagNameMap | string;
-      path?: string;
-      isDefaultImport?: boolean;
-      attributes?: Record<string, unknown>;
-    };
+    } & ComponentDefinition);
 
 export enum CODE_ENTRY_TYPE {
   StyleSheet,
