@@ -494,6 +494,10 @@ function App() {
         using paint. <br />
         <br />
         Look around for beacons to get further instructions.
+        <br />
+        <br />
+        Please note, this application may send reports to the developer if any
+        errors occur.
       </Tour>
       <div className="flex flex-1 flex-row">
         <div className="sidebar flex flex-col absolute p-4 pb-0 h-screen dark-glass z-10">
