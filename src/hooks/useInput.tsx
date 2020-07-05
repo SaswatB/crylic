@@ -28,15 +28,28 @@ import "rc-color-picker/assets/index.css";
 
 const HEX_COLOR_REGEX = /^#([A-Fa-f0-9]{8}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
 
-export function useTextInput(
-  onChange = (value: string) => {},
-  label = "",
-  initialValue = "",
-  bindInitialValue = false
-) {
+export type useInputFunction<
+  S = {},
+  T = any,
+  U = string,
+  R = readonly [U, (props?: T) => JSX.Element]
+> = (
+  config: {
+    onChange?: (value: U) => void;
+    label?: string;
+    initialValue?: U;
+  } & S
+) => R;
+
+export const useTextInput: useInputFunction<{ bindInitialValue?: boolean }> = ({
+  bindInitialValue,
+  onChange,
+  label,
+  initialValue,
+}) => {
   const [focused, setFocused] = useState(false);
   const [value, setValue] = useBoundState(
-    initialValue,
+    initialValue || "",
     bindInitialValue && !focused
   );
 
@@ -48,25 +61,23 @@ export function useTextInput(
       value={value}
       onChange={(e) => {
         setValue(e.target.value);
-        onChange(e.target.value);
+        onChange?.(e.target.value);
       }}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
     />
   );
 
-  return [value, render] as const;
-}
+  return [value, render];
+};
 
-export function useCSSLengthInput(
-  onChange = (value: string) => {},
-  label = "",
-  initialValue = "",
-  bindInitialValue = false
-) {
+export const useCSSLengthInput: useInputFunction<{
+  bindInitialValue?: boolean;
+  endAddon?: React.ReactNode;
+}> = ({ bindInitialValue, endAddon, onChange, label, initialValue }) => {
   const [focused, setFocused] = useState(false);
   const [value, setValue] = useBoundState(
-    initialValue,
+    initialValue || "",
     bindInitialValue && !focused
   );
 
@@ -97,7 +108,7 @@ export function useCSSLengthInput(
   const updateValue = (newNumberValue = numberValue, newUnit = unit) => {
     const newValue = `${newNumberValue}${newUnit}`;
     setValue(newValue);
-    onChange(newValue);
+    onChange?.(newValue);
   };
 
   const render = (
@@ -140,22 +151,22 @@ export function useCSSLengthInput(
                 </option>
               ))}
             </Select>
+            {endAddon || null}
           </InputAdornment>
         }
-        labelWidth={label.length * 8.7}
+        labelWidth={(label?.length || 0) * 6.9}
       />
     </FormControl>
   );
 
-  return [value, render] as const;
-}
+  return [value, render];
+};
 
-export function useSliderInput(
-  onChange = (value: number) => {},
-  label = "",
-  initialValue = 0
-) {
-  const [value, setValue] = useBoundState(initialValue);
+export const useSliderInput: useInputFunction<{}, SliderProps, number> = ({
+  onChange,
+  initialValue,
+}) => {
+  const [value, setValue] = useBoundState<number>(initialValue || 0);
 
   const render = (props?: SliderProps) => (
     <Slider
@@ -163,21 +174,18 @@ export function useSliderInput(
       value={value}
       onChange={(e, v) => {
         setValue(v as number);
-        onChange(v as number);
+        onChange?.(v as number);
       }}
     />
   );
 
-  return [value, render] as const;
-}
+  return [value, render];
+};
 
-export function useSelectInput(
-  options: { name: string; value: string }[],
-  onChange = (value: string) => {},
-  label = "",
-  initialValue = ""
-) {
-  const [value, setValue] = useBoundState(initialValue);
+export const useSelectInput: useInputFunction<{
+  options: { name: string; value: string }[];
+}> = ({ options, onChange, label, initialValue }) => {
+  const [value, setValue] = useBoundState(initialValue || "");
 
   const render = (props?: FormControlProps) => (
     <FormControl fullWidth variant="outlined" {...props}>
@@ -187,7 +195,7 @@ export function useSelectInput(
         value={value}
         onChange={(e) => {
           setValue(e.target.value as string);
-          onChange(e.target.value as string);
+          onChange?.(e.target.value as string);
         }}
         label={label}
       >
@@ -200,16 +208,14 @@ export function useSelectInput(
     </FormControl>
   );
 
-  return [value, render] as const;
-}
+  return [value, render];
+};
 
-export function useColorPicker(
-  onChange = (value: string, preview?: boolean) => {},
-  label = "",
-  initialValue = ""
-) {
+export const useColorPicker: useInputFunction<{
+  onChange: (value: string, preview?: boolean) => void;
+}> = ({ onChange, label, initialValue }) => {
   const anchor = useRef<HTMLButtonElement>(null);
-  const [value, setValue] = useState(initialValue);
+  const [value, setValue] = useState(initialValue || "");
   const [focused, setFocused] = useState(false);
   useEffect(() => {
     if (!focused) setValue(initialValue ? `#${rgbHex(initialValue)}` : "");
@@ -240,15 +246,15 @@ export function useColorPicker(
               />
             </InputAdornment>
           }
-          labelWidth={label.length * 8.7}
+          labelWidth={(label?.length || 0) * 6.9}
         />
       </FormControl>
     </>
   );
 
   const throttledValue = useThrottle(value, 300);
-  return [throttledValue, render] as const;
-}
+  return [throttledValue, render];
+};
 
 const WidePopper = (props: PopperProps) => {
   return (
@@ -260,29 +266,27 @@ const WidePopper = (props: PopperProps) => {
   );
 };
 
-export function useAutocomplete<T>(
-  options: { name: string; category?: string; value: T }[],
+export const useAutocomplete: useInputFunction<{
+  options: { name: string; category?: string; value: string }[];
   // if freeSolo is true T is assumed to be a string
-  autoCompleteOptions?: { freeSolo?: boolean; widePopper?: boolean },
-  onChange = (value: T | undefined) => {},
-  label = "",
-  initialValue: T | undefined = undefined
-) {
-  const [value, setValue] = useBoundState(initialValue);
-  const filter = useRef(createFilterOptions<{ name: string; value: T }>());
+  freeSolo?: boolean;
+  widePopper?: boolean;
+}> = ({ options, freeSolo, widePopper, onChange, label, initialValue }) => {
+  const [value, setValue] = useBoundState(initialValue || "");
+  const filter = useRef(createFilterOptions<{ name: string; value: string }>());
 
   const render = (
     props?: Partial<
-      AutocompleteProps<{ name: string; category?: string; value: T }>
+      AutocompleteProps<{ name: string; category?: string; value: string }>
     >
   ) => (
     <Autocomplete
       {...props}
-      PopperComponent={autoCompleteOptions?.widePopper ? WidePopper : undefined}
+      PopperComponent={widePopper ? WidePopper : undefined}
       multiple={false}
       value={
         options.find((option) => isEqual(option.value, value)) ||
-        (autoCompleteOptions?.freeSolo && value
+        (freeSolo && value
           ? {
               name: `${value}`,
               value,
@@ -292,10 +296,12 @@ export function useAutocomplete<T>(
       onChange={(event, newValue) => {
         const v =
           newValue?.value ||
-          (autoCompleteOptions?.freeSolo && (newValue as T | null)) ||
+          (freeSolo && (newValue as string | null)) ||
           undefined;
-        setValue(v);
-        onChange(v);
+        if (v !== undefined) {
+          setValue(v);
+          onChange?.(v);
+        }
       }}
       filterOptions={(options, params) => {
         const filtered = filter.current(options, params);
@@ -317,23 +323,30 @@ export function useAutocomplete<T>(
       clearOnBlur
       disableClearable
       renderOption={(option) => option.name}
-      freeSolo={autoCompleteOptions?.freeSolo}
+      freeSolo={freeSolo}
       renderInput={(params) => (
         <TextField {...params} label={label} variant="outlined" />
       )}
     />
   );
-  return [value, render] as const;
-}
+  return [value, render];
+};
 
-export function useMenuInput(
-  options: { name: string; value: string }[],
-  menuOptions?: { disableSelection: boolean },
-  onChange = (value: string) => {},
-  label = "",
-  initialValue = ""
-) {
-  const [value, setValue] = useBoundState<string>(initialValue);
+export const useMenuInput: useInputFunction<
+  {
+    options: { name: string; value: string }[];
+    disableSelection?: boolean;
+  },
+  never,
+  string,
+  readonly [
+    string | undefined,
+    (props?: never) => JSX.Element,
+    (event: React.MouseEvent<HTMLElement, MouseEvent>) => void,
+    () => void
+  ]
+> = ({ options, disableSelection, onChange, initialValue }) => {
+  const [value, setValue] = useBoundState<string>(initialValue || "");
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const openMenu = (event: React.MouseEvent<HTMLElement>) =>
@@ -352,10 +365,10 @@ export function useMenuInput(
       {options.map((option) => (
         <MenuItem
           key={option.value}
-          selected={!menuOptions?.disableSelection && option.value === value}
+          selected={!disableSelection && option.value === value}
           onClick={() => {
             setValue(option.value);
-            onChange(option.value);
+            onChange?.(option.value);
           }}
         >
           {option.name}
@@ -363,5 +376,5 @@ export function useMenuInput(
       ))}
     </Menu>
   );
-  return [value, render, openMenu, closeMenu] as const;
-}
+  return [value, render, openMenu, closeMenu];
+};

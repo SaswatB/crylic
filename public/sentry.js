@@ -1,3 +1,5 @@
+if (process.env.NODE_ENV === "development") return;
+
 const Sentry = require("@sentry/electron");
 Sentry.init({
   dsn:

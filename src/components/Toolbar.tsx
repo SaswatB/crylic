@@ -43,18 +43,17 @@ const useAdderTab = (
   const [
     selectedComponentConfigIndex,
     renderSelectComponentConfig,
-  ] = useSelectInput(
-    [
+  ] = useSelectInput({
+    options: [
       { name: "Default", value: "-1" },
       ...config.componentConfigs.map((config, index) => ({
         name: config.name,
         value: `${index}`,
       })),
     ],
-    undefined,
-    "Component Library",
-    "-1"
-  );
+    label: "Component Library",
+    initialValue: "-1",
+  });
 
   const renderHTMLAddOption = (
     name: string,

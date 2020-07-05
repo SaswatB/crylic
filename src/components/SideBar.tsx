@@ -9,7 +9,9 @@ import React, {
 } from "react";
 import {
   faCog,
+  faCompress,
   faEdit,
+  faExpand,
   faEye,
   faFilter,
   faPlus,
@@ -21,7 +23,7 @@ import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import TreeItem from "@material-ui/lab/TreeItem";
 import TreeView from "@material-ui/lab/TreeView";
-import { startCase } from "lodash";
+import { startCase, uniq } from "lodash";
 
 import { Tabs, TabsRef } from "../components/Tabs";
 import { openFilePicker, saveFilePicker } from "../hooks/useFilePicker";
@@ -29,6 +31,7 @@ import {
   useAutocomplete,
   useColorPicker,
   useCSSLengthInput,
+  useInputFunction,
   useMenuInput,
   useSelectInput,
   useTextInput,
@@ -73,25 +76,18 @@ import { Tour, TourContext } from "./Tour";
 
 const path = __non_webpack_require__("path") as typeof import("path");
 
-const useBoundTextInput = (
-  onChange: (v: string) => void,
-  label: string,
-  initialValue: string
-) => useTextInput(onChange, label, initialValue, true);
-const useBoundCSSLengthInput = (
-  onChange: (v: string) => void,
-  label: string,
-  initialValue: string
-) => useCSSLengthInput(onChange, label, initialValue, true);
+type EditorHook<T> = useInputFunction<
+  {
+    onChange: (v: string, preview?: boolean) => void;
+    label: string;
+  } & T,
+  { className?: string; style?: CSSProperties }
+>;
 
-type EditorHook = (
-  onChange: (v: string, preview?: boolean) => void,
-  label: string,
-  iv: string
-) => readonly [
-  string,
-  (props?: { className?: string; style?: CSSProperties }) => JSX.Element
-];
+const useBoundTextInput: useInputFunction = (config) =>
+  useTextInput({ ...config, bindInitialValue: true });
+const useBoundCSSLengthInput: useInputFunction = (config) =>
+  useCSSLengthInput({ ...config, bindInitialValue: true });
 
 const useMainTab = ({
   project,
@@ -113,27 +109,25 @@ const useMainTab = ({
     renderAssetsFilterMenu,
     openAssetsFilterMenu,
     closeAssetsFilterMenu,
-  ] = useMenuInput(
-    [
+  ] = useMenuInput({
+    options: [
       { name: "All", value: "all" },
       { name: "Components", value: "components" },
       { name: "Styles", value: "styles" },
       { name: "Images", value: "images" },
     ],
-    undefined,
-    () => closeAssetsFilterMenu(),
-    undefined,
-    "components"
-  );
+    onChange: () => closeAssetsFilterMenu(),
+    initialValue: "components",
+  });
 
-  const [, renderAddMenu, openAddMenu, closeAddMenu] = useMenuInput(
-    [
+  const [, renderAddMenu, openAddMenu, closeAddMenu] = useMenuInput({
+    options: [
       { name: "New Component", value: "component" },
       { name: "New Style Sheet", value: "stylesheet" },
       { name: "Import Image", value: "image" },
     ],
-    { disableSelection: true },
-    (value) => {
+    disableSelection: true,
+    onChange: (value) => {
       closeAddMenu();
       switch (value) {
         case "component":
@@ -147,9 +141,7 @@ const useMainTab = ({
           break;
       }
     },
-    undefined,
-    undefined
-  );
+  });
 
   interface Tree {
     id: string;
@@ -622,22 +614,20 @@ const useSelectedElementEditorTab = ({
     [selectedElement]
   );
 
-  const [, renderTextContentInput] = useTextInput(
-    (newTextContent) =>
+  const [, renderTextContentInput] = useBoundTextInput({
+    onChange: (newTextContent) =>
       updateSelectedElement((editor, editContext) =>
         editor.updateElementText(editContext, newTextContent)
       ),
-    "Text Content",
-    selectedElement?.element.textContent ?? undefined,
-    true
-  );
+    label: "Text Content",
+    initialValue: selectedElement?.element.textContent ?? undefined,
+  });
 
-  const [, renderIDInput] = useTextInput(
-    (newID) => updateSelectedElementAttributes({ id: newID }),
-    "Identifier",
-    selectedElement?.element.id ?? undefined,
-    true
-  );
+  const [, renderIDInput] = useBoundTextInput({
+    onChange: (newID) => updateSelectedElementAttributes({ id: newID }),
+    label: "Identifier",
+    initialValue: selectedElement?.element.id ?? undefined,
+  });
 
   const routeDefinition = useObservable(
     selectedElement?.viewContext?.onRoutesDefined
@@ -645,13 +635,13 @@ const useSelectedElementEditorTab = ({
   const selectedElementIsRouterLink =
     !!routeDefinition &&
     selectedElement?.sourceMetadata?.componentName === "Link";
-  const [, renderLinkTargetInput] = useAutocomplete(
-    (routeDefinition?.routes || []).map((availableRoute) => ({
+  const [, renderLinkTargetInput] = useAutocomplete({
+    options: (routeDefinition?.routes || []).map((availableRoute) => ({
       name: availableRoute,
       value: availableRoute,
     })),
-    { freeSolo: true },
-    (newHref) => {
+    freeSolo: true,
+    onChange: (newHref) => {
       const shouldBeRouterLink =
         !!routeDefinition &&
         (newHref?.startsWith("/") || newHref?.startsWith("."));
@@ -676,13 +666,14 @@ const useSelectedElementEditorTab = ({
         );
       });
     },
-    "Link Target",
+    label: "Link Target",
     // todo support alias for Link
-    ((selectedElementIsRouterLink &&
-      `${selectedElement?.sourceMetadata?.directProps.to || ""}`) ||
-      (selectedElement?.element as HTMLLinkElement)?.getAttribute("href")) ??
-      undefined
-  );
+    initialValue:
+      ((selectedElementIsRouterLink &&
+        `${selectedElement?.sourceMetadata?.directProps.to || ""}`) ||
+        (selectedElement?.element as HTMLLinkElement)?.getAttribute("href")) ??
+      undefined,
+  });
 
   const styleGroupOptions = (selectedElement?.styleGroups || []).map(
     (group) => ({
@@ -691,13 +682,14 @@ const useSelectedElementEditorTab = ({
       value: group,
     })
   );
-  const [, renderStyleGroupSelector] = useAutocomplete(
-    styleGroupOptions,
-    undefined,
-    setSelectedStyleGroup,
-    undefined,
-    selectedStyleGroup
-  );
+  const [, renderStyleGroupSelector] = useAutocomplete({
+    // @ts-expect-error todo fix type error caused by generics
+    options: styleGroupOptions,
+    // @ts-expect-error todo fix type error caused by generics
+    onChange: setSelectedStyleGroup,
+    // @ts-expect-error todo fix type error caused by generics
+    initialValue: selectedStyleGroup,
+  });
 
   const StylePropNameMap: { [index in keyof CSSStyleDeclaration]?: string } = {
     backgroundColor: "Fill",
@@ -713,10 +705,12 @@ const useSelectedElementEditorTab = ({
     fontFamily: "Font",
     textDecorationLine: "Decoration",
   };
-  const useSelectedElementEditor = (
+  const useSelectedElementEditor = <T extends {} | undefined = undefined>(
     styleProp: keyof CSSStyleDeclaration,
-    useEditorHook: EditorHook = useBoundCSSLengthInput
+    ...rest: (T extends undefined ? [EditorHook<{}>] : [EditorHook<T>, T]) | []
   ) => {
+    const useEditorHook = rest[0] || useBoundCSSLengthInput;
+    const editorHookConfig = rest[1] || {};
     const onChange = (newValue: string, preview?: boolean) =>
       updateSelectedElementStyle(
         selectedStyleGroup!,
@@ -731,15 +725,116 @@ const useSelectedElementEditorTab = ({
       selectedElement?.computedStyles[styleProp] ||
       "";
 
-    const [selectedElementValue, renderValueInput] = useEditorHook(
+    const [selectedElementValue, renderValueInput] = useEditorHook({
+      ...editorHookConfig,
       onChange,
       label,
-      `${initialValue}`
-    );
+      initialValue: `${initialValue}`,
+    });
     return [
       selectedElementValue,
       (props?: React.HTMLAttributes<HTMLElement>) => renderValueInput(props),
     ] as const;
+  };
+
+  const useSelectedElementBreakdownEditor = (prop: "padding" | "margin") => {
+    const [showBreakdown, setShowBreakdown] = useState(false);
+    const renderExpand = () => (
+      <button
+        title={`Expand ${startCase(prop)} Options`}
+        onClick={() => setShowBreakdown(true)}
+      >
+        <FontAwesomeIcon icon={faExpand} />
+      </button>
+    );
+    // todo: replace prop on collapse
+    const renderCollapse = () =>
+      null && (
+        <button
+          title={`Consolidate ${startCase(prop)} Options`}
+          onClick={() => setShowBreakdown(false)}
+        >
+          <FontAwesomeIcon icon={faCompress} />
+        </button>
+      );
+    const [
+      selectedElementPropTop,
+      renderPropTopInput,
+    ] = useSelectedElementEditor(
+      `${prop}Top` as keyof CSSStyleDeclaration,
+      useCSSLengthInput,
+      {
+        bindInitialValue: true,
+        endAddon: renderCollapse(),
+      }
+    );
+    const [
+      selectedElementPropBottom,
+      renderPropBottomInput,
+    ] = useSelectedElementEditor(
+      `${prop}Bottom` as keyof CSSStyleDeclaration,
+      useCSSLengthInput,
+      {
+        bindInitialValue: true,
+        endAddon: renderCollapse(),
+      }
+    );
+    const [
+      selectedElementPropLeft,
+      renderPropLeftInput,
+    ] = useSelectedElementEditor(
+      `${prop}Left` as keyof CSSStyleDeclaration,
+      useCSSLengthInput,
+      {
+        bindInitialValue: true,
+        endAddon: renderCollapse(),
+      }
+    );
+    const [
+      selectedElementPropRight,
+      renderPropRightInput,
+    ] = useSelectedElementEditor(
+      `${prop}Right` as keyof CSSStyleDeclaration,
+      useCSSLengthInput,
+      {
+        bindInitialValue: true,
+        endAddon: renderCollapse(),
+      }
+    );
+
+    // reset breakdown visibility on selected element change
+    useEffect(() => {
+      setShowBreakdown(
+        uniq([
+          selectedElementPropTop,
+          selectedElementPropBottom,
+          selectedElementPropLeft,
+          selectedElementPropRight,
+        ]).length > 1
+      );
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedElement?.lookupId]);
+
+    const [, renderPropInput] = useSelectedElementEditor(
+      prop,
+      useCSSLengthInput,
+      {
+        bindInitialValue: true,
+        endAddon: renderExpand(),
+      }
+    );
+    return () =>
+      showBreakdown ? (
+        <>
+          {renderPropTopInput()}
+          {renderPropBottomInput()}
+          {renderPropLeftInput()}
+          {renderPropRightInput()}
+          {renderBorderRadiusInput()}
+        </>
+      ) : (
+        renderPropInput()
+      );
   };
 
   const [, renderWidthInput] = useSelectedElementEditor("width");
@@ -747,33 +842,43 @@ const useSelectedElementEditorTab = ({
   const [
     selectedElementPosition,
     renderPositionInput,
-  ] = useSelectedElementEditor(
-    "position",
-    useSelectInput.bind(undefined, CSS_POSITION_OPTIONS)
-  );
+  ] = useSelectedElementEditor("position", useSelectInput, {
+    options: CSS_POSITION_OPTIONS,
+  });
   const [, renderTopInput] = useSelectedElementEditor("top");
   const [, renderLeftInput] = useSelectedElementEditor("left");
   const [, renderBottomInput] = useSelectedElementEditor("bottom");
   const [, renderRightInput] = useSelectedElementEditor("right");
+  const renderPaddingInput = useSelectedElementBreakdownEditor("padding");
+  const renderMarginInput = useSelectedElementBreakdownEditor("margin");
   const [selectedElementDisplay, renderDisplayInput] = useSelectedElementEditor(
     "display",
-    useSelectInput.bind(undefined, CSS_DISPLAY_OPTIONS)
+    useSelectInput,
+    {
+      options: CSS_DISPLAY_OPTIONS,
+    }
   );
   const [, renderFlexDirectionInput] = useSelectedElementEditor(
     "flexDirection",
-    useSelectInput.bind(undefined, CSS_FLEX_DIRECTION_OPTIONS)
+    useSelectInput,
+    { options: CSS_FLEX_DIRECTION_OPTIONS }
   );
   const [, renderFlexWrapInput] = useSelectedElementEditor(
     "flexWrap",
-    useSelectInput.bind(undefined, CSS_FLEX_WRAP_OPTIONS)
+    useSelectInput,
+    { options: CSS_FLEX_WRAP_OPTIONS }
   );
   const [, renderAlignItemsInput] = useSelectedElementEditor(
     "alignItems",
-    useSelectInput.bind(undefined, CSS_ALIGN_ITEMS_OPTIONS)
+    useSelectInput,
+    { options: CSS_ALIGN_ITEMS_OPTIONS }
   );
   const [, renderJustifyContentInput] = useSelectedElementEditor(
     "justifyContent",
-    useSelectInput.bind(undefined, CSS_JUSTIFY_CONTENT_OPTIONS)
+    useSelectInput,
+    {
+      options: CSS_JUSTIFY_CONTENT_OPTIONS,
+    }
   );
   const [, renderOpacityInput] = useSelectedElementEditor(
     "opacity",
@@ -795,23 +900,24 @@ const useSelectedElementEditorTab = ({
       selectedElement?.computedStyles[imageProp] ||
       "";
 
-    const [, renderMenu, openMenu, closeMenu] = useMenuInput(
-      (project?.codeEntries || []).filter(isImageEntry).map((entry) => ({
-        name: path.basename(entry.filePath),
-        value: entry.id,
-      })),
-      { disableSelection: true },
-      (newCodeId: string) => {
+    const [, renderMenu, openMenu, closeMenu] = useMenuInput({
+      options: (project?.codeEntries || [])
+        .filter(isImageEntry)
+        .map((entry) => ({
+          name: path.basename(entry.filePath),
+          value: entry.id,
+        })),
+      disableSelection: true,
+      onChange: (newCodeId: string) => {
         closeMenu();
         onChange(project!.getCodeEntry(newCodeId)!);
-      }
-    );
+      },
+    });
 
-    const [selectedElementValue, renderValueInput] = useBoundTextInput(
-      () => {},
+    const [selectedElementValue, renderValueInput] = useBoundTextInput({
       label,
-      `${initialValue}`
-    );
+      initialValue: `${initialValue}`,
+    });
 
     return [
       selectedElementValue,
@@ -834,11 +940,12 @@ const useSelectedElementEditorTab = ({
 
   const [, renderBackgroundSizeInput] = useSelectedElementEditor(
     "backgroundSize",
-    // @ts-expect-error todo fix type error caused by generics
-    useAutocomplete.bind(undefined, CSS_BACKGROUND_SIZE_OPTIONS, {
+    useAutocomplete,
+    {
+      options: CSS_BACKGROUND_SIZE_OPTIONS,
       freeSolo: true,
       widePopper: true,
-    })
+    }
   );
 
   const [, renderColorInput] = useSelectedElementEditor(
@@ -848,29 +955,36 @@ const useSelectedElementEditorTab = ({
   const [, renderTextSizeInput] = useSelectedElementEditor("fontSize");
   const [, renderTextWeightInput] = useSelectedElementEditor(
     "fontWeight",
-    useSelectInput.bind(undefined, CSS_FONT_WEIGHT_OPTIONS)
+    useSelectInput,
+    { options: CSS_FONT_WEIGHT_OPTIONS }
   );
   const [, renderTextFamilyInput] = useSelectedElementEditor(
     "fontFamily",
-    // @ts-expect-error todo fix type error caused by generics
-    useAutocomplete.bind(undefined, CSS_FONT_FAMILY_OPTIONS, {
+    useAutocomplete,
+    {
+      options: CSS_FONT_FAMILY_OPTIONS,
       freeSolo: true,
       widePopper: true,
-    })
+    }
   );
   const [, renderTextAlignInput] = useSelectedElementEditor(
     "textAlign",
-    useSelectInput.bind(undefined, CSS_TEXT_ALIGN_OPTIONS)
+    useSelectInput,
+    { options: CSS_TEXT_ALIGN_OPTIONS }
   );
   // todo support multiple selection
   const [, renderTextDecorationLineInput] = useSelectedElementEditor(
     "textDecorationLine",
-    useSelectInput.bind(undefined, CSS_TEXT_DECORATION_LINE_OPTIONS)
+    useSelectInput,
+    {
+      options: CSS_TEXT_DECORATION_LINE_OPTIONS,
+    }
   );
 
   const [, renderCursorInput] = useSelectedElementEditor(
     "cursor",
-    useSelectInput.bind(undefined, CSS_CURSOR_OPTIONS)
+    useSelectInput,
+    { options: CSS_CURSOR_OPTIONS }
   );
 
   const renderEditor = () => (
@@ -891,8 +1005,8 @@ const useSelectedElementEditorTab = ({
               {renderRightInput()}
             </>
           )}
-          {renderBorderRadiusInput()}
-          {/* todo padding + margin */}
+          {renderPaddingInput()}
+          {renderMarginInput()}
         </div>
       </Collapsible>
       <Collapsible title="Colors">
@@ -919,7 +1033,7 @@ const useSelectedElementEditorTab = ({
       {selectedElementDisplay === "flex" && (
         <>
           <Collapsible title="Content">
-            <div className="grid grid-cols-2 row-gap-3 col-gap-2 pt-1 pb-2">
+            <div className="grid2x">
               {renderFlexDirectionInput()}
               {renderFlexWrapInput()}
               {renderAlignItemsInput()}

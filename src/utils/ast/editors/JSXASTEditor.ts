@@ -616,7 +616,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
             b.identifier(importName),
             component.import.preferredAlias
               ? b.identifier(component.import.preferredAlias)
-              : undefined
+              : null
           );
       assetImport.specifiers = assetImport.specifiers || [];
       assetImport.specifiers.push(assetImportIdentifier);

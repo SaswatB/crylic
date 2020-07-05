@@ -90,6 +90,58 @@ fieldset {
 
 .grid2x {
   @apply grid grid-cols-2 row-gap-3 col-gap-2 py-2;
+
+  option {
+    font-size: 16px;
+  }
+
+  .MuiFormControl-root,
+  .MuiInputLabel-outlined,
+  .MuiOutlinedInput-input,
+  .MuiAutocomplete-input,
+  .MuiOutlinedInput-notchedOutline {
+    font-size: 13px;
+  }
+
+  .MuiInputLabel-outlined {
+    transform: translate(14px, 9px) scale(1);
+  }
+
+  .MuiAutocomplete-inputRoot {
+    padding: 0 !important;
+  }
+
+  .MuiSelect-select.MuiSelect-select {
+    padding: 0;
+  }
+
+  .MuiSelect-icon {
+    display: none;
+  }
+
+  .MuiOutlinedInput-input,
+  .MuiAutocomplete-input {
+    padding: 7px 9px !important;
+  }
+
+  .MuiOutlinedInput-adornedEnd {
+    padding-right: 7px;
+  }
+
+  .MuiInputAdornment-positionEnd {
+    .MuiInput-underline:before {
+      display: none;
+    }
+
+    .MuiInputBase-root,
+    button {
+      font-size: 10px;
+    }
+
+    .rc-color-picker-wrap {
+      line-height: 0;
+    }
+  }
 }
 
 // material ui overrides

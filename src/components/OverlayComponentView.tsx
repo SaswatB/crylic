@@ -160,19 +160,18 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentRoute]);
 
-  const [, renderRouteMenu, openRouteMenu, closeRouteMenu] = useMenuInput(
-    (routeDefinition?.routes || []).map((availableRoute) => ({
+  const [, renderRouteMenu, openRouteMenu, closeRouteMenu] = useMenuInput({
+    options: (routeDefinition?.routes || []).map((availableRoute) => ({
       name: availableRoute,
       value: availableRoute,
     })),
-    { disableSelection: true },
-    (newRoute) => {
+    disableSelection: true,
+    onChange: (newRoute) => {
       closeRouteMenu();
       routeDefinition?.history.push(newRoute);
     },
-    undefined,
-    currentRoute
-  );
+    initialValue: currentRoute,
+  });
 
   return (
     <div className="flex flex-col m-10">
@@ -231,8 +230,9 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
         {currentRoute && (
           <div className="absolute inset-0 text-center pointer-events-none">
             <div
-              className="inline-flex py-1 font-bold pointer-events-auto"
-              title="Route"
+              className="inline-block truncate py-1 font-bold pointer-events-auto"
+              style={{ maxWidth: "100px" }}
+              title={`Route: ${currentRoute}`}
             >
               {currentRoute}
             </div>
