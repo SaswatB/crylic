@@ -1,7 +1,7 @@
 import { namedTypes as t } from "ast-types";
 import { pipe } from "fp-ts/lib/pipeable";
 import { CSSASTNode } from "gonzales-pe";
-import { flatten } from "lodash";
+import { flatten, kebabCase } from "lodash";
 import { types } from "recast";
 
 import { CodeEntry } from "../../../types/paint";
@@ -101,7 +101,7 @@ export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
                   property.type === "ObjectProperty" &&
                   property.key.type === "Identifier" &&
                   property.value.type === "StringLiteral" && {
-                    name: property.key.name,
+                    name: kebabCase(property.key.name),
                     value: property.value.value,
                   }
               )

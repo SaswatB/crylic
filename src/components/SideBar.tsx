@@ -803,15 +803,27 @@ const useSelectedElementEditorTab = ({
     );
 
     // reset breakdown visibility on selected element change
-    useEffect(() => {
-      setShowBreakdown(
+    const refreshBreakdown = (allowUnset = false) => {
+      const show =
         uniq([
           selectedElementPropTop,
           selectedElementPropBottom,
           selectedElementPropLeft,
           selectedElementPropRight,
-        ]).length > 1
-      );
+        ]).length > 1;
+      if (allowUnset || show) setShowBreakdown(show);
+    };
+    useEffect(() => {
+      refreshBreakdown();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+      selectedElementPropBottom,
+      selectedElementPropLeft,
+      selectedElementPropRight,
+      selectedElementPropTop,
+    ]);
+    useEffect(() => {
+      refreshBreakdown(true);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedElement?.lookupId]);
 
