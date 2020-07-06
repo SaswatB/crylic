@@ -1049,6 +1049,7 @@ const useSelectedElementEditorTab = ({
             renderTextContentInput({
               className: "col-span-2",
               autoFocus: true,
+              multiline: true,
             })}
           {renderColorInput()}
           {renderTextSizeInput()}
