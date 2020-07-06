@@ -111,7 +111,8 @@ fieldset {
     padding: 0 !important;
   }
 
-  .MuiSelect-select.MuiSelect-select {
+  .MuiSelect-select.MuiSelect-select,
+  .MuiOutlinedInput-multiline {
     padding: 0;
   }
 
