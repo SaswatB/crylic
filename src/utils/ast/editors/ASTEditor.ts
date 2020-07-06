@@ -26,7 +26,7 @@ export interface EditContext<T> {
   lookupId: string;
 }
 
-abstract class ASTEditor<ASTType> {
+export abstract class ASTEditor<ASTType> {
   public addLookupData = editAST(this.addLookupDataToAST.bind(this));
   protected abstract addLookupDataToAST({
     ast,
@@ -63,8 +63,8 @@ export abstract class StyleASTEditor<ASTType> extends ASTEditor<ASTType> {
     element: HTMLElement
   ): StyleGroup[];
 
-  public addStyles = editAST(this.addStylesToAST.bind(this));
-  protected abstract addStylesToAST(
+  public applyStyles = editAST(this.applyStylesToAST.bind(this));
+  protected abstract applyStylesToAST(
     editContext: EditContext<ASTType>,
     styles: Styles
   ): void;

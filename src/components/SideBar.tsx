@@ -38,7 +38,12 @@ import {
 } from "../hooks/useInput";
 import { useObservable } from "../hooks/useObservable";
 import { useUpdatingRef } from "../hooks/useUpdatingRef";
-import { CodeEntry, OutlineElement, SelectedElement } from "../types/paint";
+import {
+  CodeEntry,
+  OutlineElement,
+  SelectedElement,
+  Styles,
+} from "../types/paint";
 import {
   EditContext,
   ElementASTEditor,
@@ -581,6 +586,7 @@ const useSelectedElementEditorTab = ({
   project,
   selectedElement,
   updateSelectedElementStyle,
+  updateSelectedElementStyles,
   updateSelectedElement,
   updateSelectedElementImage,
 }: Props) => {
@@ -754,21 +760,72 @@ const useSelectedElementEditorTab = ({
     const renderExpand = () => (
       <button
         title={`Expand ${startCase(prop)} Options`}
-        onClick={() => setShowBreakdown(true)}
+        onClick={() => {
+          setShowBreakdown(true);
+          // todo only update styles if prop is defined for this style group
+          updateSelectedElementStyles(selectedStyleGroup!, [
+            {
+              styleName: prop,
+              styleValue: null,
+            },
+            {
+              styleName: `${prop}Top` as keyof CSSStyleDeclaration,
+              styleValue: selectedElement!.computedStyles[prop],
+            },
+            {
+              styleName: `${prop}Bottom` as keyof CSSStyleDeclaration,
+              styleValue: selectedElement!.computedStyles[prop],
+            },
+            {
+              styleName: `${prop}Left` as keyof CSSStyleDeclaration,
+              styleValue: selectedElement!.computedStyles[prop],
+            },
+            {
+              styleName: `${prop}Right` as keyof CSSStyleDeclaration,
+              styleValue: selectedElement!.computedStyles[prop],
+            },
+          ]);
+        }}
       >
         <FontAwesomeIcon icon={faExpand} />
       </button>
     );
-    // todo: replace prop on collapse
-    const renderCollapse = () =>
-      null && (
-        <button
-          title={`Consolidate ${startCase(prop)} Options`}
-          onClick={() => setShowBreakdown(false)}
-        >
-          <FontAwesomeIcon icon={faCompress} />
-        </button>
-      );
+    const renderCollapse = () => (
+      <button
+        title={`Consolidate ${startCase(prop)} Options`}
+        onClick={() => {
+          setShowBreakdown(false);
+          // todo only update styles if prop is defined for this style group
+          updateSelectedElementStyles(selectedStyleGroup!, [
+            {
+              styleName: prop,
+              // todo do an average or pick min/max
+              styleValue: selectedElement!.computedStyles[
+                `${prop}Top` as keyof CSSStyleDeclaration
+              ],
+            },
+            {
+              styleName: `${prop}Top` as keyof CSSStyleDeclaration,
+              styleValue: null,
+            },
+            {
+              styleName: `${prop}Bottom` as keyof CSSStyleDeclaration,
+              styleValue: null,
+            },
+            {
+              styleName: `${prop}Left` as keyof CSSStyleDeclaration,
+              styleValue: null,
+            },
+            {
+              styleName: `${prop}Right` as keyof CSSStyleDeclaration,
+              styleValue: null,
+            },
+          ]);
+        }}
+      >
+        <FontAwesomeIcon icon={faCompress} />
+      </button>
+    );
     const [
       selectedElementPropTop,
       renderPropTopInput,
@@ -1095,6 +1152,11 @@ interface Props {
     styleGroup: StyleGroup,
     styleProp: keyof CSSStyleDeclaration,
     newValue: string,
+    preview?: boolean
+  ) => void;
+  updateSelectedElementStyles: (
+    styleGroup: StyleGroup,
+    styles: Styles,
     preview?: boolean
   ) => void;
   updateSelectedElement: <T extends {}>(

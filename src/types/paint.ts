@@ -69,7 +69,7 @@ export type onMoveResizeCallback = (
 
 export type Styles = {
   styleName: keyof CSSStyleDeclaration;
-  styleValue: string;
+  styleValue: string | null;
 }[];
 
 export interface CustomComponentDefinition {

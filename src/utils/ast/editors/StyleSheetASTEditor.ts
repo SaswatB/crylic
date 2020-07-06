@@ -96,7 +96,7 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
     return styleGroups;
   }
 
-  protected addStylesToAST(
+  protected applyStylesToAST(
     { ast, lookupId }: EditContext<CSSASTNode>,
     styles: Styles
   ): void {
@@ -211,7 +211,7 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
     styles.forEach(({ styleName, styleValue }) => {
       const cssStyleName = kebabCase(`${styleName}`);
 
-      const existingRuleDeclaration = ruleBlockContent.find(
+      const existingRuleDeclarationIndex = ruleBlockContent.findIndex(
         (blockNode) =>
           blockNode.type === "declaration" &&
           pipe(
@@ -227,9 +227,9 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
             (_) => _ === cssStyleName
           )
       );
-      if (existingRuleDeclaration) {
+      if (existingRuleDeclarationIndex !== -1) {
         const ruleValue = pipe(
-          existingRuleDeclaration,
+          ruleBlockContent[existingRuleDeclarationIndex],
           getContent,
           ifArray,
           (_) => _?.find((n) => n.type === "value"),
@@ -237,12 +237,30 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
           ifArray,
           (_) => _?.[0]
         );
-        if (ruleValue) {
+        if (styleValue === null) {
+          // if the style is set to null, delete the declaration
+          if (
+            ruleBlockContent[existingRuleDeclarationIndex + 1]?.type ===
+            "declarationDelimiter"
+          ) {
+            ruleBlock.removeChild(existingRuleDeclarationIndex + 1);
+          }
+          ruleBlock.removeChild(existingRuleDeclarationIndex);
+          if (
+            ruleBlockContent[existingRuleDeclarationIndex - 1]?.type === "space"
+          ) {
+            ruleBlock.removeChild(existingRuleDeclarationIndex - 1);
+          }
+          return;
+        } else if (ruleValue) {
           // replace existing rule
           ruleValue.type = "ident";
           ruleValue.content = styleValue;
           return;
         }
+      }
+      if (styleValue === null) {
+        return;
       }
 
       // add rule to the end of the ruleset

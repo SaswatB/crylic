@@ -16,6 +16,9 @@ const STYLED_LOOKUP_MATCHER = new RegExp(
   `${STYLED_LOOKUP_CSS_VAR_PREFIX}(.+): 1;`
 );
 
+const getStyleMatcherRule = (cssStyleName: string) =>
+  `(($|[^\\S\\r\\n])[^\\S\\r\\n]*)${cssStyleName}: ([^:;]+);`;
+
 export class StyledASTEditor extends StyleASTEditor<t.File> {
   private createdIds = new Set<string>();
   private lookupIdNameMap: Record<string, string | undefined> = {};
@@ -89,7 +92,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
     return styleGroups;
   }
 
-  protected addStylesToAST(
+  protected applyStylesToAST(
     { ast, lookupId }: EditContext<t.File>,
     styles: Styles
   ): void {
@@ -139,25 +142,37 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
   ) => {
     styles.forEach(({ styleName, styleValue }) => {
       const cssStyleName = kebabCase(`${styleName}`);
-      const styleMatcher = new RegExp(`($|\\s)\\s*${cssStyleName}: ([^:;]+);`);
+      const styleMatcherRule = getStyleMatcherRule(cssStyleName);
+      const styleMatcher = new RegExp(styleMatcherRule);
       const found = path.value.quasi.quasis.find(({ value: quasiValue }) => {
         const res = styleMatcher.exec(quasiValue.raw);
         if (res) {
-          // replace existing rule
-          quasiValue.raw = quasiValue.raw.replace(
-            styleMatcher,
-            `${cssStyleName}: ${styleValue};`
-          );
+          if (styleValue === null) {
+            // if the style is set to null, delete the attribute
+            quasiValue.raw = quasiValue.raw.replace(
+              new RegExp(`\n?${styleMatcherRule}`),
+              ""
+            );
+          } else {
+            // replace existing rule
+            quasiValue.raw = quasiValue.raw.replace(
+              styleMatcher,
+              `${res[1]}${cssStyleName}: ${styleValue};`
+            );
+          }
           return true;
         }
         return false;
       });
-      if (found) return;
+      if (found || styleValue === null) return;
 
       // add rule to the end of the template
       const quasiValue =
         path.value.quasi.quasis[path.value.quasi.quasis.length - 1].value;
-      quasiValue.raw = `${quasiValue.raw}${cssStyleName}: ${styleValue};`;
+      const indent =
+        new RegExp(getStyleMatcherRule("[^\\s]+")).exec(quasiValue.raw)?.[1] ||
+        "";
+      quasiValue.raw = `${quasiValue.raw}${indent}${cssStyleName}: ${styleValue};\n`;
     });
   };
 }

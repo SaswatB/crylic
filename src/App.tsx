@@ -298,7 +298,7 @@ function App() {
     if (preview) return;
 
     updateStyleGroup(styleGroup, (editor, editContext) =>
-      editor.addStyles(editContext, styles)
+      editor.applyStyles(editContext, styles)
     );
   };
 
@@ -309,15 +309,16 @@ function App() {
     preview?: boolean
   ) => {
     if (
-      selectedElement &&
-      newValue !== selectedElement?.computedStyles[styleProp]
-    ) {
-      updateSelectedElementStyles(
-        styleGroup,
-        [{ styleName: styleProp, styleValue: newValue }],
-        preview
-      );
-    }
+      !selectedElement ||
+      newValue === selectedElement?.computedStyles[styleProp]
+    )
+      return;
+
+    updateSelectedElementStyles(
+      styleGroup,
+      [{ styleName: styleProp, styleValue: newValue }],
+      preview
+    );
   };
 
   const updateSelectedElementImage = (
@@ -339,6 +340,7 @@ function App() {
       selectedElement={selectedElement}
       onChangeSelectMode={setSelectMode}
       updateSelectedElementStyle={updateSelectedElementStyle}
+      updateSelectedElementStyles={updateSelectedElementStyles}
       updateSelectedElement={updateSelectedElement}
       updateSelectedElementImage={updateSelectedElementImage}
       onNewComponent={async () => {

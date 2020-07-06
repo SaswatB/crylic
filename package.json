@@ -176,6 +176,9 @@
     "transformIgnorePatterns": [
       "<rootDir>/node_modules/"
     ],
+    "moduleNameMapper": {
+      "monaco-editor.*": "<rootDir>/test/stub.js"
+    },
     "verbose": true
   },
   "browserslist": {

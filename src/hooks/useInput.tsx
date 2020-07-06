@@ -22,6 +22,7 @@ import { isEqual } from "lodash";
 import rgbHex from "rgb-hex";
 
 import { DebouncingColorPicker } from "../components/DebouncingColorPicker";
+import { CSS_LENGTH_UNITS } from "../utils/constants";
 import { useBoundState } from "./useBoundState";
 import { useThrottle } from "./useThrottle";
 import "rc-color-picker/assets/index.css";
@@ -81,24 +82,6 @@ export const useCSSLengthInput: useInputFunction<{
     bindInitialValue && !focused
   );
 
-  const units = [
-    { name: "px", value: "px" },
-    { name: "%", value: "%" },
-    { name: "em", value: "em" },
-    { name: "vh", value: "vh" },
-    { name: "vw", value: "vw" },
-    { name: "ex", value: "ex" },
-    { name: "cm", value: "cm" },
-    { name: "mm", value: "mm" },
-    { name: "in", value: "in" },
-    { name: "pt", value: "pt" },
-    { name: "pc", value: "pc" },
-    { name: "ch", value: "ch" },
-    { name: "rem", value: "rem" },
-    { name: "vmin", value: "vmin" },
-    { name: "vmax", value: "vmax" },
-  ];
-
   const { numberValue, unit } = useMemo(() => {
     const res = /(\d+)(.+)/.exec(value);
     return res
@@ -145,7 +128,7 @@ export const useCSSLengthInput: useInputFunction<{
               value={unit}
               onChange={(e) => updateValue(undefined, `${e.target.value}`)}
             >
-              {units.map((o) => (
+              {CSS_LENGTH_UNITS.map((o) => (
                 <option key={o.name} value={o.value}>
                   {o.name}
                 </option>

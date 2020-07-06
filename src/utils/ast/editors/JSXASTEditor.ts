@@ -357,7 +357,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     return decorations;
   }
 
-  protected addStylesToAST(
+  protected applyStylesToAST(
     { ast, lookupId }: EditContext<t.File>,
     styles: Styles
   ) {
@@ -366,7 +366,10 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
         path,
         styles.map((style) => ({
           styleName: style.styleName,
-          styleValue: b.stringLiteral(style.styleValue),
+          styleValue:
+            style.styleValue !== null
+              ? b.stringLiteral(style.styleValue)
+              : null,
         }))
       )
     );
@@ -475,7 +478,11 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
             [
               b.jsxAttribute(
                 b.jsxIdentifier("style"),
-                valueToJSXLiteral({ display: "flex", height: "100%" })
+                valueToJSXLiteral({
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
+                })
               ),
             ],
             true
@@ -500,7 +507,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     path: NodePath<types.namedTypes.JSXElement, t.JSXElement>,
     styles: {
       styleName: keyof CSSStyleDeclaration;
-      styleValue: t.StringLiteral | t.TemplateLiteral;
+      styleValue: t.StringLiteral | t.TemplateLiteral | null;
     }[]
   ) {
     let existingStyleAttr = path.value.openingElement.attributes?.find(
@@ -517,13 +524,16 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     }
     styles.forEach(({ styleName, styleValue }) => {
       // todo handle more cases
-      const existingStyleProp = pipe(
+      const existingStyleLiteral = pipe(
         existingStyleAttr,
         ifJSXAttribute,
         getValue,
         ifJSXExpressionContainer,
         (_) => _?.expression,
-        ifObjectExpression,
+        ifObjectExpression
+      );
+      const existingStyleProp = pipe(
+        existingStyleLiteral,
         (_) => _?.properties
       )?.find(
         (prop): prop is t.ObjectProperty =>
@@ -536,9 +546,19 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
           ) === styleName
       );
       if (existingStyleProp) {
-        existingStyleProp.value = styleValue;
+        if (styleValue === null) {
+          // if the style is set to null, delete the attribute
+          existingStyleLiteral!.properties = existingStyleLiteral!.properties.filter(
+            (prop) => prop !== existingStyleProp
+          );
+        } else {
+          existingStyleProp.value = styleValue;
+        }
+        return;
+      } else if (styleValue === null) {
         return;
       }
+
       const existingStylePropObject = pipe(
         existingStyleAttr,
         ifJSXAttribute,
