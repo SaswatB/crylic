@@ -23,7 +23,7 @@ import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import TreeItem from "@material-ui/lab/TreeItem";
 import TreeView from "@material-ui/lab/TreeView";
-import { startCase, uniq } from "lodash";
+import { debounce, startCase, uniq } from "lodash";
 
 import { Tabs, TabsRef } from "../components/Tabs";
 import { openFilePicker, saveFilePicker } from "../hooks/useFilePicker";
@@ -37,6 +37,7 @@ import {
   useTextInput,
 } from "../hooks/useInput";
 import { useObservable } from "../hooks/useObservable";
+import { useUpdatingRef } from "../hooks/useUpdatingRef";
 import { CodeEntry, OutlineElement, SelectedElement } from "../types/paint";
 import {
   EditContext,
@@ -614,11 +615,22 @@ const useSelectedElementEditorTab = ({
     [selectedElement]
   );
 
+  // debounce text entry
+  const updateSelectedElementRef = useUpdatingRef(updateSelectedElement);
+  const updateSelectedElementDebouncedRef = useRef(
+    debounce(
+      (...args: Parameters<typeof updateSelectedElement>) =>
+        updateSelectedElementRef.current(...args),
+      1000
+    )
+  );
   const [, renderTextContentInput] = useBoundTextInput({
-    onChange: (newTextContent) =>
-      updateSelectedElement((editor, editContext) =>
+    onChange: (newTextContent) => {
+      selectedElement!.element.textContent = newTextContent;
+      updateSelectedElementDebouncedRef.current((editor, editContext) =>
         editor.updateElementText(editContext, newTextContent)
-      ),
+      );
+    },
     label: "Text Content",
     initialValue: selectedElement?.element.textContent ?? undefined,
   });
@@ -1033,7 +1045,11 @@ const useSelectedElementEditorTab = ({
       {/* todo border */}
       <Collapsible title="Text">
         <div className="grid2x">
-          {allowTextEdit && renderTextContentInput({ className: "col-span-2" })}
+          {allowTextEdit &&
+            renderTextContentInput({
+              className: "col-span-2",
+              autoFocus: true,
+            })}
           {renderColorInput()}
           {renderTextSizeInput()}
           {renderTextWeightInput()}
