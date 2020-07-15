@@ -79,6 +79,11 @@ export const CSS_DISPLAY_OPTIONS = [
   { name: "Table Row", value: "table-row" },
 ];
 
+export const CSS_BOX_SIZING_OPTIONS = [
+  { name: "Content Box", value: "content-box" },
+  { name: "Border Box", value: "border-box" },
+];
+
 export const CSS_FLEX_DIRECTION_OPTIONS = [
   { name: "Row", value: "row" },
   { name: "Column", value: "column" },

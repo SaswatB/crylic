@@ -52,6 +52,7 @@ import {
 import {
   CSS_ALIGN_ITEMS_OPTIONS,
   CSS_BACKGROUND_SIZE_OPTIONS,
+  CSS_BOX_SIZING_OPTIONS,
   CSS_CURSOR_OPTIONS,
   CSS_DISPLAY_OPTIONS,
   CSS_FLEX_DIRECTION_OPTIONS,
@@ -802,7 +803,7 @@ const useSelectedElementEditorTab = ({
               // todo do an average or pick min/max
               styleValue: selectedElement!.computedStyles[
                 `${prop}Top` as keyof CSSStyleDeclaration
-              ],
+              ] as string,
             },
             {
               styleName: `${prop}Top` as keyof CSSStyleDeclaration,
@@ -937,6 +938,13 @@ const useSelectedElementEditorTab = ({
     useSelectInput,
     {
       options: CSS_DISPLAY_OPTIONS,
+    }
+  );
+  const [, renderBoxSizingInput] = useSelectedElementEditor(
+    "boxSizing",
+    useSelectInput,
+    {
+      options: CSS_BOX_SIZING_OPTIONS,
     }
   );
   const [, renderFlexDirectionInput] = useSelectedElementEditor(
@@ -1078,6 +1086,7 @@ const useSelectedElementEditorTab = ({
           {renderHeightInput()}
           {renderPositionInput()}
           {renderDisplayInput()}
+          {renderBoxSizingInput()}
           {selectedElementPosition !== "static" && (
             <>
               {renderTopInput()}
