@@ -14,6 +14,7 @@ import {
   faSync,
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
+import { Subject } from "rxjs";
 
 import { useDebounce } from "../hooks/useDebounce";
 import { useMenuInput } from "../hooks/useInput";
@@ -82,10 +83,14 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
     height: DEFAULT_FRAME_HEIGHT,
   });
 
+  // event for when temp styles are applied to the selected component
+  const addTempStylesObservableRef = useRef(new Subject());
+
   const [renderOverlay] = useOverlay(
     compilerProps.project,
     componentView.current,
     frameSize,
+    addTempStylesObservableRef.current,
     scaleRef,
     selectedElement,
     selectModeType,
@@ -252,11 +257,28 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           ref={(newComponentViewRef) => {
             componentView.current = newComponentViewRef ?? undefined;
             if (compilerProps.ref) {
+              const refProxy = newComponentViewRef
+                ? {
+                    ...newComponentViewRef,
+                    addTempStyles(
+                      lookupId: string,
+                      styles: Styles,
+                      persisteRender: boolean
+                    ) {
+                      newComponentViewRef.addTempStyles(
+                        lookupId,
+                        styles,
+                        persisteRender
+                      );
+                      addTempStylesObservableRef.current.next();
+                    },
+                  }
+                : null;
               if (typeof compilerProps.ref === "function") {
-                compilerProps.ref(newComponentViewRef);
+                compilerProps.ref(refProxy);
               } else {
                 // @ts-ignore ignore readonly error
-                compilerProps.ref.current = newComponentViewRef;
+                compilerProps.ref.current = refProxy;
               }
             }
           }}

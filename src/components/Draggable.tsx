@@ -8,13 +8,23 @@ import React, {
 import { DraggableCore } from "react-draggable";
 import { clamp } from "lodash";
 import { Resizable } from "re-resizable";
+import { Observable } from "rxjs";
+
+import { useObservable } from "../hooks/useObservable";
+
+const { screen } = (__non_webpack_require__(
+  "electron"
+) as typeof import("electron")).remote;
 
 const SNAP_GAP = 10;
 
 interface Props {
   className: string;
-  dimensions: { top: number; left: number; width: number; height: number };
-  bounds: { top: number; left: number; width: number; height: number };
+  calculateBoundingBox: () => {
+    dimensions?: { top: number; left: number; width: number; height: number };
+    bounds?: { top: number; left: number; width: number; height: number };
+  };
+  recalculateBoundsObservable: Observable<number>;
   onDragStart?: () => void;
   onDrag?: (d: { deltaX: number; deltaY: number }) => void;
   onDragStop?: (d: { deltaX: number; deltaY: number }) => void;
@@ -34,8 +44,8 @@ interface Props {
 }
 export const Draggable: FunctionComponent<Props> = ({
   className,
-  dimensions,
-  bounds,
+  calculateBoundingBox,
+  recalculateBoundsObservable,
   onDragStart,
   onDrag,
   onDragStop,
@@ -45,29 +55,23 @@ export const Draggable: FunctionComponent<Props> = ({
 }) => {
   const divRef = useRef<Resizable>(null);
 
+  // get bounds
+  const renderId = useObservable(recalculateBoundsObservable);
+  const box = useMemo(calculateBoundingBox, [renderId]);
+  const skipRender = !box.dimensions || !box.bounds;
+  const dimensions = box.dimensions || { top: 0, left: 0, width: 0, height: 0 };
+  const bounds = box.bounds || { top: 0, left: 0, width: 0, height: 0 };
+
   // state that tracks drags
-  const [dragState, setDragState] = useState({
+  const dragState = useRef({
     // mouse position when drag started
     startX: 0,
     startY: 0,
     // mouse position at current point in drag
     currentX: 0,
     currentY: 0,
+    dimensions,
   });
-  // clear drag state when element location/size gets updated
-  useEffect(() => {
-    setDragState({
-      startX: 0,
-      startY: 0,
-      currentX: 0,
-      currentY: 0,
-    });
-  }, [dimensions]);
-  // drag derivatives
-  const dragTop = dimensions.top + dragState.currentY - dragState.startY;
-  const dragLeft = dimensions.left + dragState.currentX - dragState.startX;
-  const widthOffset = bounds.width - dragLeft;
-  const heightOffset = bounds.height - dragTop;
 
   // drag snap points
   const dragSnap = useMemo(() => {
@@ -106,71 +110,93 @@ export const Draggable: FunctionComponent<Props> = ({
     return { x: xSnaps, y: ySnaps };
   }, [bounds.width, bounds.height, dimensions.top, dimensions.left]);
 
+  if (skipRender) return null;
   return (
     <DraggableCore
       onStart={(event, data) => {
         event.preventDefault();
         event.stopPropagation();
 
-        setDragState({
-          startX: data.x,
-          startY: data.y,
-          currentX: data.x,
-          currentY: data.y,
-        });
+        const { x, y } = screen.getCursorScreenPoint();
+
+        dragState.current = {
+          startX: x,
+          startY: y,
+          currentX: x,
+          currentY: y,
+          dimensions,
+        };
         onDragStart?.();
       }}
       onDrag={(event, data) => {
         event.preventDefault();
         event.stopPropagation();
 
-        setDragState((currentDragState) => {
-          // get the new position, handling clamped to bounds
-          let elementX = clamp(
-            dimensions.left + data.x - currentDragState.startX,
-            0,
-            bounds.width - dimensions.width
-          );
-          let elementY = clamp(
-            dimensions.top + data.y - currentDragState.startY,
-            0,
-            bounds.height - dimensions.height
-          );
+        const { x, y } = screen.getCursorScreenPoint();
 
-          // handle drag snap (disabled when shift is pressed)
-          if (!event.shiftKey) {
-            dragSnap.x.forEach((snap) => {
-              if (Math.abs(elementX - snap) < SNAP_GAP) {
-                elementX = snap;
-              }
-            });
-            dragSnap.y.forEach((snap) => {
-              if (Math.abs(elementY - snap) < SNAP_GAP) {
-                elementY = snap;
-              }
-            });
-          }
+        // get the position deltas
+        const newDragState = {
+          ...dragState.current,
+          currentX: x,
+          currentY: y,
+        };
 
-          // get the position deltas
-          const newDragState = {
-            ...currentDragState,
-            currentX: elementX - dimensions.left + currentDragState.startX,
-            currentY: elementY - dimensions.top + currentDragState.startY,
-          };
+        // get the new position, handling clamped to bounds
+        let elementX = clamp(
+          newDragState.dimensions.left +
+            newDragState.currentX -
+            newDragState.startX,
+          0,
+          bounds.width - newDragState.dimensions.width
+        );
+        let elementY = clamp(
+          newDragState.dimensions.top +
+            newDragState.currentY -
+            newDragState.startY,
+          0,
+          bounds.height - newDragState.dimensions.height
+        );
 
-          onDrag?.({
-            deltaX: newDragState.currentX - newDragState.startX,
-            deltaY: newDragState.currentY - newDragState.startY,
+        // handle drag snap (disabled when shift is pressed)
+        if (!event.shiftKey) {
+          dragSnap.x.forEach((snap) => {
+            if (Math.abs(elementX - snap) < SNAP_GAP) {
+              elementX = snap;
+            }
           });
-          return newDragState;
+          dragSnap.y.forEach((snap) => {
+            if (Math.abs(elementY - snap) < SNAP_GAP) {
+              elementY = snap;
+            }
+          });
+        }
+
+        newDragState.currentX =
+          elementX - newDragState.dimensions.left + newDragState.startX;
+        newDragState.currentY =
+          elementY - newDragState.dimensions.top + newDragState.startY;
+
+        onDrag?.({
+          deltaX: newDragState.currentX - newDragState.startX,
+          deltaY: newDragState.currentY - newDragState.startY,
         });
+        console.log(
+          "onDrag",
+          newDragState.currentX,
+          newDragState.currentY,
+          newDragState.startX,
+          newDragState.startY,
+          newDragState.currentX - newDragState.startX,
+          newDragState.currentY - newDragState.startY
+        );
+        dragState.current = newDragState;
       }}
       onStop={(event) => {
         event.preventDefault();
         event.stopPropagation();
         onDragStop?.({
-          deltaX: dragState.currentX - dragState.startX,
-          deltaY: dragState.currentY - dragState.startY,
+          deltaX: dragState.current.currentX - dragState.current.startX,
+          deltaY: dragState.current.currentY - dragState.current.startY,
         });
       }}
     >
@@ -178,8 +204,8 @@ export const Draggable: FunctionComponent<Props> = ({
         ref={divRef}
         className={className}
         style={{
-          top: dragTop + bounds.top,
-          left: dragLeft + bounds.left,
+          top: dimensions.top + bounds.top,
+          left: dimensions.left + bounds.left,
           zIndex: 10,
           cursor: "move",
         }}
@@ -189,8 +215,8 @@ export const Draggable: FunctionComponent<Props> = ({
         }}
         snap={resizeSnaps}
         snapGap={SNAP_GAP}
-        maxWidth={widthOffset}
-        maxHeight={heightOffset}
+        maxWidth={bounds.width - dimensions.left}
+        maxHeight={bounds.height - dimensions.top}
         enable={{
           // todo handle
           // top: dimensions.height > 0,
