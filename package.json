@@ -167,7 +167,7 @@
       "**/*.{spec,test}.{js,jsx,ts,tsx}"
     ],
     "setupFiles": [
-      "<rootDir>/test/setupTests.ts"
+      "<rootDir>/test/lib/setupTests.ts"
     ],
     "transform": {
       ".*\\.fixture\\..*": "jest-raw-loader",
@@ -177,7 +177,7 @@
       "<rootDir>/node_modules/"
     ],
     "moduleNameMapper": {
-      "monaco-editor.*": "<rootDir>/test/stub.js"
+      "monaco-editor.*": "<rootDir>/test/lib/stub.js"
     },
     "verbose": true
   },
