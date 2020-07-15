@@ -1,5 +1,6 @@
 type IFs = import("memfs").IFs;
 
+// import path from "path";
 const path = __non_webpack_require__("path") as typeof import("path");
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 const crypto = __non_webpack_require__("crypto") as typeof import("crypto");
@@ -32,7 +33,7 @@ export function initialize(nodeModulesPath = "") {
   memfs = __non_webpack_require__(`${nodeModulesPath}memfs`);
   joinPath = __non_webpack_require__(`${nodeModulesPath}memory-fs/lib/join`);
   unionfs = __non_webpack_require__(`${nodeModulesPath}unionfs`);
-  webpack = __non_webpack_require__(`${nodeModulesPath}webpack`);
+  webpack = require(`webpack`);
   // nodeSass = __non_webpack_require__(`${nodeModulesPath}node-sass`);
   tailwindcss = __non_webpack_require__(`${nodeModulesPath}tailwindcss`);
   ReactRefreshPlugin = __non_webpack_require__(
@@ -74,59 +75,63 @@ const getWebpackModules = (codeId: string) => ({
     {
       test: /\.[jt]sx?$/,
       use: {
-        loader: "babel-loader",
+        loader: require("babel-loader"),
         options: {
           presets: [
             [
-              "@babel/preset-env",
+              require("@babel/preset-env"),
               {
                 targets: {
                   electron: "8",
                 },
               },
             ],
-            "@babel/preset-react",
-            "@babel/preset-typescript",
+            require("@babel/preset-react"),
+            require("@babel/preset-typescript"),
           ],
           plugins: [
-            "@babel/proposal-class-properties",
-            "@babel/proposal-object-rest-spread",
-            ENABLE_FAST_REFRESH && "react-refresh/babel",
+            require("@babel/plugin-proposal-class-properties"),
+            require("@babel/plugin-proposal-object-rest-spread"),
+            ENABLE_FAST_REFRESH && require("react-refresh/babel"),
           ].filter((r) => !!r),
         },
       },
     },
     {
       test: /\.css$/,
-      use: ["style-loader", "css-loader"],
+      use: [require("style-loader"), require("css-loader")],
     },
+    // {
+    //   test: /\.s[ac]ss$/,
+    //   use: [
+    //     require("style-loader"),
+    //     require("css-loader"),
+    //     {
+    //       loader: require("postcss-loader"),
+    //       options: {
+    //         ident: "postcss",
+    //         plugins: [tailwindcss],
+    //       },
+    //     },
+    //     // require("sassjs-loader"),
+    //     // {
+    //     //   loader: "sass-loader",
+    //     //   options: {
+    //     //     implementation: nodeSass,
+    //     //   },
+    //     // },
+    //   ],
+    // },
+    // {
+    //   test: /\.less$/,
+    //   use: [
+    //     require("style-loader"),
+    //     require("css-loader"),
+    //     // require("less-loader"),
+    //   ],
+    // },
     {
-      test: /\.s[ac]ss$/,
-      use: [
-        "style-loader",
-        "css-loader",
-        {
-          loader: "postcss-loader",
-          options: {
-            ident: "postcss",
-            plugins: [tailwindcss],
-          },
-        },
-        "sassjs-loader",
-        // {
-        //   loader: "sass-loader",
-        //   options: {
-        //     implementation: nodeSass,
-        //   },
-        // },
-      ],
-    },
-    {
-      test: /\.less$/,
-      use: ["style-loader", "css-loader", "less-loader"],
-    },
-    {
-      loader: "file-loader",
+      loader: require("file-loader"),
       exclude: [
         /\.(js|mjs|jsx|ts|tsx)$/,
         /\.html$/,
@@ -180,6 +185,10 @@ export const webpackRunCode = async (
         filename: "[name].js",
         library: "paintbundle",
         libraryTarget: "umd",
+        hashFunction: function () {
+          this.update = () => {};
+          this.digest = () => "1";
+        },
       },
       module: getWebpackModules(selectedCodeId),
       resolve: {

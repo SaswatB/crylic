@@ -1,3 +1,4 @@
+import path from "path";
 import WebpackWorker from "worker-loader!./webpack-worker";
 
 import { RenderEntry } from "../../types/paint";
@@ -5,8 +6,6 @@ import { Project } from "../Project";
 import { publishComponent, unpublishComponent } from "../publish-component";
 import { getReactRouterProxy, RouteDefinition } from "../react-router-proxy";
 import { webpackRunCode } from "./run-code-webpack";
-
-const path = __non_webpack_require__("path") as typeof import("path");
 
 const WORKER_ENABLED = true;
 

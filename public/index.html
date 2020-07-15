@@ -26,7 +26,7 @@
         window.addEventListener("error", function (e) {
           const { error } = e;
           if (!error.captured) {
-            console.log(error);
+            console.log(error, e);
             error.captured = true;
             e.stopImmediatePropagation();
             e.preventDefault();

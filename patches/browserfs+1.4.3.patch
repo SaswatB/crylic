@@ -1,0 +1,13 @@
+diff --git a/node_modules/browserfs/dist/browserfs.js b/node_modules/browserfs/dist/browserfs.js
+index 675051f..a07bc35 100644
+--- a/node_modules/browserfs/dist/browserfs.js
++++ b/node_modules/browserfs/dist/browserfs.js
+@@ -17876,7 +17876,7 @@ return /******/ (function(modules) { // webpackBootstrap
+ 	        this.exitCode = 0;
+ 	        this._gid = 1;
+ 	        this._uid = 1;
+-	        this.version = 'v5.0';
++	        this.version = 'v5.0.0';
+ 	        this.versions = {
+ 	            http_parser: '0.0',
+ 	            node: '5.0',

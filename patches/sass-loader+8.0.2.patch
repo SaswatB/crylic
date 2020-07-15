@@ -1,0 +1,14 @@
+diff --git a/node_modules/sass-loader/dist/index.js b/node_modules/sass-loader/dist/index.js
+index bfdb5e0..187b464 100644
+--- a/node_modules/sass-loader/dist/index.js
++++ b/node_modules/sass-loader/dist/index.js
+@@ -57,6 +57,9 @@ function loader(content) {
+     sassOptions.importer.push((0, _webpackImporter.default)(this.resourcePath, resolve, addNormalizedDependency));
+   } // Skip empty files, otherwise it will stop webpack, see issue #21
+ 
++  if (sassOptions.data instanceof Uint8Array) {
++    sassOptions.data = new TextDecoder("utf-8").decode(sassOptions.data);
++  }
+ 
+   if (sassOptions.data.trim() === '') {
+     callback(null, '');
