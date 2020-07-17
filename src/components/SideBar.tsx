@@ -23,7 +23,7 @@ import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import TreeItem from "@material-ui/lab/TreeItem";
 import TreeView from "@material-ui/lab/TreeView";
-import { debounce, startCase, uniq } from "lodash";
+import { startCase, uniq } from "lodash";
 
 import { Tabs, TabsRef } from "../components/Tabs";
 import { useDebouncedFunction } from "../hooks/useDebouncedFunction";
@@ -38,7 +38,6 @@ import {
   useTextInput,
 } from "../hooks/useInput";
 import { useObservable } from "../hooks/useObservable";
-import { useUpdatingRef } from "../hooks/useUpdatingRef";
 import {
   CodeEntry,
   OutlineElement,

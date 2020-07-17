@@ -84,13 +84,14 @@ export const useCSSLengthInput: useInputFunction<{
     bindInitialValue && !focused ? `${numberValue}${unit}` : initialValue || "";
   useEffect(() => {
     if (bindInitialValue && !focused) {
+      // extract the number and unit from the css property
       const res = /([\d.]+)?([^\d.]+)/.exec(initialValue || "");
       setNumberValue(res?.[1] || "");
       setUnit(res?.[2] || "px");
     }
   }, [bindInitialValue, focused, initialValue]);
 
-  const onChangeDebounced = useDebouncedFunction(onChange, 1000);
+  const onChangeDebounced = useDebouncedFunction(onChange || (() => {}), 1000);
 
   const updateValue = (newNumberValue = numberValue, newUnit = unit) => {
     const newValue = `${newNumberValue}${newUnit}`;
