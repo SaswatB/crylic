@@ -385,7 +385,10 @@ function App() {
       onNewProject={newProject}
       onOpenProject={openProject}
       onSaveProject={() => project?.saveFiles()}
-      onCloseProject={closeProject}
+      onCloseProject={() => {
+        closeProject();
+        setSelectedElement(undefined);
+      }}
       toggleCodeEntryEdit={toggleCodeEntryEdit}
       addRenderEntry={addRenderEntry}
     />
