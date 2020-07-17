@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   FormControl,
   FormControlProps,
@@ -24,6 +24,7 @@ import rgbHex from "rgb-hex";
 import { DebouncingColorPicker } from "../components/DebouncingColorPicker";
 import { CSS_LENGTH_UNITS } from "../utils/constants";
 import { useBoundState } from "./useBoundState";
+import { useDebouncedFunction } from "./useDebouncedFunction";
 import { useThrottle } from "./useThrottle";
 import "rc-color-picker/assets/index.css";
 
@@ -36,7 +37,7 @@ export type useInputFunction<
   R = readonly [U, (props?: T) => JSX.Element]
 > = (
   config: {
-    onChange?: (value: U) => void;
+    onChange?: (value: U, preview?: boolean) => void;
     label?: string;
     initialValue?: U;
   } & S
@@ -77,21 +78,26 @@ export const useCSSLengthInput: useInputFunction<{
   endAddon?: React.ReactNode;
 }> = ({ bindInitialValue, endAddon, onChange, label, initialValue }) => {
   const [focused, setFocused] = useState(false);
-  const [value, setValue] = useBoundState(
-    initialValue || "",
-    bindInitialValue && !focused
-  );
+  const [numberValue, setNumberValue] = useState("0");
+  const [unit, setUnit] = useState("px");
+  const value =
+    bindInitialValue && !focused ? `${numberValue}${unit}` : initialValue || "";
+  useEffect(() => {
+    if (bindInitialValue && !focused) {
+      const res = /([\d.]+)?([^\d.]+)/.exec(initialValue || "");
+      setNumberValue(res?.[1] || "");
+      setUnit(res?.[2] || "px");
+    }
+  }, [bindInitialValue, focused, initialValue]);
 
-  const { numberValue, unit } = useMemo(() => {
-    const res = /(\d+)(.+)/.exec(value);
-    return res
-      ? { numberValue: res[1], unit: res[2] || "px" }
-      : { numberValue: value };
-  }, [value]);
+  const onChangeDebounced = useDebouncedFunction(onChange, 1000);
+
   const updateValue = (newNumberValue = numberValue, newUnit = unit) => {
     const newValue = `${newNumberValue}${newUnit}`;
-    setValue(newValue);
-    onChange?.(newValue);
+    setNumberValue(newNumberValue);
+    setUnit(newUnit);
+    onChange?.(newValue, true);
+    onChangeDebounced(newValue);
   };
 
   const render = (
@@ -116,10 +122,12 @@ export const useCSSLengthInput: useInputFunction<{
             // decrement value on down arrow
             increment = -1;
           }
-          try {
-            const numericalValue = parseFloat(numberValue);
-            updateValue(`${numericalValue + increment}`);
-          } catch (e) {}
+          if (increment) {
+            try {
+              const numericalValue = parseFloat(numberValue || "0");
+              updateValue(`${numericalValue + increment}`);
+            } catch (e) {}
+          }
         }}
         endAdornment={
           <InputAdornment position="end">
@@ -194,9 +202,11 @@ export const useSelectInput: useInputFunction<{
   return [value, render];
 };
 
-export const useColorPicker: useInputFunction<{
-  onChange: (value: string, preview?: boolean) => void;
-}> = ({ onChange, label, initialValue }) => {
+export const useColorPicker: useInputFunction = ({
+  onChange,
+  label,
+  initialValue,
+}) => {
   const anchor = useRef<HTMLButtonElement>(null);
   const [value, setValue] = useState(initialValue || "");
   const [focused, setFocused] = useState(false);
@@ -213,7 +223,8 @@ export const useColorPicker: useInputFunction<{
           value={value}
           onChange={(e) => {
             setValue(e.target.value);
-            if (HEX_COLOR_REGEX.test(e.target.value)) onChange(e.target.value);
+            if (HEX_COLOR_REGEX.test(e.target.value))
+              onChange?.(e.target.value);
           }}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
@@ -223,9 +234,9 @@ export const useColorPicker: useInputFunction<{
                 value={value}
                 onChange={(newValue) => {
                   setValue(newValue);
-                  onChange(newValue);
+                  onChange?.(newValue);
                 }}
-                onTempChange={(previewValue) => onChange(previewValue, true)}
+                onTempChange={(previewValue) => onChange?.(previewValue, true)}
               />
             </InputAdornment>
           }

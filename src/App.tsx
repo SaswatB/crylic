@@ -308,12 +308,6 @@ function App() {
     newValue: string,
     preview?: boolean
   ) => {
-    if (
-      !selectedElement ||
-      newValue === selectedElement?.computedStyles[styleProp]
-    )
-      return;
-
     updateSelectedElementStyles(
       styleGroup,
       [{ styleName: styleProp, styleValue: newValue }],

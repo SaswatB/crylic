@@ -26,6 +26,7 @@ import TreeView from "@material-ui/lab/TreeView";
 import { debounce, startCase, uniq } from "lodash";
 
 import { Tabs, TabsRef } from "../components/Tabs";
+import { useDebouncedFunction } from "../hooks/useDebouncedFunction";
 import { openFilePicker, saveFilePicker } from "../hooks/useFilePicker";
 import {
   useAutocomplete,
@@ -623,18 +624,15 @@ const useSelectedElementEditorTab = ({
   );
 
   // debounce text entry
-  const updateSelectedElementRef = useUpdatingRef(updateSelectedElement);
-  const updateSelectedElementDebouncedRef = useRef(
-    debounce(
-      (...args: Parameters<typeof updateSelectedElement>) =>
-        updateSelectedElementRef.current(...args),
-      1000
-    )
+  const updateSelectedElementDebounced = useDebouncedFunction(
+    updateSelectedElement,
+    1000
   );
+
   const [, renderTextContentInput] = useBoundTextInput({
     onChange: (newTextContent) => {
       selectedElement!.element.textContent = newTextContent;
-      updateSelectedElementDebouncedRef.current((editor, editContext) =>
+      updateSelectedElementDebounced((editor, editContext) =>
         editor.updateElementText(editContext, newTextContent)
       );
     },
