@@ -21,6 +21,10 @@ fieldset {
   @apply default-transition;
 }
 
+#root .MuiBackdrop-root {
+  z-index: 11;
+}
+
 @keyframes border-pulsate {
   0% {
     border-color: var(--border-light);

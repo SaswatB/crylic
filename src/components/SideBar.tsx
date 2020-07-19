@@ -340,7 +340,7 @@ const useMainTab = ({
               data-tour={isFirstRenderableNode ? "asset-tree-edit" : undefined}
               title="Edit Code"
               icon={faEdit}
-              onClick={() => toggleCodeEntryEdit(codeEntry.id)}
+              onClick={() => toggleCodeEntryEdit(codeEntry)}
             />
           </>
         )}
@@ -1180,7 +1180,7 @@ interface Props {
   onOpenProject: (filePath: string) => void;
   onSaveProject: () => void;
   onCloseProject: () => void;
-  toggleCodeEntryEdit: (codeId: string) => void;
+  toggleCodeEntryEdit: (codeEntry: CodeEntry) => void;
   addRenderEntry: (codeEntry: CodeEntry) => void;
 }
 

@@ -7,9 +7,9 @@ import { Project } from "./Project";
 
 const path = __non_webpack_require__("path") as typeof import("path");
 
-export const STYLE_EXTENSION_REGEX = /\.(css|s[ac]ss|less)$/;
-export const SCRIPT_EXTENSION_REGEX = /\.[jt]sx?$/;
-export const IMAGE_EXTENSION_REGEX = /\.(jpe?g|png|gif|svg)$/;
+export const STYLE_EXTENSION_REGEX = /\.(css|s[ac]ss|less)$/i;
+export const SCRIPT_EXTENSION_REGEX = /\.[jt]sx?$/i;
+export const IMAGE_EXTENSION_REGEX = /\.(jpe?g|png|gif|svg)$/i;
 
 export const isStyleEntry = (codeEntry: CodeEntry) =>
   !!codeEntry.filePath.match(STYLE_EXTENSION_REGEX);
@@ -56,6 +56,10 @@ export function getFriendlyName({ codeEntries }: Project, codeId: string) {
   return `${startCase(fileName)}${
     isStyleEntry(codeEntry) ? " (stylesheet)" : ""
   }`;
+}
+
+export function isDefined<T>(v: T | undefined | null): v is T {
+  return v !== undefined && v !== null;
 }
 
 export const buildOutline = (

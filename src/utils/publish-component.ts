@@ -1,3 +1,5 @@
+import cors from "cors";
+
 const crypto = __non_webpack_require__("crypto") as typeof import("crypto");
 const express = __non_webpack_require__("express") as typeof import("express");
 
@@ -48,6 +50,7 @@ const initPublishServer = () => {
 
   return new Promise((resolve) => {
     publishServer = express();
+    publishServer.use(cors());
 
     publicSecurityToken = crypto
       .randomBytes(32)

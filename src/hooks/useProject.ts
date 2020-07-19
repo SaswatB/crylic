@@ -18,8 +18,10 @@ export const useProject = () => {
   const codeRedoStack = useRef<{ id: string; code: string }[]>([]);
 
   const addCodeEntry = (
-    partialEntry: Partial<CodeEntry> & { filePath: string }
-  ) => setProject((project) => project?.addCodeEntries(partialEntry));
+    partialEntry: Partial<CodeEntry> & { filePath: string },
+    options?: { render?: boolean; edit?: boolean }
+  ) =>
+    setProject((project) => project?.addCodeEntries([partialEntry], options));
   const addRenderEntry = (codeEntry: CodeEntry) =>
     setProject((project) =>
       project?.addRenderEntry(project.getCodeEntry(codeEntry.id)!)
@@ -64,12 +66,12 @@ export const useProject = () => {
     // save the edited code
     setCode(codeEntry.id, prettyPrintCodeEntryAST(codeEntry, editedAst));
   };
-  const toggleCodeEntryEdit = (codeId: string) =>
-    setProject((currentProject) =>
-      currentProject?.editCodeEntry(codeId, {
-        edit: !currentProject.getCodeEntry(codeId)?.edit,
-      })
-    );
+  const toggleCodeEntryEdit = (codeEntry: CodeEntry) =>
+    setProject((currentProject) => {
+      if (currentProject?.editEntries.find((e) => e.codeId === codeEntry.id))
+        return currentProject.removeEditEntry(codeEntry);
+      return currentProject?.addEditEntry(codeEntry);
+    });
 
   const undoCodeChange = () => {
     const change = codeChangeStack.current.pop();

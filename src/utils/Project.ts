@@ -7,7 +7,12 @@ import { camelCase, cloneDeep, uniqueId, upperFirst } from "lodash";
 import { Readable } from "stream";
 import yauzl from "yauzl";
 
-import { CodeEntry, ProjectConfig, RenderEntry } from "../types/paint";
+import {
+  CodeEntry,
+  EditEntry,
+  ProjectConfig,
+  RenderEntry,
+} from "../types/paint";
 import {
   getComponentExport,
   hashString,
@@ -44,6 +49,7 @@ export class Project {
   private [immerable] = true; // enable immer support
 
   public readonly codeEntries: CodeEntry[] = [];
+  public readonly editEntries: EditEntry[] = [];
   public readonly renderEntries: RenderEntry[] = [];
   public readonly elementEditorEntries: EditorEntry<ElementASTEditor<any>>[];
   public readonly styleEditorEntries: EditorEntry<StyleASTEditor<any>>[];
@@ -98,7 +104,7 @@ export class Project {
               isDir = true;
             }
 
-            // check for windows weird way of specifying a directory
+            // check for window's weird way of specifying a directory
             // https://github.com/maxogden/extract-zip/issues/13#issuecomment-154494566
             const madeBy = entry.versionMadeBy >> 8;
             if (!isDir)
@@ -199,6 +205,8 @@ export class Project {
               filePath,
               code: undefined,
             });
+          } else {
+            console.log("ignoring file", filePath);
           }
         });
       // read all files within the source folder
@@ -206,7 +214,7 @@ export class Project {
     }
 
     return new Project(folderPath, srcFolderName, config).addCodeEntries(
-      ...fileCodeEntries
+      fileCodeEntries
     );
   }
 
@@ -249,12 +257,22 @@ export class Project {
   // Project is immutable so these functions return a new copy with modifications
 
   public addCodeEntries(
-    ...partialEntries: (Partial<CodeEntry> & { filePath: string })[]
+    partialEntries: (Partial<CodeEntry> & { filePath: string })[],
+    options?: { render?: boolean; edit?: boolean }
   ) {
     return produce(this, (draft: Project) => {
-      partialEntries.forEach((partialEntry) =>
-        draft.codeEntries.push(this.createCodeEntry(partialEntry))
+      const newCodeEntries = partialEntries.map((partialEntry) =>
+        this.createCodeEntry(partialEntry)
       );
+      draft.codeEntries.push(...newCodeEntries);
+
+      // if these code entries are edited/rendered by default, add those respective entries
+      if (options?.edit || options?.render) {
+        newCodeEntries.forEach((newCodeEntry) => {
+          if (options.edit) this.addEditEntryToDraft(draft, newCodeEntry);
+          if (options.render) this.addRenderEntryToDraft(draft, newCodeEntry);
+        });
+      }
     });
   }
 
@@ -390,25 +408,48 @@ export class Project {
     });
   }
 
-  public addRenderEntry(codeEntry: CodeEntry) {
-    return produce(this, (draft: Project) => {
-      let baseName = getFriendlyName(this, codeEntry.id);
-      const name = { current: baseName };
-      let index = 1;
-      while (
-        draft.renderEntries.find(
-          (renderEntry) => renderEntry.name === name.current
-        )
-      ) {
-        name.current = `${baseName} (${index++})`;
-      }
-
-      draft.renderEntries.push({
-        id: uniqueId(),
-        name: name.current,
-        codeId: codeEntry.id,
-      });
+  private addEditEntryToDraft(draft: Project, codeEntry: CodeEntry) {
+    draft.editEntries.push({
+      codeId: codeEntry.id,
     });
+  }
+  public addEditEntry(codeEntry: CodeEntry) {
+    return produce(this, (draft: Project) =>
+      this.addEditEntryToDraft(draft, codeEntry)
+    );
+  }
+
+  public removeEditEntry(codeEntry: CodeEntry) {
+    return produce(this, (draft: Project) => {
+      draft.editEntries.splice(
+        draft.editEntries.findIndex((entry) => entry.codeId === codeEntry.id),
+        1
+      );
+    });
+  }
+
+  private addRenderEntryToDraft(draft: Project, codeEntry: CodeEntry) {
+    let baseName = getFriendlyName(this, codeEntry.id);
+    const name = { current: baseName };
+    let index = 1;
+    while (
+      draft.renderEntries.find(
+        (renderEntry) => renderEntry.name === name.current
+      )
+    ) {
+      name.current = `${baseName} (${index++})`;
+    }
+
+    draft.renderEntries.push({
+      id: uniqueId(),
+      name: name.current,
+      codeId: codeEntry.id,
+    });
+  }
+  public addRenderEntry(codeEntry: CodeEntry) {
+    return produce(this, (draft: Project) =>
+      this.addRenderEntryToDraft(draft, codeEntry)
+    );
   }
 
   public editRenderEntry(

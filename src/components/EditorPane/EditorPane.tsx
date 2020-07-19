@@ -1,7 +1,8 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
 
+import { CodeEntry } from "../../types/paint";
 import { Project } from "../../utils/Project";
-import { getFriendlyName, isImageEntry } from "../../utils/utils";
+import { getFriendlyName, isDefined, isImageEntry } from "../../utils/utils";
 import { Editor } from "./Editor";
 import { EditorTabs } from "./EditorTabs";
 import { ImageViewer } from "./ImageViewer";
@@ -9,7 +10,7 @@ import { ImageViewer } from "./ImageViewer";
 interface Props {
   project: Project | undefined;
   onCodeChange: (codeId: string, newCode: string) => void;
-  onCloseCodeEntry: (codeId: string) => void;
+  onCloseCodeEntry: (codeEntry: CodeEntry) => void;
   selectedElementId: string | undefined;
   onSelectElement: (lookupId: string) => void;
 }
@@ -23,9 +24,10 @@ export const EditorPane: FunctionComponent<Props> = ({
 }) => {
   const [activeTab, setActiveTab] = useState(0);
 
-  const editableEntries = project?.codeEntries.filter(
-    (codeEntry) => codeEntry.edit
-  );
+  // get all the code entries being edited
+  const editableEntries = project?.editEntries
+    .map((e) => project.getCodeEntry(e.codeId))
+    .filter(isDefined);
 
   // switch to the editor that the selected element belongs to when it's selected
   useEffect(() => {
@@ -63,7 +65,7 @@ export const EditorPane: FunctionComponent<Props> = ({
               isActiveEditor={activeTab === index}
             />
           ),
-        onClose: () => onCloseCodeEntry(codeEntry.id),
+        onClose: () => onCloseCodeEntry(codeEntry),
       }))}
     />
   );

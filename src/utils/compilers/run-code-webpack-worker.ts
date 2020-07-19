@@ -94,6 +94,10 @@ export const webpackRunCodeWithWorker = async (
       },
     ]);
 
+  const overrideConfigPath = project.config?.overrideWebpackConfigPath
+    ? path.join(project.path, project.config.overrideWebpackConfigPath)
+    : undefined;
+
   let bundle;
   if (WORKER_ENABLED) {
     // register a callback for then the worker completes
@@ -108,6 +112,7 @@ export const webpackRunCodeWithWorker = async (
       codeEntries,
       selectedCodeId: bundleId,
       compileId,
+      overrideConfigPath,
     });
 
     // wait for the worker to compile
@@ -116,7 +121,12 @@ export const webpackRunCodeWithWorker = async (
     delete compileCallbacks[compileId];
     delete progressCallbacks[compileId];
   } else {
-    bundle = await webpackRunCode(codeEntries, bundleId, onProgress);
+    bundle = await webpackRunCode(
+      codeEntries,
+      bundleId,
+      overrideConfigPath,
+      onProgress
+    );
   }
 
   const workerCallbackTime = Date.now();

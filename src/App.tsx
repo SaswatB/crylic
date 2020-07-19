@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
+import { Backdrop, CircularProgress } from "@material-ui/core";
 import { produce } from "immer";
 import { camelCase, snakeCase, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
@@ -46,6 +47,7 @@ const open = __non_webpack_require__("open") as typeof import("open");
 
 function App() {
   const { enqueueSnackbar } = useSnackbar();
+  const [loading, setLoading] = useState(0);
   const componentViews = useRef<
     Record<string, CompilerComponentViewRef | null | undefined>
   >({});
@@ -347,8 +349,7 @@ function App() {
         const name = upperFirst(camelCase(inputName));
         const filePath = project!.getNewComponentPath(name);
         const code = getBoilerPlateComponent(name);
-        // todo render component on create
-        addCodeEntry({ filePath, code, edit: false });
+        addCodeEntry({ filePath, code }, { render: true });
         enqueueSnackbar("Started a new component!");
       }}
       onNewStyleSheet={async () => {
@@ -360,7 +361,7 @@ function App() {
         // todo add validation/duplicate checking to name
         const name = camelCase(inputName);
         const filePath = project!.getNewStyleSheetPath(name);
-        addCodeEntry({ filePath, edit: true });
+        addCodeEntry({ filePath }, { edit: true });
         enqueueSnackbar("Started a new component!");
       }}
       onImportImage={async () => {
@@ -377,7 +378,14 @@ function App() {
         enqueueSnackbar("Imported Image!");
       }}
       onNewProject={newProject}
-      onOpenProject={openProject}
+      onOpenProject={(filePath) => {
+        setLoading((l) => l + 1);
+        // set timeout allows react to render the loading screen before
+        // the main thread get's pegged from opening the project
+        setTimeout(() =>
+          openProject(filePath).finally(() => setLoading((l) => l - 1))
+        );
+      }}
       onSaveProject={() => project?.saveFiles()}
       onCloseProject={() => {
         closeProject();
@@ -482,6 +490,9 @@ function App() {
       className="flex flex-col items-stretch w-screen h-screen relative overflow-hidden text-white"
       data-tour="start"
     >
+      <Backdrop open={loading > 0}>
+        <CircularProgress />
+      </Backdrop>
       <Tour
         name="start"
         autoOpen
@@ -527,7 +538,7 @@ function App() {
             <TransformComponent>{renderComponentViews()}</TransformComponent>
           </TransformWrapper>
         </div>
-        {project?.codeEntries.find(({ edit }) => edit) && (
+        {(project?.editEntries.length || 0) > 0 && (
           <EditorPane
             project={project}
             onCodeChange={(codeId, newCode) => {

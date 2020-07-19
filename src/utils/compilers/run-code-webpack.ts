@@ -1,3 +1,5 @@
+import cors from "cors";
+
 type IFs = import("memfs").IFs;
 
 const path = __non_webpack_require__("path") as typeof import("path");
@@ -18,8 +20,9 @@ let send: typeof import("send");
 
 const ENABLE_FAST_REFRESH = false;
 
-let staticFileServer: ReturnType<typeof import("express")>;
+const overrideConfigCache: Record<string, Function | undefined> = {};
 
+let staticFileServer: ReturnType<typeof import("express")>;
 let assetPort = 0;
 let assetSecurityToken: string;
 
@@ -48,6 +51,7 @@ export function initialize(nodeModulesPath = "") {
     .replace(/[+/=]/g, "");
 
   staticFileServer = express();
+  staticFileServer.use(cors());
   staticFileServer.get(`/files/:codeId/*`, (req, res) => {
     // check against a generated security token to prevent outside access
     if (req.query.token !== assetSecurityToken) {
@@ -159,6 +163,7 @@ const webpackCache: Record<
 export const webpackRunCode = async (
   codeEntries: { id: string; filePath: string; code?: string }[],
   selectedCodeId: string,
+  overrideConfigPath: string | undefined,
   onProgress: (arg: { percentage: number; message: string }) => void
 ) => {
   if (!webpack) initialize();
@@ -171,7 +176,7 @@ export const webpackRunCode = async (
   if (!primaryCodeEntry) throw new Error("Failed to find primary code entry");
 
   if (!webpackCache[primaryCodeEntry.id]) {
-    const compiler = webpack({
+    let options: import("webpack").Configuration = {
       mode: "development",
       entry: primaryCodeEntry.filePath,
       devtool: false,
@@ -219,7 +224,23 @@ export const webpackRunCode = async (
         }),
         ENABLE_FAST_REFRESH && new ReactRefreshPlugin(),
       ].filter((p): p is typeof webpack.Plugin => !!p),
-    });
+    };
+
+    // handle a config override specified for this project
+    if (overrideConfigPath) {
+      // todo verify this require returns a function, also maybe run it in a vm are pass an instance of webpack
+      const overrideConfig =
+        overrideConfigCache[overrideConfigPath] ||
+        __non_webpack_require__(overrideConfigPath);
+      overrideConfigCache[overrideConfigPath] = overrideConfig;
+
+      const result = overrideConfig(options);
+      if (result) {
+        options = result;
+      }
+    }
+
+    const compiler = webpack(options);
     const ufs1 = new unionfs.Union();
     const inputFs = memfs.createFsFromVolume(new memfs.Volume());
 
