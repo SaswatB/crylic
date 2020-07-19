@@ -1,6 +1,6 @@
 import { ComponentDefinition } from "../types/paint";
 
-export const CONFIG_FILE_NAME = "paint.config.js";
+export const CONFIG_FILE_NAME = "crylic.config.js";
 
 export const DEFAULT_FRAME_WIDTH = 350;
 export const DEFAULT_FRAME_HEIGHT = 600;

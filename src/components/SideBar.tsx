@@ -281,7 +281,7 @@ const useMainTab = ({
                   marginLeft: 7,
                 }}
               >
-                Here you get to unleash the power of Paint! <br />
+                Here you get to unleash the power of Crylic! <br />
                 <br />
                 Using this action, components can be shown on the main view,
                 where they can be interacted with and edited. <br />
@@ -387,7 +387,7 @@ const useMainTab = ({
                   marginLeft: 10,
                 }}
               >
-                Paint is project based, so to get started you will need to
+                Crylic is project based, so to get started you will need to
                 either create a new project or open an existing one. <br />
                 <br />
                 Try creating a new project to start!

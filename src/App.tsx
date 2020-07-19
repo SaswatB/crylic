@@ -490,7 +490,7 @@ function App() {
       >
         Welcome! <br />
         To help get you started, this tour will guide you through the basics of
-        using paint. <br />
+        using Crylic. <br />
         <br />
         Look around for beacons to get further instructions.
         <br />

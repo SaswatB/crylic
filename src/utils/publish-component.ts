@@ -5,7 +5,7 @@ const express = __non_webpack_require__("express") as typeof import("express");
 const getHTMLPage = (bundle: string) => `
 <html>
   <head>
-    <title>Paint Publish</title>
+    <title>Crylic Publish</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css" />
 
