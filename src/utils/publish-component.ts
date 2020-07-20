@@ -49,22 +49,16 @@ const initPublishServer = () => {
   if (publishServer) return Promise.resolve();
 
   return new Promise((resolve) => {
-    publishServer = express();
-    publishServer.use(cors());
-
     publicSecurityToken = crypto
       .randomBytes(32)
       .toString("base64")
       .replace(/[+/=]/g, "");
 
-    // todo see if anything needs to be done for react router on this route
-    publishServer.get(`/publish/:codeId`, (req, res) => {
-      // check against a generated security token to prevent outside access
-      if (req.query.token !== publicSecurityToken) {
-        console.log("unauthorized access blocked");
-        return res.status(401).send();
-      }
+    publishServer = express();
+    publishServer.use(cors());
 
+    // todo see if anything needs to be done for react router on this route
+    publishServer.get(`/publish/${publicSecurityToken}/:codeId`, (req, res) => {
       console.log("bundle request at", req.params.codeId);
       const bundle = bundleMap[req.params.codeId];
       if (!bundle) {
@@ -89,7 +83,8 @@ const initPublishServer = () => {
 export const publishComponent = async (codeId: string, bundle: string) => {
   await initPublishServer();
   bundleMap[codeId] = bundle;
-  return `http://localhost:${publishPort}/publish/${codeId}?token=${publicSecurityToken}`;
+  // todo use this as the public url in the bundle
+  return `http://localhost:${publishPort}/publish/${publicSecurityToken}/${codeId}`;
 };
 
 export const unpublishComponent = async (codeId: string) => {

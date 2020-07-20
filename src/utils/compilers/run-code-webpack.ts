@@ -61,13 +61,7 @@ export function initialize(nodeModulesPath = "") {
 
   staticFileServer = express();
   staticFileServer.use(cors());
-  staticFileServer.get(`/files/:codeId/*`, (req, res) => {
-    // check against a generated security token to prevent outside access
-    if (req.query.token !== assetSecurityToken) {
-      console.log("unauthorized access blocked");
-      return res.status(401).send();
-    }
-
+  staticFileServer.get(`/files/${assetSecurityToken}/:codeId/*`, (req, res) => {
     const staticPath = `/public/${req.params[0]}`;
     console.log("static file request at", staticPath);
     res.contentType(send.mime.lookup(staticPath) || "");
@@ -106,7 +100,6 @@ const getEnvVars = (projectFolder: string, assetPath: string) => {
 
   const appEnv: Record<string, string | undefined> = {
     NODE_ENV: `"${NODE_ENV}"`,
-    // probably won't work due to security token
     PUBLIC_URL: `"${assetPath}"`,
     CRYLIC_ENABLED: "true",
   };
@@ -132,8 +125,6 @@ const getWebpackModules = async (
     name: "static/media/[name].[hash:8].[ext]",
     outputPath: "/public",
     publicPath: assetPath,
-    postTransformPublicPath: (p: string) =>
-      `"${p.replace(/"/g, "")}?token=${assetSecurityToken}"`,
   };
 
   const loaders = [
@@ -324,7 +315,7 @@ export const webpackRunCode = async (
   if (!primaryCodeEntry) throw new Error("Failed to find primary code entry");
 
   if (!webpackCache[primaryCodeEntry.id]) {
-    const assetPath = `http://localhost:${await assetPort}/files/${selectedCodeId}/`;
+    const assetPath = `http://localhost:${await assetPort}/files/${assetSecurityToken}/${selectedCodeId}/`;
     const env = getEnvVars(paths.projectFolder, assetPath);
 
     let options: import("webpack").Configuration = {
