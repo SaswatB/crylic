@@ -67,8 +67,10 @@ function App() {
     toggleCodeEntryEdit,
     addRenderEntry,
   } = useProject();
+  const projectRef = useUpdatingRef(project);
 
-  // handle undo/redo hotkeys
+  // handle save/undo/redo hotkeys
+  useHotkeys("ctrl+s", () => projectRef.current?.saveFiles());
   useHotkeys("ctrl+z", undoCodeChange);
   useHotkeys("ctrl+shift+z", redoCodeChange);
 
@@ -382,8 +384,9 @@ function App() {
         setLoading((l) => l + 1);
         // set timeout allows react to render the loading screen before
         // the main thread get's pegged from opening the project
-        setTimeout(() =>
-          openProject(filePath).finally(() => setLoading((l) => l - 1))
+        setTimeout(
+          () => openProject(filePath).finally(() => setLoading((l) => l - 1)),
+          10
         );
       }}
       onSaveProject={() => project?.saveFiles()}
@@ -491,7 +494,7 @@ function App() {
       data-tour="start"
     >
       <Backdrop open={loading > 0}>
-        <CircularProgress />
+        <CircularProgress disableShrink />
       </Backdrop>
       <Tour
         name="start"

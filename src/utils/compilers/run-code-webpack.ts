@@ -1,10 +1,13 @@
+import getCSSModuleLocalIdent from "react-dev-utils/getCSSModuleLocalIdent";
 import cors from "cors";
+import { cloneDeep } from "lodash";
 
 type IFs = import("memfs").IFs;
 
 const path = __non_webpack_require__("path") as typeof import("path");
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 const crypto = __non_webpack_require__("crypto") as typeof import("crypto");
+const process = __non_webpack_require__("process") as typeof import("process");
 
 let memfs: typeof import("memfs");
 let joinPath: typeof import("memory-fs/lib/join");
@@ -17,19 +20,23 @@ let ReactRefreshPlugin: typeof import("@pmmmwh/react-refresh-webpack-plugin");
 let express: typeof import("express");
 // @ts-ignore todo add types
 let send: typeof import("send");
+let dotenvExpand: typeof import("dotenv-expand");
+let dotenv: typeof import("dotenv");
 
 const ENABLE_FAST_REFRESH = false;
+const NODE_ENV = "development";
+const REACT_APP = /^REACT_APP_/i;
 
 const overrideConfigCache: Record<string, Function | undefined> = {};
 
 let staticFileServer: ReturnType<typeof import("express")>;
-let assetPort = 0;
+let assetPort = Promise.resolve(0);
 let assetSecurityToken: string;
 
 export function initialize(nodeModulesPath = "") {
   // needed to resolve loaders and babel plugins/presets
   if (nodeModulesPath) {
-    __non_webpack_require__("process").chdir(path.dirname(nodeModulesPath));
+    process.chdir(path.dirname(nodeModulesPath));
   }
 
   memfs = __non_webpack_require__(`${nodeModulesPath}memfs`);
@@ -44,6 +51,8 @@ export function initialize(nodeModulesPath = "") {
 
   express = __non_webpack_require__(`${nodeModulesPath}express`);
   send = __non_webpack_require__(`${nodeModulesPath}send`);
+  dotenvExpand = __non_webpack_require__(`${nodeModulesPath}dotenv-expand`);
+  dotenv = __non_webpack_require__(`${nodeModulesPath}dotenv`);
 
   assetSecurityToken = crypto
     .randomBytes(32)
@@ -66,40 +75,176 @@ export function initialize(nodeModulesPath = "") {
       webpackCache[req.params.codeId]?.outputFs.readFileSync(staticPath)
     );
   });
-  const serverInstance = staticFileServer.listen(assetPort, "localhost", () => {
-    assetPort = (serverInstance.address() as { port: number }).port;
-    console.log("Static file server is running...", assetPort);
+  assetPort = new Promise((resolve) => {
+    const serverInstance = staticFileServer.listen(0, "localhost", () => {
+      const { port } = serverInstance.address() as { port: number };
+      console.log("Static file server is running...", port);
+      resolve(port);
+    });
   });
 }
 
+const getEnvVars = (projectFolder: string, assetPath: string) => {
+  const dotenvPath = path.resolve(projectFolder, ".env");
+  // https://github.com/bkeepers/dotenv#what-other-env-files-can-i-use
+  const dotenvFiles = [
+    `${dotenvPath}.${NODE_ENV}.local`,
+    `${dotenvPath}.${NODE_ENV}`,
+    `${dotenvPath}.local`,
+    dotenvPath,
+  ];
+
+  // preserve this app's env vars
+  // todo clear app specific vars
+  const originalEnv = process.env;
+  process.env = cloneDeep(originalEnv);
+
+  dotenvFiles.forEach((dotenvFile) => {
+    if (fs.existsSync(dotenvFile))
+      dotenvExpand(dotenv.config({ path: dotenvFile }));
+  });
+
+  const appEnv: Record<string, string | undefined> = {
+    NODE_ENV: `"${NODE_ENV}"`,
+    // probably won't work due to security token
+    PUBLIC_URL: `"${assetPath}"`,
+    CRYLIC_ENABLED: "true",
+  };
+  // copy REACT_APP env vars
+  Object.keys(process.env)
+    .filter((key) => REACT_APP.test(key))
+    .forEach((key) => {
+      appEnv[key] = JSON.stringify(process.env[key]);
+    });
+
+  // restore the original env vars
+  process.env = originalEnv;
+
+  return appEnv;
+};
+
 // supports ts(x), js(x), css, sass, less and everything else as static files
-const getWebpackModules = (codeId: string) => ({
-  rules: [
+const getWebpackModules = async (
+  assetPath: string,
+  env: Record<string, string | undefined>
+) => {
+  const fileLoaderOptions = {
+    name: "static/media/[name].[hash:8].[ext]",
+    outputPath: "/public",
+    publicPath: assetPath,
+    postTransformPublicPath: (p: string) =>
+      `"${p.replace(/"/g, "")}?token=${assetSecurityToken}"`,
+  };
+
+  const loaders = [
+    // embed small images as data urls
     {
-      test: /\.[jt]sx?$/,
-      use: {
-        loader: "babel-loader",
-        options: {
-          presets: [
-            [
-              "@babel/preset-env",
-              {
-                targets: {
-                  electron: "8",
-                },
-              },
-            ],
-            "@babel/preset-react",
-            "@babel/preset-typescript",
-          ],
-          plugins: [
-            "@babel/proposal-class-properties",
-            "@babel/proposal-object-rest-spread",
-            ENABLE_FAST_REFRESH && "react-refresh/babel",
-          ].filter((r) => !!r),
-        },
+      test: [/\.bmp$/, /\.gif$/, /\.jpe?g$/, /\.png$/],
+      loader: "url-loader",
+      options: {
+        limit: parseInt(env.IMAGE_INLINE_SIZE_LIMIT || "10000"),
+        fallback: "file-loader",
+        ...fileLoaderOptions,
       },
     },
+
+    // handle project code
+    {
+      test: /\.(jsx?|tsx?|mjs)$/,
+      // include: paths.appSrc,
+      loader: "babel-loader",
+      options: {
+        presets: [
+          [
+            "@babel/preset-env",
+            {
+              targets: {
+                // todo change on publish or support more options
+                electron: "8",
+              },
+            },
+          ],
+          "@babel/preset-react",
+          "@babel/preset-typescript",
+        ],
+        plugins: [
+          "macros",
+          ["@babel/proposal-decorators", false],
+          "@babel/proposal-class-properties",
+          "@babel/proposal-object-rest-spread",
+          "@babel/proposal-numeric-separator",
+          "@babel/proposal-optional-chaining",
+          "@babel/proposal-nullish-coalescing-operator",
+          [
+            "named-asset-import",
+            {
+              loaderMap: {
+                svg: {
+                  ReactComponent: "@svgr/webpack?-svgo,+titleProp,+ref![path]",
+                },
+              },
+            },
+          ],
+          ENABLE_FAST_REFRESH && "react-refresh/babel",
+        ].filter((r) => !!r),
+        cacheDirectory: true,
+        cacheCompression: false,
+        overrides: [
+          {
+            exclude: /\.tsx?$/,
+            plugins: ["@babel/transform-flow-strip-types"],
+          },
+          {
+            test: /\.tsx?$/,
+            plugins: [["@babel/proposal-decorators", { legacy: true }]],
+          },
+        ],
+      },
+    },
+    // handle js outside of project's source directory
+    {
+      test: /\.m?js$/,
+      exclude: /@babel(?:\/|\\{1,2})runtime/,
+      loader: "babel-loader",
+      options: {
+        babelrc: false,
+        configFile: false,
+        compact: false,
+        sourceType: "unambiguous",
+        presets: [
+          [
+            "@babel/preset-env",
+            {
+              targets: {
+                // todo change on publish or support more options
+                electron: "8",
+              },
+              useBuiltIns: "entry",
+              modules: false,
+              exclude: ["transform-typeof-symbol"],
+            },
+          ],
+        ],
+        plugins: [
+          [
+            "@babel/transform-runtime",
+            {
+              corejs: false,
+              helpers: true,
+              // version: require('@babel/runtime/package.json').version,
+              regenerator: true,
+              useESModules: true,
+              // absoluteRuntime: absoluteRuntimePath,
+            },
+          ],
+        ],
+        cacheDirectory: true,
+        cacheCompression: false,
+      },
+    },
+
+    // style loaders for css/scss/less
+
     {
       test: /\.css$/,
       use: ["style-loader", "css-loader"],
@@ -129,24 +274,17 @@ const getWebpackModules = (codeId: string) => ({
       test: /\.less$/,
       use: ["style-loader", "css-loader", "less-loader"],
     },
+
+    // fallback loader for all other assets
     {
       loader: "file-loader",
-      exclude: [
-        /\.(js|mjs|jsx|ts|tsx)$/,
-        /\.html$/,
-        /\.json$/,
-        /\.(s?css|sass|less)$/,
-      ],
-      options: {
-        name: "static/media/[name].[hash:8].[ext]",
-        outputPath: "/public",
-        publicPath: `http://localhost:${assetPort}/files/${codeId}/`,
-        postTransformPublicPath: (p: string) =>
-          `"${p.replace(/"/g, "")}?token=${assetSecurityToken}"`,
-      },
+      exclude: [/\.(js|mjs|jsx|ts|tsx)$/, /\.html$/, /\.json$/],
+      options: fileLoaderOptions,
     },
-  ],
-});
+  ];
+
+  return { rules: [{ oneOf: loaders }] };
+};
 
 const webpackCache: Record<
   string,
@@ -154,6 +292,7 @@ const webpackCache: Record<
       compiler: import("webpack").Compiler;
       inputFs: IFs;
       outputFs: IFs;
+      savedCodeRevisions: Record<string, number | undefined>;
       runId: number;
       lastPromise?: Promise<unknown>;
     }
@@ -161,9 +300,18 @@ const webpackCache: Record<
 > = {};
 
 export const webpackRunCode = async (
-  codeEntries: { id: string; filePath: string; code?: string }[],
+  codeEntries: {
+    id: string;
+    filePath: string;
+    code?: string;
+    codeRevisionId: number;
+  }[],
   selectedCodeId: string,
-  overrideConfigPath: string | undefined,
+  paths: {
+    projectFolder: string;
+    projectSrcFolder: string;
+    overrideWebpackConfig?: string;
+  },
   onProgress: (arg: { percentage: number; message: string }) => void
 ) => {
   if (!webpack) initialize();
@@ -176,20 +324,39 @@ export const webpackRunCode = async (
   if (!primaryCodeEntry) throw new Error("Failed to find primary code entry");
 
   if (!webpackCache[primaryCodeEntry.id]) {
+    const assetPath = `http://localhost:${await assetPort}/files/${selectedCodeId}/`;
+    const env = getEnvVars(paths.projectFolder, assetPath);
+
     let options: import("webpack").Configuration = {
-      mode: "development",
+      mode: NODE_ENV,
+      // entry: [require.resolve('react-dev-utils/webpackHotDevClient'),primaryCodeEntry.filePath]
       entry: primaryCodeEntry.filePath,
       devtool: false,
+      performance: false,
       output: {
         path: "/static",
         filename: "[name].js",
+        // publicPath:
+        // jsonpFunction:
+        // devtoolModuleFilenameTemplate:
+        chunkFilename: "[name].chunk.js",
         library: "paintbundle",
         libraryTarget: "umd",
+        globalObject: "this",
       },
-      module: getWebpackModules(selectedCodeId),
+      module: await getWebpackModules(assetPath, env),
       resolve: {
-        extensions: [".jsx", ".json", ".js", ".ts", ".tsx"],
+        // modules: ['node_modules', paths.appNodeModules].concat(
+        //   modules.additionalModulePaths || []
+        // ),
+        extensions: [".mjs", ".js", ".jsx", ".ts", ".tsx", ".json"],
+        alias: {
+          "react-native": "react-native-web",
+          // src: paths.appSrc
+        },
+        // plugins: [PnpWebpackPlugin]
       },
+      // resolveLoader: { plugins: [PnpWebpackPlugin.moduleLoader(module)] },
       externals: {
         react: {
           commonjs: "react",
@@ -217,6 +384,14 @@ export const webpackRunCode = async (
         },
       },
       plugins: [
+        // HtmlWebpackPlugin
+        // InterpolateHtmlPlugin
+        // ModuleNotFoundPlugin
+        new webpack.DefinePlugin({ "process.env": env }),
+        // new webpack.HotModuleReplacementPlugin(),
+        // WatchMissingNodeModulesPlugin
+        // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
+        new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
         new webpack.ProgressPlugin({
           handler(percentage, message, ...args) {
             onProgress({ percentage, message });
@@ -224,28 +399,43 @@ export const webpackRunCode = async (
         }),
         ENABLE_FAST_REFRESH && new ReactRefreshPlugin(),
       ].filter((p): p is typeof webpack.Plugin => !!p),
+      node: {
+        module: "empty",
+        dgram: "empty",
+        dns: "mock",
+        fs: "empty",
+        http2: "empty",
+        net: "empty",
+        tls: "empty",
+        child_process: "empty",
+      },
     };
 
     // handle a config override specified for this project
-    if (overrideConfigPath) {
+    if (paths.overrideWebpackConfig) {
       // todo verify this require returns a function, also maybe run it in a vm are pass an instance of webpack
       const overrideConfig =
-        overrideConfigCache[overrideConfigPath] ||
-        __non_webpack_require__(overrideConfigPath);
-      overrideConfigCache[overrideConfigPath] = overrideConfig;
+        overrideConfigCache[paths.overrideWebpackConfig] ||
+        __non_webpack_require__(paths.overrideWebpackConfig);
+      overrideConfigCache[paths.overrideWebpackConfig] = overrideConfig;
 
-      const result = overrideConfig(options);
+      const result = await overrideConfig(
+        options,
+        webpack,
+        primaryCodeEntry.filePath
+      );
       if (result) {
         options = result;
       }
     }
 
     const compiler = webpack(options);
-    const ufs1 = new unionfs.Union();
     const inputFs = memfs.createFsFromVolume(new memfs.Volume());
-
+    const outputFs = inputFs;
+    const ufs1 = new unionfs.Union();
     // @ts-ignore bad types
     ufs1.use(fs).use(inputFs);
+
     compiler.inputFileSystem = ufs1;
     // @ts-ignore bad types
     compiler.resolvers.normal.fileSystem = compiler.inputFileSystem;
@@ -254,27 +444,36 @@ export const webpackRunCode = async (
     // @ts-ignore bad types
     compiler.resolvers.loader.fileSystem = compiler.inputFileSystem;
 
-    const outputFs = memfs.createFsFromVolume(new memfs.Volume());
     // @ts-ignore bug in typescript
     compiler.outputFileSystem = {
       join: joinPath,
       ...outputFs,
     };
 
+    console.log("initialized webpack", compiler, inputFs, outputFs);
     webpackCache[primaryCodeEntry.id] = {
       compiler,
       inputFs,
       outputFs,
+      savedCodeRevisions: {},
       runId: 0,
     };
   }
-  const { compiler, inputFs, outputFs } = webpackCache[primaryCodeEntry.id]!;
+  const { compiler, inputFs, outputFs, savedCodeRevisions } = webpackCache[
+    primaryCodeEntry.id
+  ]!;
   // todo handle deleted code entries
   codeEntries
-    .filter((entry) => entry.code !== undefined)
+    .filter(
+      (entry) =>
+        entry.code !== undefined &&
+        entry.codeRevisionId !== savedCodeRevisions[entry.id]
+    )
     .forEach((entry) => {
       inputFs.mkdirpSync(path.dirname(entry.filePath));
       inputFs.writeFileSync(entry.filePath, entry.code!);
+      savedCodeRevisions[entry.id] = entry.codeRevisionId;
+      console.log("updating webpack file", entry.filePath);
     });
 
   const runId = ++webpackCache[primaryCodeEntry.id]!.runId;

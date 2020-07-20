@@ -24,11 +24,11 @@ export const runEditor = <
   codeExtension: string,
   apply: runEditorApply<T, S>
 ) => {
-  const codeEntry = {
+  const codeEntry: CodeEntry = {
     id: "0",
     filePath: `/file.${codeExtension}`,
     code,
-    edit: true,
+    codeRevisionId: 0,
   };
   let ast: S = parseCodeEntryAST(codeEntry) as S;
   let lookupIds;

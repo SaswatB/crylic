@@ -4,11 +4,14 @@ import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
 import { useBoundState } from "../../hooks/useBoundState";
 import { useDebounce } from "../../hooks/useDebounce";
+import { useUpdatingRef } from "../../hooks/useUpdatingRef";
 import { CodeEntry } from "../../types/paint";
 import { JSXActionProvider } from "../../utils/ast/providers/JSXActionProvider";
 import { setupLanguageService } from "../../utils/moncao-helpers";
 import { Project } from "../../utils/Project";
 import { getFileExtensionLanguage, isScriptEntry } from "../../utils/utils";
+
+const fs = __non_webpack_require__("fs") as typeof import("fs");
 
 interface Props {
   project: Project;
@@ -29,7 +32,8 @@ export const Editor: FunctionComponent<Props> = ({
 }) => {
   const editorRef = useRef<MonacoEditor>(null);
   const [localValue, setLocalValue] = useBoundState(codeEntry.code);
-  const [debouncedLocalValue] = useDebounce(localValue, 500);
+  const localValueRef = useUpdatingRef(localValue);
+  const [debouncedLocalValue] = useDebounce(localValue, 1000);
   useEffect(() => {
     if (debouncedLocalValue !== codeEntry.code) {
       onCodeChange(codeEntry.id, debouncedLocalValue || "");
@@ -163,9 +167,13 @@ export const Editor: FunctionComponent<Props> = ({
         automaticLayout: true,
       }}
       onChange={setLocalValue}
-      editorDidMount={(editorMonaco) =>
-        setupLanguageService(editorMonaco, codeEntry)
-      }
+      editorDidMount={(editorMonaco) => {
+        setupLanguageService(editorMonaco, codeEntry);
+        editorMonaco.addCommand(
+          monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S,
+          () => fs.writeFileSync(codeEntry.filePath, localValueRef.current)
+        );
+      }}
     />
   );
 };

@@ -8,16 +8,11 @@ self.addEventListener(
     if (e.data.action === "initialize") {
       initialize(e.data.nodeModulesPath);
     } else if (e.data.action === "compile") {
-      const {
-        codeEntries,
-        selectedCodeId,
-        compileId,
-        overrideConfigPath,
-      } = e.data;
+      const { codeEntries, selectedCodeId, compileId, paths } = e.data;
       const bundle = await webpackRunCode(
         codeEntries,
         selectedCodeId,
-        overrideConfigPath,
+        paths,
         ({ percentage, message }) => {
           postMessage({
             type: "percent-update",

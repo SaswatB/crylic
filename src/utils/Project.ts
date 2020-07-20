@@ -56,7 +56,7 @@ export class Project {
 
   private constructor(
     public readonly path: string,
-    public readonly sourceFolderName: string,
+    public readonly sourceFolderPath: string,
     public readonly config?: ProjectConfig
   ) {
     this.elementEditorEntries = [
@@ -213,14 +213,16 @@ export class Project {
       read(srcFolderPath);
     }
 
-    return new Project(folderPath, srcFolderName, config).addCodeEntries(
+    return new Project(folderPath, srcFolderPath, config).addCodeEntries(
       fileCodeEntries
     );
   }
 
   public saveFiles() {
     this.codeEntries
-      .filter(({ code }) => code !== undefined)
+      .filter(
+        ({ code, codeRevisionId }) => code !== undefined && codeRevisionId !== 1
+      )
       .forEach(({ filePath, code }) => fs.writeFileSync(filePath, code));
   }
 
@@ -296,6 +298,7 @@ export class Project {
             exportIsDefault,
           } = this.getCodeEntryMetaData(codeEntry);
 
+          codeEntry.codeRevisionId = codeEntry.codeRevisionId + 1;
           codeEntry.ast = ast;
           codeEntry.codeWithLookupData = codeWithLookupData;
           codeEntry.isRenderable = isRenderable;
@@ -309,12 +312,11 @@ export class Project {
 
   private createCodeEntry(
     partialEntry: Partial<CodeEntry> & { filePath: string }
-  ) {
-    const codeEntry = {
+  ): CodeEntry {
+    const codeEntry: CodeEntry = {
       id: hashString(partialEntry.filePath),
       code: undefined,
-      edit: false,
-      render: false,
+      codeRevisionId: 1,
       ...partialEntry,
     };
     return {

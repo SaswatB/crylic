@@ -85,18 +85,26 @@ export const webpackRunCodeWithWorker = async (
       id: codeEntry.id,
       filePath: codeEntry.filePath,
       code: codeEntry.codeWithLookupData || codeEntry.code,
+      codeRevisionId: codeEntry.codeRevisionId,
     }))
     .concat([
       {
         id: bundleId,
         code: bundleCode,
-        filePath: "/index.tsx",
+        filePath: "/index.js",
+        codeRevisionId: 0,
       },
     ]);
 
-  const overrideConfigPath = project.config?.overrideWebpackConfigPath
-    ? path.join(project.path, project.config.overrideWebpackConfigPath)
+  const overrideWebpackConfig = project.config?.overrideWebpack?.path
+    ? path.join(project.path, project.config.overrideWebpack.path)
     : undefined;
+
+  const paths = {
+    projectFolder: project.path,
+    projectSrcFolder: project.sourceFolderPath,
+    overrideWebpackConfig,
+  };
 
   let bundle;
   if (WORKER_ENABLED) {
@@ -112,7 +120,7 @@ export const webpackRunCodeWithWorker = async (
       codeEntries,
       selectedCodeId: bundleId,
       compileId,
-      overrideConfigPath,
+      paths,
     });
 
     // wait for the worker to compile
@@ -121,12 +129,7 @@ export const webpackRunCodeWithWorker = async (
     delete compileCallbacks[compileId];
     delete progressCallbacks[compileId];
   } else {
-    bundle = await webpackRunCode(
-      codeEntries,
-      bundleId,
-      overrideConfigPath,
-      onProgress
-    );
+    bundle = await webpackRunCode(codeEntries, bundleId, paths, onProgress);
   }
 
   const workerCallbackTime = Date.now();

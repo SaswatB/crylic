@@ -74,7 +74,7 @@ export const Frame: FunctionComponent<
       // @ts-ignore ignore ref that's overridden by useImperativeHandle
       ref={frame}
       title="frame"
-      sandbox="allow-same-origin allow-scripts"
+      sandbox="allow-same-origin allow-scripts allow-forms"
       {...props}
     />
   );

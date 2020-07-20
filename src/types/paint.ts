@@ -7,6 +7,7 @@ export interface CodeEntry {
   id: string;
   filePath: string;
   code: string | undefined;
+  codeRevisionId: number;
 
   // metadata generated from code
   ast?: any;
@@ -32,7 +33,12 @@ export interface RenderEntry {
 export const ProjectConfig = it.type({
   bootstrap: it.union([it.string, it.undefined]),
   sourceFolder: it.union([it.string, it.undefined]),
-  overrideWebpackConfigPath: it.union([it.string, it.undefined]),
+  overrideWebpack: it.union([
+    it.type({
+      path: it.string,
+    }),
+    it.undefined,
+  ]),
 });
 export type ProjectConfig = it.TypeOf<typeof ProjectConfig>;
 

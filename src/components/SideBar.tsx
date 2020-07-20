@@ -204,13 +204,11 @@ const useMainTab = ({
   }
   const treeNodeIds = new Set<string>("root");
   const projectTree: Tree = { id: "root", name: "", children: [] };
-  const projectPath = path
-    .join(project?.path || "", project?.sourceFolderName || "")
-    .replace(/\\/g, "/");
+  const projectPath = project?.sourceFolderPath.replace(/\\/g, "/");
   codeEntries?.forEach((codeEntry) => {
     const path = codeEntry.filePath
       .replace(/\\/g, "/")
-      .replace(projectPath!, "")
+      .replace(projectPath || "", "")
       .replace(/^\//, "")
       .replace(extensionRegex || "", "")
       .split("/");
