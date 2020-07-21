@@ -63,11 +63,23 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     let lookupIds: string[] = [];
     traverseJSXElements(ast, (path, index) => {
       const lookupId = this.createLookupId(codeEntry, index);
-      const attr = b.jsxAttribute(
-        b.jsxIdentifier(`data-${JSX_LOOKUP_DATA_ATTR}`),
-        b.stringLiteral(lookupId)
+      // todo get 'React' from import
+      const isReactFragment = pipe(
+        path.value.openingElement.name,
+        (_) => (_.type === "JSXMemberExpression" ? _ : undefined),
+        (_) =>
+          _?.object.type === "JSXIdentifier" &&
+          _.object.name === "React" &&
+          _?.property.name === "Fragment"
       );
-      path.value.openingElement.attributes?.push(attr);
+      // don't add lookup ids to react fragments, otherwise react complains
+      if (!isReactFragment) {
+        const attr = b.jsxAttribute(
+          b.jsxIdentifier(`data-${JSX_LOOKUP_DATA_ATTR}`),
+          b.stringLiteral(lookupId)
+        );
+        path.value.openingElement.attributes?.push(attr);
+      }
       lookupIds.push(lookupId);
     });
     return {

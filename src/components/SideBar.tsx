@@ -907,7 +907,6 @@ const useSelectedElementEditorTab = ({
           {renderPropBottomInput()}
           {renderPropLeftInput()}
           {renderPropRightInput()}
-          {renderBorderRadiusInput()}
         </>
       ) : (
         renderPropInput()
@@ -1092,6 +1091,7 @@ const useSelectedElementEditorTab = ({
           )}
           {renderPaddingInput()}
           {renderMarginInput()}
+          {renderBorderRadiusInput()}
         </div>
       </Collapsible>
       <Collapsible title="Colors">
