@@ -147,90 +147,94 @@ export const CompilerComponentView: FunctionComponent<
     const [debouncedCodeEntries] = useDebounce(project?.codeEntries, 150);
     useEffect(() => {
       (async () => {
-        if (project && debouncedCodeEntries?.length) {
-          try {
-            console.log("compiling", renderEntry.codeId, project);
-            const onProgressSubject = new ReplaySubject<{
-              percentage: number;
-              message: string;
-            }>(1);
-            const onRoutesDefinedSubject = new ReplaySubject<RouteDefinition>(
-              1
-            );
-            const onRouteChangeSubject = new ReplaySubject<string>(1);
+        if (!project || !debouncedCodeEntries?.length) return;
+        try {
+          console.log("compiling", renderEntry.codeId, project);
+          const onProgressSubject = new ReplaySubject<{
+            percentage: number;
+            message: string;
+          }>(1);
+          const onRoutesDefinedSubject = new ReplaySubject<RouteDefinition>(1);
+          const onRouteChangeSubject = new ReplaySubject<string>(1);
 
-            onCompileStart?.({
-              onProgress: onProgressSubject.pipe(distinctUntilChanged(isEqual)),
-            });
+          onCompileStart?.({
+            onProgress: onProgressSubject.pipe(distinctUntilChanged(isEqual)),
+          });
 
-            const codeExports = await webpackRunCodeWithWorker(
-              project,
-              renderEntry,
-              {
-                window: getInactiveFrame().current?.frameElement.contentWindow,
-                onProgress(arg) {
-                  onProgressSubject.next(arg);
-                },
-                onPublish(url) {
-                  if (url !== lastPublishUrl.current) {
-                    lastPublishUrl.current = url;
-                    onNewPublishUrl?.(url);
-                  }
-                },
-                onRoutesDefined(arg) {
-                  onRoutesDefinedSubject.next(arg);
-                },
-                onRouteChange(route) {
-                  onRouteChangeSubject.next(route);
-                },
-              }
-            );
-            setTempStyles({});
-            // if nothing was returned, the compilation was likely preempted
-            if (!codeExports) return;
-            console.log("codeExports", codeExports);
+          const codeExports = await webpackRunCodeWithWorker(
+            project,
+            renderEntry,
+            {
+              window: getInactiveFrame().current?.frameElement.contentWindow,
+              onProgress(arg) {
+                onProgressSubject.next(arg);
+              },
+              onPublish(url) {
+                if (url !== lastPublishUrl.current) {
+                  lastPublishUrl.current = url;
+                  onNewPublishUrl?.(url);
+                }
+              },
+              onRoutesDefined(arg) {
+                onRoutesDefinedSubject.next(arg);
+              },
+              onRouteChange(route) {
+                onRouteChangeSubject.next(route);
+              },
+            }
+          );
+          setTempStyles({});
+          // if nothing was returned, the compilation was likely preempted
+          if (!codeExports) return;
+          console.log("codeExports", codeExports);
 
-            setBootstrapElement(() =>
-              Object.values(codeExports.bootstrap || {}).find(
-                (e): e is Function => typeof e === "function"
-              )
-            );
-            setCompiledElement(() =>
+          setBootstrapElement(() =>
+            Object.values(codeExports.bootstrap || {}).find(
+              (e): e is Function => typeof e === "function"
+            )
+          );
+
+          const codeEntry = project.getCodeEntry(renderEntry.codeId);
+          const exportName = codeEntry?.exportIsDefault
+            ? "default"
+            : codeEntry?.exportName;
+          setCompiledElement(
+            () =>
+              (codeExports.component || {})[exportName || ""] ||
               Object.values(codeExports.component || {}).find(
                 (e): e is Function => typeof e === "function"
               )
-            );
+          );
 
-            getActiveFrame().current?.frameElement.contentDocument?.location.reload();
-            if (errorBoundary.current?.hasError()) {
-              errorBoundary.current.resetError();
-            }
-
-            // wait until the dom is fully updated so that getElementByLookupId can work with the updated view
-            setTimeout(() =>
-              requestAnimationFrame(
-                () =>
-                  getInactiveFrame().current &&
-                  onCompileEnd?.(renderEntry, {
-                    ...handleRef.current,
-                    iframe: getInactiveFrame().current!.frameElement,
-                    onRoutesDefined: onRoutesDefinedSubject.pipe(
-                      distinctUntilChanged(isEqual)
-                    ),
-                    onRouteChange: onRouteChangeSubject.pipe(
-                      distinctUntilChanged()
-                    ),
-                  })
-              )
-            );
-
-            // flip the active frame
-            setActiveFrame(activeFrame === 1 ? 2 : 1);
-          } catch (e) {
-            console.log(e);
+          getActiveFrame().current?.frameElement.contentDocument?.location.reload();
+          if (errorBoundary.current?.hasError()) {
+            errorBoundary.current.resetError();
           }
+
+          // wait until the dom is fully updated so that getElementByLookupId can work with the updated view
+          setTimeout(() =>
+            requestAnimationFrame(
+              () =>
+                getInactiveFrame().current &&
+                onCompileEnd?.(renderEntry, {
+                  ...handleRef.current,
+                  iframe: getInactiveFrame().current!.frameElement,
+                  onRoutesDefined: onRoutesDefinedSubject.pipe(
+                    distinctUntilChanged(isEqual)
+                  ),
+                  onRouteChange: onRouteChangeSubject.pipe(
+                    distinctUntilChanged()
+                  ),
+                })
+            )
+          );
+
+          // flip the active frame
+          setActiveFrame(activeFrame === 1 ? 2 : 1);
+        } catch (e) {
+          console.log(e);
         }
-      })().catch(console.log);
+      })();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [debouncedCodeEntries, renderEntry.publish]);
 

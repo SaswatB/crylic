@@ -431,7 +431,7 @@ export class Project {
   }
 
   private addRenderEntryToDraft(draft: Project, codeEntry: CodeEntry) {
-    let baseName = getFriendlyName(this, codeEntry.id);
+    let baseName = getFriendlyName(draft, codeEntry.id);
     const name = { current: baseName };
     let index = 1;
     while (

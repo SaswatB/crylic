@@ -17,7 +17,7 @@ import { format } from "prettier/standalone";
 import { parse, print, types, visit } from "recast";
 
 import { CodeEntry } from "../../types/paint";
-import { getStyleEntryExtension, isStyleEntry } from "../utils";
+import { getStyleEntryExtension, isDefined, isStyleEntry } from "../utils";
 import { babelTsParser } from "./babel-ts";
 
 const { builders: b } = types;
@@ -311,6 +311,11 @@ const getBlockIdentifiers = (nodes: t.ASTNode[], parents: t.ASTNode[] = []) => {
       case "FunctionDeclaration":
         identifiers.push(...getBlockIdentifiers([node.id], newParents));
         break;
+      case "ClassDeclaration":
+        if (node.id !== null) {
+          identifiers.push(...getBlockIdentifiers([node.id], newParents));
+        }
+        break;
 
       case "Identifier":
         identifiers.push({ name: node.name, node, parents });
@@ -348,11 +353,13 @@ export const getComponentExport = (
   // todo support marker comment that overrides static analysis
   // todo try to check if the function returns jsx
   // todo try to get the best export if multiple functions are defined
+  // todo support class expressions
+  // todo check class extends React.Component/React.PureComponent
 
   /**
-   * Checks whether the given variable name refers to a function
+   * Checks whether the given variable name refers to a function/class
    */
-  const hasFunctionIdentifier = (varName: string) => {
+  const hasFunctionOrClassIdentifier = (varName: string) => {
     // get all the variables defined at the top level of the program
     const astIdentifiers = getBlockIdentifiers([ast.program]); // todo cache after first run & filter out ones past the target line
 
@@ -366,6 +373,7 @@ export const getComponentExport = (
     // check whether the parent is a function (not exhaustive)
     return (
       varParent.type === "FunctionDeclaration" ||
+      varParent.type === "ClassDeclaration" ||
       (varParent.type === "VariableDeclarator" &&
         (varParent.init?.type === "ArrowFunctionExpression" ||
           varParent.init?.type === "FunctionExpression"))
@@ -381,11 +389,15 @@ export const getComponentExport = (
     .map((node) => {
       let name: string | undefined;
       switch (node.declaration?.type) {
+        case "ClassDeclaration": {
+          // name doesn't matter for default export
+          if (node.type === "ExportDefaultDeclaration") return { node };
+          name = getIdName(node.declaration);
+          break;
+        }
         case "FunctionDeclaration": {
-          if (node.type === "ExportDefaultDeclaration") {
-            // name doesn't matter (and may not exist) for default export
-            return { node };
-          }
+          // name doesn't matter (and may not exist) for default export
+          if (node.type === "ExportDefaultDeclaration") return { node };
           name = getIdName(node.declaration);
           break;
         }
@@ -396,7 +408,8 @@ export const getComponentExport = (
               if (declaration.type !== "VariableDeclarator") return undefined;
               if (
                 declaration.init?.type !== "ArrowFunctionExpression" &&
-                declaration.init?.type !== "FunctionExpression"
+                declaration.init?.type !== "FunctionExpression" &&
+                declaration.init?.type !== "ClassExpression"
               )
                 return undefined;
 
@@ -408,43 +421,49 @@ export const getComponentExport = (
         }
         case "ArrowFunctionExpression":
         case "FunctionExpression":
-          if (node.type === "ExportDefaultDeclaration") {
-            // these declarations should only be possible for default exports
-            return { node };
-          }
+          // these declarations should only be possible for default exports
+          if (node.type === "ExportDefaultDeclaration") return { node };
           break;
         case "Identifier":
-          // if a default export is exporting a variable, check if that variable is a function (this is handled under specifiers for named exports)
+          // if a default export is exporting a variable, check if that variable is a function/class (this is handled under specifiers below for named exports)
           if (
             node.type === "ExportDefaultDeclaration" &&
-            hasFunctionIdentifier(node.declaration.name)
+            hasFunctionOrClassIdentifier(node.declaration.name)
           ) {
             return { node };
           }
           break;
       }
       if (node.type === "ExportNamedDeclaration") {
-        // check whether any specifiers are functions
+        // check whether any specifiers are functions/classes
         name =
           node.specifiers?.map((specifier) => {
             const varName =
               getIdName({ id: specifier.local }) ||
               getIdName({ id: specifier.exported });
-            return varName && hasFunctionIdentifier(varName)
+            return varName && hasFunctionOrClassIdentifier(varName)
               ? varName
               : undefined;
           })[0] || name;
       }
       return name ? { name, node } : undefined;
     })
-    .filter((n) => n !== undefined);
+    .filter(isDefined);
 
   // return whether an export was found
   if (exportedFunctions.length > 0) {
-    if (exportedFunctions[0]!.node.type === "ExportDefaultDeclaration") {
+    // prefer default exports, then capitalized exports, and lastly the last export
+    let bestExportedFunction =
+      exportedFunctions.find(
+        (f) => f.node.type === "ExportDefaultDeclaration"
+      ) ||
+      exportedFunctions.find((f) => f.name?.match(/^[A-Z]/)) ||
+      exportedFunctions[exportedFunctions.length - 1];
+
+    if (bestExportedFunction.node.type === "ExportDefaultDeclaration") {
       return { isDefault: true };
     }
-    return { isDefault: false, name: exportedFunctions[0]!.name! };
+    return { isDefault: false, name: bestExportedFunction.name! };
   }
 
   return undefined;

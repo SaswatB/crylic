@@ -67,7 +67,7 @@ export const webpackRunCodeWithWorker = async (
 
   const bundleCode = `
   export const component = require("${
-    project.codeEntries.find(({ id }) => id === renderEntry.codeId)!.filePath
+    project.getCodeEntry(renderEntry.codeId)!.filePath
   }")
   ${
     project.config?.bootstrap
