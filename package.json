@@ -43,6 +43,7 @@
     "babel-loader": "^8.1.0",
     "babel-plugin-macros": "^2.8.0",
     "babel-plugin-named-asset-import": "^0.3.6",
+    "clone": "^2.1.2",
     "cors": "^2.8.5",
     "cosmiconfig": "^6.0.0",
     "css-loader": "^3.5.3",

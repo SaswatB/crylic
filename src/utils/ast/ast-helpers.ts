@@ -1,6 +1,7 @@
 import { namedTypes as t } from "ast-types";
 import { LiteralKind } from "ast-types/gen/kinds";
 import { NodePath } from "ast-types/lib/node-path";
+import clone from "clone";
 import deepFreeze from "deep-freeze-strict";
 import { Either, left, right } from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
@@ -10,7 +11,7 @@ import gonzales, {
   CSSASTNodeType,
   CSSASTSyntax,
 } from "gonzales-pe";
-import { cloneDeep, isArray } from "lodash";
+import { isArray } from "lodash";
 import prettierParserBabel from "prettier/parser-babel";
 import prettierParsesPostcss from "prettier/parser-postcss";
 import { format } from "prettier/standalone";
@@ -27,8 +28,9 @@ export const parseAST = (code: string): t.File =>
   parse(code, {
     parser: babelTsParser,
   });
-export const printAST = (ast: t.File) => print(cloneDeep(ast)).code;
-export const prettyPrintAST = (ast: t.File) =>
+const printAST = (ast: t.File) =>
+  print(clone(ast, undefined, undefined, undefined, true)).code;
+const prettyPrintAST = (ast: t.File) =>
   format(printAST(ast), { parser: "babel-ts", plugins: [prettierParserBabel] });
 
 export const parseStyleSheetAST = (codeEntry: CodeEntry) => {
@@ -40,11 +42,8 @@ export const parseStyleSheetAST = (codeEntry: CodeEntry) => {
   ast.syntax = ast.syntax || syntax;
   return ast;
 };
-export const printStyleSheetAST = (ast: CSSASTNode) => ast.toString();
-export const prettyPrintStyleSheetAST = (
-  codeEntry: CodeEntry,
-  ast: CSSASTNode
-) => {
+const printStyleSheetAST = (ast: CSSASTNode) => ast.toString();
+const prettyPrintStyleSheetAST = (codeEntry: CodeEntry, ast: CSSASTNode) => {
   const syntax = getStyleEntryExtension(codeEntry);
   const code = printStyleSheetAST(ast);
 
@@ -491,7 +490,7 @@ export const editAST = <R, S, T extends object | void, U extends any[]>(
   ...rest: U
 ): T extends void ? R : T & { ast: R } => {
   let applyResult: T | undefined = undefined;
-  const newAst = cloneDeep(arg0.ast);
+  const newAst = clone(arg0.ast, undefined, undefined, undefined, true);
   // const newAst = produce(ast, (draft) => {
   //   console.log('using draft')
   applyResult = apply({ ...arg0, ast: newAst }, ...rest);

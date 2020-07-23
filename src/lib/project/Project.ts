@@ -1,7 +1,8 @@
+import clone from "clone";
 import deepFreeze from "deep-freeze-strict";
 import { MakeDirectoryOptions } from "fs";
 import produce, { immerable } from "immer";
-import { camelCase, cloneDeep, uniqueId, upperFirst } from "lodash";
+import { camelCase, uniqueId, upperFirst } from "lodash";
 import { Readable } from "stream";
 import yauzl from "yauzl";
 
@@ -354,7 +355,7 @@ export class Project {
       // return the modified ast and code
       console.log("codeTransformer", codeEntry.filePath, ast);
       return {
-        ast: deepFreeze(cloneDeep(ast)),
+        ast: deepFreeze(clone(ast, undefined, undefined, undefined, true)),
         codeWithLookupData: printCodeEntryAST(codeEntry, ast),
         isRenderable,
         // this code entry has to be a script or style entry by this point so it's editable

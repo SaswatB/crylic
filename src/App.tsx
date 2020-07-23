@@ -386,7 +386,7 @@ function App() {
         // the main thread get's pegged from opening the project
         setTimeout(
           () => openProject(filePath).finally(() => setLoading((l) => l - 1)),
-          10
+          150
         );
       }}
       onSaveProject={() => project?.saveFiles()}
