@@ -9,16 +9,17 @@ import React, {
   useState,
 } from "react";
 import produce from "immer";
-import { isEqual } from "lodash";
+import { flatten, isEqual, uniq } from "lodash";
 import { Observable, ReplaySubject } from "rxjs";
 import { distinctUntilChanged } from "rxjs/operators";
 
 import { useDebounce } from "../hooks/useDebounce";
 import { useUpdatingRef } from "../hooks/useUpdatingRef";
+import { Project } from "../lib/project/Project";
 import { RenderEntry, Styles } from "../types/paint";
 import { webpackRunCodeWithWorker } from "../utils/compilers/run-code-webpack-worker";
-import { Project } from "../utils/Project";
 import { RouteDefinition } from "../utils/react-router-proxy";
+import { isDefined } from "../utils/utils";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { Frame } from "./Frame";
 
@@ -161,6 +162,31 @@ export const CompilerComponentView: FunctionComponent<
             onProgress: onProgressSubject.pipe(distinctUntilChanged(isEqual)),
           });
 
+          const switchContext: Record<string, RouteDefinition | undefined> = {};
+          const routeContext: Record<string, string | undefined> = {};
+          const refreshRouteDefined = () => {
+            const switches = Object.values(switchContext).filter(isDefined);
+            if (switches.length > 0) {
+              const arg = {
+                // todo add ability to select switch to target instead of choosing the first one here
+                ...switches[0],
+                // combine all the routes defined by all the switches
+                routes: uniq(flatten(switches.map((s) => s.routes))),
+              };
+              onRoutesDefinedSubject.next(arg);
+            }
+          };
+          const refreshRouteChange = () => {
+            const routes = Object.values(routeContext).filter(isDefined);
+            if (routes.length) {
+              // get the most specific route
+              let route = routes[0];
+              routes.forEach((r) => {
+                if (r.length > route.length) route = r;
+              });
+              onRouteChangeSubject.next(route);
+            }
+          };
           const codeExports = await webpackRunCodeWithWorker(
             project,
             renderEntry,
@@ -175,11 +201,21 @@ export const CompilerComponentView: FunctionComponent<
                   onNewPublishUrl?.(url);
                 }
               },
-              onRoutesDefined(arg) {
-                onRoutesDefinedSubject.next(arg);
+              onSwitchActive(id, arg) {
+                switchContext[id] = arg;
+                refreshRouteDefined();
               },
-              onRouteChange(route) {
-                onRouteChangeSubject.next(route);
+              onSwitchDeactivate(id) {
+                delete switchContext[id];
+                refreshRouteDefined();
+              },
+              onRouteActive(id, route) {
+                routeContext[id] = route;
+                refreshRouteChange();
+              },
+              onRouteDeactivate(id) {
+                delete routeContext[id];
+                refreshRouteChange();
               },
             }
           );

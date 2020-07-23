@@ -1,7 +1,8 @@
-import * as it from "io-ts";
-
 import { ViewContext } from "../components/CompilerComponentView";
 import { StyleGroup } from "../utils/ast/editors/ASTEditor";
+
+// todo use a better type
+export type PackageJson = any;
 
 export interface CodeEntry {
   id: string;
@@ -29,18 +30,6 @@ export interface RenderEntry {
   publish?: boolean;
   route?: string;
 }
-
-export const ProjectConfig = it.type({
-  bootstrap: it.union([it.string, it.undefined]),
-  sourceFolder: it.union([it.string, it.undefined]),
-  overrideWebpack: it.union([
-    it.type({
-      path: it.string,
-    }),
-    it.undefined,
-  ]),
-});
-export type ProjectConfig = it.TypeOf<typeof ProjectConfig>;
 
 export interface SourceMetadata {
   componentName: string;

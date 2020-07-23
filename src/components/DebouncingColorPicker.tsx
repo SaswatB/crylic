@@ -43,6 +43,7 @@ export const DebouncingColorPicker: FunctionComponent<Props> = ({
   return (
     <ColorPicker
       animation="slide-up"
+      defaultColor="#000000"
       color={tempValue}
       onChange={onColorPickerChange}
     />

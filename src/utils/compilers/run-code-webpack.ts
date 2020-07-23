@@ -1,4 +1,4 @@
-import getCSSModuleLocalIdent from "react-dev-utils/getCSSModuleLocalIdent";
+// import getCSSModuleLocalIdent from "react-dev-utils/getCSSModuleLocalIdent";
 import cors from "cors";
 import { cloneDeep } from "lodash";
 
@@ -367,6 +367,11 @@ export const webpackRunCode = async (
           amd: "react-router-dom",
           root: "ReactRouterDOM",
         },
+        "react-refresh/runtime": {
+          commonjs: "react-refresh/runtime",
+          commonjs2: "react-refresh/runtime",
+          amd: "react-refresh/runtime",
+        },
         // this is externalized so that the default project template can be loaded without npm i
         "normalize.css": {
           commonjs: "normalize.css",
@@ -379,7 +384,7 @@ export const webpackRunCode = async (
         // InterpolateHtmlPlugin
         // ModuleNotFoundPlugin
         new webpack.DefinePlugin({ "process.env": env }),
-        // new webpack.HotModuleReplacementPlugin(),
+        ENABLE_FAST_REFRESH && new webpack.HotModuleReplacementPlugin(),
         // WatchMissingNodeModulesPlugin
         // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
         new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),

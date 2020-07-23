@@ -38,6 +38,7 @@ import {
   useTextInput,
 } from "../hooks/useInput";
 import { useObservable } from "../hooks/useObservable";
+import { Project } from "../lib/project/Project";
 import {
   CodeEntry,
   OutlineElement,
@@ -67,7 +68,6 @@ import {
   SelectModeType,
 } from "../utils/constants";
 import { linkComponent } from "../utils/defs/react-router-dom";
-import { Project } from "../utils/Project";
 import {
   getElementUniqueId,
   IMAGE_EXTENSION_REGEX,

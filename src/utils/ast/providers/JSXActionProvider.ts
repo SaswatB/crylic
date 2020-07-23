@@ -4,8 +4,8 @@ import { CSSASTNode } from "gonzales-pe";
 import { flatten, kebabCase } from "lodash";
 import { types } from "recast";
 
+import { Project } from "../../../lib/project/Project";
 import { CodeEntry } from "../../../types/paint";
-import { Project } from "../../Project";
 import { getFriendlyName, isStyleEntry } from "../../utils";
 import {
   createCSSPropertyDeclaration,
@@ -16,8 +16,7 @@ import {
   ifObjectExpression,
   parseAST,
   parseStyleSheetAST,
-  prettyPrintAST,
-  prettyPrintStyleSheetAST,
+  prettyPrintCodeEntryAST,
   traverseJSXElements,
 } from "../ast-helpers";
 import { ActionProvider, EditorAction } from "./ActionProvider";
@@ -153,11 +152,15 @@ export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
       return [
         {
           id: action.codeId,
-          code: prettyPrintAST(ast),
+          code: prettyPrintCodeEntryAST(project.config, codeEntry, ast),
         },
         {
           id: styleCodeEntry.id,
-          code: prettyPrintStyleSheetAST(styleCodeEntry, styleAst),
+          code: prettyPrintCodeEntryAST(
+            project.config,
+            styleCodeEntry,
+            styleAst
+          ),
         },
       ];
     }

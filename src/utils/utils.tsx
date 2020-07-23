@@ -2,8 +2,8 @@ import React from "react";
 import { startCase, uniqueId } from "lodash";
 import { Readable } from "stream";
 
+import { Project } from "../lib/project/Project";
 import { CodeEntry, OutlineElement } from "../types/paint";
-import { Project } from "./Project";
 
 const path = __non_webpack_require__("path") as typeof import("path");
 

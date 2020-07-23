@@ -16,6 +16,7 @@ import prettierParsesPostcss from "prettier/parser-postcss";
 import { format } from "prettier/standalone";
 import { parse, print, types, visit } from "recast";
 
+import { ProjectConfig } from "../../lib/project/ProjectConfig";
 import { CodeEntry } from "../../types/paint";
 import { getStyleEntryExtension, isDefined, isStyleEntry } from "../utils";
 import { babelTsParser } from "./babel-ts";
@@ -67,12 +68,16 @@ export const printCodeEntryAST = (
     ? printStyleSheetAST(ast as CSSASTNode)
     : printAST(ast as t.File);
 export const prettyPrintCodeEntryAST = (
+  config: ProjectConfig,
   codeEntry: CodeEntry,
   ast: CSSASTNode | t.File
-) =>
-  isStyleEntry(codeEntry)
+) => {
+  if (!config.isPrettierEnabled()) return printCodeEntryAST(codeEntry, ast);
+
+  return isStyleEntry(codeEntry)
     ? prettyPrintStyleSheetAST(codeEntry, ast as CSSASTNode)
     : prettyPrintAST(ast as t.File);
+};
 
 export const ifIdentifier = (
   node: t.Node | null | undefined

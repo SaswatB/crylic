@@ -168,7 +168,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
     disableSelection: true,
     onChange: (newRoute) => {
       closeRouteMenu();
-      routeDefinition?.history.push(newRoute);
+      routeDefinition?.historyRef.current.push(newRoute);
     },
     initialValue: currentRoute,
   });

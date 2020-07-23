@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
 
+import { Project } from "../../lib/project/Project";
 import { CodeEntry } from "../../types/paint";
-import { Project } from "../../utils/Project";
 import { getFriendlyName, isDefined, isImageEntry } from "../../utils/utils";
 import { Editor } from "./Editor";
 import { EditorTabs } from "./EditorTabs";

@@ -1,18 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { isArray, omit } from "lodash";
 
+import { useUpdatingRef } from "../hooks/useUpdatingRef";
+
 const LINK_DATA_ATTR = "paintlink";
 
 export interface RouteDefinition {
   routes: string[];
   switchProps: object | undefined;
-  history: import("history").History;
+  historyRef: React.MutableRefObject<import("history").History>;
 }
 
 export function getReactRouterProxy(
   initialRoute: string | undefined,
-  onRoutesDefined: (arg: RouteDefinition) => void,
-  onRouteChange: (route: string) => void
+  onSwitchActive: (switchId: string, arg: RouteDefinition) => void,
+  onSwitchDeactivate: (switchId: string) => void,
+  onRouteActive: (routeId: string, route: string) => void,
+  onRouteDeactivate: (routeId: string) => void
 ) {
   const reactRouterDom = require("react-router-dom") as typeof import("react-router-dom");
   const reactRouterDomProxy = {
@@ -38,8 +42,16 @@ export function getReactRouterProxy(
     Route: (props: any) => {
       // todo test ref
       const { Route } = reactRouterDom;
-      // console.log("Route", props);
-      onRouteChange(props.path);
+
+      // track this route while it's being rendered
+      useEffect(() => {
+        console.log("Route", props);
+        const id = `${Math.random()}`;
+        onRouteActive(id, props.path);
+        return () => onRouteDeactivate(id);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [props.path]);
+
       return <Route {...props} />;
     },
     // todo maybe stub switch from react-router itself?
@@ -47,16 +59,19 @@ export function getReactRouterProxy(
       // todo test ref
       const { Switch, useHistory } = reactRouterDom;
       const history = useHistory();
+      const historyRef = useUpdatingRef(history);
 
       // override history.location for the first render to properly set the initial route
       // and avoid flashing the home route on load
       const [initialLocation, setInitialLocation] = useState(initialRoute);
       useEffect(() => {
         if (initialRoute) {
+          console.log("setting router initial route", initialRoute);
           history.push(initialRoute);
           setInitialLocation(undefined);
         }
-      }, [history]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, []);
 
       const routes: string[] = [];
       const children = !props.children
@@ -64,18 +79,25 @@ export function getReactRouterProxy(
         : isArray(props.children)
         ? props.children
         : [props.children];
-      // console.log("Switch", props);
       children.forEach((child: any) => {
         if (React.isValidElement(child) && "path" in (child.props as any)) {
           routes.push((child.props as any).path);
           // console.log("Switch Child", child.props);
         }
       });
-      onRoutesDefined({
-        routes,
-        switchProps: omit(props, "children"),
-        history,
-      });
+
+      // track this switch while it's being rendered
+      useEffect(() => {
+        console.log("Switch", props);
+        const id = `${Math.random()}`;
+        onSwitchActive(id, {
+          routes,
+          switchProps: omit(props, "children"),
+          historyRef,
+        });
+        return () => onSwitchDeactivate(id);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [routes.join()]);
 
       return (
         <Switch

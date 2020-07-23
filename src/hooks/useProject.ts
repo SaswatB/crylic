@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 
+import { Project } from "../lib/project/Project";
 import { CodeEntry } from "../types/paint";
 import { prettyPrintCodeEntryAST } from "../utils/ast/ast-helpers";
-import { Project } from "../utils/Project";
 
 export const useProject = () => {
   const [project, setProject] = useState<Project>();
@@ -58,13 +58,18 @@ export const useProject = () => {
       return currentProject?.editCodeEntry(codeId, { code });
     });
   const setCodeAstEdit = (editedAst: any, codeEntry: CodeEntry) => {
+    if (!project) return;
+
     // todo use a project ref of something similar to avoid closure issues
     // remove lookup data from the ast and get the transformed code
-    project?.getEditorsForCodeEntry(codeEntry).forEach((editor) => {
+    project.getEditorsForCodeEntry(codeEntry).forEach((editor) => {
       editedAst = editor.removeLookupData({ ast: editedAst, codeEntry });
     });
     // save the edited code
-    setCode(codeEntry.id, prettyPrintCodeEntryAST(codeEntry, editedAst));
+    setCode(
+      codeEntry.id,
+      prettyPrintCodeEntryAST(project.config, codeEntry, editedAst)
+    );
   };
   const toggleCodeEntryEdit = (codeEntry: CodeEntry) =>
     setProject((currentProject) => {

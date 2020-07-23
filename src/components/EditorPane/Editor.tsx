@@ -5,10 +5,10 @@ import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { useBoundState } from "../../hooks/useBoundState";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useUpdatingRef } from "../../hooks/useUpdatingRef";
+import { Project } from "../../lib/project/Project";
 import { CodeEntry } from "../../types/paint";
 import { JSXActionProvider } from "../../utils/ast/providers/JSXActionProvider";
 import { setupLanguageService } from "../../utils/moncao-helpers";
-import { Project } from "../../utils/Project";
 import { getFileExtensionLanguage, isScriptEntry } from "../../utils/utils";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");

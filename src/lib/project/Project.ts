@@ -1,29 +1,24 @@
 import deepFreeze from "deep-freeze-strict";
-import { fold } from "fp-ts/lib/Either";
-import { pipe } from "fp-ts/lib/pipeable";
 import { MakeDirectoryOptions } from "fs";
 import produce, { immerable } from "immer";
 import { camelCase, cloneDeep, uniqueId, upperFirst } from "lodash";
 import { Readable } from "stream";
 import yauzl from "yauzl";
 
-import {
-  CodeEntry,
-  EditEntry,
-  ProjectConfig,
-  RenderEntry,
-} from "../types/paint";
+import { CodeEntry, EditEntry, RenderEntry } from "../../types/paint";
 import {
   getComponentExport,
   hashString,
   parseCodeEntryAST,
   printCodeEntryAST,
-} from "./ast/ast-helpers";
-import { ElementASTEditor, StyleASTEditor } from "./ast/editors/ASTEditor";
-import { JSXASTEditor } from "./ast/editors/JSXASTEditor";
-import { StyledASTEditor } from "./ast/editors/StyledASTEditor";
-import { StyleSheetASTEditor } from "./ast/editors/StyleSheetASTEditor";
-import { CONFIG_FILE_NAME, DEFAULT_PROJECT_SOURCE_FOLDER } from "./constants";
+} from "../../utils/ast/ast-helpers";
+import {
+  ElementASTEditor,
+  StyleASTEditor,
+} from "../../utils/ast/editors/ASTEditor";
+import { JSXASTEditor } from "../../utils/ast/editors/JSXASTEditor";
+import { StyledASTEditor } from "../../utils/ast/editors/StyledASTEditor";
+import { StyleSheetASTEditor } from "../../utils/ast/editors/StyleSheetASTEditor";
 import {
   getFriendlyName,
   IMAGE_EXTENSION_REGEX,
@@ -33,9 +28,10 @@ import {
   SCRIPT_EXTENSION_REGEX,
   streamToString,
   STYLE_EXTENSION_REGEX,
-} from "./utils";
+} from "../../utils/utils";
+import { ProjectConfig } from "./ProjectConfig";
 
-import projectTemplate from "!!../../loaders/binaryLoader!../assets/project-template.zip";
+import projectTemplate from "!!../../../loaders/binaryLoader!../../assets/project-template.zip";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 const path = __non_webpack_require__("path") as typeof import("path");
@@ -54,10 +50,10 @@ export class Project {
   public readonly elementEditorEntries: EditorEntry<ElementASTEditor<any>>[];
   public readonly styleEditorEntries: EditorEntry<StyleASTEditor<any>>[];
 
-  private constructor(
+  protected constructor(
     public readonly path: string,
     public readonly sourceFolderPath: string,
-    public readonly config?: ProjectConfig
+    public readonly config: ProjectConfig
   ) {
     this.elementEditorEntries = [
       { editor: new JSXASTEditor(), shouldApply: isScriptEntry },
@@ -155,33 +151,17 @@ export class Project {
   }
 
   public static async createProjectFromDirectory(folderPath: string) {
-    let config;
+    // build metadata
+    const config = await ProjectConfig.createProjectConfigFromDirectory(
+      folderPath
+    );
+
+    // process all the source files
     const fileCodeEntries: {
       filePath: string;
       code: string | undefined;
     }[] = [];
-
-    const configFilePath = path.join(folderPath, CONFIG_FILE_NAME);
-    if (fs.existsSync(configFilePath)) {
-      // todo use a more secure require/allow async
-      config = pipe(
-        configFilePath,
-        // require the config file
-        __non_webpack_require__ as (p: string) => any,
-        // parse the config file
-        ProjectConfig.decode,
-        fold(
-          // log any errors
-          (e) => {
-            console.log(e);
-            return undefined;
-          },
-          (config) => config
-        )
-      );
-    }
-    const srcFolderName = config?.sourceFolder || DEFAULT_PROJECT_SOURCE_FOLDER;
-    const srcFolderPath = path.join(folderPath, srcFolderName);
+    const srcFolderPath = config.getFullSourceFolderPath();
     if (fs.existsSync(srcFolderPath)) {
       // recursive function for creating code entries from a folder
       const read = (subFolderPath: string) =>
@@ -335,8 +315,9 @@ export class Project {
       let ast = parseCodeEntryAST(codeEntry);
 
       const isBootstrap =
-        this.config?.bootstrap &&
-        path.join(this.path, this.config.bootstrap) === codeEntry.filePath;
+        this.config?.configFile?.bootstrap &&
+        path.join(this.path, this.config.configFile?.bootstrap) ===
+          codeEntry.filePath;
       // check if the file is a component
       const isRenderableScript =
         isScriptEntry(codeEntry) &&

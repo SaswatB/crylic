@@ -1,7 +1,7 @@
 import WebpackWorker from "worker-loader!./webpack-worker";
 
+import { Project } from "../../lib/project/Project";
 import { RenderEntry } from "../../types/paint";
-import { Project } from "../Project";
 import { publishComponent, unpublishComponent } from "../publish-component";
 import { getReactRouterProxy, RouteDefinition } from "../react-router-proxy";
 import { webpackRunCode } from "./run-code-webpack";
@@ -44,8 +44,10 @@ interface RunnerContext {
   onPublish: (url: string) => void;
 
   // react router support
-  onRoutesDefined: (arg: RouteDefinition) => void;
-  onRouteChange: (route: string) => void;
+  onSwitchActive: (switchId: string, arg: RouteDefinition) => void;
+  onSwitchDeactivate: (switchId: string) => void;
+  onRouteActive: (routeId: string, route: string) => void;
+  onRouteDeactivate: (routeId: string) => void;
 }
 
 /**
@@ -58,8 +60,10 @@ export const webpackRunCodeWithWorker = async (
     window,
     onProgress,
     onPublish,
-    onRoutesDefined,
-    onRouteChange,
+    onSwitchActive,
+    onSwitchDeactivate,
+    onRouteActive,
+    onRouteDeactivate,
   }: RunnerContext
 ) => {
   const startTime = Date.now();
@@ -70,10 +74,10 @@ export const webpackRunCodeWithWorker = async (
     project.getCodeEntry(renderEntry.codeId)!.filePath
   }")
   ${
-    project.config?.bootstrap
+    project.config?.configFile?.bootstrap
       ? `export const bootstrap = require("${path.join(
           project.path,
-          project.config.bootstrap
+          project.config.configFile?.bootstrap
         )}");`
       : ""
   }
@@ -96,14 +100,10 @@ export const webpackRunCodeWithWorker = async (
       },
     ]);
 
-  const overrideWebpackConfig = project.config?.overrideWebpack?.path
-    ? path.join(project.path, project.config.overrideWebpack.path)
-    : undefined;
-
   const paths = {
     projectFolder: project.path,
     projectSrcFolder: project.sourceFolderPath,
-    overrideWebpackConfig,
+    overrideWebpackConfig: project.config.getFullOverrideWebpackPath(),
   };
 
   let bundle;
@@ -143,9 +143,13 @@ export const webpackRunCodeWithWorker = async (
     if (name === "react-router-dom")
       return getReactRouterProxy(
         renderEntry.route,
-        onRoutesDefined,
-        onRouteChange
+        onSwitchActive,
+        onSwitchDeactivate,
+        onRouteActive,
+        onRouteDeactivate
       );
+    if (name === "react-refresh/runtime")
+      return require("react-refresh/runtime");
     // normalize is injected into all frames by default, todo use this to override any setting that turns normalize off
     if (name === "normalize.css") return {};
     throw new Error(`Unable to require "${name}"`);

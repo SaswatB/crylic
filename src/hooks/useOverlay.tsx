@@ -12,9 +12,9 @@ import {
   getComponentElementsFromEvent,
 } from "../components/CompilerComponentView";
 import { Draggable } from "../components/Draggable";
+import { Project } from "../lib/project/Project";
 import { onMoveResizeCallback, SelectedElement } from "../types/paint";
 import { SelectModeType } from "../utils/constants";
-import { Project } from "../utils/Project";
 
 let lastDragResizeHandled = 0;
 export function useOverlay(
