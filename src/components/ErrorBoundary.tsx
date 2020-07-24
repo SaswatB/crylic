@@ -14,6 +14,10 @@ export class ErrorBoundary extends React.Component<{
     return !!this.state.error;
   }
 
+  setError(error: Error) {
+    this.setState({ error });
+  }
+
   resetError() {
     this.setState({ error: false });
   }
@@ -22,8 +26,43 @@ export class ErrorBoundary extends React.Component<{
     const { error } = this.state;
     if (error) {
       return (
-        <div className="w-full h-full p-5 overflow-auto bg-gray-900 text-white text-sm whitespace-pre-wrap">
-          {error.stack}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            boxSizing: "border-box",
+            minHeight: "min-content",
+            height: "100%",
+            padding: 20,
+            backgroundImage:
+              "linear-gradient( 135deg, #FEB692 10%, #EA5455 100%)",
+            color: "white",
+            textAlign: "center",
+          }}
+        >
+          <span>An error occurred:</span>
+          {error.message.length < 100 && (
+            <span style={{ fontSize: 24 }}>{error.message}</span>
+          )}
+          <div
+            style={{
+              whiteSpace: "pre",
+              overflow: "auto",
+              width: "100%",
+              background: "rgba(0,0,0,.5)",
+              padding: "20px",
+              margin: "20px",
+              boxSizing: "border-box",
+              // todo fix parent background if the frame is smaller than this height + title
+              minHeight: "300px",
+              minWidth: "300px",
+              textAlign: "left",
+            }}
+          >
+            {error.stack}
+          </div>
         </div>
       );
     }

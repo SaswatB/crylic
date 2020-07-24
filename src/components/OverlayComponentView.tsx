@@ -264,6 +264,11 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
             setViewContext(context);
             compilerProps?.onCompileEnd?.(renderEntry, context);
           }}
+          onCompileError={(e) => {
+            skipLoadingDebounce();
+            setLoading(false);
+            compilerProps?.onCompileError?.(e);
+          }}
           style={{
             ...compilerProps.style,
             width: `${frameSize.width}px`,

@@ -72,6 +72,7 @@ export interface CompilerComponentViewProps {
   renderEntry: RenderEntry;
   onCompileStart?: OnCompileStartCallback;
   onCompileEnd?: OnCompileEndCallback;
+  onCompileError?: (e: Error) => void;
   onNewPublishUrl?: (url: string) => void;
 }
 
@@ -86,6 +87,7 @@ export const CompilerComponentView: FunctionComponent<
       renderEntry,
       onCompileStart,
       onCompileEnd,
+      onCompileError,
       onNewPublishUrl,
       ...props
     },
@@ -269,6 +271,8 @@ export const CompilerComponentView: FunctionComponent<
           setActiveFrame(activeFrame === 1 ? 2 : 1);
         } catch (e) {
           console.log(e);
+          errorBoundary.current?.setError(e);
+          onCompileError?.(e);
         }
       })();
       // eslint-disable-next-line react-hooks/exhaustive-deps
