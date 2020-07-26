@@ -34,14 +34,12 @@ export const getComponentElementsFromEvent = (
   return componentView?.getElementsAtPoint(x, y) || [];
 };
 
-export type GetElementByLookupId = (
-  lookupId: string
-) => HTMLElement | null | undefined;
+export type GetElementsByLookupId = (lookupId: string) => HTMLElement[];
 
 export interface CompilerComponentViewRef {
   getRootElement(): HTMLBodyElement | undefined;
   getElementsAtPoint: (x: number, y: number) => HTMLElement[];
-  getElementByLookupId: GetElementByLookupId;
+  getElementsByLookupId: GetElementsByLookupId;
   // cleared on next compile
   addTempStyles: (
     lookupId: string,
@@ -74,6 +72,7 @@ export interface CompilerComponentViewProps {
   onCompileEnd?: OnCompileEndCallback;
   onCompileError?: (e: Error) => void;
   onNewPublishUrl?: (url: string) => void;
+  onReload?: (renderEntry: RenderEntry) => void;
 }
 
 export const CompilerComponentView: FunctionComponent<
@@ -89,40 +88,33 @@ export const CompilerComponentView: FunctionComponent<
       onCompileEnd,
       onCompileError,
       onNewPublishUrl,
+      onReload,
       ...props
     },
     ref
   ) => {
     const [tempStyles, setTempStyles] = useState<Record<string, Styles>>({});
-    const [activeFrame, setActiveFrame] = useState(1);
-    const frame1 = useRef<{
-      frameElement: HTMLIFrameElement;
-    }>(null);
-    const frame2 = useRef<{
+    const frame = useRef<{
       frameElement: HTMLIFrameElement;
     }>(null);
 
     const handle: CompilerComponentViewRef = {
       getRootElement() {
-        const iframeDocument = getActiveFrame().current?.frameElement
-          .contentDocument;
+        const iframeDocument = frame.current?.frameElement.contentDocument;
         return iframeDocument?.querySelector("body") || undefined;
       },
       getElementsAtPoint(x, y) {
-        const iframeDocument = getActiveFrame().current?.frameElement
-          .contentDocument;
+        const iframeDocument = frame.current?.frameElement.contentDocument;
         return (iframeDocument?.elementsFromPoint(x, y) || []) as HTMLElement[];
       },
-      getElementByLookupId(lookupId) {
-        const iframeDocument = getActiveFrame().current?.frameElement
-          .contentDocument;
-        return (
-          iframeDocument &&
-          project?.primaryElementEditor.getHTMLElementByLookupId(
-            iframeDocument,
-            lookupId
-          )
-        );
+      getElementsByLookupId(lookupId) {
+        const iframeDocument = frame.current?.frameElement.contentDocument;
+        return iframeDocument && project
+          ? project.primaryElementEditor.getHTMLElementsByLookupId(
+              iframeDocument,
+              lookupId
+            )
+          : [];
       },
       addTempStyles(lookupId, styles, persistRender) {
         const newTempStyles = produce(tempStyles, (draft) => {
@@ -135,9 +127,6 @@ export const CompilerComponentView: FunctionComponent<
     const handleRef = useUpdatingRef(handle);
     useImperativeHandle(ref, () => handle);
 
-    const getActiveFrame = () => (activeFrame === 1 ? frame1 : frame2);
-    const getInactiveFrame = () => (activeFrame === 1 ? frame2 : frame1);
-
     const lastPublishUrl = useRef<string>();
     if (!renderEntry.publish && lastPublishUrl.current) {
       // clear publish url if the render entry isn't published
@@ -145,8 +134,6 @@ export const CompilerComponentView: FunctionComponent<
     }
 
     const errorBoundary = useRef<ErrorBoundary>(null);
-    const [BootstrapElement, setBootstrapElement] = useState<any>();
-    const [CompiledElement, setCompiledElement] = useState<any>();
     const [debouncedCodeEntries] = useDebounce(project?.codeEntries, 150);
     useEffect(() => {
       (async () => {
@@ -189,74 +176,51 @@ export const CompilerComponentView: FunctionComponent<
               onRouteChangeSubject.next(route);
             }
           };
-          const codeExports = await webpackRunCodeWithWorker(
-            project,
-            renderEntry,
-            {
-              window: getInactiveFrame().current?.frameElement.contentWindow,
-              onProgress(arg) {
-                onProgressSubject.next(arg);
-              },
-              onPublish(url) {
-                if (url !== lastPublishUrl.current) {
-                  lastPublishUrl.current = url;
-                  onNewPublishUrl?.(url);
-                }
-              },
-              onSwitchActive(id, arg) {
-                switchContext[id] = arg;
-                refreshRouteDefined();
-              },
-              onSwitchDeactivate(id) {
-                delete switchContext[id];
-                refreshRouteDefined();
-              },
-              onRouteActive(id, route) {
-                routeContext[id] = route;
-                refreshRouteChange();
-              },
-              onRouteDeactivate(id) {
-                delete routeContext[id];
-                refreshRouteChange();
-              },
-            }
-          );
+          await webpackRunCodeWithWorker(project, renderEntry, {
+            frame: frame.current?.frameElement,
+            onProgress(arg) {
+              onProgressSubject.next(arg);
+            },
+            onPublish(url) {
+              if (url !== lastPublishUrl.current) {
+                lastPublishUrl.current = url;
+                onNewPublishUrl?.(url);
+              }
+            },
+            onReload() {
+              onReload?.(renderEntry);
+            },
+            onSwitchActive(id, arg) {
+              switchContext[id] = arg;
+              refreshRouteDefined();
+            },
+            onSwitchDeactivate(id) {
+              delete switchContext[id];
+              refreshRouteDefined();
+            },
+            onRouteActive(id, route) {
+              routeContext[id] = route;
+              refreshRouteChange();
+            },
+            onRouteDeactivate(id) {
+              delete routeContext[id];
+              refreshRouteChange();
+            },
+          });
           setTempStyles({});
-          // if nothing was returned, the compilation was likely preempted
-          if (!codeExports) return;
-          console.log("codeExports", codeExports);
 
-          setBootstrapElement(() =>
-            Object.values(codeExports.bootstrap || {}).find(
-              (e): e is Function => typeof e === "function"
-            )
-          );
-
-          const codeEntry = project.getCodeEntry(renderEntry.codeId);
-          const exportName = codeEntry?.exportIsDefault
-            ? "default"
-            : codeEntry?.exportName;
-          setCompiledElement(
-            () =>
-              (codeExports.component || {})[exportName || ""] ||
-              Object.values(codeExports.component || {}).find(
-                (e): e is Function => typeof e === "function"
-              )
-          );
-
-          getActiveFrame().current?.frameElement.contentDocument?.location.reload();
           if (errorBoundary.current?.hasError()) {
             errorBoundary.current.resetError();
           }
 
-          // wait until the dom is fully updated so that getElementByLookupId can work with the updated view
+          // wait until the dom is fully updated so that getElementsByLookupId can work with the updated view
           setTimeout(() =>
             requestAnimationFrame(
               () =>
-                getInactiveFrame().current &&
+                frame.current &&
                 onCompileEnd?.(renderEntry, {
                   ...handleRef.current,
-                  iframe: getInactiveFrame().current!.frameElement,
+                  iframe: frame.current!.frameElement,
                   onRoutesDefined: onRoutesDefinedSubject.pipe(
                     distinctUntilChanged(isEqual)
                   ),
@@ -266,9 +230,6 @@ export const CompilerComponentView: FunctionComponent<
                 })
             )
           );
-
-          // flip the active frame
-          setActiveFrame(activeFrame === 1 ? 2 : 1);
         } catch (e) {
           console.log(e);
           errorBoundary.current?.setError(e);
@@ -280,54 +241,19 @@ export const CompilerComponentView: FunctionComponent<
 
     const applyTempStyles = (newTempStyles: typeof tempStyles) => {
       Object.entries(newTempStyles).forEach(([lookupId, styles]) => {
-        const element = handle.getElementByLookupId(lookupId) as HTMLElement;
+        const elements = handle.getElementsByLookupId(lookupId);
         console.log("applying temp styles");
         styles.forEach(({ styleName, styleValue }) => {
-          // @ts-ignore ignore read-only css props
-          element.style[styleName] = styleValue;
+          elements.forEach((element) => {
+            // @ts-ignore ignore read-only css props
+            element.style[styleName] = styleValue;
+          });
         });
       });
     };
 
     useLayoutEffect(() => applyTempStyles(tempStyles));
 
-    const Wrapper = BootstrapElement || React.Fragment;
-    const renderFrameContent = () => (
-      <ErrorBoundary
-        ref={errorBoundary}
-        onError={(error, errorInfo) => {
-          console.log(error, errorInfo);
-        }}
-      >
-        <Wrapper>
-          {CompiledElement && React.createElement(CompiledElement)}
-        </Wrapper>
-      </ErrorBoundary>
-    );
-
-    return (
-      <>
-        <Frame
-          {...props}
-          style={{
-            ...props.style,
-            ...(activeFrame !== 1 && { display: "none" }),
-          }}
-          ref={frame1}
-        >
-          {activeFrame === 1 && renderFrameContent()}
-        </Frame>
-        <Frame
-          {...props}
-          style={{
-            ...props.style,
-            ...(activeFrame !== 2 && { display: "none" }),
-          }}
-          ref={frame2}
-        >
-          {activeFrame === 2 && renderFrameContent()}
-        </Frame>
-      </>
-    );
+    return <Frame {...props} ref={frame} />;
   }
 );

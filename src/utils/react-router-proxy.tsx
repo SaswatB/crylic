@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { isArray, omit } from "lodash";
 
 import { useUpdatingRef } from "../hooks/useUpdatingRef";
+import { createBrowserHistory, createHashHistory } from "../vendor/history";
 
 const LINK_DATA_ATTR = "paintlink";
 
@@ -12,7 +13,7 @@ export interface RouteDefinition {
 }
 
 export function getReactRouterProxy(
-  initialRoute: string | undefined,
+  iframeWindow: Window,
   onSwitchActive: (switchId: string, arg: RouteDefinition) => void,
   onSwitchDeactivate: (switchId: string) => void,
   onRouteActive: (routeId: string, route: string) => void,
@@ -21,8 +22,28 @@ export function getReactRouterProxy(
   const reactRouterDom = require("react-router-dom") as typeof import("react-router-dom");
   const reactRouterDomProxy = {
     ...reactRouterDom,
-    BrowserRouter: reactRouterDom.MemoryRouter,
-    HashRouter: reactRouterDom.MemoryRouter,
+    BrowserRouter: (props: any) => {
+      const historyRef = useRef<any>(
+        createBrowserHistory({ ...(props || {}), window: iframeWindow })
+      );
+      return (
+        <reactRouterDom.Router
+          history={historyRef.current}
+          children={props.children}
+        />
+      );
+    },
+    HashRouter: (props: any) => {
+      const historyRef = useRef<any>(
+        createHashHistory({ ...(props || {}), window: iframeWindow })
+      );
+      return (
+        <reactRouterDom.Router
+          history={historyRef.current}
+          children={props.children}
+        />
+      );
+    },
     Link: (props: any) => {
       // todo test ref
       const { Link } = reactRouterDom;
@@ -61,18 +82,6 @@ export function getReactRouterProxy(
       const history = useHistory();
       const historyRef = useUpdatingRef(history);
 
-      // override history.location for the first render to properly set the initial route
-      // and avoid flashing the home route on load
-      const [initialLocation, setInitialLocation] = useState(initialRoute);
-      useEffect(() => {
-        if (initialRoute) {
-          console.log("setting router initial route", initialRoute);
-          history.push(initialRoute);
-          setInitialLocation(undefined);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-      }, []);
-
       const routes: string[] = [];
       const children = !props.children
         ? []
@@ -99,16 +108,7 @@ export function getReactRouterProxy(
         // eslint-disable-next-line react-hooks/exhaustive-deps
       }, [routes.join()]);
 
-      return (
-        <Switch
-          {...props}
-          location={
-            initialLocation
-              ? { pathname: initialLocation }
-              : props?.location || history.location
-          }
-        />
-      );
+      return <Switch {...props} />;
     },
   };
   return reactRouterDomProxy;

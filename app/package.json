@@ -5,7 +5,8 @@
   "author": "Saswat Bhattacharya",
   "main": "build/electron.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@babel/core": "^7.10.2",
@@ -33,11 +34,13 @@
     "electron-window-state": "^5.0.3",
     "express": "^4.17.1",
     "file-loader": "^6.0.0",
+    "html-webpack-plugin": "^4.3.0",
     "less-loader": "^6.1.0",
     "memfs": "^3.2.0",
     "memory-fs": "^0.5.0",
     "oniguruma": "^7.2.1",
     "open": "^7.0.4",
+    "patch-package": "^6.2.2",
     "postcss": "^7.0.31",
     "postcss-loader": "^3.0.0",
     "react-refresh": "^0.8.3",
@@ -47,6 +50,7 @@
     "tailwindcss": "^1.4.6",
     "unionfs": "^4.4.0",
     "url-loader": "^4.1.0",
-    "webpack": "^4.42.0"
+    "webpack": "^4.42.0",
+    "webpack-dev-server": "^3.11.0"
   }
 }

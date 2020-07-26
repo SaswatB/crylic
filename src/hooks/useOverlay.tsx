@@ -85,16 +85,16 @@ export function useOverlay(
   } = useMemo(() => {
     if (!selectedElement) return {};
 
-    const componentElement = componentView?.getElementByLookupId(
+    const componentElements = componentView?.getElementsByLookupId(
       selectedElement?.lookupId
     );
     const pbcr = (selectedElement?.computedStyles.position === "static" &&
-      componentElement?.parentElement?.getBoundingClientRect()) || {
+      componentElements?.[0].parentElement?.getBoundingClientRect()) || {
       top: 0,
       left: 0,
       ...frameSize,
     };
-    const bcr = componentElement?.getBoundingClientRect();
+    const bcr = componentElements?.[0].getBoundingClientRect();
     if (bcr) {
       bcr.x -= pbcr.left;
       bcr.y -= pbcr.top;

@@ -193,7 +193,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
             />
           </>
         ) : null}
-        <IconButton
+        {/* <IconButton
           title={
             compilerProps.renderEntry.publish
               ? "Stop browser viewer"
@@ -207,7 +207,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
               : undefined,
           }}
           onClick={onTogglePublish}
-        />
+        /> */}
         <IconButton
           title="Resize Frame"
           className="ml-2"

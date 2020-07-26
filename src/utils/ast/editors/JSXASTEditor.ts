@@ -318,11 +318,11 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     return sourceMetadata;
   }
 
-  public getHTMLElementByLookupId(document: Document, lookupId: string) {
-    return (
-      document.querySelector<HTMLElement>(
+  public getHTMLElementsByLookupId(document: Document, lookupId: string) {
+    return Array.from(
+      document.querySelectorAll<HTMLElement>(
         `[data-${JSX_LOOKUP_DATA_ATTR}="${lookupId}"]`
-      ) || undefined
+      )
     );
   }
 

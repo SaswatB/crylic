@@ -41,6 +41,7 @@ export interface SelectedElement {
   renderId: string;
   lookupId: string;
   element: HTMLElement;
+  elements: HTMLElement[];
   styleGroups: StyleGroup[];
   computedStyles: CSSStyleDeclaration;
   inlineStyles: CSSStyleDeclaration;

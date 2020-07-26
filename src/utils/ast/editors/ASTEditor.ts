@@ -129,10 +129,10 @@ export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
     lookupId: string
   ): SourceMetadata | undefined;
 
-  public abstract getHTMLElementByLookupId(
+  public abstract getHTMLElementsByLookupId(
     document: Document,
     lookupId: string
-  ): HTMLElement | undefined;
+  ): HTMLElement[];
 
   public abstract getEditorDecorationsForElement(
     readContext: ReadContext<ASTType>,

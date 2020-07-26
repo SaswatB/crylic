@@ -8,7 +8,6 @@ import { useSnackbar } from "notistack";
 
 import {
   CompilerComponentViewRef,
-  GetElementByLookupId,
   OnCompileEndCallback,
   ViewContext,
 } from "./components/CompilerComponentView";
@@ -40,7 +39,7 @@ import {
   SelectModeType,
 } from "./utils/constants";
 import { routeComponent } from "./utils/defs/react-router-dom";
-import { buildOutline } from "./utils/utils";
+import { buildOutline, sleep } from "./utils/utils";
 import "./App.scss";
 
 const open = __non_webpack_require__("open") as typeof import("open");
@@ -76,45 +75,55 @@ function App() {
 
   const [selectMode, setSelectMode] = useState<SelectMode>();
   const [selectedElement, setSelectedElement] = useState<SelectedElement>();
+  // for debugging purposes
+  (window as any).selectedElement = selectedElement;
   // clear select mode on escape hotkey
   useHotkeys("escape", () => setSelectMode(undefined));
 
-  const selectElement = useUpdatingRef(
-    (renderId: string, componentElement: HTMLElement) => {
-      const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
-        componentElement
-      );
-      if (!lookupId) return;
-      const codeId = project?.primaryElementEditor.getCodeIdFromLookupId(
-        lookupId
-      );
-      if (!codeId) return;
-      const codeEntry = project?.getCodeEntry(codeId);
-      if (!codeEntry) return;
-
-      const styleGroups: StyleGroup[] = [];
-
-      project?.editorEntries.forEach(({ editor }) => {
-        styleGroups.push(
-          ...editor.getStyleGroupsFromHTMLElement(componentElement)
-        );
-      });
-
-      setSelectedElement({
-        renderId,
-        lookupId,
-        sourceMetadata: project!.primaryElementEditor.getSourceMetaDataFromLookupId(
-          { ast: codeEntry.ast, codeEntry },
-          lookupId
-        ),
-        viewContext: viewContextMap.current[renderId],
-        element: componentElement,
-        styleGroups,
-        computedStyles: window.getComputedStyle(componentElement),
-        inlineStyles: componentElement.style,
-      });
+  const selectElement = useUpdatingRef((renderId: string, lookupId: string) => {
+    const { getElementsByLookupId } = viewContextMap.current[renderId] || {};
+    const codeId = project?.primaryElementEditor.getCodeIdFromLookupId(
+      lookupId
+    );
+    if (!codeId) {
+      console.log("dropping element select, no code id");
+      return;
     }
-  );
+    const codeEntry = project?.getCodeEntry(codeId);
+    if (!codeEntry) {
+      console.log("dropping element select, no code entry");
+      return;
+    }
+    const componentElements = getElementsByLookupId?.(lookupId);
+    if (!componentElements?.length) {
+      console.log("dropping element select, no elements");
+      return;
+    }
+
+    const styleGroups: StyleGroup[] = [];
+
+    project?.editorEntries.forEach(({ editor }) => {
+      styleGroups.push(
+        ...editor.getStyleGroupsFromHTMLElement(componentElements[0])
+      );
+    });
+
+    setSelectedElement({
+      renderId,
+      lookupId,
+      sourceMetadata: project!.primaryElementEditor.getSourceMetaDataFromLookupId(
+        { ast: codeEntry.ast, codeEntry },
+        lookupId
+      ),
+      viewContext: viewContextMap.current[renderId],
+      element: componentElements[0],
+      elements: componentElements,
+      styleGroups,
+      // todo properly support multiple elements instead of taking the first one
+      computedStyles: window.getComputedStyle(componentElements[0]),
+      inlineStyles: componentElements[0].style,
+    });
+  });
 
   const [outlineMap, setOutlineMap] = useState<
     Record<string, OutlineElement[] | undefined>
@@ -134,50 +143,59 @@ function App() {
   };
 
   const compileTasks = useRef<
-    Record<
-      string,
-      ((getElementByLookupId: GetElementByLookupId) => void)[] | undefined
-    >
+    Record<string, ((viewContext: ViewContext) => void)[] | undefined>
   >({});
-  const onComponentViewCompiled: OnCompileEndCallback = (
-    renderEntry,
-    viewContext
-  ) => {
-    viewContextMap.current[renderEntry.id] = viewContext;
-    const { iframe, getElementByLookupId } = viewContext;
+  const onComponentViewCompiled = useUpdatingRef<OnCompileEndCallback>(
+    (renderEntry, viewContext) => {
+      viewContextMap.current[renderEntry.id] = viewContext;
+      const { iframe } = viewContext;
 
-    project?.editorEntries.forEach(({ editor }) => editor.onASTRender(iframe));
-
-    if (
-      selectedElement &&
-      project?.primaryElementEditor.getCodeIdFromLookupId(
-        selectedElement.lookupId
-      ) === renderEntry.codeId
-    ) {
-      const newSelectedComponent = getElementByLookupId(
-        selectedElement.lookupId
+      project?.editorEntries.forEach(({ editor }) =>
+        editor.onASTRender(iframe)
       );
-      if (newSelectedComponent) {
-        console.log(
-          "setting selected element post-compile",
-          selectedElement.lookupId
-        );
-        selectElement.current(
-          renderEntry.id,
-          newSelectedComponent as HTMLElement
-        );
-      } else {
-        setSelectedElement(undefined);
-      }
+
+      calculateOutline(renderEntry);
+
+      compileTasks.current[renderEntry.id]?.forEach((task) =>
+        task(viewContext)
+      );
+      compileTasks.current[renderEntry.id] = [];
     }
+  );
 
-    calculateOutline(renderEntry);
+  const onComponentViewReload = useUpdatingRef(
+    async (renderEntry: RenderEntry) => {
+      const { getElementsByLookupId } =
+        viewContextMap.current[renderEntry.id] || {};
 
-    compileTasks.current[renderEntry.id]?.forEach((task) =>
-      task(getElementByLookupId)
-    );
-    compileTasks.current[renderEntry.id] = [];
-  };
+      // refresh the selected element when the iframe reloads, if possible
+      if (selectedElement?.renderId === renderEntry.id) {
+        let newSelectedComponent = undefined;
+        for (let i = 0; i < 5 && !newSelectedComponent; i++) {
+          newSelectedComponent = getElementsByLookupId?.(
+            selectedElement.lookupId
+          )[0];
+          if (!newSelectedComponent) await sleep(100);
+        }
+
+        if (newSelectedComponent) {
+          console.log(
+            "setting selected element post-iframe reload",
+            selectedElement.lookupId
+          );
+          selectElement.current(renderEntry.id, selectedElement.lookupId);
+        } else {
+          console.log(
+            "unable to reselect selected element post-iframe reload",
+            selectedElement.lookupId
+          );
+          setSelectedElement(undefined);
+        }
+      }
+
+      calculateOutline(renderEntry);
+    }
+  );
 
   const onOverlaySelectElement = (
     renderId: string,
@@ -187,13 +205,11 @@ function App() {
     switch (selectMode?.type) {
       default:
       case SelectModeType.SelectElement:
-        console.log(
-          "setting selected from manual selection",
-          project?.primaryElementEditor.getLookupIdFromHTMLElement(
-            componentElement as HTMLElement
-          )
+        const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
+          componentElement
         );
-        selectElement.current(renderId, componentElement);
+        console.log("setting selected from manual selection", lookupId);
+        if (lookupId) selectElement.current(renderId, lookupId);
         break;
       case SelectModeType.AddElement: {
         const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
@@ -232,16 +248,22 @@ function App() {
         if (newChildLookupId !== undefined) {
           // try to select the newly added element when the CompilerComponentView next compiles
           compileTasks.current[renderId] = compileTasks.current[renderId] || [];
-          compileTasks.current[renderId]!.push((getElementByLookupId) => {
-            const newChildComponent = getElementByLookupId(newChildLookupId!);
-            if (newChildComponent) {
-              console.log(
-                "setting selected element through post-child add",
-                newChildLookupId
-              );
-              selectElement.current(renderId, newChildComponent as HTMLElement);
+          compileTasks.current[renderId]!.push(
+            async ({ getElementsByLookupId }) => {
+              let newChildComponent = undefined;
+              for (let i = 0; i < 5 && !newChildComponent; i++) {
+                newChildComponent = getElementsByLookupId(newChildLookupId!)[0];
+                if (!newChildComponent) await sleep(100);
+              }
+              if (newChildComponent) {
+                console.log(
+                  "setting selected element through post-child add",
+                  newChildLookupId
+                );
+                selectElement.current(renderId, newChildLookupId);
+              }
             }
-          });
+          );
         }
 
         setCodeAstEdit(newAst, codeEntry);
@@ -334,7 +356,12 @@ function App() {
     <SideBar
       project={project}
       outlineMap={outlineMap}
-      selectElement={(r, c) => selectElement.current(r, c)}
+      selectElement={(r, c) => {
+        const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
+          c
+        );
+        if (lookupId) selectElement.current(r, lookupId);
+      }}
       selectedElement={selectedElement}
       onChangeSelectMode={setSelectMode}
       updateSelectedElementStyle={updateSelectedElementStyle}
@@ -424,11 +451,12 @@ function App() {
           },
           project,
           renderEntry: entry,
-          onCompileEnd: onComponentViewCompiled,
+          onCompileEnd: (...args) => onComponentViewCompiled.current(...args),
           onNewPublishUrl(url) {
             // open a published component in a brower whenever it gets a new url
             open(url);
           },
+          onReload: (...args) => onComponentViewReload.current(...args),
         }}
         scaleRef={scaleRef}
         selectModeType={selectMode?.type}
@@ -550,21 +578,21 @@ function App() {
             onCloseCodeEntry={toggleCodeEntryEdit}
             selectedElementId={selectedElement?.lookupId}
             onSelectElement={(lookupId) => {
-              const newSelectedComponent = Object.values(componentViews.current)
-                .map((componentView) =>
-                  componentView?.getElementByLookupId(lookupId)
-                )
-                .filter((e) => !!e)[0];
-              if (newSelectedComponent) {
-                console.log(
-                  "setting selected element through editor cursor update",
-                  project?.primaryElementEditor.getLookupIdFromHTMLElement(
-                    newSelectedComponent as HTMLElement
-                  )
-                );
-                // todo reenable
-                // selectElement(newSelectedComponent as HTMLElement);
-              }
+              // todo reenable
+              // const newSelectedComponent = Object.values(componentViews.current)
+              //   .map((componentView) =>
+              //     componentView?.getElementsByLookupId(lookupId)
+              //   )
+              //   .filter((e) => !!e)[0];
+              // if (newSelectedComponent) {
+              //   console.log(
+              //     "setting selected element through editor cursor update",
+              //     project?.primaryElementEditor.getLookupIdFromHTMLElement(
+              //       newSelectedComponent as HTMLElement
+              //     )
+              //   );
+              //   selectElement(newSelectedComponent as HTMLElement);
+              // }
             }}
           />
         )}

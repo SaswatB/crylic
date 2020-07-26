@@ -1,37 +1,34 @@
 // import getCSSModuleLocalIdent from "react-dev-utils/getCSSModuleLocalIdent";
-import cors from "cors";
 import { cloneDeep } from "lodash";
+import { AddressInfo } from "net";
+
+import baseAppEntry from "!!raw-loader!../../assets/base-app-entry.html";
 
 type IFs = import("memfs").IFs;
 
 const path = __non_webpack_require__("path") as typeof import("path");
 const fs = __non_webpack_require__("fs") as typeof import("fs");
-const crypto = __non_webpack_require__("crypto") as typeof import("crypto");
 const process = __non_webpack_require__("process") as typeof import("process");
 
 let memfs: typeof import("memfs");
 let joinPath: typeof import("memory-fs/lib/join");
 let unionfs: typeof import("unionfs");
 let webpack: typeof import("webpack");
+let WebpackDevServer: typeof import("webpack-dev-server");
+let HtmlWebpackPlugin: typeof import("html-webpack-plugin");
 // let nodeSass: typeof import("node-sass");
 // @ts-ignore todo add types
 let tailwindcss: typeof import("tailwindcss");
 let ReactRefreshPlugin: typeof import("@pmmmwh/react-refresh-webpack-plugin");
-let express: typeof import("express");
-// @ts-ignore todo add types
-let send: typeof import("send");
 let dotenvExpand: typeof import("dotenv-expand");
 let dotenv: typeof import("dotenv");
 
+// todo make this a configuration
 const ENABLE_FAST_REFRESH = false;
 const NODE_ENV = "development";
 const REACT_APP = /^REACT_APP_/i;
 
 const overrideConfigCache: Record<string, Function | undefined> = {};
-
-let staticFileServer: ReturnType<typeof import("express")>;
-let assetPort = Promise.resolve(0);
-let assetSecurityToken: string;
 
 export function initialize(nodeModulesPath = "") {
   // needed to resolve loaders and babel plugins/presets
@@ -43,42 +40,23 @@ export function initialize(nodeModulesPath = "") {
   joinPath = __non_webpack_require__(`${nodeModulesPath}memory-fs/lib/join`);
   unionfs = __non_webpack_require__(`${nodeModulesPath}unionfs`);
   webpack = __non_webpack_require__(`${nodeModulesPath}webpack`);
+  WebpackDevServer = __non_webpack_require__(
+    `${nodeModulesPath}webpack-dev-server`
+  );
+  HtmlWebpackPlugin = __non_webpack_require__(
+    `${nodeModulesPath}html-webpack-plugin`
+  );
   // nodeSass = __non_webpack_require__(`${nodeModulesPath}node-sass`);
   tailwindcss = __non_webpack_require__(`${nodeModulesPath}tailwindcss`);
   ReactRefreshPlugin = __non_webpack_require__(
     `${nodeModulesPath}@pmmmwh/react-refresh-webpack-plugin`
   );
 
-  express = __non_webpack_require__(`${nodeModulesPath}express`);
-  send = __non_webpack_require__(`${nodeModulesPath}send`);
   dotenvExpand = __non_webpack_require__(`${nodeModulesPath}dotenv-expand`);
   dotenv = __non_webpack_require__(`${nodeModulesPath}dotenv`);
-
-  assetSecurityToken = crypto
-    .randomBytes(32)
-    .toString("base64")
-    .replace(/[+/=]/g, "");
-
-  staticFileServer = express();
-  staticFileServer.use(cors());
-  staticFileServer.get(`/files/${assetSecurityToken}/:codeId/*`, (req, res) => {
-    const staticPath = `/public/${req.params[0]}`;
-    console.log("static file request at", staticPath);
-    res.contentType(send.mime.lookup(staticPath) || "");
-    return res.end(
-      webpackCache[req.params.codeId]?.outputFs.readFileSync(staticPath)
-    );
-  });
-  assetPort = new Promise((resolve) => {
-    const serverInstance = staticFileServer.listen(0, "localhost", () => {
-      const { port } = serverInstance.address() as { port: number };
-      console.log("Static file server is running...", port);
-      resolve(port);
-    });
-  });
 }
 
-const getEnvVars = (projectFolder: string, assetPath: string) => {
+const getEnvVars = (projectFolder: string) => {
   const dotenvPath = path.resolve(projectFolder, ".env");
   // https://github.com/bkeepers/dotenv#what-other-env-files-can-i-use
   const dotenvFiles = [
@@ -100,7 +78,8 @@ const getEnvVars = (projectFolder: string, assetPath: string) => {
 
   const appEnv: Record<string, string | undefined> = {
     NODE_ENV: `"${NODE_ENV}"`,
-    PUBLIC_URL: `"${assetPath}"`,
+    // todo fill in
+    PUBLIC_URL: `""`,
     CRYLIC_ENABLED: "true",
   };
   // copy REACT_APP env vars
@@ -118,14 +97,18 @@ const getEnvVars = (projectFolder: string, assetPath: string) => {
 
 // supports ts(x), js(x), css, sass, less and everything else as static files
 const getWebpackModules = async (
-  assetPath: string,
+  sourcePath: string,
   env: Record<string, string | undefined>
 ) => {
   const fileLoaderOptions = {
     name: "static/media/[name].[hash:8].[ext]",
-    outputPath: "/public",
-    publicPath: assetPath,
   };
+
+  console.log("sourcePath", sourcePath);
+  let sourceInclude = sourcePath.replace(/(\\|\/)/g, path.sep);
+  if (!sourceInclude.endsWith(path.sep)) {
+    sourceInclude += path.sep;
+  }
 
   const loaders = [
     // embed small images as data urls
@@ -142,7 +125,7 @@ const getWebpackModules = async (
     // handle project code
     {
       test: /\.(jsx?|tsx?|mjs)$/,
-      // include: paths.appSrc,
+      include: sourceInclude,
       loader: "babel-loader",
       options: {
         presets: [
@@ -176,7 +159,10 @@ const getWebpackModules = async (
               },
             },
           ],
-          ENABLE_FAST_REFRESH && "react-refresh/babel",
+          ENABLE_FAST_REFRESH && [
+            "react-refresh/babel",
+            { skipEnvCheck: true },
+          ],
         ].filter((r) => !!r),
         cacheDirectory: true,
         cacheCompression: false,
@@ -284,6 +270,7 @@ const webpackCache: Record<
       inputFs: IFs;
       outputFs: IFs;
       savedCodeRevisions: Record<string, number | undefined>;
+      devport: number;
       runId: number;
       lastPromise?: Promise<unknown>;
     }
@@ -302,6 +289,7 @@ export const webpackRunCode = async (
     projectFolder: string;
     projectSrcFolder: string;
     overrideWebpackConfig?: string;
+    htmlTemplate?: string;
   },
   onProgress: (arg: { percentage: number; message: string }) => void
 ) => {
@@ -314,9 +302,32 @@ export const webpackRunCode = async (
   console.log("loading...", selectedCodeId, primaryCodeEntry, codeEntries);
   if (!primaryCodeEntry) throw new Error("Failed to find primary code entry");
 
+  const updateFiles = (
+    inputFs: IFs,
+    savedCodeRevisions: Record<string, number | undefined>
+  ) => {
+    // todo handle deleted code entries
+    codeEntries
+      .filter(
+        (entry) =>
+          entry.code !== undefined &&
+          entry.codeRevisionId !== savedCodeRevisions[entry.id]
+      )
+      .forEach((entry) => {
+        inputFs.mkdirpSync(path.dirname(entry.filePath));
+        inputFs.writeFileSync(entry.filePath, entry.code!);
+        savedCodeRevisions[entry.id] = entry.codeRevisionId;
+        console.log("updating webpack file", entry.filePath);
+      });
+  };
+
   if (!webpackCache[primaryCodeEntry.id]) {
-    const assetPath = `http://localhost:${await assetPort}/files/${assetSecurityToken}/${selectedCodeId}/`;
-    const env = getEnvVars(paths.projectFolder, assetPath);
+    const env = getEnvVars(paths.projectFolder);
+
+    const templateOptions =
+      paths.htmlTemplate && fs.existsSync(paths.htmlTemplate)
+        ? { template: paths.htmlTemplate }
+        : { templateContent: baseAppEntry };
 
     let options: import("webpack").Configuration = {
       mode: NODE_ENV,
@@ -324,10 +335,11 @@ export const webpackRunCode = async (
       entry: primaryCodeEntry.filePath,
       devtool: false,
       performance: false,
+      watch: false,
       output: {
         path: "/static",
         filename: "[name].js",
-        // publicPath:
+        publicPath: "/",
         // jsonpFunction:
         // devtoolModuleFilenameTemplate:
         chunkFilename: "[name].chunk.js",
@@ -335,7 +347,7 @@ export const webpackRunCode = async (
         libraryTarget: "umd",
         globalObject: "this",
       },
-      module: await getWebpackModules(assetPath, env),
+      module: await getWebpackModules(paths.projectSrcFolder, env),
       resolve: {
         // modules: ['node_modules', paths.appNodeModules].concat(
         //   modules.additionalModulePaths || []
@@ -380,7 +392,11 @@ export const webpackRunCode = async (
         },
       },
       plugins: [
-        // HtmlWebpackPlugin
+        // Generates an `index.html` file with the <script> injected.
+        new HtmlWebpackPlugin({
+          inject: true,
+          ...templateOptions,
+        }),
         // InterpolateHtmlPlugin
         // ModuleNotFoundPlugin
         new webpack.DefinePlugin({ "process.env": env }),
@@ -446,32 +462,67 @@ export const webpackRunCode = async (
       ...outputFs,
     };
 
+    const savedCodeRevisions = {};
+    updateFiles(inputFs, savedCodeRevisions);
+
+    // stub out compiler.watch so that webpack-dev-server doesn't call it and instead relies on the manual compiler.run calls made below
+    // const compilerWatch = compiler.watch;
+    compiler.watch = () => ({ close() {}, invalidate() {} });
+
+    const devServer = new WebpackDevServer(compiler, {
+      disableHostCheck: true,
+      compress: true,
+      clientLogLevel: "none",
+      // contentBase: paths.appPublic,
+      // contentBasePublicPath: paths.publicUrlOrPath,
+      watchContentBase: true,
+      hot: ENABLE_FAST_REFRESH,
+      transportMode: "ws",
+      injectClient: true,
+      // sockHost,
+      // sockPath,
+      // sockPort,
+      // publicPath: paths.publicUrlOrPath.slice(0, -1),
+      quiet: true,
+      // watchOptions: { ignored: ignoredFiles(paths.appSrc) },
+      // host,
+      // overlay: false,
+      historyApiFallback: {
+        disableDotRule: true,
+        index: "/", //paths.publicUrlOrPath,
+      },
+      // public: allowedHost,
+      // proxy,
+    });
+
+    // Launch WebpackDevServer.
+    const server = devServer.listen(0, (err) => {
+      if (err) {
+        return console.log(err);
+      }
+    });
+    const devport = await new Promise<number>((resolve) => {
+      server.once("listening", () => {
+        console.log("dev server listening", server.address());
+        resolve((server.address() as AddressInfo).port);
+        // todo add timeout
+      });
+    });
+
     console.log("initialized webpack", compiler, inputFs, outputFs);
     webpackCache[primaryCodeEntry.id] = {
       compiler,
       inputFs,
       outputFs,
-      savedCodeRevisions: {},
+      savedCodeRevisions,
+      devport,
       runId: 0,
     };
+  } else {
+    const { inputFs, savedCodeRevisions } = webpackCache[primaryCodeEntry.id]!;
+    updateFiles(inputFs, savedCodeRevisions);
   }
-  const { compiler, inputFs, outputFs, savedCodeRevisions } = webpackCache[
-    primaryCodeEntry.id
-  ]!;
-  // todo handle deleted code entries
-  codeEntries
-    .filter(
-      (entry) =>
-        entry.code !== undefined &&
-        entry.codeRevisionId !== savedCodeRevisions[entry.id]
-    )
-    .forEach((entry) => {
-      inputFs.mkdirpSync(path.dirname(entry.filePath));
-      inputFs.writeFileSync(entry.filePath, entry.code!);
-      savedCodeRevisions[entry.id] = entry.codeRevisionId;
-      console.log("updating webpack file", entry.filePath);
-    });
-
+  const { compiler, devport } = webpackCache[primaryCodeEntry.id]!;
   const runId = ++webpackCache[primaryCodeEntry.id]!.runId;
 
   // only allow one instance of webpack to run at a time
@@ -483,23 +534,17 @@ export const webpackRunCode = async (
   }
 
   console.log("running webpack");
-  const runPromise = new Promise<string>((resolve, reject) => {
+  const runPromise = new Promise<number>((resolve, reject) => {
     compiler.run((err, stats) => {
-      try {
-        if (err) throw err;
-
-        console.log("webpackRunCode", err, stats);
-        const bundle = outputFs.readFileSync("/static/main.js", {
-          encoding: "utf-8",
-        });
-        const endTime = new Date().getTime();
-        console.log("loaded", primaryCodeEntry.filePath, endTime - startTime);
-
-        resolve(bundle as string);
-      } catch (error) {
-        console.log("error file", primaryCodeEntry.filePath, error);
-        reject(error);
+      console.log("webpackRunCode", err, stats);
+      if (err) {
+        reject(err);
+        return;
       }
+
+      const endTime = new Date().getTime();
+      console.log("loaded", primaryCodeEntry.filePath, endTime - startTime);
+      resolve(devport);
     });
   }).finally(() => {
     webpackCache[primaryCodeEntry.id]!.lastPromise = undefined;

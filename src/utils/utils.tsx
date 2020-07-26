@@ -141,3 +141,6 @@ export const getRelativeImportPath = (codeEntry: CodeEntry, target: string) => {
   }
   return newPath;
 };
+
+export const sleep = (duration: number) =>
+  new Promise((resolve) => setTimeout(resolve, duration));

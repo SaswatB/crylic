@@ -1,0 +1,22 @@
+diff --git a/node_modules/webpack/lib/UmdMainTemplatePlugin.js b/node_modules/webpack/lib/UmdMainTemplatePlugin.js
+index 7843c78..95cbf7f 100644
+--- a/node_modules/webpack/lib/UmdMainTemplatePlugin.js
++++ b/node_modules/webpack/lib/UmdMainTemplatePlugin.js
+@@ -2,7 +2,7 @@
+ 	MIT License http://www.opensource.org/licenses/mit-license.php
+ 	Author Tobias Koppers @sokra
+ */
+-"use strict";
++
+ 
+ const { ConcatSource, OriginalSource } = require("webpack-sources");
+ const Template = require("./Template");
+@@ -213,7 +213,7 @@ class UmdMainTemplatePlugin {
+ 
+ 			return new ConcatSource(
+ 				new OriginalSource(
+-					"(function webpackUniversalModuleDefinition(root, factory) {\n" +
++					"window.paintBundle = () => (function webpackUniversalModuleDefinition(root, factory) {\n" +
+ 						getAuxilaryComment("commonjs2") +
+ 						"	if(typeof exports === 'object' && typeof module === 'object')\n" +
+ 						"		module.exports = factory(" +

@@ -6,6 +6,7 @@ import path from "path";
 import { PackageJson } from "../../types/paint";
 import {
   CONFIG_FILE_NAME,
+  DEFAULT_PROJECT_HTML_TEMPLATE_PATH,
   DEFAULT_PROJECT_SOURCE_FOLDER,
 } from "../../utils/constants";
 
@@ -24,6 +25,13 @@ const ProjectConfigFile = it.type({
     it.type({
       enabled: it.boolean,
       config: it.union([it.string, it.undefined]),
+    }),
+    it.undefined,
+  ]),
+  htmlTemplate: it.union([
+    it.type({
+      path: it.string,
+      rootSelector: it.union([it.string, it.undefined]),
     }),
     it.undefined,
   ]),
@@ -94,5 +102,11 @@ export class ProjectConfig {
     return this.configFile?.overrideWebpack?.path
       ? path.join(this.projectPath, this.configFile.overrideWebpack.path)
       : undefined;
+  }
+  public getFullHtmlTemplatePath() {
+    return path.join(
+      this.projectPath,
+      this.configFile?.htmlTemplate?.path || DEFAULT_PROJECT_HTML_TEMPLATE_PATH
+    );
   }
 }
