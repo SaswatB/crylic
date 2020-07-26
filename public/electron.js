@@ -13,6 +13,7 @@ require(sentryPath);
 // Modules to control application life and create native browser window
 const { app, BrowserWindow } = require("electron");
 
+app.allowRendererProcessReuse = false;
 app.commandLine.appendSwitch("disable-site-isolation-trials");
 // const {
 //   default: installExtension,
@@ -40,6 +41,7 @@ function createWindow() {
       nodeIntegration: true,
       nodeIntegrationInWorker: true,
       // nodeIntegrationInSubFrames: true,
+      enableRemoteModule: true,
       webSecurity: false,
     },
   });

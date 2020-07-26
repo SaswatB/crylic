@@ -173,6 +173,7 @@ ReactDOM.render(
   const workerCallbackTime = Date.now();
 
   frame!.onload = () => {
+    console.log("frame onload");
     // run the resuulting bundle on the provided iframe, with stubs
     (frame!.contentWindow! as any).require = (name: string) => {
       if (name === "react") return require("react");
