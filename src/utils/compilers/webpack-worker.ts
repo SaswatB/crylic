@@ -9,7 +9,7 @@ self.addEventListener(
       initialize(e.data.nodeModulesPath);
     } else if (e.data.action === "compile") {
       const { codeEntries, selectedCodeId, compileId, paths } = e.data;
-      const bundle = await webpackRunCode(
+      const result = await webpackRunCode(
         codeEntries,
         selectedCodeId,
         paths,
@@ -22,7 +22,7 @@ self.addEventListener(
           });
         }
       );
-      postMessage({ type: "compile-finished", compileId, bundle });
+      postMessage({ type: "compile-finished", compileId, result });
     }
   },
   false

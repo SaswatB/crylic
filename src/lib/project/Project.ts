@@ -316,13 +316,12 @@ export class Project {
       let ast = parseCodeEntryAST(codeEntry);
 
       const isBootstrap =
-        this.config?.configFile?.bootstrap &&
+        !!this.config?.configFile?.bootstrap &&
         path.join(this.path, this.config.configFile?.bootstrap) ===
           codeEntry.filePath;
       // check if the file is a component
       const isRenderableScript =
         isScriptEntry(codeEntry) &&
-        !isBootstrap &&
         // todo add an option to disable this check (component files must start with an uppercase letter)
         !!codeEntry.filePath.match(/(^|\\|\/)[A-Z][^/\\]*$/) &&
         // todo add an option to disable this check (test and declaration files are ignored)
@@ -331,10 +330,10 @@ export class Project {
       let isRenderable = false;
       let exportName = undefined;
       let exportIsDefault = undefined;
-      if (isRenderableScript) {
+      if (isRenderableScript || isBootstrap) {
         const componentExport = getComponentExport(ast as any);
         if (componentExport) {
-          isRenderable = true;
+          isRenderable = !isBootstrap;
           exportName =
             componentExport.name ||
             upperFirst(
@@ -360,6 +359,7 @@ export class Project {
         isRenderable,
         // this code entry has to be a script or style entry by this point so it's editable
         isEditable: true,
+        isBootstrap,
         exportName,
         exportIsDefault,
       };

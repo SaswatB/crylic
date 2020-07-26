@@ -12,10 +12,12 @@ require(sentryPath);
 
 // Modules to control application life and create native browser window
 const { app, BrowserWindow } = require("electron");
-const {
-  default: installExtension,
-  REACT_DEVELOPER_TOOLS,
-} = require("electron-devtools-installer");
+
+app.commandLine.appendSwitch("disable-site-isolation-trials");
+// const {
+//   default: installExtension,
+//   REACT_DEVELOPER_TOOLS,
+// } = require("electron-devtools-installer");
 
 const windowStateKeeper = require("electron-window-state");
 
@@ -37,6 +39,8 @@ function createWindow() {
       preload: sentryPath,
       nodeIntegration: true,
       nodeIntegrationInWorker: true,
+      // nodeIntegrationInSubFrames: true,
+      webSecurity: false,
     },
   });
 
@@ -63,12 +67,12 @@ function createWindow() {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  installExtension(REACT_DEVELOPER_TOOLS)
-    .then((name) => {
-      console.log(`Added Extension:  ${name}`);
-      createWindow();
-    })
-    .catch((err) => console.log("An error occurred: ", err));
+  // installExtension(REACT_DEVELOPER_TOOLS)
+  //   .then((name) => {
+  //     console.log(`Added Extension:  ${name}`);
+  createWindow();
+  // })
+  // .catch((err) => console.log("An error occurred: ", err));
 });
 
 // Quit when all windows are closed.

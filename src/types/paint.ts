@@ -15,6 +15,7 @@ export interface CodeEntry {
   codeWithLookupData?: string;
   isRenderable?: boolean;
   isEditable?: boolean;
+  isBootstrap?: boolean;
   exportName?: string;
   exportIsDefault?: boolean;
 }

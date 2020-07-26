@@ -20,7 +20,7 @@ export const BuildProgress: FunctionComponent<Props> = ({ compileContext }) => {
         variant={progressVariant}
         value={(buildProgress?.percentage || 0) ** 0.5 * 100}
       />
-      {startCase(buildProgress?.message || "")}
+      {startCase(buildProgress?.message || "Loading")}
     </div>
   );
 };

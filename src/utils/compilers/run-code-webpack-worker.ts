@@ -109,7 +109,7 @@ export const webpackRunCodeWithWorker = async (
   let bundle;
   if (WORKER_ENABLED) {
     // register a callback for then the worker completes
-    const workerCallback = new Promise<{ bundle: string }>((resolve) => {
+    const workerCallback = new Promise<{ result: string }>((resolve) => {
       compileCallbacks[compileId] = resolve;
     });
     progressCallbacks[compileId] = onProgress;
@@ -124,7 +124,7 @@ export const webpackRunCodeWithWorker = async (
     });
 
     // wait for the worker to compile
-    ({ bundle } = await workerCallback!);
+    ({ result: bundle } = await workerCallback!);
 
     delete compileCallbacks[compileId];
     delete progressCallbacks[compileId];
