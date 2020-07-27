@@ -299,7 +299,6 @@ export const webpackRunCode = async (
   const primaryCodeEntry = codeEntries.find(
     (entry) => entry.id === selectedCodeId
   );
-  console.log("loading...", selectedCodeId, primaryCodeEntry, codeEntries);
   if (!primaryCodeEntry) throw new Error("Failed to find primary code entry");
 
   const updateFiles = (
@@ -509,7 +508,7 @@ export const webpackRunCode = async (
       });
     });
 
-    console.log("initialized webpack", compiler, inputFs, outputFs);
+    console.log("initialized webpack");
     webpackCache[primaryCodeEntry.id] = {
       compiler,
       inputFs,

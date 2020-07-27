@@ -8,6 +8,25 @@ module.exports = (env, argv) => ({
     path: path.resolve(__dirname, "build-main"),
     filename: "[name].js",
   },
+  module: {
+    rules: [
+      {
+        // Include ts, tsx, js, and jsx files.
+        test: /\.(ts|js)x?$/,
+        exclude: /node_modules/,
+        loader: "babel-loader",
+        options: {
+          presets: [
+            ["@babel/preset-env", { targets: { electron: "8" } }],
+            "@babel/preset-typescript",
+          ],
+        },
+      },
+    ],
+  },
+  resolve: {
+    extensions: [".mjs", ".js", ".jsx", ".ts", ".tsx", ".json"],
+  },
   plugins: [
     argv.mode !== "development" &&
       new SentryWebpackPlugin({

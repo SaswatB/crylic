@@ -1,9 +1,10 @@
 import path from "path";
 
+const dirPath = __non_webpack_require__
+  .resolve("webpack")
+  .replace(/node_modules[/\\].*$/, "");
 const sentryPath = path.join(
-  __non_webpack_require__
-    .resolve("webpack")
-    .replace(/node_modules[/\\].*$/, ""),
+  dirPath,
   process.env.NODE_ENV === "development"
     ? "public/sentry.js"
     : "build/sentry.js"
@@ -62,7 +63,7 @@ function createWindow() {
   mainWindow.loadURL(
     process.env.NODE_ENV === "development"
       ? "http://localhost:4000"
-      : `file://${path.join(__dirname, "../build/index.html")}`
+      : `file://${path.join(dirPath, "build/index.html")}`
   );
 
   // Open the DevTools.
@@ -96,3 +97,7 @@ app.on("activate", function () {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+
+// start up the webpack worker
+// eslint-disable-next-line import/first
+import "./utils/compilers/webpack-worker";

@@ -1,5 +1,3 @@
-import WebpackWorker from "worker-loader!./webpack-worker";
-
 import { Project } from "../../lib/project/Project";
 import { CodeEntry, RenderEntry } from "../../types/paint";
 import { DEFAULT_HTML_TEMPLATE_SELECTOR } from "../constants";
@@ -9,27 +7,29 @@ import { webpackRunCode } from "./run-code-webpack";
 
 const path = __non_webpack_require__("path") as typeof import("path");
 
+const { ipcRenderer } = __non_webpack_require__(
+  "electron"
+) as typeof import("electron");
+
 const WORKER_ENABLED = true;
 
-let worker: WebpackWorker;
 const progressCallbacks: Record<number, Function> = {};
 const compileCallbacks: Record<number, Function> = {};
 if (WORKER_ENABLED) {
   // start the worker
   console.log("starting webpack worker");
-  worker = new WebpackWorker();
-  worker.onmessage = (e) => {
-    switch (e.data.type) {
+  ipcRenderer.on("webpack-renderer-message", (e, data) => {
+    switch (data.type) {
       case "percent-update":
-        progressCallbacks[e.data.compileId]?.(e.data);
+        progressCallbacks[data.compileId]?.(data);
         break;
       case "compile-finished":
-        compileCallbacks[e.data.compileId]?.(e.data);
+        compileCallbacks[data.compileId]?.(data);
         break;
     }
-  };
+  });
   // initialize the worker with the local node modules
-  worker.postMessage({
+  ipcRenderer.send("webpack-worker-message", {
     action: "initialize",
     nodeModulesPath: __non_webpack_require__
       .resolve("webpack")
@@ -153,7 +153,7 @@ ReactDOM.render(
     progressCallbacks[compileId] = onProgress;
 
     // set a message to the worker for compiling code
-    worker.postMessage({
+    ipcRenderer.send("webpack-worker-message", {
       action: "compile",
       codeEntries,
       selectedCodeId: bundleId,
