@@ -1,26 +1,30 @@
-require("dotenv").config();
-const path = require("path");
-const isDev = require("electron-is-dev");
+import path from "path";
 
 const sentryPath = path.join(
-  __dirname,
-  isDev ? "sentry.js" : "../build/sentry.js"
+  __non_webpack_require__
+    .resolve("webpack")
+    .replace(/node_modules[/\\].*$/, ""),
+  process.env.NODE_ENV === "development"
+    ? "public/sentry.js"
+    : "build/sentry.js"
 );
 
 // init sentry on the main process
-require(sentryPath);
+__non_webpack_require__(sentryPath);
 
-// Modules to control application life and create native browser window
-const { app, BrowserWindow } = require("electron");
+const windowStateKeeper = __non_webpack_require__("electron-window-state");
+const { app, BrowserWindow } = __non_webpack_require__("electron");
 
 app.allowRendererProcessReuse = false;
+app.commandLine.appendSwitch(
+  "disable-features",
+  "OutOfBlinkCors,IsolateOrigins,site-per-process,CrossSiteDocumentBlockingAlways,CrossSiteDocumentBlockingIfIsolating"
+);
 app.commandLine.appendSwitch("disable-site-isolation-trials");
 // const {
 //   default: installExtension,
 //   REACT_DEVELOPER_TOOLS,
 // } = require("electron-devtools-installer");
-
-const windowStateKeeper = require("electron-window-state");
 
 function createWindow() {
   // Load the previous state with fallback to defaults
@@ -56,7 +60,7 @@ function createWindow() {
 
   // load the url of the app.
   mainWindow.loadURL(
-    isDev
+    process.env.NODE_ENV === "development"
       ? "http://localhost:4000"
       : `file://${path.join(__dirname, "../build/index.html")}`
   );

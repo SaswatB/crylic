@@ -12,6 +12,8 @@ node_modules
 /build
 /app/build
 /dist
+/build-main
+/app/build-main
 
 # misc
 .DS_Store

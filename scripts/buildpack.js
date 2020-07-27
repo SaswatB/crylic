@@ -42,6 +42,7 @@ archive.pipe(output);
 
 // append files from a sub-directory
 archive.directory(getProjectPath("app/build/"), "app/build");
+archive.directory(getProjectPath("app/build-main/"), "app/build-main");
 archive.directory(getProjectPath("app/patches/"), "app/patches");
 
 // finalize the archive (ie we are done appending files but streams have to finish yet)

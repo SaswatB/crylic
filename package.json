@@ -3,14 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "author": "Saswat Bhattacharya",
-  "main": "public/electron.js",
+  "main": "build-main/electron.js",
   "homepage": "./",
   "scripts": {
     "start": "react-app-rewired start",
-    "build": "npx rimraf app/build && react-app-rewired build && npx node-mv build app/build && npx rimraf --glob ./app/build/**/*.map && node ./scripts/postbuild.js",
+    "build": "npx rimraf app/build && npx rimraf app/build-main && webpack --config webpack.main.config.js --mode production && react-app-rewired build && npx node-mv build-main app/build-main && npx node-mv build app/build && npx rimraf --glob ./app/build*/**/*.map && node ./scripts/postbuild.js",
     "test": "jest test",
     "eject": "react-app-rewired eject",
-    "electron": "electron --remote-debugging-port=9222 .",
+    "electron": "webpack --config webpack.main.config.js --mode development && electron --remote-debugging-port=9222 .",
     "package": "electron-builder",
     "postinstall": "patch-package && npx electron-rebuild -o node-sass,oniguruma",
     "lint": "npx eslint --ext .ts,.tsx,.js src/.",
@@ -52,7 +52,6 @@
     "dotenv": "^8.2.0",
     "dotenv-expand": "^5.1.0",
     "electron-devtools-installer": "^3.0.0",
-    "electron-is-dev": "^1.2.0",
     "electron-window-state": "^5.0.3",
     "express": "^4.17.1",
     "file-loader": "^6.0.0",
@@ -141,7 +140,8 @@
     "eslint": "^6.8.0",
     "eslint-plugin-simple-import-sort": "^5.0.2",
     "jest-raw-loader": "^1.0.1",
-    "node-gyp": "^6.1.0"
+    "node-gyp": "^6.1.0",
+    "webpack-cli": "^3.3.12"
   },
   "eslintConfig": {
     "extends": "react-app",
