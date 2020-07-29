@@ -197,8 +197,10 @@ ReactDOM.render(
     delete (frame!.contentWindow! as any).require;
     onReload();
   };
-  if (!frame!.contentWindow!.location.href.includes(`${devport}`))
+  if (!frame!.contentWindow!.location.href.includes(`${devport}`)) {
     frame!.contentWindow!.location.href = `http://localhost:${devport}/`;
+    console.log("refreshing iframe");
+  }
 
   // todo fix
   // if (renderEntry.publish) {
