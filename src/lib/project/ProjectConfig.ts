@@ -12,6 +12,11 @@ import {
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 
+function requireUncached(module: string) {
+  delete __non_webpack_require__.cache[__non_webpack_require__.resolve(module)];
+  return __non_webpack_require__(module);
+}
+
 const ProjectConfigFile = it.type({
   bootstrap: it.union([it.string, it.undefined]),
   sourceFolder: it.union([it.string, it.undefined]),
@@ -35,8 +40,18 @@ const ProjectConfigFile = it.type({
     }),
     it.undefined,
   ]),
+  analyzer: it.union([
+    it.type({
+      allowLowerCaseComponentFiles: it.union([it.boolean, it.undefined]),
+      allowTestComponentFiles: it.union([it.boolean, it.undefined]),
+      allowDeclarationComponentFiles: it.union([it.boolean, it.undefined]),
+      disableComponentExportsGuard: it.union([it.boolean, it.undefined]),
+      forceUseComponentDefaultExports: it.union([it.boolean, it.undefined]),
+    }),
+    it.undefined,
+  ]),
 });
-type ProjectConfigFile = it.TypeOf<typeof ProjectConfigFile>;
+export type ProjectConfigFile = it.TypeOf<typeof ProjectConfigFile>;
 
 export class ProjectConfig {
   protected constructor(
@@ -56,7 +71,7 @@ export class ProjectConfig {
       configFile = pipe(
         configFilePath,
         // require the config file
-        __non_webpack_require__ as (p: string) => any,
+        requireUncached,
         // parse the config file
         ProjectConfigFile.decode,
         fold(

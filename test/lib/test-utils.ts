@@ -2,8 +2,11 @@ import { namedTypes as t } from "ast-types";
 import { CSSASTNode } from "gonzales-pe";
 
 import { Project } from "../../src/lib/project/Project";
-import { ProjectConfig } from "../../src/lib/project/ProjectConfig";
-import { CodeEntry } from "../../src/types/paint";
+import {
+  ProjectConfig,
+  ProjectConfigFile,
+} from "../../src/lib/project/ProjectConfig";
+import { CodeEntry, PackageJson } from "../../src/types/paint";
 import {
   parseCodeEntryAST,
   prettyPrintCodeEntryAST,
@@ -11,14 +14,20 @@ import {
 import { ASTEditor } from "../../src/utils/ast/editors/ASTEditor";
 
 class TestProjectConfig extends ProjectConfig {
-  public constructor() {
-    super("", undefined, undefined);
+  public constructor(
+    configFile: ProjectConfigFile | undefined = undefined,
+    packageJson: PackageJson | undefined = undefined
+  ) {
+    super("", configFile, packageJson);
   }
 }
 
-class TestProject extends Project {
-  public constructor() {
-    super("", "", new TestProjectConfig());
+export class TestProject extends Project {
+  public constructor(config = new TestProjectConfig()) {
+    super("", "", config);
+  }
+  public getCodeEntryMetaData(codeEntry: CodeEntry) {
+    return super.getCodeEntryMetaData(codeEntry);
   }
 }
 

@@ -306,7 +306,7 @@ export class Project {
     };
   }
 
-  private getCodeEntryMetaData(codeEntry: CodeEntry) {
+  protected getCodeEntryMetaData(codeEntry: CodeEntry) {
     if (!isScriptEntry(codeEntry) && !isStyleEntry(codeEntry)) {
       return { isRenderable: false, isEditable: isImageEntry(codeEntry) };
     }
@@ -321,29 +321,42 @@ export class Project {
           codeEntry.filePath;
       // check if the file is a component
       const isRenderableScript =
+        // todo add an option to support other types of scripts
         isScriptEntry(codeEntry) &&
-        // todo add an option to disable this check (component files must start with an uppercase letter)
-        !!codeEntry.filePath.match(/(^|\\|\/)[A-Z][^/\\]*$/) &&
-        // todo add an option to disable this check (test and declaration files are ignored)
-        !codeEntry.filePath.match(/\.(test|d)\.[jt]sx?$/);
+        // by default component files must start with an uppercase letter
+        (this.config.configFile?.analyzer?.allowLowerCaseComponentFiles ||
+          !!codeEntry.filePath.match(/(^|\\|\/)[A-Z][^/\\]*$/)) &&
+        // by default test and declaration files are ignored)
+        (this.config.configFile?.analyzer?.allowTestComponentFiles ||
+          !codeEntry.filePath.match(/\.test\.[jt]sx?$/)) &&
+        (this.config.configFile?.analyzer?.allowDeclarationComponentFiles ||
+          !codeEntry.filePath.match(/\.d\.ts$/));
 
       let isRenderable = false;
       let exportName = undefined;
       let exportIsDefault = undefined;
       if (isRenderableScript || isBootstrap) {
         const componentExport = getComponentExport(ast as any);
+        const baseComponentName = upperFirst(
+          camelCase(
+            path
+              .basename(codeEntry.filePath)
+              .replace(SCRIPT_EXTENSION_REGEX, "")
+          )
+        );
         if (componentExport) {
           isRenderable = !isBootstrap;
-          exportName =
-            componentExport.name ||
-            upperFirst(
-              camelCase(
-                path
-                  .basename(codeEntry.filePath)
-                  .replace(SCRIPT_EXTENSION_REGEX, "")
-              )
-            );
-          exportIsDefault = componentExport.isDefault;
+          exportName = componentExport.name || baseComponentName;
+          exportIsDefault =
+            this.config.configFile?.analyzer?.forceUseComponentDefaultExports ||
+            componentExport.isDefault;
+        } else if (
+          this.config.configFile?.analyzer?.disableComponentExportsGuard
+        ) {
+          // since static analysis failed but we still need allow this file as a component guess that it's a default export
+          isRenderable = !isBootstrap;
+          exportName = baseComponentName;
+          exportIsDefault = true;
         }
       }
 
