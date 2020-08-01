@@ -187,7 +187,7 @@ ReactDOM.render(
           onRouteDeactivate
         );
       if (name === "react-refresh/runtime")
-        return __non_webpack_require__("react-refresh/runtime");
+        return require("react-refresh/runtime");
       if (name === "normalize.css") return {};
       throw new Error(`Unable to require "${name}"`);
     };

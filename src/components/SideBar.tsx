@@ -24,6 +24,7 @@ import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import TreeItem from "@material-ui/lab/TreeItem";
 import TreeView from "@material-ui/lab/TreeView";
 import { startCase, uniq } from "lodash";
+import path from "path";
 
 import { Tabs, TabsRef } from "../components/Tabs";
 import { useDebouncedFunction } from "../hooks/useDebouncedFunction";
@@ -80,8 +81,6 @@ import {
 import { Collapsible } from "./Collapsible";
 import { IconButton } from "./IconButton";
 import { Tour, TourContext } from "./Tour";
-
-const path = __non_webpack_require__("path") as typeof import("path");
 
 type EditorHook<T> = useInputFunction<
   {

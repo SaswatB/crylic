@@ -44,7 +44,6 @@
     "postcss-loader": "^3.0.0",
     "react-refresh": "^0.8.3",
     "sassjs-loader": "^2.0.0",
-    "send": "^0.17.1",
     "style-loader": "^1.2.1",
     "tailwindcss": "^1.4.6",
     "unionfs": "^4.4.0",

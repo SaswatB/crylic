@@ -1,9 +1,9 @@
 import React, { FunctionComponent, useEffect, useRef } from "react";
+import mime from "mime";
 
 import { CodeEntry } from "../../types/paint";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
-const send = __non_webpack_require__("send");
 
 interface Props {
   codeEntry: CodeEntry;
@@ -13,7 +13,7 @@ export const ImageViewer: FunctionComponent<Props> = ({ codeEntry }) => {
 
   useEffect(() => {
     const blob = new Blob([fs.readFileSync(codeEntry.filePath)], {
-      type: send.mime.lookup(codeEntry.filePath) || "image/jpeg",
+      type: mime.getType(codeEntry.filePath) || "image/jpeg",
     });
     const url = URL.createObjectURL(blob);
     imgRef.current!.src = url;

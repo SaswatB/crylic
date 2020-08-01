@@ -3,6 +3,7 @@ import { NodePath } from "ast-types/lib/node-path";
 import { pipe } from "fp-ts/lib/pipeable";
 import { omit, startCase } from "lodash";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+import path from "path";
 import { types } from "recast";
 
 import {
@@ -34,8 +35,6 @@ import {
   ReadContext,
   StyleGroup,
 } from "./ASTEditor";
-
-const path = __non_webpack_require__("path") as typeof import("path");
 
 const { builders: b } = types;
 

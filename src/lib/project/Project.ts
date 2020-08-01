@@ -3,6 +3,7 @@ import deepFreeze from "deep-freeze-strict";
 import { MakeDirectoryOptions } from "fs";
 import produce, { immerable } from "immer";
 import { camelCase, uniqueId, upperFirst } from "lodash";
+import path from "path";
 import { Readable } from "stream";
 import yauzl from "yauzl";
 
@@ -35,7 +36,6 @@ import { ProjectConfig } from "./ProjectConfig";
 import projectTemplate from "!!../../../loaders/binaryLoader!../../assets/project-template.zip";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
-const path = __non_webpack_require__("path") as typeof import("path");
 
 type EditorEntry<T> = {
   shouldApply: (entry: CodeEntry) => boolean;

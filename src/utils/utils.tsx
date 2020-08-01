@@ -1,11 +1,10 @@
 import React from "react";
 import { startCase, uniqueId } from "lodash";
+import path from "path";
 import { Readable } from "stream";
 
 import { Project } from "../lib/project/Project";
 import { CodeEntry, OutlineElement } from "../types/paint";
-
-const path = __non_webpack_require__("path") as typeof import("path");
 
 export const STYLE_EXTENSION_REGEX = /\.(css|s[ac]ss|less)$/i;
 export const SCRIPT_EXTENSION_REGEX = /\.[jt]sx?$/i;
