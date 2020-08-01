@@ -35,7 +35,7 @@ index e17c488..afa980a 100644
  
            } // For plain functions and arrows, use name as a heuristic.
 diff --git a/node_modules/react-refresh/runtime.js b/node_modules/react-refresh/runtime.js
-index 28e3b0c..55d0766 100644
+index 28e3b0c..86c2a7f 100644
 --- a/node_modules/react-refresh/runtime.js
 +++ b/node_modules/react-refresh/runtime.js
 @@ -1,7 +1,7 @@
