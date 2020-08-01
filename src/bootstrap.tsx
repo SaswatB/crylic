@@ -3,9 +3,12 @@ import { createMuiTheme, ThemeProvider } from "@material-ui/core";
 import blue from "@material-ui/core/colors/blue";
 import purple from "@material-ui/core/colors/purple";
 import { SnackbarProvider } from "notistack";
+import { loadWASM } from "onigasm";
 
 import { ModalContainer } from "./components/PromiseModal";
 import { TourProvider } from "./components/Tour";
+
+loadWASM(require("onigasm/lib/onigasm.wasm").default);
 
 const darkTheme = createMuiTheme({
   palette: {

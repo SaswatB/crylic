@@ -1,7 +1,12 @@
 const ReactRefreshPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const SentryWebpackPlugin = require("@sentry/webpack-plugin");
-const { addBabelPlugin, addWebpackPlugin, override } = require("customize-cra");
+const {
+  addBabelPlugin,
+  addWebpackPlugin,
+  override,
+  addWebpackModuleRule,
+} = require("customize-cra");
 
 const DEV_PLUGINS = [
   addBabelPlugin(require.resolve("react-refresh/babel")),
@@ -25,5 +30,10 @@ module.exports = override(
       // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
       languages: ["javascript", "typescript", "css", "scss", "less", "html"],
     })
-  )
+  ),
+  addWebpackModuleRule({
+    test: /.*onigasm.*\.wasm$/,
+    loader: "file-loader",
+    type: "javascript/auto",
+  })
 );
