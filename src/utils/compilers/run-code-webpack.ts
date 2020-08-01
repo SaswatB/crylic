@@ -24,7 +24,7 @@ let dotenvExpand: typeof import("dotenv-expand");
 let dotenv: typeof import("dotenv");
 
 // todo make this a configuration
-const ENABLE_FAST_REFRESH = false;
+const ENABLE_FAST_REFRESH = true;
 const NODE_ENV = "development";
 const REACT_APP = /^REACT_APP_/i;
 
@@ -334,7 +334,7 @@ export const webpackRunCode = async (
       entry: primaryCodeEntry.filePath,
       devtool: false,
       performance: false,
-      watch: false,
+      recordsPath: "/static/records.json",
       output: {
         path: "/static",
         filename: "[name].js",
@@ -345,6 +345,17 @@ export const webpackRunCode = async (
         library: "paintbundle",
         libraryTarget: "umd",
         globalObject: "this",
+      },
+      optimization: {
+        // Automatically split vendor and commons
+        splitChunks: {
+          chunks: "all",
+          name: false,
+        },
+        // Keep the runtime chunk separated to enable long term caching
+        runtimeChunk: {
+          name: (entrypoint) => `runtime-${entrypoint.name}`,
+        },
       },
       module: await getWebpackModules(paths.projectSrcFolder, env),
       resolve: {
@@ -408,7 +419,7 @@ export const webpackRunCode = async (
             onProgress({ percentage, message });
           },
         }),
-        ENABLE_FAST_REFRESH && new ReactRefreshPlugin(),
+        ENABLE_FAST_REFRESH && new ReactRefreshPlugin({ forceEnable: true }),
       ].filter((p): p is typeof webpack.Plugin => !!p),
       node: {
         module: "empty",
@@ -441,7 +452,8 @@ export const webpackRunCode = async (
     }
 
     const compiler = webpack(options);
-    const inputFs = memfs.createFsFromVolume(new memfs.Volume());
+    const volume = new memfs.Volume();
+    const inputFs = memfs.createFsFromVolume(volume);
     const outputFs = inputFs;
     const ufs1 = new unionfs.Union();
     // @ts-ignore bad types
@@ -474,7 +486,8 @@ export const webpackRunCode = async (
       clientLogLevel: "none",
       // contentBase: paths.appPublic,
       // contentBasePublicPath: paths.publicUrlOrPath,
-      watchContentBase: true,
+      // todo fix hmr behavior for non-source code assets
+      // watchContentBase: true,
       hot: ENABLE_FAST_REFRESH,
       transportMode: "ws",
       injectClient: true,
@@ -482,7 +495,8 @@ export const webpackRunCode = async (
       // sockPath,
       // sockPort,
       // publicPath: paths.publicUrlOrPath.slice(0, -1),
-      quiet: true,
+      publicPath: "/",
+      // quiet: true,
       // watchOptions: { ignored: ignoredFiles(paths.appSrc) },
       // host,
       // overlay: false,
@@ -492,6 +506,8 @@ export const webpackRunCode = async (
       },
       // public: allowedHost,
       // proxy,
+      // @ts-ignore ignore type error for hidden option
+      fs: compiler.outputFileSystem,
     });
 
     // Launch WebpackDevServer.
@@ -535,7 +551,7 @@ export const webpackRunCode = async (
   console.log("running webpack");
   const runPromise = new Promise<number>((resolve, reject) => {
     compiler.run((err, stats) => {
-      console.log("webpackRunCode", err, stats);
+      console.log("webpackRunCode" /* , err, stats */);
       if (err) {
         reject(err);
         return;
@@ -543,6 +559,7 @@ export const webpackRunCode = async (
 
       const endTime = new Date().getTime();
       console.log("loaded", primaryCodeEntry.filePath, endTime - startTime);
+      // fs.writeFileSync("outputfs.json", JSON.stringify(volume.toJSON(), null, 4));
       resolve(devport);
     });
   }).finally(() => {
