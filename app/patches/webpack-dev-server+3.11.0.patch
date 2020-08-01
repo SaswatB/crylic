@@ -2,12 +2,6 @@ diff --git a/node_modules/webpack-dev-server/lib/Server.js b/node_modules/webpac
 index efe8c51..2aef06e 100644
 --- a/node_modules/webpack-dev-server/lib/Server.js
 +++ b/node_modules/webpack-dev-server/lib/Server.js
-@@ -1,4 +1,4 @@
--'use strict';
-+
- 
- /* eslint-disable
-   no-shadow,
 @@ -54,7 +54,7 @@ class Server {
        throw new Error("'filename' option must be set in lazy mode.");
      }
@@ -17,24 +11,3 @@ index efe8c51..2aef06e 100644
  
      this.compiler = compiler;
      this.options = options;
-diff --git a/node_modules/webpack-dev-server/lib/utils/createConfig.js b/node_modules/webpack-dev-server/lib/utils/createConfig.js
-index 5c15b35..bc08d28 100644
---- a/node_modules/webpack-dev-server/lib/utils/createConfig.js
-+++ b/node_modules/webpack-dev-server/lib/utils/createConfig.js
-@@ -1,4 +1,4 @@
--'use strict';
-+
- 
- const path = require('path');
- const isAbsoluteUrl = require('is-absolute-url');
-@@ -59,6 +59,10 @@ function createConfig(config, argv, { port }) {
-     options.overlay = argv.overlay;
-   }
- 
-+  if (argv.outputFileSystem) {
-+    options.outputFileSystem = argv.outputFileSystem;
-+  }
-+
-   if (!options.publicPath) {
-     // eslint-disable-next-line
-     options.publicPath =

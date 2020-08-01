@@ -334,8 +334,6 @@ export const webpackRunCode = async (
       entry: primaryCodeEntry.filePath,
       devtool: false,
       performance: false,
-      // watch: true,
-      // watchOptions: { poll: 1000 },
       recordsPath: "/static/records.json",
       output: {
         path: "/static",
@@ -350,15 +348,11 @@ export const webpackRunCode = async (
       },
       optimization: {
         // Automatically split vendor and commons
-        // https://twitter.com/wSokra/status/969633336732905474
-        // https://medium.com/webpack/webpack-4-code-splitting-chunk-graph-and-the-splitchunks-optimization-be739a861366
         splitChunks: {
           chunks: "all",
           name: false,
         },
         // Keep the runtime chunk separated to enable long term caching
-        // https://twitter.com/wSokra/status/969679223278505985
-        // https://github.com/facebook/create-react-app/issues/5358
         runtimeChunk: {
           name: (entrypoint) => `runtime-${entrypoint.name}`,
         },
@@ -492,6 +486,7 @@ export const webpackRunCode = async (
       clientLogLevel: "none",
       // contentBase: paths.appPublic,
       // contentBasePublicPath: paths.publicUrlOrPath,
+      // todo fix hmr behavior for non-source code assets
       // watchContentBase: true,
       hot: ENABLE_FAST_REFRESH,
       transportMode: "ws",
@@ -534,7 +529,6 @@ export const webpackRunCode = async (
       compiler,
       inputFs,
       outputFs,
-      volume,
       savedCodeRevisions,
       devport,
       runId: 0,
@@ -543,7 +537,7 @@ export const webpackRunCode = async (
     const { inputFs, savedCodeRevisions } = webpackCache[primaryCodeEntry.id]!;
     updateFiles(inputFs, savedCodeRevisions);
   }
-  const { compiler, devport, volume } = webpackCache[primaryCodeEntry.id]!;
+  const { compiler, devport } = webpackCache[primaryCodeEntry.id]!;
   const runId = ++webpackCache[primaryCodeEntry.id]!.runId;
 
   // only allow one instance of webpack to run at a time
@@ -557,8 +551,7 @@ export const webpackRunCode = async (
   console.log("running webpack");
   const runPromise = new Promise<number>((resolve, reject) => {
     compiler.run((err, stats) => {
-      console.log("webpackRunCode");
-      // console.log("webpackRunCode", err, stats);
+      console.log("webpackRunCode" /* , err, stats */);
       if (err) {
         reject(err);
         return;
@@ -566,15 +559,7 @@ export const webpackRunCode = async (
 
       const endTime = new Date().getTime();
       console.log("loaded", primaryCodeEntry.filePath, endTime - startTime);
-      try {
-        const te = volume.toJSON();
-        console.log("teeeetete");
-        const outfsjson = JSON.stringify(te, null, 4);
-        console.log("outputfs length", outfsjson.length);
-        fs.writeFileSync("outputfs.json", outfsjson);
-      } catch (e) {
-        console.log("qwdasdasd", e);
-      }
+      // fs.writeFileSync("outputfs.json", JSON.stringify(volume.toJSON(), null, 4));
       resolve(devport);
     });
   }).finally(() => {
