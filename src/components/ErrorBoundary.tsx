@@ -1,12 +1,13 @@
 import React, { ErrorInfo } from "react";
 
 export class ErrorBoundary extends React.Component<{
-  onError: (error: Error, errorInfo: ErrorInfo) => void;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  error?: Error;
 }> {
   state = { error: false as Error | false };
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    this.props.onError(error, errorInfo);
+    this.props.onError?.(error, errorInfo);
     this.setState({ error });
   }
 
@@ -23,7 +24,7 @@ export class ErrorBoundary extends React.Component<{
   }
 
   render() {
-    const { error } = this.state;
+    const error = this.state.error || this.props.error;
     if (error) {
       return (
         <div
@@ -34,10 +35,9 @@ export class ErrorBoundary extends React.Component<{
             justifyContent: "center",
             boxSizing: "border-box",
             minHeight: "min-content",
-            height: "100%",
+            height: "100vh",
             padding: 20,
-            backgroundImage:
-              "linear-gradient( 135deg, #FEB692 10%, #EA5455 100%)",
+            backgroundColor: "rgb(52, 52, 52)",
             color: "white",
             textAlign: "center",
           }}
@@ -51,7 +51,7 @@ export class ErrorBoundary extends React.Component<{
               whiteSpace: "pre",
               overflow: "auto",
               width: "100%",
-              background: "rgba(0,0,0,.5)",
+              background: "rgb(71, 71, 71)",
               padding: "20px",
               margin: "20px",
               boxSizing: "border-box",

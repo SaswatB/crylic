@@ -112,7 +112,7 @@
     "yauzl": "^2.10.0"
   },
   "devDependencies": {
-    "@pmmmwh/react-refresh-webpack-plugin": "^0.4.0-beta.8",
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.4.1",
     "@sentry/webpack-plugin": "^1.11.1",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",

@@ -1,9 +1,15 @@
+import React from "react";
+import ReactDOMServer from "react-dom/server";
+
+import { ErrorBoundary } from "../../components/ErrorBoundary";
 import { Project } from "../../lib/project/Project";
 import { CodeEntry, RenderEntry } from "../../types/paint";
 import { DEFAULT_HTML_TEMPLATE_SELECTOR } from "../constants";
 import { publishComponent, unpublishComponent } from "../publish-component";
 import { getReactRouterProxy, RouteDefinition } from "../react-router-proxy";
 import { webpackRunCode } from "./run-code-webpack";
+
+import errorBoundaryComponent from "!!raw-loader!../../components/ErrorBoundary";
 
 const path = __non_webpack_require__("path") as typeof import("path");
 
@@ -98,19 +104,19 @@ export const webpackRunCodeWithWorker = async (
     : "";
 
   const bundleCode = `
-import React from "react";
+import React, { ErrorInfo } from "react";
 import ReactDOM from "react-dom";
 ${componentImport}
 ${bootstrapImport}
 
-ReactDOM.render(
-  ${
-    bootstrapCodeEntry
-      ? `(<Bootstrap>
-    <Component />
-  </Bootstrap>)`
-      : `<App />`
-  },
+${errorBoundaryComponent
+  .replace('import React, { ErrorInfo } from "react";', "")
+  .replace("export", "")}
+
+ReactDOM.render((
+  <ErrorBoundary>
+    ${bootstrapCodeEntry ? `<Bootstrap><Component /></Bootstrap>` : `<App />`}
+  </ErrorBoundary>),
   document.getElementById("${
     project.config.configFile?.htmlTemplate?.rootSelector ||
     DEFAULT_HTML_TEMPLATE_SELECTOR
@@ -132,7 +138,7 @@ ReactDOM.render(
         id: bundleId,
         code: bundleCode,
         // todo add random string to filename
-        filePath: path.join(project.sourceFolderPath, "paintbundle.jsx"),
+        filePath: path.join(project.sourceFolderPath, "paintbundle.tsx"),
         codeRevisionId: 0,
       },
     ]);
@@ -174,6 +180,19 @@ ReactDOM.render(
 
   frame!.onload = () => {
     console.log("frame onload");
+    const errorHandler = (error: Error) => {
+      const body = frame!.contentDocument!.querySelector("body")!;
+      body.style.margin = "0px";
+      body.innerHTML = ReactDOMServer.renderToStaticMarkup(
+        React.createElement(ErrorBoundary, { error })
+      );
+      (frame!.contentWindow! as any).paintErrorDisplayed = true;
+      return true;
+    };
+    frame!.contentWindow!.addEventListener("error", (e) =>
+      errorHandler(e.error)
+    );
+
     // run the resuulting bundle on the provided iframe, with stubs
     (frame!.contentWindow! as any).require = (name: string) => {
       if (name === "react") return require("react");
@@ -192,12 +211,19 @@ ReactDOM.render(
       throw new Error(`Unable to require "${name}"`);
     };
     (frame!.contentWindow! as any).exports = {};
-    (frame!.contentWindow! as any).paintBundle();
+    try {
+      (frame!.contentWindow! as any).paintBundle();
+    } catch (error) {
+      errorHandler(error);
+    }
     delete (frame!.contentWindow! as any).exports;
     delete (frame!.contentWindow! as any).require;
     onReload();
   };
-  if (!frame!.contentWindow!.location.href.includes(`${devport}`)) {
+  if (
+    !frame!.contentWindow!.location.href.includes(`${devport}`) ||
+    (frame!.contentWindow! as any).paintErrorDisplayed
+  ) {
     frame!.contentWindow!.location.href = `http://localhost:${devport}/`;
     console.log("refreshing iframe");
   }
