@@ -26,7 +26,6 @@ import { CSS_LENGTH_UNITS } from "../utils/constants";
 import { useBoundState } from "./useBoundState";
 import { useDebouncedFunction } from "./useDebouncedFunction";
 import { useThrottle } from "./useThrottle";
-import "rc-color-picker/assets/index.css";
 
 const HEX_COLOR_REGEX = /^#([A-Fa-f0-9]{8}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
 
