@@ -1,10 +1,12 @@
 import React, { FunctionComponent, useEffect, useRef } from "react";
 import MonacoEditor from "react-monaco-editor";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+import { useBus } from "ts-bus/react";
 
 import { useBoundState } from "../../hooks/useBoundState";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useUpdatingRef } from "../../hooks/useUpdatingRef";
+import { editorResize } from "../../lib/events";
 import { Project } from "../../lib/project/Project";
 import { CodeEntry } from "../../types/paint";
 import { JSXActionProvider } from "../../utils/ast/providers/JSXActionProvider";
@@ -30,6 +32,7 @@ export const Editor: FunctionComponent<Props> = ({
   onSelectElement,
   isActiveEditor,
 }) => {
+  const bus = useBus();
   const editorRef = useRef<MonacoEditor>(null);
   const [localValue, setLocalValue] = useBoundState(codeEntry.code);
   const localValueRef = useUpdatingRef(localValue);
@@ -157,6 +160,14 @@ export const Editor: FunctionComponent<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [codeEntry, selectedElementId]);
 
+  // listen for layout changes
+  useEffect(
+    () =>
+      bus.subscribe(editorResize, () => editorRef.current?.editor?.layout()),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   return (
     <MonacoEditor
       ref={editorRef}
@@ -168,7 +179,11 @@ export const Editor: FunctionComponent<Props> = ({
       }}
       onChange={setLocalValue}
       editorDidMount={(editorMonaco) => {
-        setupLanguageService(editorMonaco, codeEntry);
+        try {
+          setupLanguageService(editorMonaco, codeEntry);
+        } catch (e) {
+          console.error(e);
+        }
         editorMonaco.addCommand(
           monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S,
           () => fs.writeFileSync(codeEntry.filePath, localValueRef.current)

@@ -4,9 +4,11 @@ import blue from "@material-ui/core/colors/blue";
 import purple from "@material-ui/core/colors/purple";
 import { SnackbarProvider } from "notistack";
 import { loadWASM } from "onigasm";
+import { BusProvider } from "ts-bus/react";
 
 import { ModalContainer } from "./components/PromiseModal";
 import { TourProvider } from "./components/Tour";
+import { bus } from "./lib/events";
 
 loadWASM(require("onigasm/lib/onigasm.wasm").default);
 
@@ -19,12 +21,14 @@ const darkTheme = createMuiTheme({
 });
 
 export const Bootstrap: FunctionComponent = ({ children }) => (
-  <SnackbarProvider maxSnack={3}>
-    <ThemeProvider theme={darkTheme}>
-      <TourProvider>
-        <ModalContainer />
-        {children}
-      </TourProvider>
-    </ThemeProvider>
-  </SnackbarProvider>
+  <BusProvider value={bus}>
+    <SnackbarProvider maxSnack={3}>
+      <ThemeProvider theme={darkTheme}>
+        <TourProvider>
+          <ModalContainer />
+          {children}
+        </TourProvider>
+      </ThemeProvider>
+    </SnackbarProvider>
+  </BusProvider>
 );

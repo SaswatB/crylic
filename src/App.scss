@@ -83,13 +83,9 @@ fieldset {
   width: 300px;
 }
 
-.toolbar {
-  left: 300px;
-
-  .btn {
-    padding: 6px 12px;
-    border-radius: 0;
-  }
+.toolbar .btn {
+  padding: 6px 12px;
+  border-radius: 0;
 }
 
 .grid2x {

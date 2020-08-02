@@ -5,6 +5,8 @@ import { Backdrop, CircularProgress } from "@material-ui/core";
 import { produce } from "immer";
 import { camelCase, snakeCase, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
+import { Resizable } from "re-resizable";
+import { useBus } from "ts-bus/react";
 
 import {
   CompilerComponentViewRef,
@@ -20,6 +22,7 @@ import { Tour } from "./components/Tour";
 import { openFilePicker } from "./hooks/useFilePicker";
 import { useProject } from "./hooks/useProject";
 import { useUpdatingRef } from "./hooks/useUpdatingRef";
+import { editorResize } from "./lib/events";
 import {
   CodeEntry,
   OutlineElement,
@@ -46,6 +49,7 @@ const open = __non_webpack_require__("open") as typeof import("open");
 
 function App() {
   const { enqueueSnackbar } = useSnackbar();
+  const bus = useBus();
   const [loading, setLoading] = useState(0);
   const componentViews = useRef<
     Record<string, CompilerComponentViewRef | null | undefined>
@@ -541,12 +545,18 @@ function App() {
         errors occur.
       </Tour>
       <div className="flex flex-1 flex-row">
-        <div className="sidebar flex flex-col absolute p-4 pb-0 h-screen dark-glass z-10">
+        <Resizable
+          className="sidebar flex flex-col p-4 pb-0 h-screen bg-gray-800 z-10"
+          minWidth={200}
+          maxWidth={800}
+          defaultSize={{ height: "100vh", width: 300 }}
+          enable={{ right: true }}
+        >
           {renderSideBar()}
-        </div>
+        </Resizable>
         <div className="flex flex-col flex-1 relative bg-gray-600 items-center justify-center overflow-hidden">
           {(project?.renderEntries.length ?? 0) > 0 && (
-            <div className="toolbar flex absolute top-0 right-0 dark-glass z-10">
+            <div className="toolbar flex absolute top-0 right-0 left-0 bg-gray-800 z-10">
               {renderToolbar()}
             </div>
           )}
@@ -570,31 +580,39 @@ function App() {
           </TransformWrapper>
         </div>
         {(project?.editEntries.length || 0) > 0 && (
-          <EditorPane
-            project={project}
-            onCodeChange={(codeId, newCode) => {
-              setCode(codeId, newCode);
-            }}
-            onCloseCodeEntry={toggleCodeEntryEdit}
-            selectedElementId={selectedElement?.lookupId}
-            onSelectElement={(lookupId) => {
-              // todo reenable
-              // const newSelectedComponent = Object.values(componentViews.current)
-              //   .map((componentView) =>
-              //     componentView?.getElementsByLookupId(lookupId)
-              //   )
-              //   .filter((e) => !!e)[0];
-              // if (newSelectedComponent) {
-              //   console.log(
-              //     "setting selected element through editor cursor update",
-              //     project?.primaryElementEditor.getLookupIdFromHTMLElement(
-              //       newSelectedComponent as HTMLElement
-              //     )
-              //   );
-              //   selectElement(newSelectedComponent as HTMLElement);
-              // }
-            }}
-          />
+          <Resizable
+            minWidth={200}
+            maxWidth={1200}
+            defaultSize={{ height: "100vh", width: 600 }}
+            enable={{ left: true }}
+            onResizeStop={() => bus.publish(editorResize())}
+          >
+            <EditorPane
+              project={project}
+              onCodeChange={(codeId, newCode) => {
+                setCode(codeId, newCode);
+              }}
+              onCloseCodeEntry={toggleCodeEntryEdit}
+              selectedElementId={selectedElement?.lookupId}
+              onSelectElement={(lookupId) => {
+                // todo reenable
+                // const newSelectedComponent = Object.values(componentViews.current)
+                //   .map((componentView) =>
+                //     componentView?.getElementsByLookupId(lookupId)
+                //   )
+                //   .filter((e) => !!e)[0];
+                // if (newSelectedComponent) {
+                //   console.log(
+                //     "setting selected element through editor cursor update",
+                //     project?.primaryElementEditor.getLookupIdFromHTMLElement(
+                //       newSelectedComponent as HTMLElement
+                //     )
+                //   );
+                //   selectElement(newSelectedComponent as HTMLElement);
+                // }
+              }}
+            />
+          </Resizable>
         )}
       </div>
     </div>

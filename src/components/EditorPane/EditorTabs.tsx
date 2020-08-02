@@ -41,10 +41,7 @@ export const EditorTabs: FunctionComponent<Props> = ({
   }, [usableTabs.length]);
 
   return (
-    <div
-      className="editor-tabs flex flex-col h-full"
-      style={{ width: "600px" }}
-    >
+    <div className="editor-tabs flex flex-col h-full">
       <div ref={tabScrollRef} className="tabs flex flex-row overflow-x-auto">
         {usableTabs.map(({ key, name, title, onClose }, index) => (
           <div
