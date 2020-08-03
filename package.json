@@ -177,30 +177,6 @@
       "import/no-webpack-loader-syntax": 0
     }
   },
-  "jest": {
-    "roots": [
-      "<rootDir>/test/"
-    ],
-    "testMatch": [
-      "**/__tests__/**/*.{js,jsx,ts,tsx}",
-      "**/*.{spec,test}.{js,jsx,ts,tsx}"
-    ],
-    "setupFiles": [
-      "<rootDir>/test/lib/setupTests.ts"
-    ],
-    "transform": {
-      ".*\\.fixture\\..*": "jest-raw-loader",
-      "^.+\\.[jt]sx?$": "react-app-rewired/scripts/utils/babelTransform.js"
-    },
-    "transformIgnorePatterns": [
-      "<rootDir>/node_modules/"
-    ],
-    "moduleNameMapper": {
-      "monaco-editor.*": "<rootDir>/test/lib/stub.js",
-      "!!*": "<rootDir>/test/lib/stub.js"
-    },
-    "verbose": true
-  },
   "browserslist": {
     "production": [
       ">0.2%",
