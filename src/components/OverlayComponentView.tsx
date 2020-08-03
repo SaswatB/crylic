@@ -11,6 +11,7 @@ import {
   faGlobe,
   faLink,
   faPlus,
+  faSync,
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -208,6 +209,12 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           }}
           onClick={onTogglePublish}
         /> */}
+        <IconButton
+          title="Refresh Frame"
+          className="ml-2"
+          icon={faSync}
+          onClick={() => viewContext?.iframe.contentWindow?.location.reload()}
+        />
         <IconButton
           title="Resize Frame"
           className="ml-2"
