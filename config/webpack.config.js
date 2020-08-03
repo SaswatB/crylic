@@ -644,7 +644,6 @@ module.exports = function (webpackEnv) {
 
       isEnvDevelopment && new ReactRefreshPlugin({}),
       isEnvProduction &&
-        false &&
         new SentryWebpackPlugin({
           include: "./build",
           urlPrefix: "app:///build",

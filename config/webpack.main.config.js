@@ -29,7 +29,6 @@ module.exports = (env, argv) => ({
   },
   plugins: [
     argv.mode !== "development" &&
-      false &&
       new SentryWebpackPlugin({
         include: "./build-main",
         urlPrefix: "app:///build-main",
