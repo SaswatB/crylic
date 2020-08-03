@@ -360,6 +360,10 @@ function App() {
     <SideBar
       project={project}
       outlineMap={outlineMap}
+      refreshOutline={(renderId) => {
+        const entry = project?.renderEntries.find((e) => e.id === renderId);
+        if (entry) calculateOutline(entry);
+      }}
       selectElement={(r, c) => {
         const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
           c

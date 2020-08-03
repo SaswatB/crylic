@@ -16,6 +16,7 @@ import {
   faFilter,
   faPlus,
   faStream,
+  faSync,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
@@ -502,6 +503,7 @@ const useOutlineTab = ({
   outlineMap,
   selectElement,
   selectedElement,
+  refreshOutline,
 }: Props) => {
   const outlines = Object.entries(outlineMap)
     .map(([key, value]) => ({
@@ -523,11 +525,25 @@ const useOutlineTab = ({
     }
 
     treeNodeIds.add(id);
+    const treeLabel = (
+      <div className="flex">
+        {node.tag}
+        <div className="flex-1" />
+        {/* if element isn't defined, this is probably the frame element */}
+        {!node.element && (
+          <IconButton
+            title="Refresh Outline"
+            icon={faSync}
+            onClick={() => refreshOutline(node.renderId)}
+          />
+        )}
+      </div>
+    );
     return (
       <TreeItem
         key={id}
         nodeId={id}
-        label={node.tag}
+        label={treeLabel}
         onClick={() =>
           node.element && selectElement(node.renderId, node.element)
         }
@@ -1147,6 +1163,7 @@ const useSelectedElementEditorTab = ({
 
 interface Props {
   outlineMap: Record<string, OutlineElement[] | undefined>;
+  refreshOutline: (renderId: string) => void;
   project: Project | undefined;
   selectElement: (renderId: string, componentElement: HTMLElement) => void;
   selectedElement: SelectedElement | undefined;
