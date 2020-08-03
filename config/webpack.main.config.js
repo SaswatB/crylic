@@ -5,7 +5,7 @@ module.exports = (env, argv) => ({
   entry: { electron: "./src/electron.ts" },
   devtool: "source-map",
   output: {
-    path: path.resolve(__dirname, "build-main"),
+    path: path.resolve(__dirname, "../build-main"),
     filename: "[name].js",
   },
   module: {
@@ -29,6 +29,7 @@ module.exports = (env, argv) => ({
   },
   plugins: [
     argv.mode !== "development" &&
+      false &&
       new SentryWebpackPlugin({
         include: "./build-main",
         urlPrefix: "app:///build-main",

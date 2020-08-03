@@ -2,23 +2,6 @@ diff --git a/node_modules/react-refresh/cjs/react-refresh-runtime.development.js
 index e17c488..afa980a 100644
 --- a/node_modules/react-refresh/cjs/react-refresh-runtime.development.js
 +++ b/node_modules/react-refresh/cjs/react-refresh-runtime.development.js
-@@ -7,13 +7,13 @@
-  * LICENSE file in the root directory of this source tree.
-  */
- 
--'use strict';
- 
- 
- 
--if (process.env.NODE_ENV !== "production") {
-+
-+if (process.env.NODE_ENV !== "production" || true) {
-   (function() {
--'use strict';
-+
- 
- // ATTENTION
- // When adding new symbols to this file,
 @@ -621,10 +621,10 @@ function isLikelyComponentType(type) {
              } // eslint-disable-next-line no-proto
  
@@ -34,21 +17,3 @@ index e17c488..afa980a 100644
              // This looks like a regular function with empty prototype.
  
            } // For plain functions and arrows, use name as a heuristic.
-diff --git a/node_modules/react-refresh/runtime.js b/node_modules/react-refresh/runtime.js
-index 28e3b0c..86c2a7f 100644
---- a/node_modules/react-refresh/runtime.js
-+++ b/node_modules/react-refresh/runtime.js
-@@ -1,7 +1,7 @@
--'use strict';
- 
--if (process.env.NODE_ENV === 'production') {
--  module.exports = require('./cjs/react-refresh-runtime.production.min.js');
--} else {
--  module.exports = require('./cjs/react-refresh-runtime.development.js');
--}
-+
-+// if (process.env.NODE_ENV === 'production') {
-+//   module.exports = require('./cjs/react-refresh-runtime.production.min.js');
-+// } else {
-+module.exports = require('./cjs/react-refresh-runtime.development.js');
-+// }

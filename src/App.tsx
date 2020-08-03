@@ -563,9 +563,9 @@ function App() {
           <TransformWrapper
             defaultScale={1}
             scale={resetTransform ? 1 : undefined}
-            defaultPositionX={350}
+            defaultPositionX={50}
             defaultPositionY={20}
-            positionX={resetTransform ? 350 : undefined}
+            positionX={resetTransform ? 50 : undefined}
             positionY={resetTransform ? 20 : undefined}
             options={{
               minScale: 0.01,
