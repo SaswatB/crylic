@@ -133,6 +133,13 @@ export const CompilerComponentView: FunctionComponent<
       lastPublishUrl.current = undefined;
     }
 
+    // track route info per frame
+    // todo clear these onFrameLoad
+    const onRoutesDefinedSubjectRef = useRef(
+      new ReplaySubject<RouteDefinition>(1)
+    );
+    const onRouteChangeSubjectRef = useRef(new ReplaySubject<string>(1));
+
     const errorBoundary = useRef<ErrorBoundary>(null);
     const [debouncedCodeEntries] = useDebounce(project?.codeEntries, 150);
     useEffect(() => {
@@ -144,8 +151,6 @@ export const CompilerComponentView: FunctionComponent<
             percentage: number;
             message: string;
           }>(1);
-          const onRoutesDefinedSubject = new ReplaySubject<RouteDefinition>(1);
-          const onRouteChangeSubject = new ReplaySubject<string>(1);
 
           onCompileStart?.({
             onProgress: onProgressSubject.pipe(distinctUntilChanged(isEqual)),
@@ -162,7 +167,7 @@ export const CompilerComponentView: FunctionComponent<
                 // combine all the routes defined by all the switches
                 routes: uniq(flatten(switches.map((s) => s.routes))),
               };
-              onRoutesDefinedSubject.next(arg);
+              onRoutesDefinedSubjectRef.current.next(arg);
             }
           };
           const refreshRouteChange = () => {
@@ -173,7 +178,7 @@ export const CompilerComponentView: FunctionComponent<
               routes.forEach((r) => {
                 if (r.length > route.length) route = r;
               });
-              onRouteChangeSubject.next(route);
+              onRouteChangeSubjectRef.current.next(route);
             }
           };
           await webpackRunCodeWithWorker(project, renderEntry, {
@@ -221,10 +226,10 @@ export const CompilerComponentView: FunctionComponent<
                 onCompileEnd?.(renderEntry, {
                   ...handleRef.current,
                   iframe: frame.current!.frameElement,
-                  onRoutesDefined: onRoutesDefinedSubject.pipe(
+                  onRoutesDefined: onRoutesDefinedSubjectRef.current.pipe(
                     distinctUntilChanged(isEqual)
                   ),
-                  onRouteChange: onRouteChangeSubject.pipe(
+                  onRouteChange: onRouteChangeSubjectRef.current.pipe(
                     distinctUntilChanged()
                   ),
                 })
