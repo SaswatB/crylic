@@ -9,7 +9,7 @@
     "start": "react-app-rewired start",
     "build": "npx rimraf app/build && npx rimraf app/build-main && webpack --config webpack.main.config.js --mode production && react-app-rewired build && npx node-mv build-main app/build-main && npx node-mv build app/build && npx rimraf --glob ./app/build*/**/*.map && node ./scripts/postbuild.js",
     "test": "jest test",
-    "eject": "react-app-rewired eject",
+    "eject": "react-scripts eject",
     "electron": "webpack --config webpack.main.config.js --mode development && electron --remote-debugging-port=9222 .",
     "package": "electron-builder",
     "postinstall": "patch-package",
