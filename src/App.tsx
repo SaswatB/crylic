@@ -37,6 +37,7 @@ import {
   StyleGroup,
 } from "./utils/ast/editors/ASTEditor";
 import {
+  ComponentViewZoomAction,
   getBoilerPlateComponent,
   SelectMode,
   SelectModeType,
@@ -434,14 +435,14 @@ function App() {
     />
   );
 
-  const [resetTransform, setResetTransform] = useState(false);
+  const [zoomAction, setZoomAction] = useState<ComponentViewZoomAction>();
   useEffect(() => {
-    if (resetTransform) setResetTransform(false);
-  }, [resetTransform]);
+    if (zoomAction) setZoomAction(undefined);
+  }, [zoomAction]);
 
   const renderToolbar = () => (
     <Toolbar
-      setResetTransform={setResetTransform}
+      setZoomAction={setZoomAction}
       selectMode={selectMode}
       setSelectMode={setSelectMode}
       selectedElement={selectedElement}
@@ -566,11 +567,23 @@ function App() {
           )}
           <TransformWrapper
             defaultScale={1}
-            scale={resetTransform ? 1 : undefined}
+            scale={
+              zoomAction === ComponentViewZoomAction.RESET
+                ? (scaleRef.current = 1)
+                : zoomAction === ComponentViewZoomAction.ZOOM_IN
+                ? (scaleRef.current = scaleRef.current * 1.5)
+                : zoomAction === ComponentViewZoomAction.ZOOM_OUT
+                ? (scaleRef.current = scaleRef.current / 1.5)
+                : undefined
+            }
             defaultPositionX={50}
             defaultPositionY={20}
-            positionX={resetTransform ? 50 : undefined}
-            positionY={resetTransform ? 20 : undefined}
+            positionX={
+              zoomAction === ComponentViewZoomAction.RESET ? 50 : undefined
+            }
+            positionY={
+              zoomAction === ComponentViewZoomAction.RESET ? 20 : undefined
+            }
             options={{
               minScale: 0.01,
               maxScale: 3,

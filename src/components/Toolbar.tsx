@@ -14,6 +14,8 @@ import {
   faMousePointer,
   faPlus,
   faPlusSquare,
+  faSearchMinus,
+  faSearchPlus,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   FontAwesomeIcon,
@@ -30,7 +32,11 @@ import {
 import { useGlobalConfig } from "../hooks/useGlobalConfig";
 import { useSelectInput } from "../hooks/useInput";
 import { SelectedElement } from "../types/paint";
-import { SelectMode, SelectModeType } from "../utils/constants";
+import {
+  ComponentViewZoomAction,
+  SelectMode,
+  SelectModeType,
+} from "../utils/constants";
 import { renderSeparator } from "../utils/utils";
 import { Tour } from "./Tour";
 
@@ -165,14 +171,14 @@ const useAdderTab = (
 };
 
 interface Props {
-  setResetTransform: (value: boolean) => void;
+  setZoomAction: (action: ComponentViewZoomAction) => void;
   selectMode: SelectMode | undefined;
   setSelectMode: (mode: SelectMode | undefined) => void;
   selectedElement: SelectedElement | undefined;
   setSelectedElement: (selectedElement: SelectedElement | undefined) => void;
 }
 export const Toolbar: FunctionComponent<Props> = ({
-  setResetTransform,
+  setZoomAction,
   selectMode,
   setSelectMode,
   selectedElement,
@@ -282,7 +288,25 @@ export const Toolbar: FunctionComponent<Props> = ({
       </div>
       <div className="flex-1" />
       <div className="btngrp-h">
-        <button className="btn" onClick={() => setResetTransform(true)}>
+        <button
+          className="btn"
+          title="Zoom In"
+          onClick={() => setZoomAction(ComponentViewZoomAction.ZOOM_IN)}
+        >
+          <FontAwesomeIcon icon={faSearchPlus} />
+        </button>
+        <button
+          className="btn"
+          title="Zoom Out"
+          onClick={() => setZoomAction(ComponentViewZoomAction.ZOOM_OUT)}
+        >
+          <FontAwesomeIcon icon={faSearchMinus} />
+        </button>
+        <button
+          className="btn"
+          title="Reset Zoom"
+          onClick={() => setZoomAction(ComponentViewZoomAction.RESET)}
+        >
           <FontAwesomeIcon icon={faCompressArrowsAlt} />
         </button>
       </div>
