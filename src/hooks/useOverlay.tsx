@@ -153,6 +153,7 @@ export function useOverlay(
       ) : (
         <Draggable
           className="border-2 border-blue-600 border-solid pulsing-highlight"
+          element={selectedElement?.element}
           calculateBoundingBox={calculateBoundingBox}
           recalculateBoundsObservable={recalculateBoundsObservable.current}
           onDragStart={() => {

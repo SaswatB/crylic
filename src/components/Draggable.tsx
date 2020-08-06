@@ -1,16 +1,13 @@
-import React, {
-  FunctionComponent,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { FunctionComponent, useMemo, useRef, useState } from "react";
 import { DraggableCore } from "react-draggable";
-import { clamp } from "lodash";
+import { clamp, throttle } from "lodash";
 import { Resizable } from "re-resizable";
 import { Observable } from "rxjs";
 
+import { useDebouncedFunction } from "../hooks/useDebouncedFunction";
+import { useInterval } from "../hooks/useInterval";
 import { useObservable } from "../hooks/useObservable";
+import { useResizeObserver } from "../hooks/useResizeObserver";
 
 const { screen } = (__non_webpack_require__(
   "electron"
@@ -20,6 +17,7 @@ const SNAP_GAP = 10;
 
 interface Props {
   className: string;
+  element?: HTMLElement;
   calculateBoundingBox: () => {
     dimensions?: { top: number; left: number; width: number; height: number };
     bounds?: { top: number; left: number; width: number; height: number };
@@ -44,6 +42,7 @@ interface Props {
 }
 export const Draggable: FunctionComponent<Props> = ({
   className,
+  element,
   calculateBoundingBox,
   recalculateBoundsObservable,
   onDragStart,
@@ -55,9 +54,19 @@ export const Draggable: FunctionComponent<Props> = ({
 }) => {
   const divRef = useRef<Resizable>(null);
 
+  const [localRenderId, setLocalRenderId] = useState(0);
+  const rerenderThrottled = useDebouncedFunction(
+    () => setLocalRenderId((l) => l + 1),
+    10,
+    throttle
+  );
+  useResizeObserver(element, rerenderThrottled);
+  // todo don't cheat with useInterval
+  useInterval(() => setLocalRenderId((l) => l + 1), 100);
+
   // get bounds
   const renderId = useObservable(recalculateBoundsObservable);
-  const box = useMemo(calculateBoundingBox, [renderId]);
+  const box = useMemo(calculateBoundingBox, [renderId, localRenderId]);
   const skipRender = !box.dimensions || !box.bounds;
   const dimensions = box.dimensions || { top: 0, left: 0, width: 0, height: 0 };
   const bounds = box.bounds || { top: 0, left: 0, width: 0, height: 0 };

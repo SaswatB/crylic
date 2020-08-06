@@ -133,16 +133,58 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           styleValue: `${newMarginTop}px`,
         });
       }
-      if (width)
+      if (width) {
+        let effectiveWidth = width;
+        if (
+          selectedElement?.computedStyles.boxSizing === "content-box" &&
+          width.includes("px")
+        ) {
+          let contentWidth = parseFloat(width);
+          contentWidth -= parseFloat(
+            selectedElement?.computedStyles.paddingLeft
+          );
+          contentWidth -= parseFloat(
+            selectedElement?.computedStyles.paddingRight
+          );
+          contentWidth -= parseFloat(
+            selectedElement?.computedStyles.borderLeftWidth
+          );
+          contentWidth -= parseFloat(
+            selectedElement?.computedStyles.borderRightWidth
+          );
+          effectiveWidth = `${contentWidth}px`;
+        }
         styles.push({
           styleName: "width",
-          styleValue: width,
+          styleValue: effectiveWidth,
         });
-      if (height)
+      }
+      if (height) {
+        let effectiveHeight = height;
+        if (
+          selectedElement?.computedStyles.boxSizing === "content-box" &&
+          height.includes("px")
+        ) {
+          let contentHeight = parseFloat(height);
+          contentHeight -= parseFloat(
+            selectedElement?.computedStyles.paddingTop
+          );
+          contentHeight -= parseFloat(
+            selectedElement?.computedStyles.paddingBottom
+          );
+          contentHeight -= parseFloat(
+            selectedElement?.computedStyles.borderTopWidth
+          );
+          contentHeight -= parseFloat(
+            selectedElement?.computedStyles.borderBottomWidth
+          );
+          effectiveHeight = `${contentHeight}px`;
+        }
         styles.push({
           styleName: "height",
-          styleValue: height,
+          styleValue: effectiveHeight,
         });
+      }
       // todo take style group from sidebar
       updateSelectedElementStyles(
         selectedElement!.styleGroups[0],

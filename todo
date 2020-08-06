@@ -1,0 +1,353 @@
+Add a mode that works off of urls and does temp edits to avoid recreating a user's build system.
+  webpack plugin?
+'on-call' developers that can remotely fix your code - maybe uber style (freelance software engineers)
+collaborative editing between users
+ability to create a fully functioning prototype without code
+git support
+ - screenshots in pr?
+diffs for large code changes
+full debuggability into ast use
+additive transform based on state
+load via v8 snapshots
+step by step guide for a programmer to setup config, with tests they can do to verify the config works
+robust animation framework
+make a todo list app
+clippy!
+windows package manager/homebrew
+draft mode? (easy component creation/editing, then apply resolves to an ast)
+vscode link (select element opens file, refresh component when vscode saves)
+easily fill in data from a graphql or defined rest backend
+3d depth visualizer
+online variation that uses github as file store
+drm & auto login locally
+storyboard integration?
+devs care about transparency/debuggability
+group add? (have a quick prototyping view where you can add multiple components quickly), prototype view?
+
+auto install custom component libraries
+create shared styles
+show subcomponents in outline
+reset inline style(s)
+recent and document colors
+gradient fill
+context menu
+more elements! - icons, dialogs?
+switching css length input unit should keep same relative value
+delete element
+allow percent resize
+more properties!
+ - support grid display props
+move assets to different directories (drag?)
+parse proptypes
+pass in props - freeze props from use
+drag on numerical input field
+lock resize aspect ratio
+show/edit component/jsx comments
+drag to move assets between folders
+add file icons to tree
+test global undo against monaco
+Support expressions in the style attribute
+scroll iframe to show selected component, and when dragging
+preserve scroll between app recompiles
+highlight all elements in iframe if there are multiple that map to a jsx element
+drag resize frame
+resize affects padding instead of height/width
+change frame background color/(disable) shadow
+hook state
+view/edit/clear cookies/localstorage
+stub iframe methods for things like network calls and console logs
+add ability for programmers to add fake default props (and children like text?)
+rename css class editor action
+gatsby support
+tooltip?
+hover over outline should highlight element
+independent frame sizes
+support for component libraries (like material ui)
+react suspense support
+editor tab drag
+select 'layer' (element behind frontmost element)
+better image viewer (zoom/pan)
+inject global variable flag into running components
+rename/delete files
+support html tables
+support path aliases
+route path parameters
+select multiple elements and edit styles on all (automatic shared style creation)
+use styled components name and html id in outline if possible
+highlight frame on ouline click
+NavLink support
+hover/active styles
+support drawing svgs (pen/pencil tool parity)
+recent projects
+focus link target or text on element create
+support hoc :/
+warning when adding to root
+gui view hotkeys
+better contraints (esp with other elements)
+proper save indicator
+undo/redo buttons
+auto save
+ability to freeze 'components' to prevent unintentional edits
+support craco?
+add ability to refresh webpack config, dump active webpack config
+surface render/config loading errors
+collapse/expand asset tree
+add version to webpack override config
+flow/css module/custom .babelrc support?
+asset tree filter
+'go to code' button for style groups
+ability to investigate why a file is/isn't a component & which function is chosen as the component
+monaco open vscode
+hotkey to open file (ctrl+p?)
+block exit if unsaved
+autogenerate bootstrap
+fix new name preview
+explicit modal support?
+zindex helper?
+add prettier to new project template
+indicator if prettier is enabled
+webview context menu
+make all __non_webpack_require__ take deps from app/
+look into using 'first-contentful-paint'/mutation observers for reselecting the selected element, instead of sleeps
+remove patche files from generated app package
+zoom slider
+multiselect
+
+data attribute shouldn't apply to fragments
+refresh selection box on frame resize
+error handling + promisify ast classes
+block electron refresh shortcut on prod
+block links and redirects
+resize that also moves
+shift resize to ignore snap
+fix drag/resize on scale
+watch project for changes on filesystem
+debounce text edits
+handle drag when parent has alignment flex-end
+fix long color hex getting cut off
+fix editor actions on code collapse
+max route length in frame title
+fix click on a with href=# causing app to shift up
+clear selected elements if it's deleted
+fix code editor click to select element
+border pulsate uses a lot of gpu
+use codeEntry metadata to get component export
+style components in outline differently
+show webpack errors
+stop publish if project or frame gets closed
+use https://github.com/mamal72/react/blob/master/packages/react-refresh/src/ReactFreshRuntime.js#L650 for react component detection?
+font dropdowns should apply font to options
+default link text content
+clear background image
+confusing when div in frame doesn't take up full frame
+fix element highlight
+ts-morph may help with getting a variable's declaration
+fix selected style group if the current one is deleted
+fix padding flash on padding breakdown input editor collapse
+fix undo in text boxes vs global undo
+add line height/box shadow/overflow
+styled components props can repeat styles
+frame resize should have some default breakpoints
+empty assets tour btns cut off
+fix label animation when content of css input is deleted and unfocused
+style floating point clamp
+edit button doesn't show if ast parse fails?
+fix route width cutoff for large frames
+handle frame losing render export
+test preview edits while react rerenders
+investigate recast making random formatting changes when prettier is disabled
+text edit performance issue!!
+investigate why webSecurity: false doesn't work in electron 10 beta 8 (works in 10 beta 4)
+refresh outline on panel open/route change
+auto scroll outline for a selected element (needed where there's a lot of elements)
+
+
+__REACT_DEVTOOLS_GLOBAL_HOOK__.rendererInterfaces.get(1).getFiberIDForNative(document.querySelector('iframe').contentDocument.querySelector('body > div > div'))
+__REACT_DEVTOOLS_GLOBAL_HOOK__.getFiberRoots(1)
+$Env:NODE_OPTIONS = "--max_old_space_size=8192"
+$Env:PYTHON = 'C:\Python27\python.exe'
+temp1.contentWindow.addEventListener('beforeunload',()=>{debugger})
+https://developer.mozilla.org/en-US/docs/Web/API/Resize_Observer_API
+
+implemented features:
+- generate boilerplate for new projects & components
+- edit element properties (size, position, layout, fill...) in gui, with live code changes
+- set frame size
+- resize elements in live view
+- live view of component
+- select element by cursor in editor + selection view
+- add elements by dropping on live view
+- webpack build system to support most project configurations and generate live view
+  - run on a child thread to avoid ui lock ups
+- edit styled components css within the template automatically
+- multiple files open at the same time (with element selection between them)
+- edit stylesheets from elements
+- get smooth/instant feedback on many style changes
+- per project configuration with support for component bootstrap scripts
+- outline view of components
+- react router support
+- guided tour
+- availble for win+mac
+- view your project in a browser
+
+qa checklist:
+- able to creating a working new project
+- able to load an existing project
+- outline works
+- routing works
+- publish works
+- select element works
+- element editor works
+- selected element stays selected between renders
+- save works
+- able to add new elements and have them be selected on refresh
+- check code editor w/ syntax highlighting and selected element highlight
+
+current limitations:
+~- only works on projects that use the default cra setup~
+- untested redux
+- only works on react
+- slow startup/build
+- changes may be slow to reflect on frame, esp if there are images
+- one component per file (ideally one export)
+- cannot create css classes
+- doesn't support experimental js syntax that's not handled by babel's core parser
+- doesn't support createElement() or create-react-class
+- bootstrap file requires a single function import
+- component files must start with an uppercase letter to be renderable
+
+competition
+- reactide
+  - react ide with live reloading and component tree
+  - doesn't appear to work at a component level
+  - not meant for designers
+- framer x
+  - design & prototyping tool
+  - not meant for production apps as many of their components aren't available for web use
+  - not easy (possible?) to create responsive layouts
+- figma
+  - design & prototyping tool with ability to create responsive layouts
+  - not meant for coders or production apps (only really designs)
+- appgeyver composer pro
+  - nocode app development tool
+  - not meant for coders (there's no code!)
+  - i didn't like their development tool, unintuitive
+- balsamiq
+- axure
+  - figma integration
+- dreamweaver
+  - doesn't work with modern websites
+- honeycode
+  - no code
+  - specialized for data entry
+- pagedraw
+  - can turn figma designs into code
+  - gave up on idea and is now open source
+- webflow
+- zeplin
+- https://www.sanity.io/
+
+template project creation:
+  - npx create-react-app paint-playground --template typescript --use-npm
+  - add bootstrap file
+  - add react router
+  - zip contents (without node modules)
+
+template project todo:
+  - change project name in package.json
+  - update public assets to not say cra
+  - install deps (maybe in background?)
+
+config schema todo:
+  - bootstrap file function based on component file path
+  - bootstrap index html for cdn links
+  - files to ignore
+  - automatic style group preferrence
+  - configure/disable prettier
+  - component directory(s)
+  - component/stylesheet extension
+  - override components list
+  - disable normalize
+  - default frame size
+  - allowed text tags
+  - component comment marker
+  - default animation library
+  - supported fonts
+  - assets directory
+  - disable iframe buffer
+  - auto generate hover/active style settings (like how to calc the color)
+  - disable scale in interactive mode
+  - define all this in package.json
+  - default frame size
+  - select package manager
+  - company 'colors'
+  - don't add lookup data to components?
+  - disable react router support
+  - webpack dev server settings
+
+component libraries to consider for support (stars):
+ - https://github.com/ant-design/ant-design (60.8k)
+ - https://github.com/mui-org/material-ui (58.4k)
+ - https://github.com/react-bootstrap/react-bootstrap (17.8k)
+ - https://github.com/palantir/blueprint (16.3k) desktop first, might not be appropriate
+ - https://github.com/Semantic-Org/Semantic-UI-React (11.4k) in maintenance mode :/ https://github.com/Semantic-Org/Semantic-UI-React/issues/3885
+ - https://github.com/segmentio/evergreen (9.7k)
+ - https://github.com/microsoft/fluentui (8.5k)
+ - https://github.com/OnsenUI/OnsenUI (8k)
+ - https://github.com/chakra-ui/chakra-ui/ (7.7k)
+ - https://github.com/rebassjs/rebass (6.6k)
+ - https://github.com/grommet/grommet (6.4k)
+
+done:
+* new project
+fix select when zoomed out
+fix code out of sync with filepath on filepath change
+fix selecting outer element if inner element's data attribute can't be found
+resize selection box on frame resize
+fix loading typescript for monaco when a spreadsheet is created first
+* add more specific routes before more general routes
+* add empty div with empty route
+finish link edit and add router link
+clear selected element on route switch
+add a render id to selected element?
+persist route switch
+* fix outline for route change
+// don't allow base element of frame to be dragged/resized
+scroll tab bar on tab selection
+select should only pick elements with data attributes
+// handle multiple lookup ids resolving to element
+fix pan between top navigation buttons
+// select first child of project component on editor selection
+fix excessive renders in transform component
+move element adders to a new toolbar
+// drag to add elements/components
+'play' button that publishes a web server to test page on a device
+persist window size/position
+proper unpublish indicator
+collapse component index files
+sidebar collapsables
+more elements! - external library components
+handle long route name in frame title
+text entry should be focused by default when text element is created/selected
+app freaks out when typing text
+div in new route should be a column
+larger text content entry
+deleting causes px to show
+clear selected element on close project
+look into failed port allocation
+use query path auth for internal express asset server to fix PUBLIC_PATH
+fix react router infinite loop
+disable prettier (or make it autodetect)
+stuck loading when webpack throws an error
+selected element's styles disappear when multiple text edits queue up at once
+lowercase file names
+add to base html
+hot reload support
+resize sidebars
+add frame refresh button
+fix error handling again - error during compile/error during inital run/error any time during react run
+outline refresh button
+fix resize when there's padding and box sizing isn't border box
+better highlight tracking - esp after fast refresh
+
+vs ui engineers

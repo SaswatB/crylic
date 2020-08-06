@@ -21,6 +21,7 @@ app.commandLine.appendSwitch(
   "disable-features",
   "OutOfBlinkCors,IsolateOrigins,site-per-process,CrossSiteDocumentBlockingAlways,CrossSiteDocumentBlockingIfIsolating"
 );
+app.commandLine.appendSwitch("enable-blink-features", "ResizeObserverUpdates"); // enables borderBoxSize on ResizeObserver
 app.commandLine.appendSwitch("disable-site-isolation-trials");
 // const {
 //   default: installExtension,
