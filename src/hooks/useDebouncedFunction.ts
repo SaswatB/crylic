@@ -5,11 +5,12 @@ import { useUpdatingRef } from "./useUpdatingRef";
 
 export function useDebouncedFunction<R, S extends Array<R>>(
   func: (...args: S) => void,
-  delay: number
+  delay: number,
+  debounceFunction = debounce
 ) {
   const functionRef = useUpdatingRef(func);
   const debouncedFunctionRef = useRef(
-    debounce<(...args: S) => void>(
+    debounceFunction<(...args: S) => void>(
       (...args) => functionRef.current(...args),
       delay
     )

@@ -1,11 +1,5 @@
-import React, {
-  MutableRefObject,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import produce from "immer";
+import React, { MutableRefObject, useEffect, useRef, useState } from "react";
+import { Observable, Subject } from "rxjs";
 
 import {
   CompilerComponentViewRef,
@@ -15,12 +9,14 @@ import { Draggable } from "../components/Draggable";
 import { Project } from "../lib/project/Project";
 import { onMoveResizeCallback, SelectedElement } from "../types/paint";
 import { SelectModeType } from "../utils/constants";
+import { useObservableCallback } from "./useObservableCallback";
 
 let lastDragResizeHandled = 0;
 export function useOverlay(
   project: Project | undefined,
   componentView: CompilerComponentViewRef | null | undefined,
   frameSize: { width: number; height: number },
+  addTempStylesObservable: Observable<unknown>,
   scaleRef: MutableRefObject<number>,
   selectedElement?: SelectedElement,
   selectModeType?: SelectModeType,
@@ -70,19 +66,7 @@ export function useOverlay(
     onSelect?.(componentElement);
   };
 
-  const [tempOffset, setTempOffset] = useState({
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0,
-  });
-  useEffect(() => setTempOffset({ x: 0, y: 0, width: 0, height: 0 }), [
-    selectedElement,
-  ]);
-  const {
-    selectedElementBoundingBox,
-    selectedElementParentBoundingBox,
-  } = useMemo(() => {
+  const calculateBoundingBox = () => {
     if (!selectedElement) return {};
 
     const componentElements = componentView?.getElementsByLookupId(
@@ -95,17 +79,30 @@ export function useOverlay(
       ...frameSize,
     };
     const bcr = componentElements?.[0].getBoundingClientRect();
-    if (bcr) {
-      bcr.x -= pbcr.left;
-      bcr.y -= pbcr.top;
-    }
 
     return {
-      selectedElementParentBoundingBox: pbcr,
-      selectedElementBoundingBox: bcr,
+      bounds: {
+        top: pbcr.top,
+        left: pbcr.left,
+        width: pbcr.width,
+        height: pbcr.height,
+      },
+      dimensions: bcr && {
+        top: bcr.top - pbcr.top,
+        left: bcr.left - pbcr.left,
+        width: bcr.width,
+        height: bcr.height,
+      },
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedElement]);
+  };
+  const recalculateBoundsObservable = useRef(new Subject<number>());
+  const boundsRenderCounterRef = useRef(0);
+  const recalcBounds = () => {
+    console.log("recalcBounds");
+    recalculateBoundsObservable.current.next(boundsRenderCounterRef.current++);
+  };
+  useObservableCallback(addTempStylesObservable, recalcBounds);
+  useEffect(recalcBounds, [selectedElement]);
 
   const onResizeSelection = (
     finalWidth: string,
@@ -154,89 +151,65 @@ export function useOverlay(
           }}
         />
       ) : (
-        selectedElementBoundingBox &&
-        selectedElementParentBoundingBox && (
-          <Draggable
-            className="border-2 border-blue-600 border-solid pulsing-highlight"
-            dimensions={{
-              top: selectedElementBoundingBox.y + tempOffset.y,
-              left: selectedElementBoundingBox.x + tempOffset.x,
-              width: selectedElementBoundingBox.width + tempOffset.width,
-              height: selectedElementBoundingBox.height + tempOffset.height,
-            }}
-            bounds={selectedElementParentBoundingBox}
-            onDragStart={() => {
-              previewDraggingHighlight.current.dx = 0;
-              previewDraggingHighlight.current.dy = 0;
-            }}
-            onDrag={({ deltaX, deltaY }) => {
+        <Draggable
+          className="border-2 border-blue-600 border-solid pulsing-highlight"
+          element={selectedElement?.element}
+          calculateBoundingBox={calculateBoundingBox}
+          recalculateBoundsObservable={recalculateBoundsObservable.current}
+          onDragStart={() => {
+            previewDraggingHighlight.current.dx = 0;
+            previewDraggingHighlight.current.dy = 0;
+          }}
+          onDrag={({ deltaX, deltaY }) => {
+            onMoveResizeSelection?.(
+              deltaX - previewDraggingHighlight.current.dx,
+              undefined,
+              deltaY - previewDraggingHighlight.current.dy,
+              undefined,
+              undefined,
+              undefined,
+              true
+            );
+            previewDraggingHighlight.current.dx = deltaX;
+            previewDraggingHighlight.current.dy = deltaY;
+          }}
+          onDragStop={() => {
+            if (
+              previewDraggingHighlight.current.dx ||
+              previewDraggingHighlight.current.dy
+            ) {
+              lastDragResizeHandled = Date.now();
               onMoveResizeSelection?.(
-                deltaX - previewDraggingHighlight.current.dx,
+                0,
+                previewDraggingHighlight.current.dx,
+                0,
+                previewDraggingHighlight.current.dy,
                 undefined,
-                deltaY - previewDraggingHighlight.current.dy,
-                undefined,
-                undefined,
-                undefined,
-                true
+                undefined
               );
-              previewDraggingHighlight.current.dx = deltaX;
-              previewDraggingHighlight.current.dy = deltaY;
-            }}
-            onDragStop={() => {
-              if (
-                previewDraggingHighlight.current.dx ||
-                previewDraggingHighlight.current.dy
-              ) {
-                lastDragResizeHandled = Date.now();
-                onMoveResizeSelection?.(
-                  0,
-                  previewDraggingHighlight.current.dx,
-                  0,
-                  previewDraggingHighlight.current.dy,
-                  undefined,
-                  undefined
-                );
-                setTempOffset(
-                  produce((draft) => {
-                    draft.x += previewDraggingHighlight.current.dx;
-                    draft.y += previewDraggingHighlight.current.dy;
-                  })
-                );
-              }
-            }}
-            onResize={({ finalWidth, finalHeight, deltaWidth, deltaHeight }) =>
-              onResizeSelection(
-                finalWidth,
-                finalHeight,
-                deltaWidth,
-                deltaHeight,
-                true
-              )
             }
-            onResizeStop={({
+          }}
+          onResize={({ finalWidth, finalHeight, deltaWidth, deltaHeight }) =>
+            onResizeSelection(
               finalWidth,
               finalHeight,
               deltaWidth,
               deltaHeight,
-            }) => {
-              if (!deltaWidth && !deltaHeight) return;
+              true
+            )
+          }
+          onResizeStop={({
+            finalWidth,
+            finalHeight,
+            deltaWidth,
+            deltaHeight,
+          }) => {
+            if (!deltaWidth && !deltaHeight) return;
 
-              lastDragResizeHandled = Date.now();
-              setTempOffset(
-                produce((draft) => {
-                  draft.width += deltaWidth;
-                  draft.height += deltaHeight;
-                })
-              );
-              onResizeSelection(
-                finalWidth,
-                finalHeight,
-                deltaWidth,
-                deltaHeight
-              );
-            }}
-          />
-        )
+            lastDragResizeHandled = Date.now();
+            onResizeSelection(finalWidth, finalHeight, deltaWidth, deltaHeight);
+          }}
+        />
       )}
     </div>
   );

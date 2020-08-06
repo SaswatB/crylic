@@ -14,6 +14,7 @@ import {
   faSync,
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
+import { Subject } from "rxjs";
 
 import { useDebounce } from "../hooks/useDebounce";
 import { useMenuInput } from "../hooks/useInput";
@@ -82,10 +83,14 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
     height: DEFAULT_FRAME_HEIGHT,
   });
 
+  // event for when temp styles are applied to the selected component
+  const addTempStylesObservableRef = useRef(new Subject());
+
   const [renderOverlay] = useOverlay(
     compilerProps.project,
     componentView.current,
     frameSize,
+    addTempStylesObservableRef.current,
     scaleRef,
     selectedElement,
     selectModeType,
@@ -128,16 +133,58 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           styleValue: `${newMarginTop}px`,
         });
       }
-      if (width)
+      if (width) {
+        let effectiveWidth = width;
+        if (
+          selectedElement?.computedStyles.boxSizing === "content-box" &&
+          width.includes("px")
+        ) {
+          let contentWidth = parseFloat(width);
+          contentWidth -= parseFloat(
+            selectedElement?.computedStyles.paddingLeft
+          );
+          contentWidth -= parseFloat(
+            selectedElement?.computedStyles.paddingRight
+          );
+          contentWidth -= parseFloat(
+            selectedElement?.computedStyles.borderLeftWidth
+          );
+          contentWidth -= parseFloat(
+            selectedElement?.computedStyles.borderRightWidth
+          );
+          effectiveWidth = `${contentWidth}px`;
+        }
         styles.push({
           styleName: "width",
-          styleValue: width,
+          styleValue: effectiveWidth,
         });
-      if (height)
+      }
+      if (height) {
+        let effectiveHeight = height;
+        if (
+          selectedElement?.computedStyles.boxSizing === "content-box" &&
+          height.includes("px")
+        ) {
+          let contentHeight = parseFloat(height);
+          contentHeight -= parseFloat(
+            selectedElement?.computedStyles.paddingTop
+          );
+          contentHeight -= parseFloat(
+            selectedElement?.computedStyles.paddingBottom
+          );
+          contentHeight -= parseFloat(
+            selectedElement?.computedStyles.borderTopWidth
+          );
+          contentHeight -= parseFloat(
+            selectedElement?.computedStyles.borderBottomWidth
+          );
+          effectiveHeight = `${contentHeight}px`;
+        }
         styles.push({
           styleName: "height",
-          styleValue: height,
+          styleValue: effectiveHeight,
         });
+      }
       // todo take style group from sidebar
       updateSelectedElementStyles(
         selectedElement!.styleGroups[0],
@@ -252,11 +299,28 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           ref={(newComponentViewRef) => {
             componentView.current = newComponentViewRef ?? undefined;
             if (compilerProps.ref) {
+              const refProxy = newComponentViewRef
+                ? {
+                    ...newComponentViewRef,
+                    addTempStyles(
+                      lookupId: string,
+                      styles: Styles,
+                      persisteRender: boolean
+                    ) {
+                      newComponentViewRef.addTempStyles(
+                        lookupId,
+                        styles,
+                        persisteRender
+                      );
+                      addTempStylesObservableRef.current.next();
+                    },
+                  }
+                : null;
               if (typeof compilerProps.ref === "function") {
-                compilerProps.ref(newComponentViewRef);
+                compilerProps.ref(refProxy);
               } else {
                 // @ts-ignore ignore readonly error
-                compilerProps.ref.current = newComponentViewRef;
+                compilerProps.ref.current = refProxy;
               }
             }
           }}
