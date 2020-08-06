@@ -394,12 +394,6 @@ export const webpackRunCode = async (
           commonjs2: "react-refresh/runtime",
           amd: "react-refresh/runtime",
         },
-        // this is externalized so that the default project template can be loaded without npm i
-        "normalize.css": {
-          commonjs: "normalize.css",
-          commonjs2: "normalize.css",
-          amd: "normalize.css",
-        },
       },
       plugins: [
         // Generates an `index.html` file with the <script> injected.

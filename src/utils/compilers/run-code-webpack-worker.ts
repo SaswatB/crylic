@@ -207,7 +207,6 @@ ReactDOM.render((
         );
       if (name === "react-refresh/runtime")
         return require("react-refresh/runtime");
-      if (name === "normalize.css") return {};
       throw new Error(`Unable to require "${name}"`);
     };
     (frame!.contentWindow! as any).exports = {};
