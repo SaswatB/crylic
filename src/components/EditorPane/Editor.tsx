@@ -54,80 +54,85 @@ export const Editor: FunctionComponent<Props> = ({
   const activeHighlights = useRef<string[]>([]);
   const activeActions = useRef<string[]>([]);
   useEffect(() => {
-    let decorations: monaco.editor.IModelDeltaDecoration[] = [];
-    if (
-      selectedElementId &&
-      project.primaryElementEditor.getCodeIdFromLookupId(selectedElementId) ===
-        codeEntry.id
-    ) {
-      try {
-        decorations = project.primaryElementEditor.getEditorDecorationsForElement(
-          { ast: codeEntry.ast, codeEntry },
-          selectedElementId
-        );
-      } catch (err) {
-        console.log(err);
-      }
-
-      if (decorations.length > 0) {
-        // center to the first decoration if the editor doesn't currently have focus
-        if (!editorRef.current?.editor?.hasTextFocus()) {
-          editorRef.current?.editor?.revealPositionInCenter({
-            lineNumber: decorations[0].range.startLineNumber,
-            column: decorations[0].range.startColumn,
-          });
-        }
-      }
-    }
-
-    // update the highlight decorations on the editor
-    const oldDecorations = activeHighlights.current;
-    if (oldDecorations.length !== 0 || decorations.length !== 0) {
-      console.log("refreshing monaco decorations", codeEntry.id);
-      activeHighlights.current =
-        editorRef.current?.editor?.deltaDecorations(
-          oldDecorations,
-          decorations
-        ) || [];
-    }
-
-    // add in editor actions
-    editorRef.current?.editor?.changeViewZones((changeAccessor) => {
-      activeActions.current.forEach((viewZoneId) =>
-        changeAccessor.removeZone(viewZoneId)
-      );
-      activeActions.current = [];
-      if (!isScriptEntry(codeEntry)) return;
-
-      try {
-        const actions = new JSXActionProvider().getEditorActions(codeEntry);
-
-        actions.forEach((action) => {
-          const linkNode = document.createElement("a");
-          linkNode.className =
-            "absolute z-20 cursor-pointer opacity-75 text-xs hover:opacity-100 hover:underline";
-          linkNode.style.marginLeft = `${action.column * 7.7}px`;
-          linkNode.text = "Move style to style sheet";
-          linkNode.onclick = () => {
-            const changes = new JSXActionProvider().runEditorActionOnAST(
-              action,
-              project
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        let decorations: monaco.editor.IModelDeltaDecoration[] = [];
+        if (
+          selectedElementId &&
+          project.primaryElementEditor.getCodeIdFromLookupId(
+            selectedElementId
+          ) === codeEntry.id
+        ) {
+          try {
+            decorations = project.primaryElementEditor.getEditorDecorationsForElement(
+              { ast: codeEntry.ast, codeEntry },
+              selectedElementId
             );
-            changes.forEach(({ id, code }) => onCodeChange(id, code));
-          };
-          const domNode = document.createElement("div");
-          domNode.appendChild(linkNode);
+          } catch (err) {
+            console.log(err);
+          }
 
-          const viewZoneId = changeAccessor.addZone({
-            afterLineNumber: action.line - 1,
-            heightInLines: 1,
-            domNode: domNode,
-          });
-          activeActions.current.push(viewZoneId);
+          if (decorations.length > 0) {
+            // center to the first decoration if the editor doesn't currently have focus
+            if (!editorRef.current?.editor?.hasTextFocus()) {
+              editorRef.current?.editor?.revealPositionInCenter({
+                lineNumber: decorations[0].range.startLineNumber,
+                column: decorations[0].range.startColumn,
+              });
+            }
+          }
+        }
+
+        // update the highlight decorations on the editor
+        const oldDecorations = activeHighlights.current;
+        if (oldDecorations.length !== 0 || decorations.length !== 0) {
+          console.log("refreshing monaco decorations", codeEntry.id);
+          activeHighlights.current =
+            editorRef.current?.editor?.deltaDecorations(
+              oldDecorations,
+              decorations
+            ) || [];
+        }
+
+        // add in editor actions
+        editorRef.current?.editor?.changeViewZones((changeAccessor) => {
+          activeActions.current.forEach((viewZoneId) =>
+            changeAccessor.removeZone(viewZoneId)
+          );
+          activeActions.current = [];
+          if (!isScriptEntry(codeEntry)) return;
+
+          try {
+            const actions = new JSXActionProvider().getEditorActions(codeEntry);
+
+            actions.forEach((action) => {
+              const linkNode = document.createElement("a");
+              linkNode.className =
+                "absolute z-20 cursor-pointer opacity-75 text-xs hover:opacity-100 hover:underline";
+              linkNode.style.marginLeft = `${action.column * 7.7}px`;
+              linkNode.text = "Move style to style sheet";
+              linkNode.onclick = () => {
+                const changes = new JSXActionProvider().runEditorActionOnAST(
+                  action,
+                  project
+                );
+                changes.forEach(({ id, code }) => onCodeChange(id, code));
+              };
+              const domNode = document.createElement("div");
+              domNode.appendChild(linkNode);
+
+              const viewZoneId = changeAccessor.addZone({
+                afterLineNumber: action.line - 1,
+                heightInLines: 1,
+                domNode: domNode,
+              });
+              activeActions.current.push(viewZoneId);
+            });
+          } catch (err) {
+            console.log(err);
+          }
         });
-      } catch (err) {
-        console.log(err);
-      }
+      }, 150);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [codeEntry, selectedElementId]);
