@@ -186,7 +186,13 @@ export const Editor: FunctionComponent<Props> = ({
         }
         editorMonaco.addCommand(
           monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S,
-          () => fs.writeFileSync(codeEntry.filePath, localValueRef.current)
+          () => {
+            try {
+              fs.writeFileSync(codeEntry.filePath, localValueRef.current);
+            } catch (error) {
+              alert(`There was an error while saving: ${error.message}`);
+            }
+          }
         );
       }}
     />

@@ -425,7 +425,14 @@ function App() {
           150
         );
       }}
-      onSaveProject={() => project?.saveFiles()}
+      onSaveProject={() => {
+        try {
+          project?.saveFiles();
+          enqueueSnackbar("Files Saved!");
+        } catch (error) {
+          alert(`There was an error while saving: ${error.message}`);
+        }
+      }}
       onCloseProject={() => {
         closeProject();
         setSelectedElement(undefined);
