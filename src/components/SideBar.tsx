@@ -10,6 +10,7 @@ import React, {
 import {
   faCog,
   faCompress,
+  faCrosshairs,
   faEdit,
   faExpand,
   faEye,
@@ -603,6 +604,7 @@ const useSelectedElementEditorTab = ({
   updateSelectedElementStyles,
   updateSelectedElement,
   updateSelectedElementImage,
+  openInEditor,
 }: Props) => {
   const updateSelectedElementAttributes = (
     attributes: Record<string, unknown>
@@ -1088,7 +1090,15 @@ const useSelectedElementEditorTab = ({
   const renderEditor = () => (
     <div data-tour="edit-element-tab">
       {renderSeparator("Style Group")}
-      {renderStyleGroupSelector()}
+      <div className="flex flex-row">
+        {renderStyleGroupSelector({ className: "flex-1" })}
+        <IconButton
+          title="View in Code Editor"
+          className="ml-3"
+          icon={faCrosshairs}
+          onClick={() => selectedStyleGroup && openInEditor(selectedStyleGroup)}
+        />
+      </div>
       <Collapsible title="Layout">
         <div className="grid2x">
           {renderWidthInput()}
@@ -1187,6 +1197,7 @@ interface Props {
     imageProp: "backgroundImage",
     assetEntry: CodeEntry
   ) => void;
+  openInEditor: (styleGroup: StyleGroup) => void;
   onNewComponent: () => void;
   onNewStyleSheet: () => void;
   onImportImage: () => void;

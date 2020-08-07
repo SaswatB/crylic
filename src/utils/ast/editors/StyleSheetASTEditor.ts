@@ -13,7 +13,12 @@ import {
   registerUninheritedCSSProperty,
   traverseStyleSheetRuleSets,
 } from "../ast-helpers";
-import { EditContext, StyleASTEditor, StyleGroup } from "./ASTEditor";
+import {
+  EditContext,
+  ReadContext,
+  StyleASTEditor,
+  StyleGroup,
+} from "./ASTEditor";
 
 export const STYLESHEET_LOOKUP_CSS_VAR_PREFIX = "--paint-stylesheetlookup-";
 
@@ -68,6 +73,17 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
     });
   }
 
+  public getCodeLineFromLookupId(
+    { ast }: ReadContext<CSSASTNode>,
+    lookupId: string
+  ) {
+    let line;
+    this.getStyleSheetRuleSetByLookup(ast, lookupId, (path) => {
+      line = path.start.line;
+    });
+    return line;
+  }
+
   public onASTRender(iframe: HTMLIFrameElement) {
     // prevent property inheritance for data lookup ids
     this.createdIds.forEach((lookupId) =>
@@ -101,7 +117,7 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
     styles: Styles
   ): void {
     let madeChange = false;
-    this.editStyleSheetRuleSetByLookup(ast, lookupId, (path) => {
+    this.getStyleSheetRuleSetByLookup(ast, lookupId, (path) => {
       this.applyStyleSheetStyleAttribute(path, styles);
       madeChange = true;
     });
@@ -189,7 +205,7 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
     return undefined;
   }
 
-  protected editStyleSheetRuleSetByLookup(
+  protected getStyleSheetRuleSetByLookup(
     ast: CSSASTNode,
     lookupId: string,
     apply: (path: CSSASTNode) => void

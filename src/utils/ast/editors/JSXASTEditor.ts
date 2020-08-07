@@ -97,6 +97,17 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     });
   }
 
+  public getCodeLineFromLookupId(
+    { ast }: ReadContext<t.File>,
+    lookupId: string
+  ) {
+    let line;
+    this.getJSXElementByLookupId(ast, lookupId, (path) => {
+      line = path.node.loc?.start.line;
+    });
+    return line;
+  }
+
   public getLookupIdFromHTMLElement(element: HTMLElement) {
     return element.dataset?.[JSX_LOOKUP_DATA_ATTR];
   }

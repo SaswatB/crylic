@@ -56,6 +56,10 @@ export abstract class ASTEditor<ASTType> {
   protected getElementIndexFromLookupId(lookupId: string) {
     return parseInt(lookupId.split("-")[1]);
   }
+  public abstract getCodeLineFromLookupId(
+    readContext: ReadContext<ASTType>,
+    lookupId: string
+  ): number | undefined;
 }
 
 export abstract class StyleASTEditor<ASTType> extends ASTEditor<ASTType> {

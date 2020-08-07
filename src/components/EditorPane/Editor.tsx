@@ -6,12 +6,16 @@ import { useBus } from "ts-bus/react";
 import { useBoundState } from "../../hooks/useBoundState";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useUpdatingRef } from "../../hooks/useUpdatingRef";
-import { editorResize } from "../../lib/events";
+import { editorOpenLocation, editorResize } from "../../lib/events";
 import { Project } from "../../lib/project/Project";
 import { CodeEntry } from "../../types/paint";
 import { JSXActionProvider } from "../../utils/ast/providers/JSXActionProvider";
 import { setupLanguageService } from "../../utils/moncao-helpers";
-import { getFileExtensionLanguage, isScriptEntry } from "../../utils/utils";
+import {
+  getFileExtensionLanguage,
+  isDefined,
+  isScriptEntry,
+} from "../../utils/utils";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 
@@ -172,6 +176,35 @@ export const Editor: FunctionComponent<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
+
+  // listen for editor open requests
+  const openHighlight = useRef<string[]>([]);
+  useEffect(
+    () =>
+      bus.subscribe(editorOpenLocation, ({ payload }) => {
+        if (codeEntry.id === payload.codeEntry.id && isDefined(payload.line)) {
+          editorRef.current?.editor?.revealLineInCenter(payload.line);
+          openHighlight.current =
+            editorRef.current?.editor?.deltaDecorations(openHighlight.current, [
+              {
+                range: new monaco.Range(payload.line, 1, payload.line, 1),
+                options: {
+                  isWholeLine: true,
+                  className: "selected-style-group-code-line-highlight",
+                },
+              },
+            ]) || [];
+        }
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+  // clear the open line highlight if the selected element changes
+  useEffect(() => {
+    openHighlight.current =
+      editorRef.current?.editor?.deltaDecorations(openHighlight.current, []) ||
+      [];
+  }, [selectedElementId]);
 
   return (
     <MonacoEditor

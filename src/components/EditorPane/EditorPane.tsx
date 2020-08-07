@@ -1,5 +1,8 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
+import { useBus } from "ts-bus/react";
 
+import { useUpdatingRef } from "../../hooks/useUpdatingRef";
+import { editorOpenLocation } from "../../lib/events";
 import { Project } from "../../lib/project/Project";
 import { CodeEntry } from "../../types/paint";
 import { getFriendlyName, isDefined, isImageEntry } from "../../utils/utils";
@@ -22,6 +25,7 @@ export const EditorPane: FunctionComponent<Props> = ({
   selectedElementId,
   onSelectElement,
 }) => {
+  const bus = useBus();
   const [activeTab, setActiveTab] = useState(0);
 
   // get all the code entries being edited
@@ -43,6 +47,23 @@ export const EditorPane: FunctionComponent<Props> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedElementId]);
+
+  // listen for editor open requests
+  const openEditorRef = useUpdatingRef((codeEntry: CodeEntry) => {
+    const editorIndex =
+      editableEntries?.findIndex((e) => e.id === codeEntry.id) ?? -1;
+    if (editorIndex !== -1 && activeTab !== editorIndex) {
+      setActiveTab(editorIndex);
+    }
+  });
+  useEffect(
+    () =>
+      bus.subscribe(editorOpenLocation, ({ payload }) =>
+        openEditorRef.current(payload.codeEntry)
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   return (
     <EditorTabs

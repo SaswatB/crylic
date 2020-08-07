@@ -22,7 +22,7 @@ import { Tour } from "./components/Tour";
 import { openFilePicker } from "./hooks/useFilePicker";
 import { useProject } from "./hooks/useProject";
 import { useUpdatingRef } from "./hooks/useUpdatingRef";
-import { editorResize } from "./lib/events";
+import { editorOpenLocation, editorResize } from "./lib/events";
 import {
   CodeEntry,
   OutlineElement,
@@ -377,6 +377,28 @@ function App() {
       updateSelectedElementStyles={updateSelectedElementStyles}
       updateSelectedElement={updateSelectedElement}
       updateSelectedElementImage={updateSelectedElementImage}
+      openInEditor={(styleGroup) => {
+        const { editor, lookupId } = styleGroup;
+        const codeId = editor.getCodeIdFromLookupId(lookupId);
+        if (!codeId) return;
+        const codeEntry = project?.getCodeEntry(codeId);
+        if (!codeEntry) return;
+        const line = editor.getCodeLineFromLookupId(
+          { codeEntry, ast: codeEntry.ast },
+          lookupId
+        );
+        console.log("openInEditor", codeEntry, line);
+        let timeout = 0;
+        if (!project?.editEntries.find((e) => e.codeId === codeEntry.id)) {
+          toggleCodeEntryEdit(codeEntry);
+          // todo don't cheat with a timeout here
+          timeout = 500;
+        }
+        setTimeout(
+          () => bus.publish(editorOpenLocation({ codeEntry, line })),
+          timeout
+        );
+      }}
       onNewComponent={async () => {
         const inputName = await InputModal({
           title: "New Component",

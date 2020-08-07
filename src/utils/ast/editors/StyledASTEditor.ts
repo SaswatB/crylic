@@ -8,7 +8,12 @@ import {
   registerUninheritedCSSProperty,
   traverseStyledTemplatesElements,
 } from "../ast-helpers";
-import { EditContext, StyleASTEditor, StyleGroup } from "./ASTEditor";
+import {
+  EditContext,
+  ReadContext,
+  StyleASTEditor,
+  StyleGroup,
+} from "./ASTEditor";
 
 export const STYLED_LOOKUP_CSS_VAR_PREFIX = "--paint-styledlookup-";
 
@@ -62,6 +67,17 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
     });
   }
 
+  public getCodeLineFromLookupId(
+    { ast }: ReadContext<t.File>,
+    lookupId: string
+  ) {
+    let line;
+    this.getStyledTemplateByLookup(ast, lookupId, (path) => {
+      line = path.node.loc?.start.line;
+    });
+    return line;
+  }
+
   public onASTRender(iframe: HTMLIFrameElement) {
     // prevent property inheritance for data lookup ids
     this.createdIds.forEach((lookupId) =>
@@ -97,7 +113,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
     styles: Styles
   ): void {
     let madeChange = false;
-    this.editStyledTemplateByLookup(ast, lookupId, (path) => {
+    this.getStyledTemplateByLookup(ast, lookupId, (path) => {
       this.applyStyledStyleAttribute(path, styles);
       madeChange = true;
     });
@@ -115,7 +131,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
 
   // helpers
 
-  protected editStyledTemplateByLookup(
+  protected getStyledTemplateByLookup(
     ast: t.File,
     lookupId: string,
     apply: (
