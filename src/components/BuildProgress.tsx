@@ -3,7 +3,7 @@ import { CircularProgress } from "@material-ui/core";
 import { startCase } from "lodash";
 
 import { useObservable } from "../hooks/useObservable";
-import { CompileContext } from "./CompilerComponentView";
+import { CompileContext } from "./ComponentView/CompilerComponentView";
 
 interface Props {
   compileContext?: CompileContext;

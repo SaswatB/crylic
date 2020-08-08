@@ -106,6 +106,8 @@ export class ProjectConfig {
   public isPrettierEnabled() {
     return this.configFile?.prettier?.enabled ?? this.isPrettierInstalled();
   }
+  public isReactInstalled = () => this.isPackageInstalled("react");
+  public isVueInstalled = () => this.isPackageInstalled("vue");
 
   public getFullSourceFolderPath() {
     return path.join(

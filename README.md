@@ -63,7 +63,7 @@ Locally
 
 ```
 npm run build
-node npm-scripts\buildpack.js
+node scripts\buildpack.js
 ```
 
 Remotely (after copying build.zip)

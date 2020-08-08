@@ -1,11 +1,11 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
 import { useBus } from "ts-bus/react";
 
-import { useUpdatingRef } from "../../hooks/useUpdatingRef";
-import { editorOpenLocation } from "../../lib/events";
-import { Project } from "../../lib/project/Project";
-import { CodeEntry } from "../../types/paint";
-import { getFriendlyName, isDefined, isImageEntry } from "../../utils/utils";
+import { useUpdatingRef } from "../../../hooks/useUpdatingRef";
+import { editorOpenLocation } from "../../../lib/events";
+import { Project } from "../../../lib/project/Project";
+import { CodeEntry } from "../../../types/paint";
+import { getFriendlyName, isDefined, isImageEntry } from "../../../utils/utils";
 import { Editor } from "./Editor";
 import { EditorTabs } from "./EditorTabs";
 import { ImageViewer } from "./ImageViewer";

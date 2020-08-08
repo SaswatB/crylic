@@ -4,7 +4,7 @@ import { Observable, Subject } from "rxjs";
 import {
   CompilerComponentViewRef,
   getComponentElementsFromEvent,
-} from "../components/CompilerComponentView";
+} from "../components/ComponentView/CompilerComponentView";
 import { Draggable } from "../components/Draggable";
 import { Project } from "../lib/project/Project";
 import { onMoveResizeCallback, SelectedElement } from "../types/paint";

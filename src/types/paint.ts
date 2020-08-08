@@ -1,4 +1,4 @@
-import { ViewContext } from "../components/CompilerComponentView";
+import { ViewContext } from "../components/ComponentView/CompilerComponentView";
 import { StyleGroup } from "../utils/ast/editors/ASTEditor";
 
 // todo use a better type

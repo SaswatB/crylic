@@ -1,8 +1,8 @@
 import React, { FunctionComponent, ReactNode, useEffect, useRef } from "react";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 
-import { usePrevious } from "../../hooks/usePrevious";
-import { IconButton } from "../IconButton";
+import { usePrevious } from "../../../hooks/usePrevious";
+import { IconButton } from "../../IconButton";
 
 interface Tab {
   key: string;

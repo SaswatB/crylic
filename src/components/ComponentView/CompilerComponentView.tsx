@@ -13,15 +13,15 @@ import { flatten, isEqual, uniq } from "lodash";
 import { Observable, ReplaySubject } from "rxjs";
 import { distinctUntilChanged } from "rxjs/operators";
 
-import { useDebounce } from "../hooks/useDebounce";
-import { useUpdatingRef } from "../hooks/useUpdatingRef";
-import { Project } from "../lib/project/Project";
-import { RenderEntry, Styles } from "../types/paint";
-import { webpackRunCodeWithWorker } from "../utils/compilers/run-code-webpack-worker";
-import { RouteDefinition } from "../utils/react-router-proxy";
-import { isDefined } from "../utils/utils";
-import { ErrorBoundary } from "./ErrorBoundary";
-import { Frame } from "./Frame";
+import { useDebounce } from "../../hooks/useDebounce";
+import { useUpdatingRef } from "../../hooks/useUpdatingRef";
+import { Project } from "../../lib/project/Project";
+import { RenderEntry, Styles } from "../../types/paint";
+import { webpackRunCodeWithWorker } from "../../utils/compilers/run-code-webpack-worker";
+import { RouteDefinition } from "../../utils/react-router-proxy";
+import { isDefined } from "../../utils/utils";
+import { ErrorBoundary } from "../ErrorBoundary";
+import { Frame } from "../Frame";
 
 export const getComponentElementsFromEvent = (
   event: React.MouseEvent<HTMLDivElement, MouseEvent>,

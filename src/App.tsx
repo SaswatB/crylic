@@ -12,11 +12,11 @@ import {
   CompilerComponentViewRef,
   OnCompileEndCallback,
   ViewContext,
-} from "./components/CompilerComponentView";
-import { EditorPane } from "./components/EditorPane/EditorPane";
+} from "./components/ComponentView/CompilerComponentView";
+import { OverlayComponentView } from "./components/ComponentView/OverlayComponentView";
 import { InputModal } from "./components/InputModal";
-import { OverlayComponentView } from "./components/OverlayComponentView";
 import { SideBar } from "./components/SideBar";
+import { EditorPane } from "./components/SideBar/EditorPane/EditorPane";
 import { Toolbar } from "./components/Toolbar";
 import { Tour } from "./components/Tour";
 import { openFilePicker } from "./hooks/useFilePicker";

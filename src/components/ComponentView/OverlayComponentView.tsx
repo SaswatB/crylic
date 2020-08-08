@@ -16,19 +16,21 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { Subject } from "rxjs";
 
-import { useDebounce } from "../hooks/useDebounce";
-import { useMenuInput } from "../hooks/useInput";
-import { useObservable } from "../hooks/useObservable";
-import { useOverlay } from "../hooks/useOverlay";
-import { SelectedElement, Styles } from "../types/paint";
-import { StyleGroup } from "../utils/ast/editors/ASTEditor";
+import { useDebounce } from "../../hooks/useDebounce";
+import { useMenuInput } from "../../hooks/useInput";
+import { useObservable } from "../../hooks/useObservable";
+import { useOverlay } from "../../hooks/useOverlay";
+import { SelectedElement, Styles } from "../../types/paint";
+import { StyleGroup } from "../../utils/ast/editors/ASTEditor";
 import {
   DEFAULT_FRAME_HEIGHT,
   DEFAULT_FRAME_WIDTH,
   SelectModeType,
-} from "../utils/constants";
-import { RouteDefinition } from "../utils/react-router-proxy";
-import { BuildProgress } from "./BuildProgress";
+} from "../../utils/constants";
+import { RouteDefinition } from "../../utils/react-router-proxy";
+import { BuildProgress } from "../BuildProgress";
+import { IconButton } from "../IconButton";
+import { ResizeModal } from "../ResizeModal";
 import {
   CompileContext,
   CompilerComponentView,
@@ -36,8 +38,6 @@ import {
   CompilerComponentViewRef,
   ViewContext,
 } from "./CompilerComponentView";
-import { IconButton } from "./IconButton";
-import { ResizeModal } from "./ResizeModal";
 
 interface Props {
   compilerProps: CompilerComponentViewProps &

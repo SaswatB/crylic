@@ -3,19 +3,19 @@ import MonacoEditor from "react-monaco-editor";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { useBus } from "ts-bus/react";
 
-import { useBoundState } from "../../hooks/useBoundState";
-import { useDebounce } from "../../hooks/useDebounce";
-import { useUpdatingRef } from "../../hooks/useUpdatingRef";
-import { editorOpenLocation, editorResize } from "../../lib/events";
-import { Project } from "../../lib/project/Project";
-import { CodeEntry } from "../../types/paint";
-import { JSXActionProvider } from "../../utils/ast/providers/JSXActionProvider";
-import { setupLanguageService } from "../../utils/moncao-helpers";
+import { useBoundState } from "../../../hooks/useBoundState";
+import { useDebounce } from "../../../hooks/useDebounce";
+import { useUpdatingRef } from "../../../hooks/useUpdatingRef";
+import { editorOpenLocation, editorResize } from "../../../lib/events";
+import { Project } from "../../../lib/project/Project";
+import { CodeEntry } from "../../../types/paint";
+import { JSXActionProvider } from "../../../utils/ast/providers/JSXActionProvider";
+import { setupLanguageService } from "../../../utils/moncao-helpers";
 import {
   getFileExtensionLanguage,
   isDefined,
   isScriptEntry,
-} from "../../utils/utils";
+} from "../../../utils/utils";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 
