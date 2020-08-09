@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
+import { faBars } from "@fortawesome/free-solid-svg-icons";
 import { Backdrop, CircularProgress } from "@material-ui/core";
 import { produce } from "immer";
 import { camelCase, snakeCase, upperFirst } from "lodash";
@@ -14,15 +15,20 @@ import {
   ViewContext,
 } from "./components/ComponentView/CompilerComponentView";
 import { OverlayComponentView } from "./components/ComponentView/OverlayComponentView";
+import { IconButton } from "./components/IconButton";
 import { InputModal } from "./components/InputModal";
-import { SideBar } from "./components/SideBar";
-import { EditorPane } from "./components/SideBar/EditorPane/EditorPane";
+import { AssetTreePane } from "./components/SideBar/AssetTreePane";
+import { CodeEditorPane } from "./components/SideBar/CodeEditorPane/CodeEditorPane";
+import { ElementEditorPane } from "./components/SideBar/ElementEditorPane";
+import { OutlinePane } from "./components/SideBar/OutlinePane";
 import { Toolbar } from "./components/Toolbar";
-import { Tour } from "./components/Tour";
-import { openFilePicker } from "./hooks/useFilePicker";
+import { Tour, TourContext } from "./components/Tour";
+import { openFilePicker, saveFilePicker } from "./hooks/useFilePicker";
+import { useMenuInput } from "./hooks/useInput";
 import { useProject } from "./hooks/useProject";
 import { useUpdatingRef } from "./hooks/useUpdatingRef";
 import { editorOpenLocation, editorResize } from "./lib/events";
+import { Project } from "./lib/project/Project";
 import {
   CodeEntry,
   OutlineElement,
@@ -356,23 +362,184 @@ function App() {
     );
   };
 
-  const scaleRef = useRef(1);
-  const renderSideBar = () => (
-    <SideBar
+  const renderIntro = () => (
+    <div className="btngrp-v w-full">
+      <button
+        className="btn w-full"
+        data-tour="new-project"
+        onClick={() =>
+          saveFilePicker({
+            filters: [{ name: "Project", extensions: [""] }],
+          }).then((f) => {
+            if (f) newProject(f);
+          })
+        }
+      >
+        New Project
+      </button>
+      <Tour
+        name="new-project"
+        beaconStyle={{
+          marginTop: -8,
+          marginLeft: 10,
+        }}
+      >
+        Crylic is project based, so to get started you will need to either
+        create a new project or open an existing one. <br />
+        <br />
+        Try creating a new project to start!
+        <br />
+        Existing React projects can also be opened, ones created with
+        create-react-app work the best.
+      </Tour>
+      <button
+        className="btn w-full"
+        onClick={() =>
+          openFilePicker({ properties: ["openDirectory"] }).then((filePath) => {
+            if (!filePath) return;
+            setLoading((l) => l + 1);
+            // set timeout allows react to render the loading screen before
+            // the main thread get's pegged from opening the project
+            setTimeout(
+              () =>
+                openProject(filePath).finally(() => setLoading((l) => l - 1)),
+              150
+            );
+          })
+        }
+      >
+        Open Project
+      </button>
+    </div>
+  );
+
+  const { tourDisabled, setTourDisabled, resetTour } = useContext(TourContext);
+  const [
+    ,
+    renderSettingsMenu,
+    openSettingsMenu,
+    closeSettingsMenu,
+  ] = useMenuInput({
+    options: [
+      { name: "Save Project", value: "save" },
+      { name: "Close Project", value: "close" },
+      {
+        name: tourDisabled ? "Enable Tour" : "Disable Tour",
+        value: "toggleTour",
+      },
+      !tourDisabled && { name: "Restart Tour", value: "restartTour" },
+    ].filter((o): o is { name: string; value: string } => !!o),
+    disableSelection: true,
+    onChange: (value) => {
+      closeSettingsMenu();
+      switch (value) {
+        case "save":
+          try {
+            project?.saveFiles();
+            enqueueSnackbar("Files Saved!");
+          } catch (error) {
+            alert(`There was an error while saving: ${error.message}`);
+          }
+          break;
+        case "close":
+          closeProject();
+          setSelectedElement(undefined);
+          break;
+        case "toggleTour":
+          setTourDisabled(!tourDisabled);
+          break;
+        case "restartTour":
+          resetTour();
+          break;
+      }
+    },
+  });
+
+  const renderLeftPane = (project: Project) => (
+    <>
+      <div className="flex">
+        {project.config.name}
+        <div className="flex-1" />
+        <IconButton
+          className="ml-2"
+          title="Settings"
+          icon={faBars}
+          onClick={openSettingsMenu}
+        />
+        {renderSettingsMenu()}
+      </div>
+      <OutlinePane
+        project={project}
+        outlineMap={outlineMap}
+        refreshOutline={(renderId) => {
+          const entry = project.renderEntries.find((e) => e.id === renderId);
+          if (entry) calculateOutline(entry);
+        }}
+        selectedElement={selectedElement}
+        selectElement={(r, c) => {
+          const lookupId = project.primaryElementEditor.getLookupIdFromHTMLElement(
+            c
+          );
+          if (lookupId) selectElement.current(r, lookupId);
+        }}
+      />
+      <Resizable
+        minHeight={100}
+        defaultSize={{ height: 225, width: "auto" }}
+        enable={{ top: true }}
+        onResizeStop={() => bus.publish(editorResize())}
+      >
+        <AssetTreePane
+          project={project}
+          onNewComponent={async () => {
+            const inputName = await InputModal({
+              title: "New Component",
+              message: "Please enter a component name",
+            });
+            if (!inputName) return;
+            // todo add validation/duplicate checking to name
+            const name = upperFirst(camelCase(inputName));
+            const filePath = project!.getNewComponentPath(name);
+            const code = getBoilerPlateComponent(name);
+            addCodeEntry({ filePath, code }, { render: true });
+            enqueueSnackbar("Started a new component!");
+          }}
+          onNewStyleSheet={async () => {
+            const inputName = await InputModal({
+              title: "New StyleSheet",
+              message: "Please enter a stylesheet name",
+            });
+            if (!inputName) return;
+            // todo add validation/duplicate checking to name
+            const name = camelCase(inputName);
+            const filePath = project!.getNewStyleSheetPath(name);
+            addCodeEntry({ filePath }, { edit: true });
+            enqueueSnackbar("Started a new component!");
+          }}
+          onImportImage={async () => {
+            const file = await openFilePicker({
+              filters: [
+                {
+                  name: "Image (.jpg,.jpeg,.png,.gif,.svg)",
+                  extensions: ["jpg", "jpeg", "png", "gif", "svg"],
+                },
+              ],
+            });
+            if (!file) return;
+            setProject((currentProject) => currentProject?.addAsset(file));
+            enqueueSnackbar("Imported Image!");
+          }}
+          onChangeSelectMode={setSelectMode}
+          toggleCodeEntryEdit={toggleCodeEntryEdit}
+          addRenderEntry={addRenderEntry}
+        />
+      </Resizable>
+    </>
+  );
+  const renderRightPane = (project: Project) => (
+    <ElementEditorPane
       project={project}
-      outlineMap={outlineMap}
-      refreshOutline={(renderId) => {
-        const entry = project?.renderEntries.find((e) => e.id === renderId);
-        if (entry) calculateOutline(entry);
-      }}
-      selectElement={(r, c) => {
-        const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
-          c
-        );
-        if (lookupId) selectElement.current(r, lookupId);
-      }}
       selectedElement={selectedElement}
-      onChangeSelectMode={setSelectMode}
       updateSelectedElementStyle={updateSelectedElementStyle}
       updateSelectedElementStyles={updateSelectedElementStyles}
       updateSelectedElement={updateSelectedElement}
@@ -381,7 +548,7 @@ function App() {
         const { editor, lookupId } = styleGroup;
         const codeId = editor.getCodeIdFromLookupId(lookupId);
         if (!codeId) return;
-        const codeEntry = project?.getCodeEntry(codeId);
+        const codeEntry = project.getCodeEntry(codeId);
         if (!codeEntry) return;
         const line = editor.getCodeLineFromLookupId(
           { codeEntry, ast: codeEntry.ast },
@@ -389,7 +556,7 @@ function App() {
         );
         console.log("openInEditor", codeEntry, line);
         let timeout = 0;
-        if (!project?.editEntries.find((e) => e.codeId === codeEntry.id)) {
+        if (!project.editEntries.find((e) => e.codeId === codeEntry.id)) {
           toggleCodeEntryEdit(codeEntry);
           // todo don't cheat with a timeout here
           timeout = 500;
@@ -399,68 +566,6 @@ function App() {
           timeout
         );
       }}
-      onNewComponent={async () => {
-        const inputName = await InputModal({
-          title: "New Component",
-          message: "Please enter a component name",
-        });
-        if (!inputName) return;
-        // todo add validation/duplicate checking to name
-        const name = upperFirst(camelCase(inputName));
-        const filePath = project!.getNewComponentPath(name);
-        const code = getBoilerPlateComponent(name);
-        addCodeEntry({ filePath, code }, { render: true });
-        enqueueSnackbar("Started a new component!");
-      }}
-      onNewStyleSheet={async () => {
-        const inputName = await InputModal({
-          title: "New StyleSheet",
-          message: "Please enter a stylesheet name",
-        });
-        if (!inputName) return;
-        // todo add validation/duplicate checking to name
-        const name = camelCase(inputName);
-        const filePath = project!.getNewStyleSheetPath(name);
-        addCodeEntry({ filePath }, { edit: true });
-        enqueueSnackbar("Started a new component!");
-      }}
-      onImportImage={async () => {
-        const file = await openFilePicker({
-          filters: [
-            {
-              name: "Image (.jpg,.jpeg,.png,.gif,.svg)",
-              extensions: ["jpg", "jpeg", "png", "gif", "svg"],
-            },
-          ],
-        });
-        if (!file) return;
-        setProject((currentProject) => currentProject?.addAsset(file));
-        enqueueSnackbar("Imported Image!");
-      }}
-      onNewProject={newProject}
-      onOpenProject={(filePath) => {
-        setLoading((l) => l + 1);
-        // set timeout allows react to render the loading screen before
-        // the main thread get's pegged from opening the project
-        setTimeout(
-          () => openProject(filePath).finally(() => setLoading((l) => l - 1)),
-          150
-        );
-      }}
-      onSaveProject={() => {
-        try {
-          project?.saveFiles();
-          enqueueSnackbar("Files Saved!");
-        } catch (error) {
-          alert(`There was an error while saving: ${error.message}`);
-        }
-      }}
-      onCloseProject={() => {
-        closeProject();
-        setSelectedElement(undefined);
-      }}
-      toggleCodeEntryEdit={toggleCodeEntryEdit}
-      addRenderEntry={addRenderEntry}
     />
   );
 
@@ -479,6 +584,7 @@ function App() {
     />
   );
 
+  const scaleRef = useRef(1);
   const renderComponentViews = () =>
     project?.renderEntries.map((entry) => (
       <OverlayComponentView
@@ -579,19 +685,26 @@ function App() {
         errors occur.
       </Tour>
       <div className="flex flex-1 flex-row">
-        <Resizable
-          className="sidebar flex flex-col p-4 pb-0 h-screen bg-gray-800 z-10"
-          minWidth={200}
-          maxWidth={800}
-          defaultSize={{ height: "100vh", width: 300 }}
-          enable={{ right: true }}
-        >
-          {renderSideBar()}
-        </Resizable>
+        {project && (
+          <Resizable
+            className="flex flex-col p-4 pb-0 h-screen bg-gray-800 z-10"
+            minWidth={200}
+            maxWidth={800}
+            defaultSize={{ height: "100vh", width: 300 }}
+            enable={{ right: true }}
+          >
+            {renderLeftPane(project)}
+          </Resizable>
+        )}
         <div className="flex flex-col flex-1 relative bg-gray-600 items-center justify-center overflow-hidden">
           {(project?.renderEntries.length ?? 0) > 0 && (
             <div className="toolbar flex absolute top-0 right-0 left-0 bg-gray-800 z-10">
               {renderToolbar()}
+            </div>
+          )}
+          {!project && (
+            <div className="flex flex-1 w-64 absolute items-center justify-center z-10">
+              {renderIntro()}
             </div>
           )}
           <TransformWrapper
@@ -625,15 +738,26 @@ function App() {
             <TransformComponent>{renderComponentViews()}</TransformComponent>
           </TransformWrapper>
         </div>
-        {(project?.editEntries.length || 0) > 0 && (
+        {project && (
+          <Resizable
+            className="flex flex-col h-screen bg-gray-800 z-10"
+            minWidth={200}
+            maxWidth={500}
+            defaultSize={{ height: "100vh", width: 300 }}
+            enable={{ left: true }}
+          >
+            {renderRightPane(project)}
+          </Resizable>
+        )}
+        {project && project.editEntries.length > 0 && (
           <Resizable
             minWidth={200}
             maxWidth={1200}
-            defaultSize={{ height: "100vh", width: 600 }}
+            defaultSize={{ height: "100vh", width: 400 }}
             enable={{ left: true }}
             onResizeStop={() => bus.publish(editorResize())}
           >
-            <EditorPane
+            <CodeEditorPane
               project={project}
               onCodeChange={(codeId, newCode) => {
                 setCode(codeId, newCode);

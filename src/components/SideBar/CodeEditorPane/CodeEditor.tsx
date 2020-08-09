@@ -28,7 +28,7 @@ interface Props {
   isActiveEditor: boolean;
 }
 
-export const Editor: FunctionComponent<Props> = ({
+export const CodeEditor: FunctionComponent<Props> = ({
   project,
   codeEntry,
   onCodeChange,

@@ -60,6 +60,10 @@ export class ProjectConfig {
     public readonly packageJson: PackageJson | undefined
   ) {}
 
+  get name() {
+    return path.basename(this.projectPath.replace(/\\/g, "/"));
+  }
+
   public static async createProjectConfigFromDirectory(projectPath: string) {
     let configFile;
     let packageJson;

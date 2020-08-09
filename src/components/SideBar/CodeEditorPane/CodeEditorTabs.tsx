@@ -17,7 +17,7 @@ interface Props {
   activeTab: number;
   onChange: (newTab: number) => void;
 }
-export const EditorTabs: FunctionComponent<Props> = ({
+export const CodeEditorTabs: FunctionComponent<Props> = ({
   tabs,
   activeTab,
   onChange,

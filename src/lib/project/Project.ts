@@ -194,6 +194,9 @@ export class Project {
       read(srcFolderPath);
     }
 
+    // set the window name
+    document.title = `${config.name} - Crylic`;
+
     return new Project(folderPath, srcFolderPath, config).addCodeEntries(
       fileCodeEntries
     );

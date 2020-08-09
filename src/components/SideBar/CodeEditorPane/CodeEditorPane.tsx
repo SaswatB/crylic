@@ -6,8 +6,8 @@ import { editorOpenLocation } from "../../../lib/events";
 import { Project } from "../../../lib/project/Project";
 import { CodeEntry } from "../../../types/paint";
 import { getFriendlyName, isDefined, isImageEntry } from "../../../utils/utils";
-import { Editor } from "./Editor";
-import { EditorTabs } from "./EditorTabs";
+import { CodeEditor } from "./CodeEditor";
+import { CodeEditorTabs } from "./CodeEditorTabs";
 import { ImageViewer } from "./ImageViewer";
 
 interface Props {
@@ -18,7 +18,7 @@ interface Props {
   onSelectElement: (lookupId: string) => void;
 }
 
-export const EditorPane: FunctionComponent<Props> = ({
+export const CodeEditorPane: FunctionComponent<Props> = ({
   project,
   onCodeChange,
   onCloseCodeEntry,
@@ -66,7 +66,7 @@ export const EditorPane: FunctionComponent<Props> = ({
   );
 
   return (
-    <EditorTabs
+    <CodeEditorTabs
       activeTab={activeTab}
       onChange={setActiveTab}
       tabs={editableEntries?.map((codeEntry, index) => ({
@@ -77,7 +77,7 @@ export const EditorPane: FunctionComponent<Props> = ({
           isImageEntry(codeEntry) ? (
             <ImageViewer codeEntry={codeEntry} />
           ) : (
-            <Editor
+            <CodeEditor
               project={project!}
               codeEntry={codeEntry}
               onCodeChange={onCodeChange}
