@@ -73,12 +73,12 @@ export function useOverlay(
       selectedElement?.lookupId
     );
     const pbcr = (selectedElement?.computedStyles.position === "static" &&
-      componentElements?.[0].parentElement?.getBoundingClientRect()) || {
+      componentElements?.[0]?.parentElement?.getBoundingClientRect()) || {
       top: 0,
       left: 0,
       ...frameSize,
     };
-    const bcr = componentElements?.[0].getBoundingClientRect();
+    const bcr = componentElements?.[0]?.getBoundingClientRect();
 
     return {
       bounds: {

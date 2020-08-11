@@ -31,6 +31,7 @@ import {
 
 import { useGlobalConfig } from "../hooks/useGlobalConfig";
 import { useSelectInput } from "../hooks/useInput";
+import { Project } from "../lib/project/Project";
 import { SelectedElement } from "../types/paint";
 import {
   ComponentViewZoomAction,
@@ -41,6 +42,7 @@ import { renderSeparator } from "../utils/utils";
 import { Tour } from "./Tour";
 
 const useAdderTab = (
+  project: Project,
   selectMode: SelectMode | undefined,
   setSelectMode: (mode: SelectMode | undefined) => void
 ) => {
@@ -134,6 +136,15 @@ const useAdderTab = (
       config.componentConfigs[parseInt(selectedComponentConfigIndex)];
     if (!componentConfig) return null; // todo error
 
+    if (!componentConfig.installed(project)) {
+      return (
+        <>
+          <div className="p-4 text-center">
+            {componentConfig.name} is not installed in this project
+          </div>
+        </>
+      );
+    }
     return (
       <div className="btngrp-v flex flex-col mt-2 w-64">
         {componentConfig.components.map((component, index) => (
@@ -171,6 +182,7 @@ const useAdderTab = (
 };
 
 interface Props {
+  project: Project;
   setZoomAction: (action: ComponentViewZoomAction) => void;
   selectMode: SelectMode | undefined;
   setSelectMode: (mode: SelectMode | undefined) => void;
@@ -178,6 +190,7 @@ interface Props {
   setSelectedElement: (selectedElement: SelectedElement | undefined) => void;
 }
 export const Toolbar: FunctionComponent<Props> = ({
+  project,
   setZoomAction,
   selectMode,
   setSelectMode,
@@ -188,7 +201,7 @@ export const Toolbar: FunctionComponent<Props> = ({
     variant: "popover",
     popupId: "adderPopup",
   });
-  const renderElementAdder = useAdderTab(selectMode, (mode) => {
+  const renderElementAdder = useAdderTab(project, selectMode, (mode) => {
     adderPopupState.close();
     setSelectMode(mode);
   });

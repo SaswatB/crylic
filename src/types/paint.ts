@@ -1,4 +1,5 @@
 import { ViewContext } from "../components/ComponentView/CompilerComponentView";
+import { Project } from "../lib/project/Project";
 import { StyleGroup } from "../utils/ast/editors/ASTEditor";
 
 // todo use a better type
@@ -99,5 +100,6 @@ export type ComponentDefinition = (
 
 export interface CustomComponentConfig {
   name: string;
+  installed: (project: Project) => boolean;
   components: CustomComponentDefinition[];
 }

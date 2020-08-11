@@ -574,8 +574,9 @@ function App() {
     if (zoomAction) setZoomAction(undefined);
   }, [zoomAction]);
 
-  const renderToolbar = () => (
+  const renderToolbar = (project: Project) => (
     <Toolbar
+      project={project}
       setZoomAction={setZoomAction}
       selectMode={selectMode}
       setSelectMode={setSelectMode}
@@ -697,9 +698,9 @@ function App() {
           </Resizable>
         )}
         <div className="flex flex-col flex-1 relative bg-gray-600 items-center justify-center overflow-hidden">
-          {(project?.renderEntries.length ?? 0) > 0 && (
+          {project && (project?.renderEntries.length ?? 0) > 0 && (
             <div className="toolbar flex absolute top-0 right-0 left-0 bg-gray-800 z-10">
-              {renderToolbar()}
+              {renderToolbar(project)}
             </div>
           )}
           {!project && (

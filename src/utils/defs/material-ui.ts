@@ -16,6 +16,8 @@ function materialUIComponentDef(name: string): CustomComponentDefinition {
 export const materialUiComponents: CustomComponentConfig = {
   // todo themes?
   name: "Material-UI",
+  installed: (project) =>
+    project.config.isPackageInstalled("@material-ui/core"),
   components: [
     materialUIComponentDef("Button"), // todo somehow handle events
     materialUIComponentDef("ButtonGroup"), // todo add buttons in this by default

@@ -100,7 +100,7 @@ export class ProjectConfig {
     return new ProjectConfig(projectPath, configFile, packageJson);
   }
 
-  private isPackageInstalled(module: string, allowDevDep = true) {
+  public isPackageInstalled(module: string, allowDevDep = true) {
     return (
       module in (this.packageJson?.dependencies || {}) ||
       (allowDevDep && module in (this.packageJson?.devDependencies || {}))
