@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from "react";
+import React, { FunctionComponent, useState } from "react";
 import { faSync } from "@fortawesome/free-solid-svg-icons";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
@@ -76,9 +76,10 @@ export const OutlinePane: FunctionComponent<Props> = ({
         key={id}
         nodeId={id}
         label={treeLabel}
-        onClick={() =>
-          node.element && selectElement(node.renderId, node.element)
-        }
+        onLabelClick={(e) => {
+          e.preventDefault();
+          if (node.element) selectElement(node.renderId, node.element);
+        }}
       >
         {node.children.map(renderTree)}
       </TreeItem>
@@ -96,6 +97,8 @@ export const OutlinePane: FunctionComponent<Props> = ({
     })
   );
 
+  // todo maybe store lookupIds here? (nodeIds currently clear on refresh)
+  const [collapsedNodes, setCollapsedNodes] = useState<string[]>([]);
   return (
     <>
       {project.renderEntries.length > 0 && (
@@ -120,11 +123,19 @@ export const OutlinePane: FunctionComponent<Props> = ({
         <TreeView
           defaultCollapseIcon={<ExpandMoreIcon />}
           defaultExpandIcon={<ChevronRightIcon />}
-          expanded={Array.from(treeNodeIds)}
+          expanded={Array.from(treeNodeIds).filter(
+            (i) => !collapsedNodes.includes(i)
+          )}
           selected={
             selectedElement
               ? `${getElementUniqueId(selectedElement.element)}`
               : ""
+          }
+          onNodeToggle={(e, expandedNodes) =>
+            // only store nodes that have been collapsed
+            setCollapsedNodes(
+              Array.from(treeNodeIds).filter((n) => !expandedNodes.includes(n))
+            )
           }
         >
           {renderedTree}
