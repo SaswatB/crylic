@@ -262,7 +262,6 @@ const WidePopper = (props: PopperProps) => {
 
 export const useAutocomplete: useInputFunction<{
   options: { name: string; category?: string; value: string }[];
-  // if freeSolo is true T is assumed to be a string
   freeSolo?: boolean;
   widePopper?: boolean;
 }> = ({ options, freeSolo, widePopper, onChange, label, initialValue }) => {
@@ -271,7 +270,12 @@ export const useAutocomplete: useInputFunction<{
 
   const render = (
     props?: Partial<
-      AutocompleteProps<{ name: string; category?: string; value: string }>
+      AutocompleteProps<
+        { name: string; category?: string; value: string },
+        false,
+        true,
+        boolean
+      >
     >
   ) => (
     <Autocomplete
@@ -285,11 +289,11 @@ export const useAutocomplete: useInputFunction<{
               name: `${value}`,
               value,
             }
-          : null)
+          : ((null as unknown) as undefined))
       }
       onChange={(event, newValue) => {
         const v =
-          newValue?.value ||
+          (newValue as { value: string })?.value ||
           (freeSolo && (newValue as string | null)) ||
           undefined;
         if (v !== undefined) {
