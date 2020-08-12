@@ -135,6 +135,24 @@ function App() {
       inlineStyles: componentElements[0].style,
     });
   });
+  // there are instances where selected element will have it's underlying dom element replaced
+  // so to try and handle such cases, this attempts to reselect the selected element if the parent element is missing
+  const badSelectedElementRetryCounter = useRef(0);
+  useEffect(() => {
+    if (!selectedElement) return;
+    if (!selectedElement.element.parentElement) {
+      if (badSelectedElementRetryCounter.current === 0) {
+        badSelectedElementRetryCounter.current++;
+        selectElement.current(
+          selectedElement.renderId,
+          selectedElement.lookupId
+        );
+      }
+    } else {
+      badSelectedElementRetryCounter.current = 0;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!selectedElement?.element.parentElement]);
 
   const [outlineMap, setOutlineMap] = useState<
     Record<string, OutlineElement[] | undefined>
