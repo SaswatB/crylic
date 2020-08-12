@@ -78,6 +78,7 @@ export interface CustomComponentDefinition {
   name: string;
   import: {
     path: string; // absolute path or node module, todo support path relative to project root
+    namespace?: string;
     name?: string; // defaults to name
     isDefault?: boolean;
     preferredAlias?: string;

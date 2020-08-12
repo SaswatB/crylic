@@ -148,7 +148,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
           [`data-${JSX_RECENTLY_ADDED_DATA_ATTR}`]: JSX_RECENTLY_ADDED,
         },
         {
-          isNewRoute: childTag === "Route",
+          isNewRoute: ifJSXIdentifier(childTag)?.name === "Route",
         }
       );
     });
@@ -187,9 +187,9 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     );
 
     this.getJSXElementByLookupId(ast, lookupId, (path) => {
-      path.value.openingElement.name = b.jsxIdentifier(componentTag);
+      path.value.openingElement.name = componentTag;
       if (path.value.closingElement) {
-        path.value.closingElement.name = b.jsxIdentifier(componentTag);
+        path.value.closingElement.name = componentTag;
       }
     });
   }
@@ -243,7 +243,8 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
               b.templateElement({ raw: "url(", cooked: "url(" }, false),
               b.templateElement({ raw: ")", cooked: ")" }, true),
             ],
-            [b.identifier(assetIdentifier)]
+            // todo do this more safely
+            [b.identifier(ifJSXIdentifier(assetIdentifier)!.name)]
           ),
         },
       ]);
@@ -450,7 +451,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
 
   protected addJSXChildToJSXElement(
     parentElement: t.JSXElement,
-    childElementTag: keyof HTMLElementTagNameMap | string,
+    childElementTag: t.JSXIdentifier | t.JSXMemberExpression,
     childAttributes: Record<string, unknown> = {},
     childOptions?: {
       shouldBeSelfClosing?: boolean;
@@ -469,7 +470,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
 
     const child = b.jsxElement(
       b.jsxOpeningElement(
-        b.jsxIdentifier(childElementTag),
+        childElementTag,
         Object.entries(
           omit(childAttributes, "textContent")
         ).map(([name, value]) =>
@@ -477,9 +478,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
         ),
         selfClosing
       ),
-      selfClosing
-        ? undefined
-        : b.jsxClosingElement(b.jsxIdentifier(childElementTag)),
+      selfClosing ? undefined : b.jsxClosingElement(childElementTag),
       grandChildren
     );
 
@@ -619,7 +618,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     componentDef: ComponentDefinition
   ) {
     if (componentDef.isHTMLElement) {
-      return componentDef.tag;
+      return b.jsxIdentifier(componentDef.tag);
       // todo should this import React?
     } else {
       // ensure the import for components with a path
@@ -633,7 +632,8 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     component: CustomComponentDefinition
   ) {
     const importPath = getRelativeImportPath(codeEntry, component.import.path);
-    const importName = component.import.name || component.name;
+    const importName =
+      component.import.namespace || component.import.name || component.name;
 
     // try to find an existing import declaration
     let assetImport = ast.program.body.find(
@@ -688,6 +688,12 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     if (importedName === false) {
       throw new Error("Failed to find import name");
     }
-    return importedName;
+    if (component.import.namespace) {
+      return b.jsxMemberExpression(
+        b.jsxIdentifier(importedName),
+        b.jsxIdentifier(component.import.name || component.name)
+      );
+    }
+    return b.jsxIdentifier(importedName);
   }
 }
