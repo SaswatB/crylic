@@ -3,7 +3,7 @@ import { LiteralKind } from "ast-types/gen/kinds";
 import { NodePath } from "ast-types/lib/node-path";
 import clone from "clone";
 import deepFreeze from "deep-freeze-strict";
-import { Either, left, right } from "fp-ts/lib/Either";
+import { Either, fold, left, right } from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
 import gonzales, {
   createNode,
@@ -108,6 +108,12 @@ export const ifJSXIdentifier = (
   node: t.Node | null | undefined
 ): t.JSXIdentifier | undefined =>
   node?.type === "JSXIdentifier" ? (node as t.JSXIdentifier) : undefined;
+export const ifJSXMemberExpression = (
+  node: t.Node | null | undefined
+): t.JSXMemberExpression | undefined =>
+  node?.type === "JSXMemberExpression"
+    ? (node as t.JSXMemberExpression)
+    : undefined;
 export const ifJSXText = (
   node: t.Node | null | undefined
 ): t.JSXText | undefined =>
@@ -122,6 +128,16 @@ export const ifVariableDeclarator = (
   node?.type === "VariableDeclarator"
     ? (node as t.VariableDeclarator)
     : undefined;
+
+export const eitherIf = <S, T, U extends S>(check: (n: S) => T | undefined) => (
+  n: U
+) => {
+  const checkRes = check(n);
+  if (checkRes !== undefined) {
+    return left(checkRes);
+  }
+  return right(n as Exclude<U, T>);
+};
 
 export const ifString = (value: unknown) =>
   typeof value === "string" ? value : undefined;
@@ -139,6 +155,10 @@ export const getValue = <S, T extends { value?: S }>(
 export const getContent = <S, T extends { content?: S }>(
   node: T | null | undefined
 ): ExtractPropType<T, "content"> | undefined => node?.content as any;
+
+export const getName = <S, T extends { name?: S }>(
+  node: T | null | undefined
+): ExtractPropType<T, "name"> | undefined => node?.name as any;
 
 export const getIdName = <T extends { id?: t.Node | null }>(
   node: T | null | undefined
@@ -190,7 +210,11 @@ export const astLiteralToValue = (value: LiteralKind | t.ObjectExpression) => {
         if (prop.type === "ObjectProperty") {
           if (LiteralKindTypes.includes(prop.value.type)) {
             return {
-              key: pipe(prop.key, ifStringLiteral, getValue),
+              key: pipe(
+                prop.key,
+                eitherIf(ifStringLiteral),
+                fold(getValue, (a) => pipe(a, ifIdentifier, (_) => _?.name))
+              ),
               value: (prop.value as LiteralKind).value,
             };
           }

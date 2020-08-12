@@ -1,5 +1,6 @@
 import { namedTypes as t } from "ast-types";
 import { NodePath } from "ast-types/lib/node-path";
+import { fold } from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
 import { omit, startCase } from "lodash";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
@@ -16,12 +17,15 @@ import {
 import { getRelativeImportPath } from "../../utils";
 import {
   copyJSXName,
+  eitherIf,
+  getName,
   getValue,
   ifIdentifier,
   ifJSXAttribute,
   ifJSXElement,
   ifJSXExpressionContainer,
   ifJSXIdentifier,
+  ifJSXMemberExpression,
   ifObjectExpression,
   ifObjectProperty,
   ifStringLiteral,
@@ -303,8 +307,21 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
         componentName:
           pipe(
             path.value.openingElement.name,
-            ifJSXIdentifier,
-            (_) => _?.name
+            eitherIf(ifJSXIdentifier),
+            fold(getName, (a) =>
+              pipe(
+                a,
+                ifJSXMemberExpression,
+                (_) => ({
+                  object: pipe(_?.object, ifJSXIdentifier, getName),
+                  property: pipe(_?.property, ifJSXIdentifier, getName),
+                }),
+                (_) =>
+                  _.object && _.property
+                    ? `${_.object}.${_.property}`
+                    : undefined
+              )
+            )
           ) || "",
         // get the component props by best effort (won't match non literals)
         directProps:
@@ -313,7 +330,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
               pipe(attr, ifJSXAttribute, (_) =>
                 _
                   ? {
-                      key: pipe(_.name, ifJSXIdentifier, (__) => __?.name),
+                      key: pipe(_.name, ifJSXIdentifier, getName),
                       value: _.value && jsxLiteralToValue(_.value),
                     }
                   : _
