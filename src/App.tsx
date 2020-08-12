@@ -318,6 +318,11 @@ function App() {
     const newAst = apply(editor, { ast: codeEntry.ast, codeEntry, lookupId });
 
     setCodeAstEdit(newAst, codeEntry);
+
+    // refresh the selected element after compile to get the new ast metadata
+    compileTasks.current[selectedElement.renderId]?.push(() => {
+      selectElement.current(selectedElement.renderId, selectedElement.lookupId);
+    });
   };
 
   const updateSelectedElementStyles = (
