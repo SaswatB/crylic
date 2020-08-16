@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "author": "Saswat Bhattacharya",
-  "main": "build-main/electron.js",
+  "main": "build-main-dev/electron.js",
   "homepage": "./",
   "scripts": {
     "start": "node ./scripts/start",

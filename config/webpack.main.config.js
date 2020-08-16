@@ -5,7 +5,10 @@ module.exports = (env, argv) => ({
   entry: { electron: "./src/electron.ts" },
   devtool: "source-map",
   output: {
-    path: path.resolve(__dirname, "../build-main"),
+    path: path.resolve(
+      __dirname,
+      argv.mode === "development" ? "../build-main-dev" : "../build-main"
+    ),
     filename: "[name].js",
   },
   module: {
