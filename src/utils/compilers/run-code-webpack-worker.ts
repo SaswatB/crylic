@@ -40,10 +40,8 @@ if (WORKER_ENABLED) {
     nodeModulesPath: __non_webpack_require__
       .resolve("webpack")
       .replace(
-        /node_modules[/\\].*$/,
-        `${
-          process.env.NODE_ENV === "development" ? `app${path.sep}` : ""
-        }node_modules${path.sep}`
+        /(app[/\\])?node_modules[/\\].*$/,
+        `app${path.sep}node_modules${path.sep}`
       ),
   });
 }
