@@ -27,7 +27,12 @@ import {
 } from "../../hooks/useInput";
 import { useObservable } from "../../hooks/useObservable";
 import { Project } from "../../lib/project/Project";
-import { CodeEntry, SelectedElement, Styles } from "../../types/paint";
+import {
+  CodeEntry,
+  PackageInstaller,
+  SelectedElement,
+  Styles,
+} from "../../types/paint";
 import {
   EditContext,
   ElementASTEditor,
@@ -103,6 +108,7 @@ interface Props {
     assetEntry: CodeEntry
   ) => void;
   openInEditor: (styleGroup: StyleGroup) => void;
+  installPackage: PackageInstaller;
 }
 
 export const ElementEditorPane: FunctionComponent<Props> = ({
@@ -113,6 +119,7 @@ export const ElementEditorPane: FunctionComponent<Props> = ({
   updateSelectedElement,
   updateSelectedElementImage,
   openInEditor,
+  installPackage,
 }: Props) => {
   const updateSelectedElementAttributes = (
     attributes: Record<string, unknown>

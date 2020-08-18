@@ -32,7 +32,7 @@ import {
 import { useGlobalConfig } from "../hooks/useGlobalConfig";
 import { useSelectInput } from "../hooks/useInput";
 import { Project } from "../lib/project/Project";
-import { SelectedElement } from "../types/paint";
+import { PackageInstaller, SelectedElement } from "../types/paint";
 import {
   ComponentViewZoomAction,
   SelectMode,
@@ -44,7 +44,8 @@ import { Tour } from "./Tour";
 const useAdderTab = (
   project: Project,
   selectMode: SelectMode | undefined,
-  setSelectMode: (mode: SelectMode | undefined) => void
+  setSelectMode: (mode: SelectMode | undefined) => void,
+  installPackages: PackageInstaller
 ) => {
   const { config } = useGlobalConfig();
 
@@ -142,6 +143,12 @@ const useAdderTab = (
           <div className="p-4 text-center">
             {componentConfig.name} is not installed in this project
           </div>
+          <button
+            className="btn mb-4 w-full"
+            onClick={() => componentConfig.install(project, installPackages)}
+          >
+            Install
+          </button>
         </>
       );
     }
@@ -188,6 +195,7 @@ interface Props {
   setSelectMode: (mode: SelectMode | undefined) => void;
   selectedElement: SelectedElement | undefined;
   setSelectedElement: (selectedElement: SelectedElement | undefined) => void;
+  installPackages: PackageInstaller;
 }
 export const Toolbar: FunctionComponent<Props> = ({
   project,
@@ -196,15 +204,21 @@ export const Toolbar: FunctionComponent<Props> = ({
   setSelectMode,
   selectedElement,
   setSelectedElement,
+  installPackages,
 }) => {
   const adderPopupState = usePopupState({
     variant: "popover",
     popupId: "adderPopup",
   });
-  const renderElementAdder = useAdderTab(project, selectMode, (mode) => {
-    adderPopupState.close();
-    setSelectMode(mode);
-  });
+  const renderElementAdder = useAdderTab(
+    project,
+    selectMode,
+    (mode) => {
+      adderPopupState.close();
+      setSelectMode(mode);
+    },
+    installPackages
+  );
 
   return (
     <>

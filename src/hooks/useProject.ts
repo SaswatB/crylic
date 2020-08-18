@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
+import { Subject } from "rxjs";
 
 import { Project } from "../lib/project/Project";
-import { CodeEntry } from "../types/paint";
+import { CodeEntry, PackageInstaller } from "../types/paint";
 import { prettyPrintCodeEntryAST } from "../utils/ast/ast-helpers";
 
 export const useProject = () => {
@@ -93,6 +94,27 @@ export const useProject = () => {
     }
   };
 
+  const [installingPackages, setInstallingPackages] = useState(false);
+  // todo handle input?
+  const installPackagesOutputRef = useRef(new Subject<Buffer>());
+  const installPackages: PackageInstaller = (packageName, devDep) => {
+    if (!project) return;
+    setInstallingPackages(true);
+    const childProcess = project.config
+      .getPackageManager()
+      .installPackage(packageName, devDep);
+    childProcess.stdout?.on("data", (chunk) =>
+      installPackagesOutputRef.current.next(chunk)
+    );
+    childProcess.stderr?.on("data", (chunk) =>
+      installPackagesOutputRef.current.next(chunk)
+    );
+    childProcess.on("exit", () => {
+      setInstallingPackages(false);
+      setProject((project) => project?.refreshConfig());
+    });
+  };
+
   return {
     project,
     setProject,
@@ -106,5 +128,8 @@ export const useProject = () => {
     setCodeAstEdit,
     toggleCodeEntryEdit,
     addRenderEntry,
+    installPackages,
+    installingPackages,
+    installPackagesOutput: installPackagesOutputRef.current,
   };
 };

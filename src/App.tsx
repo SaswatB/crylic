@@ -2,7 +2,15 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import { faBars } from "@fortawesome/free-solid-svg-icons";
-import { Backdrop, CircularProgress } from "@material-ui/core";
+import {
+  Backdrop,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+} from "@material-ui/core";
 import { produce } from "immer";
 import { camelCase, snakeCase, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
@@ -21,6 +29,7 @@ import { AssetTreePane } from "./components/SideBar/AssetTreePane";
 import { CodeEditorPane } from "./components/SideBar/CodeEditorPane/CodeEditorPane";
 import { ElementEditorPane } from "./components/SideBar/ElementEditorPane";
 import { OutlinePane } from "./components/SideBar/OutlinePane";
+import { Terminal } from "./components/Terminal";
 import { Toolbar } from "./components/Toolbar";
 import { Tour, TourContext } from "./components/Tour";
 import { openFilePicker, saveFilePicker } from "./hooks/useFilePicker";
@@ -76,6 +85,9 @@ function App() {
     setCodeAstEdit,
     toggleCodeEntryEdit,
     addRenderEntry,
+    installPackages,
+    installingPackages,
+    installPackagesOutput,
   } = useProject();
   const projectRef = useUpdatingRef(project);
 
@@ -589,6 +601,7 @@ function App() {
           timeout
         );
       }}
+      installPackage={installPackages}
     />
   );
 
@@ -605,6 +618,7 @@ function App() {
       setSelectMode={setSelectMode}
       selectedElement={selectedElement}
       setSelectedElement={setSelectedElement}
+      installPackages={installPackages}
     />
   );
 
@@ -684,6 +698,10 @@ function App() {
       />
     ));
 
+  const [showInstallDialog, setShowInstallDialog] = useState(false);
+  useEffect(() => {
+    if (installingPackages) setShowInstallDialog(true);
+  }, [installingPackages]);
   return (
     <div
       className="flex flex-col items-stretch w-screen h-screen relative overflow-hidden text-white"
@@ -692,6 +710,28 @@ function App() {
       <Backdrop open={loading > 0}>
         <CircularProgress disableShrink />
       </Backdrop>
+      <Dialog
+        open={showInstallDialog}
+        onClose={
+          installingPackages ? undefined : () => setShowInstallDialog(false)
+        }
+        maxWidth="xl"
+      >
+        <DialogTitle>
+          {installingPackages ? "Installing..." : "Installation Complete"}
+        </DialogTitle>
+        <DialogContent>
+          <Terminal writer={installPackagesOutput} />
+        </DialogContent>
+        <DialogActions>
+          {!installingPackages && (
+            // todo cancel button?
+            <Button onClick={() => setShowInstallDialog(false)} color="primary">
+              Close
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
       <Tour
         name="start"
         autoOpen

@@ -9,6 +9,7 @@ import {
   DEFAULT_PROJECT_HTML_TEMPLATE_PATH,
   DEFAULT_PROJECT_SOURCE_FOLDER,
 } from "../../utils/constants";
+import { InbuiltPackageManager } from "../PackageManager/InbuiltPackageManager";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 
@@ -50,6 +51,12 @@ const ProjectConfigFile = it.type({
     }),
     it.undefined,
   ]),
+  packageManager: it.union([
+    it.type({
+      type: it.union([it.string, it.undefined]), // inbuilt, inbuild-npm, inbuild-yarn, npm or yarn
+    }),
+    it.undefined,
+  ]),
 });
 export type ProjectConfigFile = it.TypeOf<typeof ProjectConfigFile>;
 
@@ -64,7 +71,7 @@ export class ProjectConfig {
     return path.basename(this.projectPath.replace(/\\/g, "/"));
   }
 
-  public static async createProjectConfigFromDirectory(projectPath: string) {
+  public static createProjectConfigFromDirectory(projectPath: string) {
     let configFile;
     let packageJson;
 
@@ -112,6 +119,25 @@ export class ProjectConfig {
   }
   public isReactInstalled = () => this.isPackageInstalled("react");
   public isVueInstalled = () => this.isPackageInstalled("vue");
+
+  public getPackageManager() {
+    const packageManagerType =
+      this.configFile?.packageManager?.type ?? "inbuilt";
+
+    if (packageManagerType.startsWith("inbuilt")) {
+      return new InbuiltPackageManager(
+        this.projectPath,
+        packageManagerType === "inbuilt-yarn" ||
+          (packageManagerType !== "inbuilt-npm" &&
+            fs.existsSync(path.join(this.projectPath, "yarn.lock")))
+      );
+    } else if (packageManagerType === "yarn") {
+      // yarn
+      throw new Error("Not implemented");
+    }
+    // npm
+    throw new Error("Not implemented");
+  }
 
   public getFullSourceFolderPath() {
     return path.join(

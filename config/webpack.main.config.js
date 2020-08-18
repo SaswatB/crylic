@@ -2,7 +2,10 @@ const path = require("path");
 const SentryWebpackPlugin = require("@sentry/webpack-plugin");
 
 module.exports = (env, argv) => ({
-  entry: { electron: "./src/electron.ts" },
+  entry: {
+    electron: "./src/electron.ts",
+    "electron-child": "./src/electron-child.ts",
+  },
   devtool: "source-map",
   output: {
     path: path.resolve(
@@ -29,6 +32,10 @@ module.exports = (env, argv) => ({
   },
   resolve: {
     extensions: [".mjs", ".js", ".jsx", ".ts", ".tsx", ".json"],
+  },
+  target: "node",
+  node: {
+    __dirname: false,
   },
   plugins: [
     argv.mode !== "development" &&

@@ -1,5 +1,4 @@
 const path = __non_webpack_require__("path") as typeof import("path");
-
 const dirPath = __non_webpack_require__
   .resolve("webpack")
   .replace(/node_modules[/\\].*$/, "");
@@ -14,7 +13,7 @@ const sentryPath = path.join(
 __non_webpack_require__(sentryPath);
 
 const windowStateKeeper = __non_webpack_require__("electron-window-state");
-const { app, BrowserWindow } = __non_webpack_require__("electron");
+const { app, ipcMain, BrowserWindow } = __non_webpack_require__("electron");
 
 app.allowRendererProcessReuse = false;
 app.commandLine.appendSwitch(
@@ -98,6 +97,14 @@ app.on("activate", function () {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+
+// call for the renderer to get the main process's dirname/execPath
+ipcMain.on("runtimeInfo", async (e) => {
+  e.sender.send("runtimeInfo", {
+    dirname: __dirname,
+    execPath: process.execPath,
+  });
+});
 
 // start up the webpack worker
 // eslint-disable-next-line import/first

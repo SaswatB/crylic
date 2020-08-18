@@ -8,6 +8,7 @@ import { Readable } from "stream";
 import yauzl from "yauzl";
 
 import { CodeEntry, EditEntry, RenderEntry } from "../../types/paint";
+import { Mutable } from "../../types/paint";
 import {
   getComponentExport,
   hashString,
@@ -153,9 +154,7 @@ export class Project {
 
   public static async createProjectFromDirectory(folderPath: string) {
     // build metadata
-    const config = await ProjectConfig.createProjectConfigFromDirectory(
-      folderPath
-    );
+    const config = ProjectConfig.createProjectConfigFromDirectory(folderPath);
 
     // process all the source files
     const fileCodeEntries: {
@@ -241,6 +240,12 @@ export class Project {
   }
 
   // Project is immutable so these functions return a new copy with modifications
+
+  public refreshConfig() {
+    return produce(this, (draft: Mutable<Project>) => {
+      draft.config = ProjectConfig.createProjectConfigFromDirectory(this.path);
+    });
+  }
 
   public addCodeEntries(
     partialEntries: (Partial<CodeEntry> & { filePath: string })[],
@@ -368,7 +373,7 @@ export class Project {
         ({ ast } = editor.addLookupData({ ast, codeEntry }));
       });
       // return the modified ast and code
-      console.log("codeTransformer", codeEntry.filePath, ast);
+      console.log("codeTransformer", codeEntry.filePath);
       return {
         ast: deepFreeze(clone(ast, undefined, undefined, undefined, true)),
         codeWithLookupData: printCodeEntryAST(codeEntry, ast),

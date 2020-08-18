@@ -5,6 +5,10 @@ import { StyleGroup } from "../utils/ast/editors/ASTEditor";
 // todo use a better type
 export type PackageJson = any;
 
+export type PackageInstaller<
+  T extends string | undefined = string | undefined
+> = (packageName: T, devDep?: boolean) => void;
+
 export interface CodeEntry {
   id: string;
   filePath: string;
@@ -102,5 +106,12 @@ export type ComponentDefinition = (
 export interface CustomComponentConfig {
   name: string;
   installed: (project: Project) => boolean;
+  install: (project: Project, installPackage: PackageInstaller<string>) => void;
   components: CustomComponentDefinition[];
 }
+
+export type Mutable<T> = {
+  -readonly [P in keyof T]: T[P] extends ReadonlyArray<infer U>
+    ? Mutable<U>[]
+    : Mutable<T[P]>;
+};
