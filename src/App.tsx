@@ -448,6 +448,35 @@ function App() {
     </div>
   );
 
+  const [showInstallDialog, setShowInstallDialog] = useState(false);
+  useEffect(() => {
+    if (installingPackages) setShowInstallDialog(true);
+  }, [installingPackages]);
+  const renderInstallDialog = () => (
+    <Dialog
+      open={showInstallDialog}
+      onClose={
+        installingPackages ? undefined : () => setShowInstallDialog(false)
+      }
+      maxWidth="xl"
+    >
+      <DialogTitle>
+        {installingPackages ? "Installing..." : "Installation Complete"}
+      </DialogTitle>
+      <DialogContent>
+        <Terminal writer={installPackagesOutput} />
+      </DialogContent>
+      <DialogActions>
+        {!installingPackages && (
+          // todo cancel button?
+          <Button onClick={() => setShowInstallDialog(false)} color="primary">
+            Close
+          </Button>
+        )}
+      </DialogActions>
+    </Dialog>
+  );
+
   const { tourDisabled, setTourDisabled, resetTour } = useContext(TourContext);
   const [
     ,
@@ -698,10 +727,6 @@ function App() {
       />
     ));
 
-  const [showInstallDialog, setShowInstallDialog] = useState(false);
-  useEffect(() => {
-    if (installingPackages) setShowInstallDialog(true);
-  }, [installingPackages]);
   return (
     <div
       className="flex flex-col items-stretch w-screen h-screen relative overflow-hidden text-white"
@@ -710,28 +735,7 @@ function App() {
       <Backdrop open={loading > 0}>
         <CircularProgress disableShrink />
       </Backdrop>
-      <Dialog
-        open={showInstallDialog}
-        onClose={
-          installingPackages ? undefined : () => setShowInstallDialog(false)
-        }
-        maxWidth="xl"
-      >
-        <DialogTitle>
-          {installingPackages ? "Installing..." : "Installation Complete"}
-        </DialogTitle>
-        <DialogContent>
-          <Terminal writer={installPackagesOutput} />
-        </DialogContent>
-        <DialogActions>
-          {!installingPackages && (
-            // todo cancel button?
-            <Button onClick={() => setShowInstallDialog(false)} color="primary">
-              Close
-            </Button>
-          )}
-        </DialogActions>
-      </Dialog>
+      {renderInstallDialog()}
       <Tour
         name="start"
         autoOpen
