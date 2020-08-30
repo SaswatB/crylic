@@ -1,0 +1,10 @@
+# testing
+/coverage
+
+# production
+/build
+/app/build
+/dist
+/build-main
+/build-main-dev
+/app/build-main
