@@ -12,6 +12,7 @@ import { webpackRunCode } from "./run-code-webpack";
 import errorBoundaryComponent from "!!raw-loader!../../components/ErrorBoundary";
 
 const path = __non_webpack_require__("path") as typeof import("path");
+const fs = __non_webpack_require__("fs") as typeof import("fs");
 
 const { ipcRenderer } = __non_webpack_require__(
   "electron"
@@ -35,14 +36,20 @@ if (WORKER_ENABLED) {
     }
   });
   // initialize the worker with the local node modules
+  let nodeModulesPath = __non_webpack_require__
+    .resolve("webpack")
+    .replace(/(app[/\\])?node_modules[/\\].*$/, "");
+  if (fs.existsSync(path.join(nodeModulesPath, "desktop"))) {
+    // only for dev
+    nodeModulesPath = path.join(nodeModulesPath, "desktop");
+  }
+  if (fs.existsSync(path.join(nodeModulesPath, "app"))) {
+    nodeModulesPath = path.join(nodeModulesPath, "app");
+  }
+  nodeModulesPath = path.join(nodeModulesPath, "node_modules/");
   ipcRenderer.send("webpack-worker-message", {
     action: "initialize",
-    nodeModulesPath: __non_webpack_require__
-      .resolve("webpack")
-      .replace(
-        /(app[/\\])?node_modules[/\\].*$/,
-        `app${path.sep}node_modules${path.sep}`
-      ),
+    nodeModulesPath,
   });
 }
 

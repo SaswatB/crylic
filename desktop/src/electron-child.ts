@@ -5,7 +5,7 @@ const dirPath = __non_webpack_require__
 const sentryPath = path.join(
   dirPath,
   process.env.NODE_ENV === "development"
-    ? "public/sentry.js"
+    ? "desktop/public/sentry.js"
     : "build/sentry.js"
 );
 

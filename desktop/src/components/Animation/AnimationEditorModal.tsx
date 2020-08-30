@@ -145,7 +145,6 @@ export const AnimationEditorModal = createModal<Props, void>(
           key={`${previewKey}`}
           className="w-16 h-16 bg-gray-800 rounded-lg"
           {...animationPropertyMapToProps(animationProperties)}
-          transition={{ repeat: Infinity }}
         />
       </div>
     );

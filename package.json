@@ -1,0 +1,13 @@
+{
+  "private": true,
+  "workspaces": [
+    "synergy",
+    "desktop",
+    "web"
+  ],
+  "resolutions": {
+    "immer": "patch:immer@6.0.3#./patches/immer+6.0.3.patch",
+    "react-refresh": "patch:react-refresh@0.8.3#./patches/react-refresh+0.8.3.patch",
+    "sassjs-loader": "patch:sassjs-loader@2.0.0#./patches/sassjs-loader+2.0.0.patch"
+  }
+}

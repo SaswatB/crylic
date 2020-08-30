@@ -1,7 +1,5 @@
-diff --git a/node_modules/immer/dist/types/types-external.d.ts b/node_modules/immer/dist/types/types-external.d.ts
-index 56cf567..92f1986 100644
---- a/node_modules/immer/dist/types/types-external.d.ts
-+++ b/node_modules/immer/dist/types/types-external.d.ts
+diff --git a/dist/types/types-external.d.ts b/dist/types/types-external.d.ts
++++ b/dist/types/types-external.d.ts
 @@ -45,9 +45,10 @@ export declare type Produced<Base, Return> = Return extends void ? Base : Return
   */
  export interface IProduce {

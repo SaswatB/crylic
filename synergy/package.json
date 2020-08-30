@@ -1,0 +1,16 @@
+{
+  "name": "synergy",
+  "version": "0.1.0",
+  "private": true,
+  "author": "Saswat Bhattacharya",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^16.13.1"
+  },
+  "devDependencies": {
+    "typescript": "^4.0.2"
+  }
+}

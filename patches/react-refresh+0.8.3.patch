@@ -1,11 +1,11 @@
-diff --git a/node_modules/react-refresh/cjs/react-refresh-runtime.development.js b/node_modules/react-refresh/cjs/react-refresh-runtime.development.js
-index e17c488..afa980a 100644
---- a/node_modules/react-refresh/cjs/react-refresh-runtime.development.js
-+++ b/node_modules/react-refresh/cjs/react-refresh-runtime.development.js
+diff --git a/cjs/react-refresh-runtime.development.js b/cjs/react-refresh-runtime.development.js
+index e17c4889e7d0648d22e700e15b658b81d8f5937f..2113ea91dd0cb00e77fb0fc1aaf4b5901ff2970b 100644
+--- a/cjs/react-refresh-runtime.development.js
++++ b/cjs/react-refresh-runtime.development.js
 @@ -621,10 +621,10 @@ function isLikelyComponentType(type) {
              } // eslint-disable-next-line no-proto
- 
- 
+
+
 -            if (type.prototype.__proto__ !== Object.prototype) {
 -              // It has a superclass.
 -              return false;
@@ -15,5 +15,5 @@ index e17c488..afa980a 100644
 +            //   return false;
 +            // } // Pass through.
              // This looks like a regular function with empty prototype.
- 
+
            } // For plain functions and arrows, use name as a heuristic.
