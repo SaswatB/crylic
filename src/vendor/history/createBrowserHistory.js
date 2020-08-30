@@ -40,7 +40,7 @@ function createBrowserHistory(props = {}) {
   invariant(canUseDOM, "Browser history needs a DOM");
   const window = props.window || globalWindow;
 
-  const globalHistory = window.history;
+  const globalHistory = window.history || {};
   const canUseHistory = supportsHistory();
   const needsHashChangeListener = !supportsPopStateOnHashChange();
 

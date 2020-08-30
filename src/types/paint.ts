@@ -1,6 +1,10 @@
 import { ViewContext } from "../components/ComponentView/CompilerComponentView";
 import { Project } from "../lib/project/Project";
-import { StyleGroup } from "../utils/ast/editors/ASTEditor";
+import {
+  EditContext,
+  ElementASTEditor,
+  StyleGroup,
+} from "../utils/ast/editors/ASTEditor";
 
 // todo use a better type
 export type PackageJson = any;
@@ -54,6 +58,10 @@ export interface SelectedElement {
   sourceMetadata: SourceMetadata | undefined;
   viewContext: ViewContext | undefined;
 }
+
+export type UpdateSelectedElement = <T extends {}>(
+  apply: (editor: ElementASTEditor<T>, editContext: EditContext<T>) => T
+) => void;
 
 export interface OutlineElement {
   tag: string;

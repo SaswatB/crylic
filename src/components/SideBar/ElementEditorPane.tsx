@@ -32,12 +32,9 @@ import {
   PackageInstaller,
   SelectedElement,
   Styles,
+  UpdateSelectedElement,
 } from "../../types/paint";
-import {
-  EditContext,
-  ElementASTEditor,
-  StyleGroup,
-} from "../../utils/ast/editors/ASTEditor";
+import { StyleGroup } from "../../utils/ast/editors/ASTEditor";
 import {
   CSS_ALIGN_ITEMS_OPTIONS,
   CSS_BACKGROUND_SIZE_OPTIONS,
@@ -55,6 +52,7 @@ import {
 } from "../../utils/constants";
 import { linkComponent } from "../../utils/defs/react-router-dom";
 import { isImageEntry, renderSeparator } from "../../utils/utils";
+import { AnimationEditorModal } from "../Animation/AnimationEditorModal";
 import { Collapsible } from "../Collapsible";
 import { IconButton } from "../IconButton";
 import { Tour } from "../Tour";
@@ -99,9 +97,7 @@ interface Props {
     styles: Styles,
     preview?: boolean
   ) => void;
-  updateSelectedElement: <T extends {}>(
-    apply: (editor: ElementASTEditor<T>, editContext: EditContext<T>) => T
-  ) => void;
+  updateSelectedElement: UpdateSelectedElement;
   updateSelectedElementImage: (
     styleGroup: StyleGroup,
     imageProp: "backgroundImage",
@@ -602,6 +598,59 @@ export const ElementEditorPane: FunctionComponent<Props> = ({
     { options: CSS_CURSOR_OPTIONS }
   );
 
+  const renderAnimationPanel = () => {
+    if (!project?.config.isPackageInstalled("framer-motion")) {
+      return (
+        <>
+          <div className="text-center">Framer Motion is not installed</div>
+          <button
+            className="btn mt-2 w-full"
+            onClick={() => installPackage("framer-motion")}
+          >
+            Install
+          </button>
+        </>
+      );
+    }
+    const { componentName } = selectedElement?.sourceMetadata || {};
+    if (!componentName?.startsWith("motion.")) {
+      // todo support more elements for animation conversion
+      if (["div", "a", "button", "span"].includes(componentName || "")) {
+        const enableAnimation = () =>
+          updateSelectedElement((editor, editContext) =>
+            editor.updateElementComponent(editContext, {
+              component: {
+                import: {
+                  path: "framer-motion",
+                  namespace: "motion",
+                  name: componentName || "",
+                },
+                name: componentName || "",
+              },
+            })
+          );
+        return (
+          <button className="btn w-full" onClick={enableAnimation}>
+            Enable Animation
+          </button>
+        );
+      }
+      // todo use a better method of checking whether motion is being used on the element
+      return "Animation is not enabled for element";
+    }
+    return (
+      <button
+        className="btn w-full"
+        onClick={() => {
+          if (selectedElement)
+            AnimationEditorModal({ selectedElement, updateSelectedElement });
+        }}
+      >
+        Edit Animation
+      </button>
+    );
+  };
+
   return (
     <ReactPlaceholder
       className="p-8"
@@ -693,7 +742,8 @@ export const ElementEditorPane: FunctionComponent<Props> = ({
             </Collapsible>
           </>
         )}
-        <Collapsible title="Extras">
+        <Collapsible title="Animation">{renderAnimationPanel()}</Collapsible>
+        <Collapsible title="Extras" defaultCollapsed>
           <div className="grid2x">
             {renderCursorInput()}
             {renderIDInput()}

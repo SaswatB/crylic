@@ -134,10 +134,8 @@ export default class ColorPicker extends React.Component {
         enableAlpha={this.props.enableAlpha}
         prefixCls={`${this.props.prefixCls}-panel`}
         onChange={this.onChange}
-        onBlur={this.onBlur}
         onDragStart={this.props.onDragStart}
         onDragEnd={this.props.onDragEnd}
-        // onDragEnd={() => console.log("ColorPickerPanel onDragEnd")}
         mode={this.props.mode}
         className={this.props.className}
       />

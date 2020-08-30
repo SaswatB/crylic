@@ -139,8 +139,8 @@ export const CSS_JUSTIFY_CONTENT_OPTIONS = [
 
 export const CSS_TEXT_ALIGN_OPTIONS = [
   { name: "Left", value: "left" },
-  { name: "Right", value: "right" },
   { name: "Center", value: "center" },
+  { name: "Right", value: "right" },
   { name: "Justify", value: "justify" },
 ];
 

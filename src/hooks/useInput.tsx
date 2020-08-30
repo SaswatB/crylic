@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { FunctionComponent, useEffect, useRef, useState } from "react";
 import {
   FormControl,
   FormControlProps,
@@ -71,6 +71,12 @@ export const useTextInput: useInputFunction<{ bindInitialValue?: boolean }> = ({
 
   return [value, render];
 };
+export const TextInput: FunctionComponent<
+  Parameters<typeof useTextInput>[0]
+> = (props) => {
+  const [, render] = useTextInput(props);
+  return render();
+};
 
 export const useCSSLengthInput: useInputFunction<{
   bindInitialValue?: boolean;
@@ -80,11 +86,15 @@ export const useCSSLengthInput: useInputFunction<{
   const [numberValue, setNumberValue] = useState("0");
   const [unit, setUnit] = useState("px");
   const value =
-    bindInitialValue && !focused ? `${numberValue}${unit}` : initialValue || "";
+    bindInitialValue && !focused
+      ? numberValue === ""
+        ? ""
+        : `${numberValue}${unit}`
+      : initialValue || "";
   useEffect(() => {
     if (bindInitialValue && !focused) {
       // extract the number and unit from the css property
-      const res = /([\d.]+)?([^\d.]+)/.exec(initialValue || "");
+      const res = /(-?[\d.]+)?([^\d.]+)/.exec(initialValue || "");
       setNumberValue(res?.[1] || "");
       setUnit(res?.[2] || "px");
     }
@@ -93,7 +103,7 @@ export const useCSSLengthInput: useInputFunction<{
   const onChangeDebounced = useDebouncedFunction(onChange || (() => {}), 1000);
 
   const updateValue = (newNumberValue = numberValue, newUnit = unit) => {
-    const newValue = `${newNumberValue}${newUnit}`;
+    const newValue = newNumberValue === "" ? "" : `${newNumberValue}${newUnit}`;
     setNumberValue(newNumberValue);
     setUnit(newUnit);
     onChange?.(newValue, true);
@@ -151,6 +161,12 @@ export const useCSSLengthInput: useInputFunction<{
   );
 
   return [value, render];
+};
+export const CSSLengthInput: FunctionComponent<
+  Parameters<typeof useCSSLengthInput>[0]
+> = (props) => {
+  const [, render] = useCSSLengthInput(props);
+  return render();
 };
 
 export const useSliderInput: useInputFunction<{}, SliderProps, number> = ({
@@ -211,7 +227,14 @@ export const useColorPicker: useInputFunction = ({
   const [value, setValue] = useState(initialValue || "");
   const [focused, setFocused] = useState(false);
   useEffect(() => {
-    if (!focused) setValue(initialValue ? `#${rgbHex(initialValue)}` : "");
+    console.log("useColorPicker", initialValue);
+    if (!focused) {
+      let newValue = initialValue || "";
+      try {
+        if (newValue.match(/rgba?/)) newValue = `#${rgbHex(newValue)}`;
+      } catch (e) {}
+      setValue(newValue);
+    }
   }, [initialValue, focused]);
 
   const render = () => (
@@ -248,6 +271,12 @@ export const useColorPicker: useInputFunction = ({
 
   const throttledValue = useThrottle(value, 300);
   return [throttledValue, render];
+};
+export const ColorPicker: FunctionComponent<
+  Parameters<typeof useColorPicker>[0]
+> = (props) => {
+  const [, render] = useColorPicker(props);
+  return render();
 };
 
 const WidePopper = (props: PopperProps) => {

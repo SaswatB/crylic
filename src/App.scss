@@ -141,6 +141,10 @@ fieldset {
   }
 }
 
+.rc-color-picker {
+  z-index: 10000;
+}
+
 // material ui overrides
 body {
   .MuiCircularProgress-colorPrimary {
