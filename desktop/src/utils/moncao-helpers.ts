@@ -2,8 +2,9 @@ import { wireTmGrammars } from "monaco-editor-textmate";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { Registry } from "monaco-textmate";
 
+import darkVs from "synergy/src/vendor/dark-vs.json";
+
 import { CodeEntry } from "../types/paint";
-import darkVs from "../vendor/dark-vs.json";
 import { getFileExtensionLanguage } from "./utils";
 
 import TypeScriptReactTMLanguage from "!!raw-loader!../vendor/TypeScriptReact.tmLanguage";
