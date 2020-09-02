@@ -1,6 +1,7 @@
 import React, { FunctionComponent, useEffect, useRef, useState } from "react";
 
-import { useUpdatingRef } from "../hooks/useUpdatingRef";
+import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
+
 import ColorPicker from "../vendor/color-picker/ColorPicker";
 import "rc-color-picker/assets/index.css";
 

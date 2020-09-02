@@ -17,7 +17,9 @@ import path from "path";
 
 import { IconButton } from "synergy/src/components/IconButton";
 
-import { useDebouncedFunction } from "../../hooks/useDebouncedFunction";
+import { useDebouncedFunction } from "synergy/src/hooks/useDebouncedFunction";
+import { useObservable } from "synergy/src/hooks/useObservable";
+
 import {
   useAutocomplete,
   useColorPicker,
@@ -27,7 +29,6 @@ import {
   useSelectInput,
   useTextInput,
 } from "../../hooks/useInput";
-import { useObservable } from "../../hooks/useObservable";
 import { Project } from "../../lib/project/Project";
 import {
   CodeEntry,

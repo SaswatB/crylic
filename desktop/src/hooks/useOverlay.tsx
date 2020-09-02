@@ -1,6 +1,8 @@
 import React, { MutableRefObject, useEffect, useRef, useState } from "react";
 import { Observable, Subject } from "rxjs";
 
+import { useObservableCallback } from "synergy/src/hooks/useObservableCallback";
+
 import {
   CompilerComponentViewRef,
   getComponentElementsFromEvent,
@@ -9,7 +11,6 @@ import { Draggable } from "../components/Draggable";
 import { Project } from "../lib/project/Project";
 import { onMoveResizeCallback, SelectedElement } from "../types/paint";
 import { SelectModeType } from "../utils/constants";
-import { useObservableCallback } from "./useObservableCallback";
 
 let lastDragResizeHandled = 0;
 export function useOverlay(

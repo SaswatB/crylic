@@ -13,8 +13,9 @@ import { flatten, isEqual, uniq } from "lodash";
 import { Observable, ReplaySubject } from "rxjs";
 import { distinctUntilChanged } from "rxjs/operators";
 
-import { useDebounce } from "../../hooks/useDebounce";
-import { useUpdatingRef } from "../../hooks/useUpdatingRef";
+import { useDebounce } from "synergy/src/hooks/useDebounce";
+import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
+
 import { Project } from "../../lib/project/Project";
 import { RenderEntry, Styles } from "../../types/paint";
 import { webpackRunCodeWithWorker } from "../../utils/compilers/run-code-webpack-worker";

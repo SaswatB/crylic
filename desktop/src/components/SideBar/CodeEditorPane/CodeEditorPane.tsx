@@ -1,7 +1,8 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
 import { useBus } from "ts-bus/react";
 
-import { useUpdatingRef } from "../../../hooks/useUpdatingRef";
+import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
+
 import { editorOpenLocation } from "../../../lib/events";
 import { Project } from "../../../lib/project/Project";
 import { CodeEntry } from "../../../types/paint";

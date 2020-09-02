@@ -17,10 +17,10 @@ import {
 import { Subject } from "rxjs";
 
 import { IconButton } from "synergy/src/components/IconButton";
+import { useDebounce } from "synergy/src/hooks/useDebounce";
+import { useObservable } from "synergy/src/hooks/useObservable";
 
-import { useDebounce } from "../../hooks/useDebounce";
 import { useMenuInput } from "../../hooks/useInput";
-import { useObservable } from "../../hooks/useObservable";
 import { useOverlay } from "../../hooks/useOverlay";
 import { SelectedElement, Styles } from "../../types/paint";
 import { StyleGroup } from "../../utils/ast/editors/ASTEditor";

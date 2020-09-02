@@ -18113,7 +18113,7 @@ resolve@1.15.0:
   languageName: node
   linkType: hard
 
-"rxjs@npm:^6.3.1, rxjs@npm:^6.5.3, rxjs@npm:^6.5.5, rxjs@npm:^6.6.0":
+"rxjs@npm:^6.3.1, rxjs@npm:^6.5.3, rxjs@npm:^6.5.5, rxjs@npm:^6.6.0, rxjs@npm:^6.6.2":
   version: 6.6.2
   resolution: "rxjs@npm:6.6.2"
   dependencies:
@@ -19512,6 +19512,7 @@ sassjs-loader@2.0.0:
     immer: ^7.0.8
     lodash: ^4.17.20
     react: ^16.13.1
+    rxjs: ^6.6.2
     typescript: ^4.0.2
   languageName: unknown
   linkType: soft

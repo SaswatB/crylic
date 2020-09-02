@@ -4,10 +4,10 @@ import { clamp, throttle } from "lodash";
 import { Resizable } from "re-resizable";
 import { Observable } from "rxjs";
 
-import { useDebouncedFunction } from "../hooks/useDebouncedFunction";
-import { useInterval } from "../hooks/useInterval";
-import { useObservable } from "../hooks/useObservable";
-import { useResizeObserver } from "../hooks/useResizeObserver";
+import { useDebouncedFunction } from "synergy/src/hooks/useDebouncedFunction";
+import { useInterval } from "synergy/src/hooks/useInterval";
+import { useObservable } from "synergy/src/hooks/useObservable";
+import { useResizeObserver } from "synergy/src/hooks/useResizeObserver";
 
 const { screen } = (__non_webpack_require__(
   "electron"

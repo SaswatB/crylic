@@ -14,7 +14,8 @@
     "framer-motion": "^2.6.5",
     "immer": "^7.0.8",
     "lodash": "^4.17.20",
-    "react": "^16.13.1"
+    "react": "^16.13.1",
+    "rxjs": "^6.6.2"
   },
   "devDependencies": {
     "typescript": "^4.0.2"

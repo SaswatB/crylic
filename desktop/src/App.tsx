@@ -18,6 +18,7 @@ import { Resizable } from "re-resizable";
 import { useBus } from "ts-bus/react";
 
 import { IconButton } from "synergy/src/components/IconButton";
+import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
 
 import {
   CompilerComponentViewRef,
@@ -36,7 +37,6 @@ import { Tour, TourContext } from "./components/Tour";
 import { openFilePicker, saveFilePicker } from "./hooks/useFilePicker";
 import { useMenuInput } from "./hooks/useInput";
 import { useProject } from "./hooks/useProject";
-import { useUpdatingRef } from "./hooks/useUpdatingRef";
 import { editorOpenLocation, editorResize } from "./lib/events";
 import { Project } from "./lib/project/Project";
 import {

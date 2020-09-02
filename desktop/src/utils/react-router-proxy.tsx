@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from "react";
 import { isArray, omit } from "lodash";
 
-import { useUpdatingRef } from "../hooks/useUpdatingRef";
+import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
+
 import { createBrowserHistory, createHashHistory } from "../vendor/history";
 
 const LINK_DATA_ATTR = "paintlink";

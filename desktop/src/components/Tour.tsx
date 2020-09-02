@@ -6,7 +6,7 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { useLocalStorage } from "../hooks/useLocalStorage";
+import { useLocalStorage } from "synergy/src/hooks/useLocalStorage";
 
 export const TourContext = React.createContext({
   shownTourSteps: [] as string[],

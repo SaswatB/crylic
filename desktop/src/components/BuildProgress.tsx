@@ -2,7 +2,8 @@ import React, { FunctionComponent } from "react";
 import { CircularProgress } from "@material-ui/core";
 import { startCase } from "lodash";
 
-import { useObservable } from "../hooks/useObservable";
+import { useObservable } from "synergy/src/hooks/useObservable";
+
 import { CompileContext } from "./ComponentView/CompilerComponentView";
 
 interface Props {
