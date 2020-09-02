@@ -10,6 +10,8 @@ import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import TreeItem from "@material-ui/lab/TreeItem";
 import TreeView from "@material-ui/lab/TreeView";
 
+import { IconButton } from "synergy/src/components/IconButton";
+
 import { useMenuInput } from "../../hooks/useInput";
 import { Project } from "../../lib/project/Project";
 import { CodeEntry } from "../../types/paint";
@@ -22,7 +24,6 @@ import {
   SCRIPT_EXTENSION_REGEX,
   STYLE_EXTENSION_REGEX,
 } from "../../utils/utils";
-import { IconButton } from "../IconButton";
 import { Tour } from "../Tour";
 
 interface Props {

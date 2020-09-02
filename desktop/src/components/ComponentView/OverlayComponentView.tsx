@@ -16,6 +16,8 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { Subject } from "rxjs";
 
+import { IconButton } from "synergy/src/components/IconButton";
+
 import { useDebounce } from "../../hooks/useDebounce";
 import { useMenuInput } from "../../hooks/useInput";
 import { useObservable } from "../../hooks/useObservable";
@@ -29,7 +31,6 @@ import {
 } from "../../utils/constants";
 import { RouteDefinition } from "../../utils/react-router-proxy";
 import { BuildProgress } from "../BuildProgress";
-import { IconButton } from "../IconButton";
 import { ResizeModal } from "../ResizeModal";
 import {
   CompileContext,

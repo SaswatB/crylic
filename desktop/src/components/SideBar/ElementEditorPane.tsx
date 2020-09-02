@@ -15,6 +15,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { startCase, uniq } from "lodash";
 import path from "path";
 
+import { IconButton } from "synergy/src/components/IconButton";
+
 import { useDebouncedFunction } from "../../hooks/useDebouncedFunction";
 import {
   useAutocomplete,
@@ -54,7 +56,6 @@ import { linkComponent } from "../../utils/defs/react-router-dom";
 import { isImageEntry, renderSeparator } from "../../utils/utils";
 import { AnimationEditorModal } from "../Animation/AnimationEditorModal";
 import { Collapsible } from "../Collapsible";
-import { IconButton } from "../IconButton";
 import { Tour } from "../Tour";
 
 type EditorHook<T> = useInputFunction<

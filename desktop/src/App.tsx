@@ -17,13 +17,14 @@ import { useSnackbar } from "notistack";
 import { Resizable } from "re-resizable";
 import { useBus } from "ts-bus/react";
 
+import { IconButton } from "synergy/src/components/IconButton";
+
 import {
   CompilerComponentViewRef,
   OnCompileEndCallback,
   ViewContext,
 } from "./components/ComponentView/CompilerComponentView";
 import { OverlayComponentView } from "./components/ComponentView/OverlayComponentView";
-import { IconButton } from "./components/IconButton";
 import { InputModal } from "./components/InputModal";
 import { AssetTreePane } from "./components/SideBar/AssetTreePane";
 import { CodeEditorPane } from "./components/SideBar/CodeEditorPane/CodeEditorPane";

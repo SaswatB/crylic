@@ -131,7 +131,7 @@ export const getRelativeImportPath = (codeEntry: CodeEntry, target: string) => {
 
   // make absolute paths relative
   let newPath = path
-    .relative(path.dirname(codeEntry.filePath), target)
+    .relative(path.dirname(codeEntry.filePath.replace(/\\/g, "/")), target)
     .replace(/\\/g, "/")
     .replace(SCRIPT_EXTENSION_REGEX, "");
 

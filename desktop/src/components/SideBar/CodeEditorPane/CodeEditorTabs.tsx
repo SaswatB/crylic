@@ -1,8 +1,9 @@
 import React, { FunctionComponent, ReactNode, useEffect, useRef } from "react";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 
+import { IconButton } from "synergy/src/components/IconButton";
+
 import { usePrevious } from "../../../hooks/usePrevious";
-import { IconButton } from "../../IconButton";
 
 interface Tab {
   key: string;

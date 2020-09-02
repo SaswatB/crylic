@@ -1,8 +1,9 @@
 import React, { FunctionComponent, useState } from "react";
 import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons";
 
+import { IconButton } from "synergy/src/components/IconButton";
+
 import { renderSeparator } from "../utils/utils";
-import { IconButton } from "./IconButton";
 
 interface Props {
   title: string;
