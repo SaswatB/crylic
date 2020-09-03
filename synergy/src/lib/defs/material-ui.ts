@@ -1,7 +1,7 @@
 import {
   CustomComponentConfig,
   CustomComponentDefinition,
-} from "synergy/src/types/paint";
+} from "../../types/paint";
 
 function materialUIComponentDef(name: string): CustomComponentDefinition {
   return {

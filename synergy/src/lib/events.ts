@@ -1,6 +1,6 @@
 import { createEventDefinition, EventBus } from "ts-bus";
 
-import { CodeEntry } from "synergy/src/types/paint";
+import { CodeEntry } from "../types/paint";
 
 export const bus = new EventBus();
 

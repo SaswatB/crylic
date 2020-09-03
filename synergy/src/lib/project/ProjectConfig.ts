@@ -1,11 +1,11 @@
 import * as it from "io-ts";
 import path from "path";
 
-import { PackageJson } from "../../types/paint";
 import {
   DEFAULT_PROJECT_HTML_TEMPLATE_PATH,
   DEFAULT_PROJECT_SOURCE_FOLDER,
 } from "../../constants";
+import { PackageJson } from "../../types/paint";
 import { PackageManager } from "../packageManager/PackageManager";
 
 export const ProjectConfigFile = it.type({

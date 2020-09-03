@@ -17,9 +17,9 @@ import prettierParsesPostcss from "prettier/parser-postcss";
 import { format } from "prettier/standalone";
 import { parse, print, types, visit } from "recast";
 
-import { getStyleEntryExtension, isDefined, isStyleEntry } from "../utils";
 import { CodeEntry } from "../../types/paint";
 import { ProjectConfig } from "../project/ProjectConfig";
+import { getStyleEntryExtension, isDefined, isStyleEntry } from "../utils";
 import { babelTsParser } from "./babel-ts";
 
 const { builders: b } = types;
@@ -337,7 +337,9 @@ const getBlockIdentifiers = (nodes: t.ASTNode[], parents: t.ASTNode[] = []) => {
         break;
       case "VariableDeclarator":
       case "FunctionDeclaration":
-        identifiers.push(...getBlockIdentifiers([node.id], newParents));
+        if (node.id) {
+          identifiers.push(...getBlockIdentifiers([node.id], newParents));
+        }
         break;
       case "ClassDeclaration":
         if (node.id !== null) {

@@ -13,16 +13,16 @@ import { flatten, isEqual, uniq } from "lodash";
 import { Observable, ReplaySubject } from "rxjs";
 import { distinctUntilChanged } from "rxjs/operators";
 
+import { Frame } from "synergy/src/components//Frame";
+import { ErrorBoundary } from "synergy/src/components/ErrorBoundary";
 import { useDebounce } from "synergy/src/hooks/useDebounce";
 import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
 import { Project } from "synergy/src/lib/project/Project";
+import { RouteDefinition } from "synergy/src/lib/react-router-proxy";
 import { isDefined } from "synergy/src/lib/utils";
 import { RenderEntry, Styles } from "synergy/src/types/paint";
 
 import { webpackRunCodeWithWorker } from "../../utils/compilers/run-code-webpack-worker";
-import { RouteDefinition } from "../../utils/react-router-proxy";
-import { ErrorBoundary } from "../ErrorBoundary";
-import { Frame } from "../Frame";
 
 export const getComponentElementsFromEvent = (
   event: React.MouseEvent<HTMLDivElement, MouseEvent>,

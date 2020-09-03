@@ -3,13 +3,13 @@ import { faArrowRight, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { IconButton } from "synergy/src/components/IconButton";
-
 import {
   ColorPicker,
   CSSLengthInput,
   TextInput,
   useAutocomplete,
-} from "../../hooks/useInput";
+} from "synergy/src/hooks/useInput";
+
 import {
   AnimationProperty,
   AnimationPropertyInputType,

@@ -17,12 +17,14 @@ import {
 import { Subject } from "rxjs";
 
 import { IconButton } from "synergy/src/components/IconButton";
+import { ResizeModal } from "synergy/src/components/ResizeModal";
 import { useDebounce } from "synergy/src/hooks/useDebounce";
+import { useMenuInput } from "synergy/src/hooks/useInput";
 import { useObservable } from "synergy/src/hooks/useObservable";
 import { StyleGroup } from "synergy/src/lib/ast/editors/ASTEditor";
+import { RouteDefinition } from "synergy/src/lib/react-router-proxy";
 import { Styles } from "synergy/src/types/paint";
 
-import { useMenuInput } from "../../hooks/useInput";
 import { useOverlay } from "../../hooks/useOverlay";
 import { SelectedElement } from "../../types/paint";
 import {
@@ -30,9 +32,7 @@ import {
   DEFAULT_FRAME_WIDTH,
   SelectModeType,
 } from "../../utils/constants";
-import { RouteDefinition } from "../../utils/react-router-proxy";
 import { BuildProgress } from "../BuildProgress";
-import { ResizeModal } from "../ResizeModal";
 import {
   CompileContext,
   CompilerComponentView,

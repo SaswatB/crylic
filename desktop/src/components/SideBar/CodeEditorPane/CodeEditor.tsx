@@ -7,6 +7,7 @@ import { useBoundState } from "synergy/src/hooks/useBoundState";
 import { useDebounce } from "synergy/src/hooks/useDebounce";
 import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
 import { JSXActionProvider } from "synergy/src/lib/ast/providers/JSXActionProvider";
+import { editorOpenLocation, editorResize } from "synergy/src/lib/events";
 import { Project } from "synergy/src/lib/project/Project";
 import {
   getFileExtensionLanguage,
@@ -15,7 +16,6 @@ import {
 } from "synergy/src/lib/utils";
 import { CodeEntry } from "synergy/src/types/paint";
 
-import { editorOpenLocation, editorResize } from "../../../lib/events";
 import { setupLanguageService } from "../../../utils/moncao-helpers";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");

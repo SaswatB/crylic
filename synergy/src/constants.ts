@@ -28,16 +28,6 @@ export const DEFAULT_PROJECT_HTML_TEMPLATE_PATH = "public/index.html";
 //       type: SelectModeType.AddElement;
 //     } & ComponentDefinition);
 
-// export enum CODE_ENTRY_TYPE {
-//   StyleSheet,
-//   Component,
-// }
-
-// export enum CODE_ENTRY_BACKING {
-//   Virtual,
-//   Physical,
-// }
-
 // export const getBoilerPlateComponent = (
 //   name: string
 // ) => `import React from "react";
@@ -246,20 +236,20 @@ export const DEFAULT_PROJECT_HTML_TEMPLATE_PATH = "public/index.html";
 //   { name: "Auto", value: "auto" },
 // ];
 
-// export const CSS_LENGTH_UNITS = [
-//   { name: "px", value: "px" },
-//   { name: "%", value: "%" },
-//   { name: "em", value: "em" },
-//   { name: "vh", value: "vh" },
-//   { name: "vw", value: "vw" },
-//   { name: "ex", value: "ex" },
-//   { name: "cm", value: "cm" },
-//   { name: "mm", value: "mm" },
-//   { name: "in", value: "in" },
-//   { name: "pt", value: "pt" },
-//   { name: "pc", value: "pc" },
-//   { name: "ch", value: "ch" },
-//   { name: "rem", value: "rem" },
-//   { name: "vmin", value: "vmin" },
-//   { name: "vmax", value: "vmax" },
-// ];
+export const CSS_LENGTH_UNITS = [
+  { name: "px", value: "px" },
+  { name: "%", value: "%" },
+  { name: "em", value: "em" },
+  { name: "vh", value: "vh" },
+  { name: "vw", value: "vw" },
+  { name: "ex", value: "ex" },
+  { name: "cm", value: "cm" },
+  { name: "mm", value: "mm" },
+  { name: "in", value: "in" },
+  { name: "pt", value: "pt" },
+  { name: "pc", value: "pc" },
+  { name: "ch", value: "ch" },
+  { name: "rem", value: "rem" },
+  { name: "vmin", value: "vmin" },
+  { name: "vmax", value: "vmax" },
+];

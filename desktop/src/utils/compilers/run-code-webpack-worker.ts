@@ -1,16 +1,19 @@
 import React from "react";
 import ReactDOMServer from "react-dom/server";
 
+import { ErrorBoundary } from "synergy/src/components/ErrorBoundary";
 import { Project } from "synergy/src/lib/project/Project";
+import {
+  getReactRouterProxy,
+  RouteDefinition,
+} from "synergy/src/lib/react-router-proxy";
 import { CodeEntry, RenderEntry } from "synergy/src/types/paint";
 
-import { ErrorBoundary } from "../../components/ErrorBoundary";
 import { DEFAULT_HTML_TEMPLATE_SELECTOR } from "../constants";
 import { publishComponent, unpublishComponent } from "../publish-component";
-import { getReactRouterProxy, RouteDefinition } from "../react-router-proxy";
 import { webpackRunCode } from "./run-code-webpack";
 
-import errorBoundaryComponent from "!!raw-loader!../../components/ErrorBoundary";
+import errorBoundaryComponent from "!!raw-loader!synergy/src/components/ErrorBoundary";
 
 const path = __non_webpack_require__("path") as typeof import("path");
 const fs = __non_webpack_require__("fs") as typeof import("fs");

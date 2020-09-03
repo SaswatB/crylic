@@ -2,6 +2,7 @@ import React, { FunctionComponent, useEffect, useState } from "react";
 import { useBus } from "ts-bus/react";
 
 import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
+import { editorOpenLocation } from "synergy/src/lib/events";
 import { Project } from "synergy/src/lib/project/Project";
 import {
   getFriendlyName,
@@ -10,7 +11,6 @@ import {
 } from "synergy/src/lib/utils";
 import { CodeEntry } from "synergy/src/types/paint";
 
-import { editorOpenLocation } from "../../../lib/events";
 import { CodeEditor } from "./CodeEditor";
 import { CodeEditorTabs } from "./CodeEditorTabs";
 import { ImageViewer } from "./ImageViewer";

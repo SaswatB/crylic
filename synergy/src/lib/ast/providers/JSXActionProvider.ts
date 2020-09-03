@@ -4,9 +4,9 @@ import { CSSASTNode } from "gonzales-pe";
 import { flatten, kebabCase } from "lodash";
 import { types } from "recast";
 
-import { getFriendlyName, isStyleEntry } from "../../utils";
 import { CodeEntry } from "../../../types/paint";
 import { Project } from "../../project/Project";
+import { getFriendlyName, isStyleEntry } from "../../utils";
 import {
   createCSSPropertyDeclaration,
   CSSASTBuilder as cb,

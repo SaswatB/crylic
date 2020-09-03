@@ -21,12 +21,11 @@ import Autocomplete, {
 import { isEqual } from "lodash";
 import rgbHex from "rgb-hex";
 
-import { useBoundState } from "synergy/src/hooks/useBoundState";
-import { useDebouncedFunction } from "synergy/src/hooks/useDebouncedFunction";
-import { useThrottle } from "synergy/src/hooks/useThrottle";
-
 import { DebouncingColorPicker } from "../components/DebouncingColorPicker";
-import { CSS_LENGTH_UNITS } from "../utils/constants";
+import { CSS_LENGTH_UNITS } from "../constants";
+import { useBoundState } from "./useBoundState";
+import { useDebouncedFunction } from "./useDebouncedFunction";
+import { useThrottle } from "./useThrottle";
 
 const HEX_COLOR_REGEX = /^#([A-Fa-f0-9]{8}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
 

@@ -1,0 +1,35 @@
+{
+  "extends": "react-app",
+  "plugins": [
+    "simple-import-sort",
+    "import"
+  ],
+  "rules": {
+    "simple-import-sort/sort": [
+      "error",
+      {
+        "groups": [
+          [
+            "^react",
+            "^@?\\w"
+          ],
+          [
+            "^synergy"
+          ],
+          [
+            "^\\u0000"
+          ],
+          [
+            "^\\.\\.(?!/?$)",
+            "^\\.\\./?$",
+            "^\\./(?=.*/)(?!/?$)",
+            "^\\.(?!/?$)",
+            "^\\./?$",
+            "^.+\\.s?css$"
+          ]
+        ]
+      }
+    ],
+    "import/no-webpack-loader-syntax": 0
+  }
+}

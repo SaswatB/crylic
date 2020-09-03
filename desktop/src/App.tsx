@@ -18,6 +18,10 @@ import { Resizable } from "re-resizable";
 import { useBus } from "ts-bus/react";
 
 import { IconButton } from "synergy/src/components/IconButton";
+import { InputModal } from "synergy/src/components/InputModal";
+import { Terminal } from "synergy/src/components/Terminal";
+import { Tour, TourContext } from "synergy/src/components/Tour";
+import { useMenuInput } from "synergy/src/hooks/useInput";
 import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
 import {
   EditContext,
@@ -25,6 +29,8 @@ import {
   StyleASTEditor,
   StyleGroup,
 } from "synergy/src/lib/ast/editors/ASTEditor";
+import { routeComponent } from "synergy/src/lib/defs/react-router-dom";
+import { editorOpenLocation, editorResize } from "synergy/src/lib/events";
 import { Project } from "synergy/src/lib/project/Project";
 import { sleep } from "synergy/src/lib/utils";
 import {
@@ -40,18 +46,13 @@ import {
   ViewContext,
 } from "./components/ComponentView/CompilerComponentView";
 import { OverlayComponentView } from "./components/ComponentView/OverlayComponentView";
-import { InputModal } from "./components/InputModal";
 import { AssetTreePane } from "./components/SideBar/AssetTreePane";
 import { CodeEditorPane } from "./components/SideBar/CodeEditorPane/CodeEditorPane";
 import { ElementEditorPane } from "./components/SideBar/ElementEditorPane";
 import { OutlinePane } from "./components/SideBar/OutlinePane";
-import { Terminal } from "./components/Terminal";
 import { Toolbar } from "./components/Toolbar";
-import { Tour, TourContext } from "./components/Tour";
 import { openFilePicker, saveFilePicker } from "./hooks/useFilePicker";
-import { useMenuInput } from "./hooks/useInput";
 import { useProject } from "./hooks/useProject";
-import { editorOpenLocation, editorResize } from "./lib/events";
 import { SelectedElement } from "./types/paint";
 import {
   ComponentViewZoomAction,
@@ -59,7 +60,6 @@ import {
   SelectMode,
   SelectModeType,
 } from "./utils/constants";
-import { routeComponent } from "./utils/defs/react-router-dom";
 import { buildOutline } from "./utils/utils";
 import "./App.scss";
 

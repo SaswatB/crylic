@@ -1,10 +1,10 @@
 // import { ViewContext } from "../components/ComponentView/CompilerComponentView";
-import { Project } from "../lib/project/Project";
 import {
   EditContext,
   ElementASTEditor,
   StyleGroup,
 } from "../lib/ast/editors/ASTEditor";
+import { Project } from "../lib/project/Project";
 
 // todo use a better type
 export type PackageJson = any;

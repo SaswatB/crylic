@@ -6,9 +6,9 @@ import { SnackbarProvider } from "notistack";
 import { loadWASM } from "onigasm";
 import { BusProvider } from "ts-bus/react";
 
-import { ModalContainer } from "./components/PromiseModal";
-import { TourProvider } from "./components/Tour";
-import { bus } from "./lib/events";
+import { ModalContainer } from "synergy/src/components/PromiseModal";
+import { TourProvider } from "synergy/src/components/Tour";
+import { bus } from "synergy/src/lib/events";
 
 loadWASM(require("onigasm/lib/onigasm.wasm").default);
 

@@ -332,9 +332,15 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
                 _
                   ? {
                       key: pipe(_.name, ifJSXIdentifier, getName),
-                      value: _.value && jsxLiteralToValue(_.value),
+                      value:
+                        _.value &&
+                        // todo investigate how this is possible https://github.com/benjamn/ast-types/pull/375
+                        _.value?.type !== "JSXElement" &&
+                        _.value?.type !== "JSXFragment"
+                          ? jsxLiteralToValue(_.value)
+                          : undefined,
                     }
-                  : _
+                  : undefined
               )
             )
             .reduce((acc: Record<string, unknown>, cur) => {

@@ -1,9 +1,8 @@
 import React, { FunctionComponent, useEffect, useRef, useState } from "react";
 
-import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
+import { useUpdatingRef } from "../hooks/useUpdatingRef";
 // @ts-ignore todo add types
-import ColorPicker from "synergy/src/vendor/color-picker/ColorPicker";
-
+import ColorPicker from "../vendor/color-picker/ColorPicker";
 import "rc-color-picker/assets/index.css";
 
 const DEFAULT_COLOR = "#ffffff";

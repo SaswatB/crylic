@@ -1,17 +1,19 @@
-import React, { FunctionComponent, useMemo, useRef, useState } from "react";
+import React, {
+  FunctionComponent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { DraggableCore } from "react-draggable";
 import { clamp, throttle } from "lodash";
 import { Resizable } from "re-resizable";
 import { Observable } from "rxjs";
 
-import { useDebouncedFunction } from "synergy/src/hooks/useDebouncedFunction";
-import { useInterval } from "synergy/src/hooks/useInterval";
-import { useObservable } from "synergy/src/hooks/useObservable";
-import { useResizeObserver } from "synergy/src/hooks/useResizeObserver";
-
-const { screen } = (__non_webpack_require__(
-  "electron"
-) as typeof import("electron")).remote;
+import { useDebouncedFunction } from "../hooks/useDebouncedFunction";
+import { useInterval } from "../hooks/useInterval";
+import { useObservable } from "../hooks/useObservable";
+import { useResizeObserver } from "../hooks/useResizeObserver";
 
 const SNAP_GAP = 10;
 
@@ -53,6 +55,20 @@ export const Draggable: FunctionComponent<Props> = ({
   onResizeStop,
 }) => {
   const divRef = useRef<Resizable>(null);
+
+  // track the mouse position
+  const mousePositionRef = useRef({ x: 0, y: 0 });
+  useEffect(() => {
+    const callback = (ev: MouseEvent) => {
+      mousePositionRef.current.x = ev.pageX;
+      mousePositionRef.current.y = ev.pageY;
+    };
+    document.addEventListener("mousemove", callback, {
+      capture: true,
+      passive: true,
+    });
+    return () => document.removeEventListener("mousemove", callback);
+  }, []);
 
   const [localRenderId, setLocalRenderId] = useState(0);
   const rerenderThrottled = useDebouncedFunction(
@@ -122,11 +138,11 @@ export const Draggable: FunctionComponent<Props> = ({
   if (skipRender) return null;
   return (
     <DraggableCore
-      onStart={(event, data) => {
+      onStart={(event) => {
         event.preventDefault();
         event.stopPropagation();
 
-        const { x, y } = screen.getCursorScreenPoint();
+        const { x, y } = mousePositionRef.current;
 
         dragState.current = {
           startX: x,
@@ -140,8 +156,9 @@ export const Draggable: FunctionComponent<Props> = ({
       onDrag={(event, data) => {
         event.preventDefault();
         event.stopPropagation();
+        rerenderThrottled();
 
-        const { x, y } = screen.getCursorScreenPoint();
+        const { x, y } = mousePositionRef.current;
 
         // get the position deltas
         const newDragState = {

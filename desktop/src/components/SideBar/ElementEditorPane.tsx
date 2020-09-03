@@ -16,9 +16,20 @@ import { startCase, uniq } from "lodash";
 import path from "path";
 
 import { IconButton } from "synergy/src/components/IconButton";
+import { Tour } from "synergy/src/components/Tour";
 import { useDebouncedFunction } from "synergy/src/hooks/useDebouncedFunction";
+import {
+  useAutocomplete,
+  useColorPicker,
+  useCSSLengthInput,
+  useInputFunction,
+  useMenuInput,
+  useSelectInput,
+  useTextInput,
+} from "synergy/src/hooks/useInput";
 import { useObservable } from "synergy/src/hooks/useObservable";
 import { StyleGroup } from "synergy/src/lib/ast/editors/ASTEditor";
+import { linkComponent } from "synergy/src/lib/defs/react-router-dom";
 import { Project } from "synergy/src/lib/project/Project";
 import { isImageEntry } from "synergy/src/lib/utils";
 import {
@@ -28,15 +39,6 @@ import {
   UpdateSelectedElement,
 } from "synergy/src/types/paint";
 
-import {
-  useAutocomplete,
-  useColorPicker,
-  useCSSLengthInput,
-  useInputFunction,
-  useMenuInput,
-  useSelectInput,
-  useTextInput,
-} from "../../hooks/useInput";
 import { SelectedElement } from "../../types/paint";
 import {
   CSS_ALIGN_ITEMS_OPTIONS,
@@ -53,11 +55,9 @@ import {
   CSS_TEXT_ALIGN_OPTIONS,
   CSS_TEXT_DECORATION_LINE_OPTIONS,
 } from "../../utils/constants";
-import { linkComponent } from "../../utils/defs/react-router-dom";
 import { renderSeparator } from "../../utils/utils";
 import { AnimationEditorModal } from "../Animation/AnimationEditorModal";
 import { Collapsible } from "../Collapsible";
-import { Tour } from "../Tour";
 
 type EditorHook<T> = useInputFunction<
   {

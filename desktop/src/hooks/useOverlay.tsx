@@ -1,6 +1,7 @@
 import React, { MutableRefObject, useEffect, useRef, useState } from "react";
 import { Observable, Subject } from "rxjs";
 
+import { Draggable } from "synergy/src/components/Draggable";
 import { useObservableCallback } from "synergy/src/hooks/useObservableCallback";
 import { Project } from "synergy/src/lib/project/Project";
 import { onMoveResizeCallback } from "synergy/src/types/paint";
@@ -9,7 +10,6 @@ import {
   CompilerComponentViewRef,
   getComponentElementsFromEvent,
 } from "../components/ComponentView/CompilerComponentView";
-import { Draggable } from "../components/Draggable";
 import { SelectedElement } from "../types/paint";
 import { SelectModeType } from "../utils/constants";
 

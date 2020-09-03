@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { materialUiComponents } from "../utils/defs/material-ui";
+import { materialUiComponents } from "../lib/defs/material-ui";
 
 export function useGlobalConfig() {
   const config = useMemo(
