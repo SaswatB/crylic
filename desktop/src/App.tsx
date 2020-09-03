@@ -19,6 +19,20 @@ import { useBus } from "ts-bus/react";
 
 import { IconButton } from "synergy/src/components/IconButton";
 import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
+import {
+  EditContext,
+  ElementASTEditor,
+  StyleASTEditor,
+  StyleGroup,
+} from "synergy/src/lib/ast/editors/ASTEditor";
+import { Project } from "synergy/src/lib/project/Project";
+import { sleep } from "synergy/src/lib/utils";
+import {
+  CodeEntry,
+  OutlineElement,
+  RenderEntry,
+  Styles,
+} from "synergy/src/types/paint";
 
 import {
   CompilerComponentViewRef,
@@ -38,20 +52,7 @@ import { openFilePicker, saveFilePicker } from "./hooks/useFilePicker";
 import { useMenuInput } from "./hooks/useInput";
 import { useProject } from "./hooks/useProject";
 import { editorOpenLocation, editorResize } from "./lib/events";
-import { Project } from "./lib/project/Project";
-import {
-  CodeEntry,
-  OutlineElement,
-  RenderEntry,
-  SelectedElement,
-  Styles,
-} from "./types/paint";
-import {
-  EditContext,
-  ElementASTEditor,
-  StyleASTEditor,
-  StyleGroup,
-} from "./utils/ast/editors/ASTEditor";
+import { SelectedElement } from "./types/paint";
 import {
   ComponentViewZoomAction,
   getBoilerPlateComponent,
@@ -59,7 +60,7 @@ import {
   SelectModeType,
 } from "./utils/constants";
 import { routeComponent } from "./utils/defs/react-router-dom";
-import { buildOutline, sleep } from "./utils/utils";
+import { buildOutline } from "./utils/utils";
 import "./App.scss";
 
 const open = __non_webpack_require__("open") as typeof import("open");

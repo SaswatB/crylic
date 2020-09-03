@@ -2,14 +2,15 @@ import React, { MutableRefObject, useEffect, useRef, useState } from "react";
 import { Observable, Subject } from "rxjs";
 
 import { useObservableCallback } from "synergy/src/hooks/useObservableCallback";
+import { Project } from "synergy/src/lib/project/Project";
+import { onMoveResizeCallback } from "synergy/src/types/paint";
 
 import {
   CompilerComponentViewRef,
   getComponentElementsFromEvent,
 } from "../components/ComponentView/CompilerComponentView";
 import { Draggable } from "../components/Draggable";
-import { Project } from "../lib/project/Project";
-import { onMoveResizeCallback, SelectedElement } from "../types/paint";
+import { SelectedElement } from "../types/paint";
 import { SelectModeType } from "../utils/constants";
 
 let lastDragResizeHandled = 0;

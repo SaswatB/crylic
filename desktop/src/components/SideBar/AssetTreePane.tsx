@@ -11,19 +11,19 @@ import TreeItem from "@material-ui/lab/TreeItem";
 import TreeView from "@material-ui/lab/TreeView";
 
 import { IconButton } from "synergy/src/components/IconButton";
-
-import { useMenuInput } from "../../hooks/useInput";
-import { Project } from "../../lib/project/Project";
-import { CodeEntry } from "../../types/paint";
-import { SelectMode, SelectModeType } from "../../utils/constants";
+import { Project } from "synergy/src/lib/project/Project";
 import {
   IMAGE_EXTENSION_REGEX,
   isImageEntry,
   isStyleEntry,
-  renderSeparator,
   SCRIPT_EXTENSION_REGEX,
   STYLE_EXTENSION_REGEX,
-} from "../../utils/utils";
+} from "synergy/src/lib/utils";
+import { CodeEntry } from "synergy/src/types/paint";
+
+import { useMenuInput } from "../../hooks/useInput";
+import { SelectMode, SelectModeType } from "../../utils/constants";
+import { renderSeparator } from "../../utils/utils";
 import { Tour } from "../Tour";
 
 interface Props {

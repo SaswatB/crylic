@@ -1,19 +1,19 @@
 import { namedTypes as t } from "ast-types";
 import { CSSASTNode } from "gonzales-pe";
 
-import { Project } from "../../src/lib/project/Project";
-import {
-  ProjectConfig,
-  ProjectConfigFile,
-} from "../../src/lib/project/ProjectConfig";
-import { CodeEntry, PackageJson } from "../../src/types/paint";
 import {
   parseCodeEntryAST,
   prettyPrintCodeEntryAST,
-} from "../../src/utils/ast/ast-helpers";
-import { ASTEditor } from "../../src/utils/ast/editors/ASTEditor";
+} from "synergy/src/lib/ast/ast-helpers";
+import { ASTEditor } from "synergy/src/lib/ast/editors/ASTEditor";
+import { ProjectConfigFile } from "synergy/src/lib/project/ProjectConfig";
+import { PackageJson } from "synergy/src/types/paint";
+import { CodeEntry } from "synergy/src/types/paint";
 
-class TestProjectConfig extends ProjectConfig {
+import { FileProject } from "../../src/lib/project/FileProject";
+import { FileProjectConfig } from "../../src/lib/project/FileProjectConfig";
+
+class TestProjectConfig extends FileProjectConfig {
   public constructor(
     configFile: ProjectConfigFile | undefined = undefined,
     packageJson: PackageJson | undefined = undefined
@@ -22,7 +22,7 @@ class TestProjectConfig extends ProjectConfig {
   }
 }
 
-export class TestProject extends Project {
+export class TestProject extends FileProject {
   public constructor(config = new TestProjectConfig()) {
     super("", "", config);
   }

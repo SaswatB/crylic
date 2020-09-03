@@ -6,13 +6,10 @@ import TreeItem from "@material-ui/lab/TreeItem";
 import TreeView from "@material-ui/lab/TreeView";
 
 import { IconButton } from "synergy/src/components/IconButton";
+import { Project } from "synergy/src/lib/project/Project";
+import { OutlineElement, RenderEntry } from "synergy/src/types/paint";
 
-import { Project } from "../../lib/project/Project";
-import {
-  OutlineElement,
-  RenderEntry,
-  SelectedElement,
-} from "../../types/paint";
+import { SelectedElement } from "../../types/paint";
 import { getElementUniqueId, renderSeparator } from "../../utils/utils";
 import { Tour } from "../Tour";
 

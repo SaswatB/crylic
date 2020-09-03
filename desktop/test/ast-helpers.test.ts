@@ -1,5 +1,6 @@
 // @ts-nocheck ts can't properly check this file due to the jest fixture transformer
-import { getComponentExport, parseAST } from "../src/utils/ast/ast-helpers";
+import { getComponentExport, parseAST } from "synergy/src/lib/ast/ast-helpers";
+
 import exportDefaultFunctionExpression from "./fixtures/component-name/export-default-function-expression.fixture";
 import exportDefaultFunction from "./fixtures/component-name/export-default-function.fixture";
 import exportDefaultLambda from "./fixtures/component-name/export-default-lambda.fixture";

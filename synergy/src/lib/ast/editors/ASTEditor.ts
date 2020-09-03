@@ -1,11 +1,9 @@
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-
 import {
-  CodeEntry,
   ComponentDefinition,
   SourceMetadata,
   Styles,
 } from "../../../types/paint";
+import { CodeEntry } from "../../../types/paint";
 import { editAST } from "../ast-helpers";
 
 export interface StyleGroup {
@@ -141,5 +139,25 @@ export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
   public abstract getEditorDecorationsForElement(
     readContext: ReadContext<ASTType>,
     lookupId: string
-  ): monaco.editor.IModelDeltaDecoration[];
+  ): {
+    // compatible with monaco.editor.IModelDeltaDecoration
+    range: {
+      startLineNumber: number;
+      startColumn: number;
+      endLineNumber: number;
+      endColumn: number;
+    };
+    options: {
+      className?: string | null;
+      isWholeLine?: boolean;
+      zIndex?: number;
+      glyphMarginClassName?: string | null;
+      linesDecorationsClassName?: string | null;
+      marginClassName?: string | null;
+      inlineClassName?: string | null;
+      inlineClassNameAffectsLetterSpacing?: boolean;
+      beforeContentClassName?: string | null;
+      afterContentClassName?: string | null;
+    };
+  }[];
 }

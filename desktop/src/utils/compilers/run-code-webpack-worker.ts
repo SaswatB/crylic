@@ -1,9 +1,10 @@
 import React from "react";
 import ReactDOMServer from "react-dom/server";
 
+import { Project } from "synergy/src/lib/project/Project";
+import { CodeEntry, RenderEntry } from "synergy/src/types/paint";
+
 import { ErrorBoundary } from "../../components/ErrorBoundary";
-import { Project } from "../../lib/project/Project";
-import { CodeEntry, RenderEntry } from "../../types/paint";
 import { DEFAULT_HTML_TEMPLATE_SELECTOR } from "../constants";
 import { publishComponent, unpublishComponent } from "../publish-component";
 import { getReactRouterProxy, RouteDefinition } from "../react-router-proxy";

@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useEffect, useRef } from "react";
 import mime from "mime";
 
-import { CodeEntry } from "../../../types/paint";
+import { CodeEntry } from "synergy/src/types/paint";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 

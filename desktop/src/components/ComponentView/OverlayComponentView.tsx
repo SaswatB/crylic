@@ -19,11 +19,12 @@ import { Subject } from "rxjs";
 import { IconButton } from "synergy/src/components/IconButton";
 import { useDebounce } from "synergy/src/hooks/useDebounce";
 import { useObservable } from "synergy/src/hooks/useObservable";
+import { StyleGroup } from "synergy/src/lib/ast/editors/ASTEditor";
+import { Styles } from "synergy/src/types/paint";
 
 import { useMenuInput } from "../../hooks/useInput";
 import { useOverlay } from "../../hooks/useOverlay";
-import { SelectedElement, Styles } from "../../types/paint";
-import { StyleGroup } from "../../utils/ast/editors/ASTEditor";
+import { SelectedElement } from "../../types/paint";
 import {
   DEFAULT_FRAME_HEIGHT,
   DEFAULT_FRAME_WIDTH,

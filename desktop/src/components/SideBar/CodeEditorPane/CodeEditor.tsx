@@ -6,17 +6,17 @@ import { useBus } from "ts-bus/react";
 import { useBoundState } from "synergy/src/hooks/useBoundState";
 import { useDebounce } from "synergy/src/hooks/useDebounce";
 import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
-
-import { editorOpenLocation, editorResize } from "../../../lib/events";
-import { Project } from "../../../lib/project/Project";
-import { CodeEntry } from "../../../types/paint";
-import { JSXActionProvider } from "../../../utils/ast/providers/JSXActionProvider";
-import { setupLanguageService } from "../../../utils/moncao-helpers";
+import { JSXActionProvider } from "synergy/src/lib/ast/providers/JSXActionProvider";
+import { Project } from "synergy/src/lib/project/Project";
 import {
   getFileExtensionLanguage,
   isDefined,
   isScriptEntry,
-} from "../../../utils/utils";
+} from "synergy/src/lib/utils";
+import { CodeEntry } from "synergy/src/types/paint";
+
+import { editorOpenLocation, editorResize } from "../../../lib/events";
+import { setupLanguageService } from "../../../utils/moncao-helpers";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 

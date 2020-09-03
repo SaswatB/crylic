@@ -2,13 +2,12 @@ import { wireTmGrammars } from "monaco-editor-textmate";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { Registry } from "monaco-textmate";
 
+import { getFileExtensionLanguage } from "synergy/src/lib/utils";
+import { CodeEntry } from "synergy/src/types/paint";
 import darkVs from "synergy/src/vendor/dark-vs.json";
 
-import { CodeEntry } from "../types/paint";
-import { getFileExtensionLanguage } from "./utils";
-
-import TypeScriptReactTMLanguage from "!!raw-loader!../vendor/TypeScriptReact.tmLanguage";
 import reactTypes from "!!raw-loader!@types/react/index.d.ts";
+import TypeScriptReactTMLanguage from "!!raw-loader!synergy/src/vendor/TypeScriptReact.tmLanguage";
 
 // setup a better typescript grammar for jsx syntax highlighting
 const registry = new Registry({

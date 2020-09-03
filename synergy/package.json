@@ -8,14 +8,33 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@babel/parser": "^7.11.5",
     "@fortawesome/fontawesome-svg-core": "^1.2.30",
     "@fortawesome/free-solid-svg-icons": "^5.14.0",
     "@fortawesome/react-fontawesome": "^0.1.11",
+    "ast-types": "^0.14.1",
+    "classnames": "^2.2.6",
+    "clone": "^2.1.2",
+    "deep-freeze-strict": "^1.1.1",
+    "fp-ts": "^2.8.2",
     "framer-motion": "^2.6.5",
+    "gonzales-pe": "^4.3.0",
     "immer": "^7.0.8",
+    "io-ts": "^2.2.10",
     "lodash": "^4.17.20",
+    "prettier": "^2.1.1",
+    "prop-types": "^15.7.2",
+    "rc-trigger": "^4.4.2",
+    "rc-util": "^5.2.1",
     "react": "^16.13.1",
-    "rxjs": "^6.6.2"
+    "react-dom": "^16.13.1",
+    "recast": "^0.20.3",
+    "resolve-pathname": "^3.0.0",
+    "rxjs": "^6.6.2",
+    "tiny-invariant": "^1.1.0",
+    "tiny-warning": "^1.0.3",
+    "tinycolor2": "^1.4.1",
+    "value-equal": "^1.0.1"
   },
   "devDependencies": {
     "typescript": "^4.0.2"

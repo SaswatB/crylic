@@ -29,10 +29,12 @@ import {
   usePopupState,
 } from "material-ui-popup-state/hooks";
 
+import { Project } from "synergy/src/lib/project/Project";
+import { PackageInstaller } from "synergy/src/types/paint";
+
 import { useGlobalConfig } from "../hooks/useGlobalConfig";
 import { useSelectInput } from "../hooks/useInput";
-import { Project } from "../lib/project/Project";
-import { PackageInstaller, SelectedElement } from "../types/paint";
+import { SelectedElement } from "../types/paint";
 import {
   ComponentViewZoomAction,
   SelectMode,

@@ -393,6 +393,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/parser@npm:^7.11.5":
+  version: 7.11.5
+  resolution: "@babel/parser@npm:7.11.5"
+  bin:
+    parser: ./bin/babel-parser.js
+  checksum: ef2874e4d27eaa86777680505e57a7b36549c9602c682372d8b7c6234dff84cb8d03bdce65002a3e98921d83233b5af451d6c9dd9c681232ebe4c4ee9f41318e
+  languageName: node
+  linkType: hard
+
 "@babel/plugin-proposal-async-generator-functions@npm:^7.10.4, @babel/plugin-proposal-async-generator-functions@npm:^7.8.3":
   version: 7.10.5
   resolution: "@babel/plugin-proposal-async-generator-functions@npm:7.10.5"
@@ -1581,7 +1590,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.1.5, @babel/runtime@npm:^7.10.2, @babel/runtime@npm:^7.3.1, @babel/runtime@npm:^7.3.4, @babel/runtime@npm:^7.4.4, @babel/runtime@npm:^7.4.5, @babel/runtime@npm:^7.5.1, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.7.2, @babel/runtime@npm:^7.8.3, @babel/runtime@npm:^7.8.4, @babel/runtime@npm:^7.8.7":
+"@babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.1.5, @babel/runtime@npm:^7.10.1, @babel/runtime@npm:^7.10.2, @babel/runtime@npm:^7.11.1, @babel/runtime@npm:^7.3.1, @babel/runtime@npm:^7.3.4, @babel/runtime@npm:^7.4.4, @babel/runtime@npm:^7.4.5, @babel/runtime@npm:^7.5.1, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.7.2, @babel/runtime@npm:^7.8.3, @babel/runtime@npm:^7.8.4, @babel/runtime@npm:^7.8.7":
   version: 7.11.2
   resolution: "@babel/runtime@npm:7.11.2"
   dependencies:
@@ -4301,6 +4310,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ast-types@npm:0.14.1, ast-types@npm:^0.14.1":
+  version: 0.14.1
+  resolution: "ast-types@npm:0.14.1"
+  dependencies:
+    tslib: ^2.0.1
+  checksum: 541d59784bca00f2d4a510dd548669279d04313e32ed196fee6100a253014eae55565bc523d926c54e4ad5d7db2104fe1a65d6efa762b2bacf88083a13486cae
+  languageName: node
+  linkType: hard
+
 "astral-regex@npm:^1.0.0":
   version: 1.0.0
   resolution: "astral-regex@npm:1.0.0"
@@ -5559,7 +5577,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"classnames@npm:^2.2.5, classnames@npm:^2.2.6":
+"classnames@npm:2.x, classnames@npm:^2.2.1, classnames@npm:^2.2.5, classnames@npm:^2.2.6":
   version: 2.2.6
   resolution: "classnames@npm:2.2.6"
   checksum: 490eaeca5931846737ffd33e472a701d268d5b8bc5717dd4cf108a127b06e86e05350e06799abbbe763a0e4c945b4217f6700b7ae00ddc703505682c370e5cf2
@@ -6455,12 +6473,10 @@ __metadata:
     babel-preset-react-app: ^9.1.2
     camelcase: ^5.3.1
     case-sensitive-paths-webpack-plugin: ^2.3.0
-    clone: ^2.1.2
     cors: ^2.8.5
     cosmiconfig: ^6.0.0
     cpy-cli: ^3.1.1
     css-loader: ^3.5.3
-    deep-freeze-strict: ^1.1.1
     dotenv: ^8.2.0
     dotenv-expand: ^5.1.0
     electron: 9.1.1
@@ -6520,7 +6536,7 @@ __metadata:
     postcss-normalize: ^8.0.1
     postcss-preset-env: ^6.7.0
     postcss-safe-parser: ^4.0.1
-    prettier: ^2.0.2
+    prettier: ^2.1.1
     raw-loader: ^4.0.0
     rc-color-picker: ^1.2.6
     re-resizable: ^6.3.2
@@ -9162,7 +9178,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fp-ts@npm:^2.5.3":
+"fp-ts@npm:^2.5.3, fp-ts@npm:^2.8.2":
   version: 2.8.2
   resolution: "fp-ts@npm:2.8.2"
   checksum: f4661304cb8a940fa96eb8a82702b5ec8bcb320c5dd5be009e2f020c4e3bdf74da4a579f049bf9a63c093f8278dc013fd00b32a131e131edc09bb5819c873425
@@ -10715,7 +10731,7 @@ immer@6.0.3:
   languageName: node
   linkType: hard
 
-"io-ts@npm:^2.2.1":
+"io-ts@npm:^2.2.1, io-ts@npm:^2.2.10":
   version: 2.2.10
   resolution: "io-ts@npm:2.2.10"
   peerDependencies:
@@ -16418,7 +16434,7 @@ immer@6.0.3:
   languageName: node
   linkType: hard
 
-"prettier@npm:^2.0.2":
+"prettier@npm:^2.1.1":
   version: 2.1.1
   resolution: "prettier@npm:2.1.1"
   bin:
@@ -16868,6 +16884,22 @@ immer@6.0.3:
   languageName: node
   linkType: hard
 
+"rc-align@npm:^4.0.0":
+  version: 4.0.3
+  resolution: "rc-align@npm:4.0.3"
+  dependencies:
+    "@babel/runtime": ^7.10.1
+    classnames: 2.x
+    dom-align: ^1.7.0
+    rc-util: ^5.0.1
+    resize-observer-polyfill: ^1.5.1
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: 3e88f2563a3a53cbd908659e31a0bf528fd1386a18f122df1028592b21177cb68384590e82c7a4e21018275b9685e98d145877de67a6a8bc113d88dbbfce8a15
+  languageName: node
+  linkType: hard
+
 "rc-animate@npm:2.x":
   version: 2.11.1
   resolution: "rc-animate@npm:2.11.1"
@@ -16899,6 +16931,21 @@ immer@6.0.3:
   languageName: node
   linkType: hard
 
+"rc-motion@npm:^1.0.0":
+  version: 1.0.3
+  resolution: "rc-motion@npm:1.0.3"
+  dependencies:
+    "@babel/runtime": ^7.11.1
+    classnames: ^2.2.1
+    raf: ^3.4.1
+    rc-util: ^5.0.6
+  peerDependencies:
+    react: ^16.0.0
+    react-dom: ^16.0.0
+  checksum: 9bf4a3000ab22d1308a87d0e755c5a41d0c6158f6d4ac5eaf2c6da67c098632b06f49f247240a7da3a3430b33106495b92def6339d122fa5821a24dd41685e13
+  languageName: node
+  linkType: hard
+
 "rc-trigger@npm:1.x":
   version: 1.11.5
   resolution: "rc-trigger@npm:1.11.5"
@@ -16913,6 +16960,20 @@ immer@6.0.3:
   languageName: node
   linkType: hard
 
+"rc-trigger@npm:^4.4.2":
+  version: 4.4.2
+  resolution: "rc-trigger@npm:4.4.2"
+  dependencies:
+    "@babel/runtime": ^7.10.1
+    classnames: ^2.2.6
+    raf: ^3.4.1
+    rc-align: ^4.0.0
+    rc-motion: ^1.0.0
+    rc-util: ^5.0.1
+  checksum: 2dcb30fd4f34418c4ed99cc0a09139f349d2e7121251d63f6aa7dce0029aaf430b4dc8a6c97eacba3ffc200888efea5f001109f14227446549a35ee04538d30c
+  languageName: node
+  linkType: hard
+
 "rc-util@npm:4.x, rc-util@npm:^4.0.2, rc-util@npm:^4.0.4, rc-util@npm:^4.15.3":
   version: 4.21.1
   resolution: "rc-util@npm:4.21.1"
@@ -16923,6 +16984,16 @@ immer@6.0.3:
     react-lifecycles-compat: ^3.0.4
     shallowequal: ^1.1.0
   checksum: 68c3907f765793abacd20ec44e2cc2e0d102c6aebb49a6ba36ead079e9468818738b8aac30705c69ef9a7607086483ccc9e5ab09e0ebb50f78e172fe126cb500
+  languageName: node
+  linkType: hard
+
+"rc-util@npm:^5.0.1, rc-util@npm:^5.0.6, rc-util@npm:^5.2.1":
+  version: 5.2.1
+  resolution: "rc-util@npm:5.2.1"
+  dependencies:
+    react-is: ^16.12.0
+    shallowequal: ^1.1.0
+  checksum: a0e3445f7b9cbce7138a671c0c2e77f4d1a9496ab2c7392a45aad512650c017c8b1d8d4cfbf9a0ae13626f822d24be2e54d16088378d6cf194b220df66732556
   languageName: node
   linkType: hard
 
@@ -17492,6 +17563,19 @@ react-refresh@0.8.3:
   languageName: node
   linkType: hard
 
+"recast@npm:^0.20.3":
+  version: 0.20.3
+  resolution: "recast@npm:0.20.3"
+  dependencies:
+    ast-types: 0.14.1
+    esprima: ~4.0.0
+    private: ^0.1.8
+    source-map: ~0.6.1
+    tslib: ^2.0.1
+  checksum: b11fd8a9dc8ab3dfc624972c5c6670dcdcfd7e16e30854cb15e72efbaa5d8f4123cd7bed408fa0d1102dbbdc497d7903533dd603042d0f7b483887d138b34822
+  languageName: node
+  linkType: hard
+
 "recursive-readdir@npm:2.2.2":
   version: 2.2.2
   resolution: "recursive-readdir@npm:2.2.2"
@@ -17807,6 +17891,13 @@ react-refresh@0.8.3:
   version: 1.0.0
   resolution: "requires-port@npm:1.0.0"
   checksum: 0db25fb2ac9b4f2345a350846b7ba99d1f25a6686b1728246d14f05450c8f2fc066bdfae4561b4be2627c184a030a27e17268cfefdf46836e271db13734bc49e
+  languageName: node
+  linkType: hard
+
+"resize-observer-polyfill@npm:^1.5.1":
+  version: 1.5.1
+  resolution: "resize-observer-polyfill@npm:1.5.1"
+  checksum: ba14bfaf584eda299eafd6a06233a65c76586bc2bab3cdfdd1edd25fc6479f4270788ddd082e65390049b3ed542558f02bdf1f123bd912624de5b11d48857ac8
   languageName: node
   linkType: hard
 
@@ -19505,15 +19596,34 @@ sassjs-loader@2.0.0:
   version: 0.0.0-use.local
   resolution: "synergy@workspace:synergy"
   dependencies:
+    "@babel/parser": ^7.11.5
     "@fortawesome/fontawesome-svg-core": ^1.2.30
     "@fortawesome/free-solid-svg-icons": ^5.14.0
     "@fortawesome/react-fontawesome": ^0.1.11
+    ast-types: ^0.14.1
+    classnames: ^2.2.6
+    clone: ^2.1.2
+    deep-freeze-strict: ^1.1.1
+    fp-ts: ^2.8.2
     framer-motion: ^2.6.5
+    gonzales-pe: ^4.3.0
     immer: ^7.0.8
+    io-ts: ^2.2.10
     lodash: ^4.17.20
+    prettier: ^2.1.1
+    prop-types: ^15.7.2
+    rc-trigger: ^4.4.2
+    rc-util: ^5.2.1
     react: ^16.13.1
+    react-dom: ^16.13.1
+    recast: ^0.20.3
+    resolve-pathname: ^3.0.0
     rxjs: ^6.6.2
+    tiny-invariant: ^1.1.0
+    tiny-warning: ^1.0.3
+    tinycolor2: ^1.4.1
     typescript: ^4.0.2
+    value-equal: ^1.0.1
   languageName: unknown
   linkType: soft
 
@@ -19771,7 +19881,7 @@ sassjs-loader@2.0.0:
   languageName: node
   linkType: hard
 
-"tiny-invariant@npm:^1.0.2":
+"tiny-invariant@npm:^1.0.2, tiny-invariant@npm:^1.1.0":
   version: 1.1.0
   resolution: "tiny-invariant@npm:1.1.0"
   checksum: 64318fbd77c451cfff23b57b9f3aef56594d9cea051a87dc538c9b371f97e8d474eaa2a7cbd60b8aa23f852393152495e8651b197607465fdf9c8ff134043b1b
@@ -19981,6 +20091,13 @@ sassjs-loader@2.0.0:
   version: 1.13.0
   resolution: "tslib@npm:1.13.0"
   checksum: 5dc3bdaea3b67c76ef4a14c28fcb2171da7bcf292fd9c59a260098729626b1ce766c52b588f08e324ed9a0c52ea8a93a815920f980d75981abc9d850fbf310fb
+  languageName: node
+  linkType: hard
+
+"tslib@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "tslib@npm:2.0.1"
+  checksum: 7b42337a07f536c9650c72471cdf51317f07eb981692e91b8979fee3f6e20136a8f047e6ecdc5f2f3201132a6cc4e0096fa3c58655eba3803bf7fe739ccd088e
   languageName: node
   linkType: hard
 

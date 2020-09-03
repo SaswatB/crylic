@@ -17,9 +17,9 @@ import prettierParsesPostcss from "prettier/parser-postcss";
 import { format } from "prettier/standalone";
 import { parse, print, types, visit } from "recast";
 
-import { ProjectConfig } from "../../lib/project/ProjectConfig";
-import { CodeEntry } from "../../types/paint";
 import { getStyleEntryExtension, isDefined, isStyleEntry } from "../utils";
+import { CodeEntry } from "../../types/paint";
+import { ProjectConfig } from "../project/ProjectConfig";
 import { babelTsParser } from "./babel-ts";
 
 const { builders: b } = types;

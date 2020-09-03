@@ -16,9 +16,17 @@ import { startCase, uniq } from "lodash";
 import path from "path";
 
 import { IconButton } from "synergy/src/components/IconButton";
-
 import { useDebouncedFunction } from "synergy/src/hooks/useDebouncedFunction";
 import { useObservable } from "synergy/src/hooks/useObservable";
+import { StyleGroup } from "synergy/src/lib/ast/editors/ASTEditor";
+import { Project } from "synergy/src/lib/project/Project";
+import { isImageEntry } from "synergy/src/lib/utils";
+import {
+  CodeEntry,
+  PackageInstaller,
+  Styles,
+  UpdateSelectedElement,
+} from "synergy/src/types/paint";
 
 import {
   useAutocomplete,
@@ -29,15 +37,7 @@ import {
   useSelectInput,
   useTextInput,
 } from "../../hooks/useInput";
-import { Project } from "../../lib/project/Project";
-import {
-  CodeEntry,
-  PackageInstaller,
-  SelectedElement,
-  Styles,
-  UpdateSelectedElement,
-} from "../../types/paint";
-import { StyleGroup } from "../../utils/ast/editors/ASTEditor";
+import { SelectedElement } from "../../types/paint";
 import {
   CSS_ALIGN_ITEMS_OPTIONS,
   CSS_BACKGROUND_SIZE_OPTIONS,
@@ -54,7 +54,7 @@ import {
   CSS_TEXT_DECORATION_LINE_OPTIONS,
 } from "../../utils/constants";
 import { linkComponent } from "../../utils/defs/react-router-dom";
-import { isImageEntry, renderSeparator } from "../../utils/utils";
+import { renderSeparator } from "../../utils/utils";
 import { AnimationEditorModal } from "../Animation/AnimationEditorModal";
 import { Collapsible } from "../Collapsible";
 import { Tour } from "../Tour";

@@ -1,7 +1,8 @@
 // @ts-nocheck ts can't properly check this file due to the jest fixture transformer
 import { namedTypes as t } from "ast-types";
 
-import { JSXASTEditor } from "../src/utils/ast/editors/JSXASTEditor";
+import { JSXASTEditor } from "synergy/src/lib/ast/editors/JSXASTEditor";
+
 import existingStyleBase from "./fixtures/styles/inline/existing-style-base.fixture";
 import existingStyleFinal from "./fixtures/styles/inline/existing-style-final.fixture";
 import noStyleBase from "./fixtures/styles/inline/no-style-base.fixture";

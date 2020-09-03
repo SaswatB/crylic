@@ -1,12 +1,10 @@
-import { ComponentDefinition } from "../types/paint";
+import { ComponentDefinition } from "synergy/src/types/paint";
 
 export const CONFIG_FILE_NAME = "crylic.config.js";
 
 export const DEFAULT_FRAME_WIDTH = 350;
 export const DEFAULT_FRAME_HEIGHT = 600;
 
-export const DEFAULT_PROJECT_SOURCE_FOLDER = "src";
-export const DEFAULT_PROJECT_HTML_TEMPLATE_PATH = "public/index.html";
 export const DEFAULT_HTML_TEMPLATE_SELECTOR = "root";
 
 export enum ComponentViewZoomAction {

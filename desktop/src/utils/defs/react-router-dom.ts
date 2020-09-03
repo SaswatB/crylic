@@ -1,4 +1,4 @@
-import { CustomComponentDefinition } from "../../types/paint";
+import { CustomComponentDefinition } from "synergy/src/types/paint";
 
 export const linkComponent: CustomComponentDefinition = {
   name: "Link",

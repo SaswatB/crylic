@@ -1,6 +1,6 @@
 import path from "path";
 
-import { PackageManager } from "./PackageManager";
+import { PackageManager } from "synergy/src/lib/packageManager/PackageManager";
 
 const { fork } = __non_webpack_require__(
   "child_process"

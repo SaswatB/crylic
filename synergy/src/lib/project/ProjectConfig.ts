@@ -1,24 +1,14 @@
-import { fold } from "fp-ts/lib/Either";
-import { pipe } from "fp-ts/lib/pipeable";
 import * as it from "io-ts";
 import path from "path";
 
 import { PackageJson } from "../../types/paint";
 import {
-  CONFIG_FILE_NAME,
   DEFAULT_PROJECT_HTML_TEMPLATE_PATH,
   DEFAULT_PROJECT_SOURCE_FOLDER,
-} from "../../utils/constants";
-import { InbuiltPackageManager } from "../PackageManager/InbuiltPackageManager";
+} from "../../constants";
+import { PackageManager } from "../packageManager/PackageManager";
 
-const fs = __non_webpack_require__("fs") as typeof import("fs");
-
-function requireUncached(module: string) {
-  delete __non_webpack_require__.cache[__non_webpack_require__.resolve(module)];
-  return __non_webpack_require__(module);
-}
-
-const ProjectConfigFile = it.type({
+export const ProjectConfigFile = it.type({
   bootstrap: it.union([it.string, it.undefined]),
   sourceFolder: it.union([it.string, it.undefined]),
   overrideWebpack: it.union([
@@ -60,7 +50,7 @@ const ProjectConfigFile = it.type({
 });
 export type ProjectConfigFile = it.TypeOf<typeof ProjectConfigFile>;
 
-export class ProjectConfig {
+export abstract class ProjectConfig {
   protected constructor(
     public readonly projectPath: string,
     public readonly configFile: ProjectConfigFile | undefined,
@@ -69,42 +59,6 @@ export class ProjectConfig {
 
   get name() {
     return path.basename(this.projectPath.replace(/\\/g, "/"));
-  }
-
-  public static createProjectConfigFromDirectory(projectPath: string) {
-    let configFile;
-    let packageJson;
-
-    // process the config file
-    const configFilePath = path.join(projectPath, CONFIG_FILE_NAME);
-    if (fs.existsSync(configFilePath)) {
-      // todo use a more secure require/allow async
-      configFile = pipe(
-        configFilePath,
-        // require the config file
-        requireUncached,
-        // parse the config file
-        ProjectConfigFile.decode,
-        fold(
-          // log any errors
-          (e) => {
-            console.log("ProjectConfigFile decode error", e);
-            return undefined;
-          },
-          (config) => config
-        )
-      );
-    }
-
-    // process package.json
-    const packageJsonPath = path.join(projectPath, "package.json");
-    if (fs.existsSync(packageJsonPath)) {
-      packageJson = JSON.parse(
-        fs.readFileSync(packageJsonPath, { encoding: "utf-8" })
-      );
-    }
-
-    return new ProjectConfig(projectPath, configFile, packageJson);
   }
 
   public isPackageInstalled(module: string, allowDevDep = true) {
@@ -120,24 +74,7 @@ export class ProjectConfig {
   public isReactInstalled = () => this.isPackageInstalled("react");
   public isVueInstalled = () => this.isPackageInstalled("vue");
 
-  public getPackageManager() {
-    const packageManagerType =
-      this.configFile?.packageManager?.type ?? "inbuilt";
-
-    if (packageManagerType.startsWith("inbuilt")) {
-      return new InbuiltPackageManager(
-        this.projectPath,
-        packageManagerType === "inbuilt-yarn" ||
-          (packageManagerType !== "inbuilt-npm" &&
-            fs.existsSync(path.join(this.projectPath, "yarn.lock")))
-      );
-    } else if (packageManagerType === "yarn") {
-      // yarn
-      throw new Error("Not implemented");
-    }
-    // npm
-    throw new Error("Not implemented");
-  }
+  public abstract getPackageManager(): PackageManager;
 
   public getFullSourceFolderPath() {
     return path.join(

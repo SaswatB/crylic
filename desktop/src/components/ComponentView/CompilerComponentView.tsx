@@ -15,12 +15,12 @@ import { distinctUntilChanged } from "rxjs/operators";
 
 import { useDebounce } from "synergy/src/hooks/useDebounce";
 import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
+import { Project } from "synergy/src/lib/project/Project";
+import { isDefined } from "synergy/src/lib/utils";
+import { RenderEntry, Styles } from "synergy/src/types/paint";
 
-import { Project } from "../../lib/project/Project";
-import { RenderEntry, Styles } from "../../types/paint";
 import { webpackRunCodeWithWorker } from "../../utils/compilers/run-code-webpack-worker";
 import { RouteDefinition } from "../../utils/react-router-proxy";
-import { isDefined } from "../../utils/utils";
 import { ErrorBoundary } from "../ErrorBoundary";
 import { Frame } from "../Frame";
 

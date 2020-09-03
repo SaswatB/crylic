@@ -9,9 +9,10 @@ import produce from "immer";
 import { capitalize } from "lodash";
 
 import { IconButton } from "synergy/src/components/IconButton";
+import { UpdateSelectedElement } from "synergy/src/types/paint";
 
 import { useSelectInput } from "../../hooks/useInput";
-import { SelectedElement, UpdateSelectedElement } from "../../types/paint";
+import { SelectedElement } from "../../types/paint";
 import { createModal } from "../PromiseModal";
 import { AnimationPropertyEditor } from "./AnimationPropertyEditor";
 import {
