@@ -10,21 +10,20 @@ import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import TreeItem from "@material-ui/lab/TreeItem";
 import TreeView from "@material-ui/lab/TreeView";
 
-import { IconButton } from "synergy/src/components/IconButton";
-import { Tour } from "synergy/src/components/Tour";
-import { useMenuInput } from "synergy/src/hooks/useInput";
-import { Project } from "synergy/src/lib/project/Project";
+import { SelectMode, SelectModeType } from "../../constants";
+import { useMenuInput } from "../../hooks/useInput";
+import { Project } from "../../lib/project/Project";
+import { renderSeparator } from "../../lib/render-utils";
 import {
   IMAGE_EXTENSION_REGEX,
   isImageEntry,
   isStyleEntry,
   SCRIPT_EXTENSION_REGEX,
   STYLE_EXTENSION_REGEX,
-} from "synergy/src/lib/utils";
-import { CodeEntry } from "synergy/src/types/paint";
-
-import { SelectMode, SelectModeType } from "../../utils/constants";
-import { renderSeparator } from "../../utils/utils";
+} from "../../lib/utils";
+import { CodeEntry } from "../../types/paint";
+import { IconButton } from "../IconButton";
+import { Tour } from "../Tour";
 
 interface Props {
   project: Project;

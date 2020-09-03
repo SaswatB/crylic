@@ -16,23 +16,20 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { Subject } from "rxjs";
 
-import { IconButton } from "synergy/src/components/IconButton";
-import { ResizeModal } from "synergy/src/components/ResizeModal";
-import { useDebounce } from "synergy/src/hooks/useDebounce";
-import { useMenuInput } from "synergy/src/hooks/useInput";
-import { useObservable } from "synergy/src/hooks/useObservable";
-import { StyleGroup } from "synergy/src/lib/ast/editors/ASTEditor";
-import { RouteDefinition } from "synergy/src/lib/react-router-proxy";
-import { Styles } from "synergy/src/types/paint";
-
-import { useOverlay } from "../../hooks/useOverlay";
-import { SelectedElement } from "../../types/paint";
 import {
   DEFAULT_FRAME_HEIGHT,
   DEFAULT_FRAME_WIDTH,
   SelectModeType,
-} from "../../utils/constants";
-import { BuildProgress } from "../BuildProgress";
+} from "../../constants";
+import { useDebounce } from "../../hooks/useDebounce";
+import { useMenuInput } from "../../hooks/useInput";
+import { useObservable } from "../../hooks/useObservable";
+import { StyleGroup } from "../../lib/ast/editors/ASTEditor";
+import { RouteDefinition } from "../../lib/react-router-proxy";
+import { SelectedElement, Styles } from "../../types/paint";
+import { IconButton } from "../IconButton";
+import { ResizeModal } from "../ResizeModal";
+import { BuildProgress } from "./BuildProgress";
 import {
   CompileContext,
   CompilerComponentView,
@@ -40,6 +37,7 @@ import {
   CompilerComponentViewRef,
   ViewContext,
 } from "./CompilerComponentView";
+import { useOverlay } from "./useOverlay";
 
 interface Props {
   compilerProps: CompilerComponentViewProps &

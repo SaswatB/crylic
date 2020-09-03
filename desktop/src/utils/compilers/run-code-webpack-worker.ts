@@ -2,12 +2,8 @@ import React from "react";
 import ReactDOMServer from "react-dom/server";
 
 import { ErrorBoundary } from "synergy/src/components/ErrorBoundary";
-import { Project } from "synergy/src/lib/project/Project";
-import {
-  getReactRouterProxy,
-  RouteDefinition,
-} from "synergy/src/lib/react-router-proxy";
-import { CodeEntry, RenderEntry } from "synergy/src/types/paint";
+import { getReactRouterProxy } from "synergy/src/lib/react-router-proxy";
+import { CodeEntry, RenderEntryDeployerContext } from "synergy/src/types/paint";
 
 import { DEFAULT_HTML_TEMPLATE_SELECTOR } from "../constants";
 import { publishComponent, unpublishComponent } from "../publish-component";
@@ -59,36 +55,21 @@ if (WORKER_ENABLED) {
 
 let compileIdCounter = 0;
 
-interface RunnerContext {
-  frame: HTMLIFrameElement | undefined;
-  onProgress: (arg: { percentage: number; message: string }) => void;
-  onPublish: (url: string) => void;
-  onReload: () => void;
-
-  // react router support
-  onSwitchActive: (switchId: string, arg: RouteDefinition) => void;
-  onSwitchDeactivate: (switchId: string) => void;
-  onRouteActive: (routeId: string, route: string) => void;
-  onRouteDeactivate: (routeId: string) => void;
-}
-
 /**
  * Runs `webpackRunCode` on a worker
  */
-export const webpackRunCodeWithWorker = async (
-  project: Project,
-  renderEntry: RenderEntry,
-  {
-    frame,
-    onProgress,
-    onPublish,
-    onReload,
-    onSwitchActive,
-    onSwitchDeactivate,
-    onRouteActive,
-    onRouteDeactivate,
-  }: RunnerContext
-) => {
+export const webpackRunCodeWithWorker = async ({
+  project,
+  renderEntry,
+  frame,
+  onProgress,
+  onPublish,
+  onReload,
+  onSwitchActive,
+  onSwitchDeactivate,
+  onRouteActive,
+  onRouteDeactivate,
+}: RenderEntryDeployerContext) => {
   const startTime = Date.now();
   const compileId = ++compileIdCounter;
 

@@ -29,19 +29,17 @@ import {
   usePopupState,
 } from "material-ui-popup-state/hooks";
 
-import { Tour } from "synergy/src/components/Tour";
-import { useGlobalConfig } from "synergy/src/hooks/useGlobalConfig";
-import { useSelectInput } from "synergy/src/hooks/useInput";
-import { Project } from "synergy/src/lib/project/Project";
-import { PackageInstaller } from "synergy/src/types/paint";
-
-import { SelectedElement } from "../types/paint";
+import { SelectMode, SelectModeType } from "../constants";
+import { useGlobalConfig } from "../hooks/useGlobalConfig";
+import { useSelectInput } from "../hooks/useInput";
+import { Project } from "../lib/project/Project";
+import { renderSeparator } from "../lib/render-utils";
 import {
   ComponentViewZoomAction,
-  SelectMode,
-  SelectModeType,
-} from "../utils/constants";
-import { renderSeparator } from "../utils/utils";
+  PackageInstaller,
+  SelectedElement,
+} from "../types/paint";
+import { Tour } from "./Tour";
 
 const useAdderTab = (
   project: Project,

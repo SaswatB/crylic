@@ -2,14 +2,13 @@ import React, { FunctionComponent } from "react";
 import { faArrowRight, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-import { IconButton } from "synergy/src/components/IconButton";
 import {
   ColorPicker,
   CSSLengthInput,
   TextInput,
   useAutocomplete,
-} from "synergy/src/hooks/useInput";
-
+} from "../../hooks/useInput";
+import { IconButton } from "../IconButton";
 import {
   AnimationProperty,
   AnimationPropertyInputType,

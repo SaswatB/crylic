@@ -1,5 +1,4 @@
-import { isDefined } from "synergy/src/lib/utils";
-
+import { isDefined } from "../../lib/utils";
 import {
   AnimationPropertyInputType,
   AnimationPropertyMap,

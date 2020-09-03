@@ -1,10 +1,11 @@
-// import { ViewContext } from "../components/ComponentView/CompilerComponentView";
+import { ViewContext } from "../components/ComponentView/CompilerComponentView";
 import {
   EditContext,
   ElementASTEditor,
   StyleGroup,
 } from "../lib/ast/editors/ASTEditor";
 import { Project } from "../lib/project/Project";
+import { RouteDefinition } from "../lib/react-router-proxy";
 
 // todo use a better type
 export type PackageJson = any;
@@ -46,18 +47,33 @@ export interface SourceMetadata {
   directProps: Record<string, unknown>;
 }
 
-// export interface SelectedElement {
-//   renderId: string;
-//   lookupId: string;
-//   element: HTMLElement;
-//   elements: HTMLElement[];
-//   styleGroups: StyleGroup[];
-//   computedStyles: CSSStyleDeclaration;
-//   inlineStyles: CSSStyleDeclaration;
+export interface SelectedElement {
+  renderId: string;
+  lookupId: string;
+  element: HTMLElement;
+  elements: HTMLElement[];
+  styleGroups: StyleGroup[];
+  computedStyles: CSSStyleDeclaration;
+  inlineStyles: CSSStyleDeclaration;
 
-//   sourceMetadata: SourceMetadata | undefined;
-//   viewContext: ViewContext | undefined;
-// }
+  sourceMetadata: SourceMetadata | undefined;
+  viewContext: ViewContext | undefined;
+}
+
+export interface RenderEntryDeployerContext {
+  project: Project;
+  renderEntry: RenderEntry;
+  frame: HTMLIFrameElement | undefined;
+  onProgress: (arg: { percentage: number; message: string }) => void;
+  onPublish: (url: string) => void;
+  onReload: () => void;
+
+  // react router support
+  onSwitchActive: (switchId: string, arg: RouteDefinition) => void;
+  onSwitchDeactivate: (switchId: string) => void;
+  onRouteActive: (routeId: string, route: string) => void;
+  onRouteDeactivate: (routeId: string) => void;
+}
 
 export type UpdateSelectedElement = <T extends {}>(
   apply: (editor: ElementASTEditor<T>, editContext: EditContext<T>) => T
@@ -123,3 +139,9 @@ export type Mutable<T> = {
     ? Mutable<U>[]
     : Mutable<T[P]>;
 };
+
+export enum ComponentViewZoomAction {
+  RESET = "reset",
+  ZOOM_IN = "zoomin",
+  ZOOM_OUT = "zoomout",
+}

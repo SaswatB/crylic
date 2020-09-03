@@ -15,9 +15,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { startCase, uniq } from "lodash";
 import path from "path";
 
-import { IconButton } from "synergy/src/components/IconButton";
-import { Tour } from "synergy/src/components/Tour";
-import { useDebouncedFunction } from "synergy/src/hooks/useDebouncedFunction";
+import { useDebouncedFunction } from "../../hooks/useDebouncedFunction";
 import {
   useAutocomplete,
   useColorPicker,
@@ -26,20 +24,24 @@ import {
   useMenuInput,
   useSelectInput,
   useTextInput,
-} from "synergy/src/hooks/useInput";
-import { useObservable } from "synergy/src/hooks/useObservable";
-import { StyleGroup } from "synergy/src/lib/ast/editors/ASTEditor";
-import { linkComponent } from "synergy/src/lib/defs/react-router-dom";
-import { Project } from "synergy/src/lib/project/Project";
-import { isImageEntry } from "synergy/src/lib/utils";
+} from "../../hooks/useInput";
+import { useObservable } from "../../hooks/useObservable";
+import { StyleGroup } from "../../lib/ast/editors/ASTEditor";
+import { linkComponent } from "../../lib/defs/react-router-dom";
+import { Project } from "../../lib/project/Project";
+import { renderSeparator } from "../../lib/render-utils";
+import { isImageEntry } from "../../lib/utils";
 import {
   CodeEntry,
   PackageInstaller,
+  SelectedElement,
   Styles,
   UpdateSelectedElement,
-} from "synergy/src/types/paint";
-
-import { SelectedElement } from "../../types/paint";
+} from "../../types/paint";
+import { AnimationEditorModal } from "../Animation/AnimationEditorModal";
+import { Collapsible } from "../Collapsible";
+import { IconButton } from "../IconButton";
+import { Tour } from "../Tour";
 import {
   CSS_ALIGN_ITEMS_OPTIONS,
   CSS_BACKGROUND_SIZE_OPTIONS,
@@ -54,10 +56,7 @@ import {
   CSS_POSITION_OPTIONS,
   CSS_TEXT_ALIGN_OPTIONS,
   CSS_TEXT_DECORATION_LINE_OPTIONS,
-} from "../../utils/constants";
-import { renderSeparator } from "../../utils/utils";
-import { AnimationEditorModal } from "../Animation/AnimationEditorModal";
-import { Collapsible } from "../Collapsible";
+} from "./css-options";
 
 type EditorHook<T> = useInputFunction<
   {

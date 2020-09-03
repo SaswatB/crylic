@@ -8,12 +8,10 @@ import { motion } from "framer-motion";
 import produce from "immer";
 import { capitalize } from "lodash";
 
-import { IconButton } from "synergy/src/components/IconButton";
-import { createModal } from "synergy/src/components/PromiseModal";
-import { useSelectInput } from "synergy/src/hooks/useInput";
-import { UpdateSelectedElement } from "synergy/src/types/paint";
-
-import { SelectedElement } from "../../types/paint";
+import { useSelectInput } from "../../hooks/useInput";
+import { SelectedElement, UpdateSelectedElement } from "../../types/paint";
+import { IconButton } from "../IconButton";
+import { createModal } from "../PromiseModal";
 import { AnimationPropertyEditor } from "./AnimationPropertyEditor";
 import {
   AnimationPropertyMap,

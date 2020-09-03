@@ -1,20 +1,13 @@
 import { useRef, useState } from "react";
 import { Subject } from "rxjs";
 
-import { prettyPrintCodeEntryAST } from "synergy/src/lib/ast/ast-helpers";
-import { Project } from "synergy/src/lib/project/Project";
-import { CodeEntry, PackageInstaller } from "synergy/src/types/paint";
-
-import { FileProject } from "../lib/project/FileProject";
+import { prettyPrintCodeEntryAST } from "../lib/ast/ast-helpers";
+import { Project } from "../lib/project/Project";
+import { CodeEntry, PackageInstaller } from "../types/paint";
 
 export const useProject = () => {
   const [project, setProject] = useState<Project>();
   (window as any).project = project; // only for debugging purposes
-
-  const newProject = (folder: string) =>
-    FileProject.createNewProjectInDirectory(folder).then(setProject);
-  const openProject = (folder: string) =>
-    FileProject.createProjectFromDirectory(folder).then(setProject);
   const closeProject = () => setProject(undefined);
 
   const codeChangeStack = useRef<{ id: string; code: string }[]>([]);
@@ -120,8 +113,6 @@ export const useProject = () => {
   return {
     project,
     setProject,
-    newProject,
-    openProject,
     closeProject,
     undoCodeChange,
     redoCodeChange,

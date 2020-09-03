@@ -17,11 +17,23 @@ import { useSnackbar } from "notistack";
 import { Resizable } from "re-resizable";
 import { useBus } from "ts-bus/react";
 
+import {
+  CompilerComponentViewRef,
+  OnCompileEndCallback,
+  ViewContext,
+} from "synergy/src/components/ComponentView/CompilerComponentView";
+import { OverlayComponentView } from "synergy/src/components/ComponentView/OverlayComponentView";
 import { IconButton } from "synergy/src/components/IconButton";
 import { InputModal } from "synergy/src/components/InputModal";
+import { AssetTreePane } from "synergy/src/components/SideBar/AssetTreePane";
+import { ElementEditorPane } from "synergy/src/components/SideBar/ElementEditorPane";
+import { OutlinePane } from "synergy/src/components/SideBar/OutlinePane";
 import { Terminal } from "synergy/src/components/Terminal";
+import { Toolbar } from "synergy/src/components/Toolbar";
 import { Tour, TourContext } from "synergy/src/components/Tour";
+import { SelectMode, SelectModeType } from "synergy/src/constants";
 import { useMenuInput } from "synergy/src/hooks/useInput";
+import { useProject } from "synergy/src/hooks/useProject";
 import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
 import {
   EditContext,
@@ -35,31 +47,18 @@ import { Project } from "synergy/src/lib/project/Project";
 import { sleep } from "synergy/src/lib/utils";
 import {
   CodeEntry,
+  ComponentViewZoomAction,
   OutlineElement,
   RenderEntry,
+  SelectedElement,
   Styles,
 } from "synergy/src/types/paint";
 
-import {
-  CompilerComponentViewRef,
-  OnCompileEndCallback,
-  ViewContext,
-} from "./components/ComponentView/CompilerComponentView";
-import { OverlayComponentView } from "./components/ComponentView/OverlayComponentView";
-import { AssetTreePane } from "./components/SideBar/AssetTreePane";
 import { CodeEditorPane } from "./components/SideBar/CodeEditorPane/CodeEditorPane";
-import { ElementEditorPane } from "./components/SideBar/ElementEditorPane";
-import { OutlinePane } from "./components/SideBar/OutlinePane";
-import { Toolbar } from "./components/Toolbar";
 import { openFilePicker, saveFilePicker } from "./hooks/useFilePicker";
-import { useProject } from "./hooks/useProject";
-import { SelectedElement } from "./types/paint";
-import {
-  ComponentViewZoomAction,
-  getBoilerPlateComponent,
-  SelectMode,
-  SelectModeType,
-} from "./utils/constants";
+import { FileProject } from "./lib/project/FileProject";
+import { webpackRunCodeWithWorker } from "./utils/compilers/run-code-webpack-worker";
+import { getBoilerPlateComponent } from "./utils/constants";
 import { buildOutline } from "./utils/utils";
 import "./App.scss";
 
@@ -77,8 +76,6 @@ function App() {
   const {
     project,
     setProject,
-    newProject,
-    openProject,
     closeProject,
     undoCodeChange,
     redoCodeChange,
@@ -408,7 +405,7 @@ function App() {
           saveFilePicker({
             filters: [{ name: "Project", extensions: [""] }],
           }).then((f) => {
-            if (f) newProject(f);
+            if (f) FileProject.createNewProjectInDirectory(f).then(setProject);
           })
         }
       >
@@ -439,7 +436,9 @@ function App() {
             // the main thread get's pegged from opening the project
             setTimeout(
               () =>
-                openProject(filePath).finally(() => setLoading((l) => l - 1)),
+                FileProject.createProjectFromDirectory(filePath)
+                  .then(setProject)
+                  .finally(() => setLoading((l) => l - 1)),
               150
             );
           })
@@ -664,6 +663,7 @@ function App() {
           },
           project,
           renderEntry: entry,
+          compiler: { deploy: webpackRunCodeWithWorker },
           onCompileEnd: (...args) => onComponentViewCompiled.current(...args),
           onNewPublishUrl(url) {
             // open a published component in a brower whenever it gets a new url

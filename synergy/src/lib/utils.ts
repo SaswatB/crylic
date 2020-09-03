@@ -1,4 +1,4 @@
-import { startCase } from "lodash";
+import { startCase, uniqueId } from "lodash";
 import path from "path";
 
 import { CodeEntry } from "../types/paint";
@@ -55,10 +55,6 @@ export function getFriendlyName({ codeEntries }: Project, codeId: string) {
   }`;
 }
 
-export function isDefined<T>(v: T | undefined | null): v is T {
-  return v !== undefined && v !== null;
-}
-
 export const getRelativeImportPath = (codeEntry: CodeEntry, target: string) => {
   if (!target.startsWith("/") && !target.includes(":")) return target;
 
@@ -73,6 +69,29 @@ export const getRelativeImportPath = (codeEntry: CodeEntry, target: string) => {
   }
   return newPath;
 };
+
+// this doesn't work on prod
+let reactInstanceKey: string | undefined;
+export const getReactDebugId = (element: HTMLElement) => {
+  if (!reactInstanceKey)
+    reactInstanceKey = Object.keys(element).find((key) =>
+      key.startsWith("__reactInternalInstance")
+    );
+  if (!reactInstanceKey) return undefined;
+
+  return (element as any)[reactInstanceKey]?._debugID;
+};
+
+export const getElementUniqueId = (element: HTMLElement): string => {
+  if (!(element as any).paintId) {
+    (element as any).paintId = uniqueId();
+  }
+  return (element as any).paintId;
+};
+
+export function isDefined<T>(v: T | undefined | null): v is T {
+  return v !== undefined && v !== null;
+}
 
 export const sleep = (duration: number) =>
   new Promise((resolve) => setTimeout(resolve, duration));

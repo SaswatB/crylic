@@ -5,13 +5,16 @@ import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import TreeItem from "@material-ui/lab/TreeItem";
 import TreeView from "@material-ui/lab/TreeView";
 
-import { IconButton } from "synergy/src/components/IconButton";
-import { Tour } from "synergy/src/components/Tour";
-import { Project } from "synergy/src/lib/project/Project";
-import { OutlineElement, RenderEntry } from "synergy/src/types/paint";
-
-import { SelectedElement } from "../../types/paint";
-import { getElementUniqueId, renderSeparator } from "../../utils/utils";
+import { Project } from "../../lib/project/Project";
+import { renderSeparator } from "../../lib/render-utils";
+import { getElementUniqueId } from "../../lib/utils";
+import {
+  OutlineElement,
+  RenderEntry,
+  SelectedElement,
+} from "../../types/paint";
+import { IconButton } from "../IconButton";
+import { Tour } from "../Tour";
 
 interface Props {
   project: Project;
