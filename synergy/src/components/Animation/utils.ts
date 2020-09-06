@@ -66,14 +66,14 @@ export const animationPropertyMapToProps = (
 
 export const propsToAnimationPropertyMap = (props: Record<string, unknown>) => {
   const newAnimationProperties: AnimationPropertyMap = {};
-  Object.entries(props.initial as object).forEach(([key, value]) => {
+  Object.entries((props.initial as object) || {}).forEach(([key, value]) => {
     newAnimationProperties.entrance = newAnimationProperties.entrance || [];
     newAnimationProperties.entrance?.push({
       name: key,
       initial: `${value}`,
     });
   });
-  Object.entries(props.animate as object).forEach(([key, value]) => {
+  Object.entries((props.animate as object) || {}).forEach(([key, value]) => {
     newAnimationProperties.entrance = newAnimationProperties.entrance || [];
     const existingProp = newAnimationProperties.entrance.find(
       (e) => e.name === key
@@ -89,11 +89,11 @@ export const propsToAnimationPropertyMap = (props: Record<string, unknown>) => {
     }
   });
 
-  Object.entries(props.whileHover as object).forEach(([key, value]) => {
+  Object.entries((props.whileHover as object) || {}).forEach(([key, value]) => {
     newAnimationProperties.hover = newAnimationProperties.hover || [];
     newAnimationProperties.hover?.push({ name: key, value: `${value}` });
   });
-  Object.entries(props.whileTap as object).forEach(([key, value]) => {
+  Object.entries((props.whileTap as object) || {}).forEach(([key, value]) => {
     newAnimationProperties.tap = newAnimationProperties.tap || [];
     newAnimationProperties.tap?.push({ name: key, value: `${value}` });
   });
