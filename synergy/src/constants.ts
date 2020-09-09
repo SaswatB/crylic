@@ -22,22 +22,22 @@ export type SelectMode =
       type: SelectModeType.AddElement;
     } & ComponentDefinition);
 
-// export const getBoilerPlateComponent = (
-//   name: string
-// ) => `import React from "react";
+export const getBoilerPlateComponent = (
+  name: string
+) => `import React from "react";
 
-// export function ${name}() {
-//   return (
-//     <div
-//       style={{
-//         width: "100%",
-//         height: "100vh",
-//         display: "flex",
-//       }}
-//     />
-//   );
-// }
-// `;
+export function ${name}() {
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: "100vh",
+        display: "flex",
+      }}
+    />
+  );
+}
+`;
 
 export const CSS_LENGTH_UNITS = [
   { name: "px", value: "px" },

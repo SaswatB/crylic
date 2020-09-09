@@ -6588,6 +6588,7 @@ __metadata:
     react-router-dom: ^5.1.2
     react-zoom-pan-pinch: ^1.6.1
     recast: ^0.18.8
+    recoil: ^0.0.10
     resolve: ^1.15.0
     resolve-url-loader: ^3.1.1
     rgb-hex: ^3.0.0
@@ -17243,6 +17244,18 @@ immer@6.0.3:
   languageName: node
   linkType: hard
 
+"react-hotkeys-hook@npm:^2.3.1":
+  version: 2.3.1
+  resolution: "react-hotkeys-hook@npm:2.3.1"
+  dependencies:
+    hotkeys-js: 3.8.1
+  peerDependencies:
+    react: ">=16.8.1"
+    react-dom: ">=16.8.1"
+  checksum: 547032cd873cacbaec6e501cc16b27532ac1e84dd02e0a103593efe890c093e1f404f1afcd281212caa2a12d191e1b2b369b274353c548809e2624731bc9f5a5
+  languageName: node
+  linkType: hard
+
 "react-is@npm:^16.12.0, react-is@npm:^16.6.0, react-is@npm:^16.7.0, react-is@npm:^16.8.0, react-is@npm:^16.8.1, react-is@npm:^16.8.4":
   version: 16.13.1
   resolution: "react-is@npm:16.13.1"
@@ -17707,6 +17720,16 @@ react-refresh@0.8.3:
     source-map: ~0.6.1
     tslib: ^2.0.1
   checksum: b11fd8a9dc8ab3dfc624972c5c6670dcdcfd7e16e30854cb15e72efbaa5d8f4123cd7bed408fa0d1102dbbdc497d7903533dd603042d0f7b483887d138b34822
+  languageName: node
+  linkType: hard
+
+"recoil@npm:^0.0.10":
+  version: 0.0.10
+  resolution: "recoil@npm:0.0.10"
+  peerDependencies:
+    react: ^16.13.1
+    react-dom: ^16.13.1
+  checksum: 204948109a1d12003bca3446ac5bc009a66087faed87bf1a51893b983648377f334f205f955e56041a86f48006001e1fb88bdbf8d0293f77746fed055cbcf89d
   languageName: node
   linkType: hard
 
@@ -19747,6 +19770,7 @@ sassjs-loader@2.0.0:
     immer: ^7.0.8
     io-ts: ^2.2.10
     lodash: ^4.17.20
+    notistack: ^0.9.9
     prettier: ^2.1.1
     prop-types: ^15.7.2
     rc-trigger: ^4.4.2
@@ -19755,13 +19779,16 @@ sassjs-loader@2.0.0:
     react: ^16.13.1
     react-dom: ^16.13.1
     react-draggable: ^4.4.3
+    react-hotkeys-hook: ^2.3.1
     recast: ^0.20.3
+    recoil: ^0.0.10
     resolve-pathname: ^3.0.0
     rgb-hex: ^3.0.0
     rxjs: ^6.6.2
     tiny-invariant: ^1.1.0
     tiny-warning: ^1.0.3
     tinycolor2: ^1.4.1
+    ts-bus: ^2.3.1
     typescript: ^4.0.2
     value-equal: ^1.0.1
     xterm: ^4.8.1

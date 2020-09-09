@@ -1,7 +1,6 @@
 import React, {
   FunctionComponent,
   MutableRefObject,
-  RefAttributes,
   useEffect,
   useRef,
   useState,
@@ -14,94 +13,120 @@ import {
   faSync,
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
+import { snakeCase } from "lodash";
+import { useSnackbar } from "notistack";
 import { Subject } from "rxjs";
+import { useBus } from "ts-bus/react";
 
 import {
   DEFAULT_FRAME_HEIGHT,
   DEFAULT_FRAME_WIDTH,
   SelectModeType,
 } from "../../constants";
+import { useCompilerContextRecoil } from "../../hooks/recoil/useCompilerContextRecoil";
+import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil";
+import { addElementHelper } from "../../hooks/recoil/useProjectRecoil/code-edit-helpers";
+import { useSelectRecoil } from "../../hooks/recoil/useSelectRecoil";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useMenuInput } from "../../hooks/useInput";
 import { useObservable } from "../../hooks/useObservable";
-import { StyleGroup } from "../../lib/ast/editors/ASTEditor";
-import { RouteDefinition } from "../../lib/react-router-proxy";
-import { SelectedElement, Styles } from "../../types/paint";
+import { routeComponent } from "../../lib/defs/react-router-dom";
+import { componentViewRouteChange } from "../../lib/events";
+import { isDefined } from "../../lib/utils";
+import { Styles, ViewContext } from "../../types/paint";
 import { IconButton } from "../IconButton";
+import { InputModal } from "../InputModal";
 import { ResizeModal } from "../ResizeModal";
 import { BuildProgress } from "./BuildProgress";
 import {
   CompileContext,
   CompilerComponentView,
   CompilerComponentViewProps,
-  CompilerComponentViewRef,
-  ViewContext,
 } from "./CompilerComponentView";
 import { useOverlay } from "./useOverlay";
 
+function assertHTMLElement(e: Element): asserts e is HTMLElement {}
+
 interface Props {
   compilerProps: CompilerComponentViewProps &
-    React.IframeHTMLAttributes<HTMLIFrameElement> &
-    RefAttributes<CompilerComponentViewRef>;
+    React.IframeHTMLAttributes<HTMLIFrameElement>;
   scaleRef: MutableRefObject<number>;
-  selectModeType: SelectModeType | undefined;
-  selectedElement: SelectedElement | undefined;
-  onSelectElement: (
-    renderId: string,
-    element: HTMLElement,
-    componentView: CompilerComponentViewRef
-  ) => void;
-  updateSelectedElementStyles: (
-    styleGroup: StyleGroup,
-    styles: Styles,
-    preview?: boolean
-  ) => void;
-  onAddRoute: (routeDefinition: RouteDefinition) => void;
-  onCurrentRouteChange: (route: string) => void;
-  onTogglePublish: () => void;
-  onRemoveComponentView: () => void;
+  enablePublish?: boolean;
 }
 
 export const OverlayComponentView: FunctionComponent<Props> = ({
   compilerProps,
   scaleRef,
-  selectModeType,
-  selectedElement,
-  onSelectElement,
-  updateSelectedElementStyles,
-  onAddRoute,
-  onCurrentRouteChange,
-  onTogglePublish,
-  onRemoveComponentView,
+  enablePublish,
 }) => {
+  const bus = useBus();
   const [loading, setLoading] = useState(false);
   const [debouncedLoading, skipLoadingDebounce] = useDebounce(loading, 700);
-  const componentView = useRef<CompilerComponentViewRef>();
+  const { project, setProject, setCodeAstEdit } = useProjectRecoil();
+  const {
+    selectMode,
+    setSelectMode,
+    selectedElement,
+    selectElement,
+    updateSelectedStyleGroup,
+  } = useSelectRecoil();
+  const { addCompileTask } = useCompilerContextRecoil();
+  const { enqueueSnackbar } = useSnackbar();
+  const { renderEntry } = compilerProps;
+  const [viewContext, setViewContext] = useState<ViewContext>();
 
   const [frameSize, setFrameSize] = useState({
     width: DEFAULT_FRAME_WIDTH,
     height: DEFAULT_FRAME_HEIGHT,
   });
 
+  // todo hook this back up
   // event for when temp styles are applied to the selected component
   const addTempStylesObservableRef = useRef(new Subject());
 
+  const onOverlaySelectElement = (
+    componentElement: Element | null | undefined
+  ) => {
+    if (!componentElement) return;
+    assertHTMLElement(componentElement);
+    const renderId = renderEntry.id;
+
+    switch (selectMode?.type) {
+      default:
+      case SelectModeType.SelectElement:
+        const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
+          componentElement
+        );
+        console.log("setting selected from manual selection", lookupId);
+        if (lookupId) selectElement(renderId, lookupId);
+        break;
+      case SelectModeType.AddElement:
+        try {
+          setCodeAstEdit(
+            addElementHelper(componentElement, selectMode, {
+              renderId,
+              addCompileTask,
+              selectElement,
+            })
+          );
+        } catch (e) {
+          enqueueSnackbar(e?.message || e);
+        }
+        break;
+    }
+
+    setSelectMode(undefined);
+  };
+
   const [renderOverlay] = useOverlay(
-    compilerProps.project,
-    componentView.current,
+    project,
+    viewContext,
     frameSize,
     addTempStylesObservableRef.current,
     scaleRef,
     selectedElement,
-    selectModeType,
-    (componentElement) =>
-      componentElement &&
-      componentView.current &&
-      onSelectElement(
-        compilerProps.renderEntry.id,
-        componentElement as HTMLElement,
-        componentView.current
-      ),
+    selectMode?.type,
+    onOverlaySelectElement,
     (deltaX, totalDeltaX, deltaY, totalDeltaY, width, height, preview) => {
       if (
         !deltaX &&
@@ -185,25 +210,61 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           styleValue: effectiveHeight,
         });
       }
-      // todo take style group from sidebar
-      updateSelectedElementStyles(
-        selectedElement!.styleGroups[0],
-        styles,
-        preview
-      );
+      updateSelectedStyleGroup(styles, preview);
     }
   );
 
   const [compileContext, setCompileContext] = useState<CompileContext>();
-  const [viewContext, setViewContext] = useState<ViewContext>();
 
   const routeDefinition = useObservable(viewContext?.onRoutesDefined);
   const currentRoute = useObservable(viewContext?.onRouteChange);
 
-  // persist any route changes to keep it between compilations
+  const onAddRoute = async () => {
+    const inputName = await InputModal({
+      title: "New Route",
+      message: "Please enter a route name",
+    });
+    if (!inputName) return;
+    // todo show preview of name in dialog
+    const name = snakeCase(inputName.replace(/[^a-z0-9]/g, ""));
+    const path = `/${name}`;
+    setCodeAstEdit((project) => {
+      const switchLookupId = project.primaryElementEditor.getLookupIdFromProps(
+        routeDefinition!.switchProps
+      )!;
+      return addElementHelper(switchLookupId, {
+        component: routeComponent,
+        attributes: { path },
+      })(project);
+    });
+    setProject((project) =>
+      project?.editRenderEntry(renderEntry.id, { route: path })
+    );
+  };
+
+  const onTogglePublish = () => {
+    console.log("onTogglePublish");
+    setProject((currentProject) =>
+      currentProject?.editRenderEntry(renderEntry.id, {
+        publish: !renderEntry.publish,
+      })
+    );
+  };
+
+  const onRemoveComponentView = () =>
+    setProject((currentProject) =>
+      currentProject?.removeRenderEntry(renderEntry.id)
+    );
+
+  // fire an event whenever the route changes
   useEffect(() => {
-    if (currentRoute && compilerProps.renderEntry.route !== currentRoute) {
-      onCurrentRouteChange(currentRoute);
+    if (currentRoute && renderEntry.route !== currentRoute) {
+      bus.publish(
+        componentViewRouteChange({
+          renderEntry,
+          route: currentRoute,
+        })
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentRoute]);
@@ -224,15 +285,11 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   return (
     <div className="flex flex-col m-10">
       <div className="flex relative px-3 py-1 bg-blue-900 opacity-50 hover:opacity-100 default-transition">
-        {compilerProps.renderEntry.name}
+        {renderEntry.name}
         <div className="flex-1" />
         {routeDefinition?.routes ? (
           <>
-            <IconButton
-              title="Add Route"
-              icon={faPlus}
-              onClick={() => onAddRoute(routeDefinition)}
-            />
+            <IconButton title="Add Route" icon={faPlus} onClick={onAddRoute} />
             <IconButton
               title="Switch Route"
               className="ml-2"
@@ -241,21 +298,19 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
             />
           </>
         ) : null}
-        {/* <IconButton
-          title={
-            compilerProps.renderEntry.publish
-              ? "Stop browser viewer"
-              : "View in Browser"
-          }
-          className="ml-2"
-          icon={faGlobe}
-          iconProps={{
-            style: compilerProps.renderEntry.publish
-              ? { color: "#43a047" }
-              : undefined,
-          }}
-          onClick={onTogglePublish}
-        /> */}
+        {enablePublish && (
+          <IconButton
+            title={
+              renderEntry.publish ? "Stop browser viewer" : "View in Browser"
+            }
+            className="ml-2"
+            icon={faGlobe}
+            iconProps={{
+              style: renderEntry.publish ? { color: "#43a047" } : undefined,
+            }}
+            onClick={onTogglePublish}
+          />
+        )}
         <IconButton
           title="Refresh Frame"
           className="ml-2"
@@ -296,34 +351,6 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
       <div className="flex relative bg-white shadow-2xl">
         <CompilerComponentView
           {...compilerProps}
-          ref={(newComponentViewRef) => {
-            componentView.current = newComponentViewRef ?? undefined;
-            if (compilerProps.ref) {
-              const refProxy = newComponentViewRef
-                ? {
-                    ...newComponentViewRef,
-                    addTempStyles(
-                      lookupId: string,
-                      styles: Styles,
-                      persisteRender: boolean
-                    ) {
-                      newComponentViewRef.addTempStyles(
-                        lookupId,
-                        styles,
-                        persisteRender
-                      );
-                      addTempStylesObservableRef.current.next();
-                    },
-                  }
-                : null;
-              if (typeof compilerProps.ref === "function") {
-                compilerProps.ref(refProxy);
-              } else {
-                // @ts-ignore ignore readonly error
-                compilerProps.ref.current = refProxy;
-              }
-            }
-          }}
           onCompileStart={(context) => {
             setLoading(true);
             setCompileContext(context);
@@ -346,7 +373,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
             height: `${frameSize.height}px`,
           }}
         />
-        {(selectModeType !== undefined || selectedElement) && renderOverlay()}
+        {(isDefined(selectMode) || selectedElement) && renderOverlay()}
         {debouncedLoading && <BuildProgress compileContext={compileContext} />}
       </div>
     </div>

@@ -30,19 +30,18 @@ import {
 } from "material-ui-popup-state/hooks";
 
 import { SelectMode, SelectModeType } from "../constants";
+import { usePackageInstallerRecoil } from "../hooks/recoil/usePackageInstallerRecoil";
+import { useProjectRecoil } from "../hooks/recoil/useProjectRecoil";
+import { useSelectRecoil } from "../hooks/recoil/useSelectRecoil";
 import { useGlobalConfig } from "../hooks/useGlobalConfig";
 import { useSelectInput } from "../hooks/useInput";
 import { Project } from "../lib/project/Project";
 import { renderSeparator } from "../lib/render-utils";
-import {
-  ComponentViewZoomAction,
-  PackageInstaller,
-  SelectedElement,
-} from "../types/paint";
+import { ComponentViewZoomAction, PackageInstaller } from "../types/paint";
 import { Tour } from "./Tour";
 
 const useAdderTab = (
-  project: Project,
+  project: Project | undefined,
   selectMode: SelectMode | undefined,
   setSelectMode: (mode: SelectMode | undefined) => void,
   installPackages: PackageInstaller
@@ -137,7 +136,7 @@ const useAdderTab = (
       config.componentConfigs[parseInt(selectedComponentConfigIndex)];
     if (!componentConfig) return null; // todo error
 
-    if (!componentConfig.installed(project)) {
+    if (project && !componentConfig.installed(project)) {
       return (
         <>
           <div className="p-4 text-center">
@@ -189,23 +188,17 @@ const useAdderTab = (
 };
 
 interface Props {
-  project: Project;
   setZoomAction: (action: ComponentViewZoomAction) => void;
-  selectMode: SelectMode | undefined;
-  setSelectMode: (mode: SelectMode | undefined) => void;
-  selectedElement: SelectedElement | undefined;
-  setSelectedElement: (selectedElement: SelectedElement | undefined) => void;
-  installPackages: PackageInstaller;
 }
-export const Toolbar: FunctionComponent<Props> = ({
-  project,
-  setZoomAction,
-  selectMode,
-  setSelectMode,
-  selectedElement,
-  setSelectedElement,
-  installPackages,
-}) => {
+export const Toolbar: FunctionComponent<Props> = ({ setZoomAction }) => {
+  const { project } = useProjectRecoil();
+  const { installPackages } = usePackageInstallerRecoil();
+  const {
+    selectMode,
+    setSelectMode,
+    selectedElement,
+    clearSelectedElement,
+  } = useSelectRecoil();
   const adderPopupState = usePopupState({
     variant: "popover",
     popupId: "adderPopup",
@@ -243,7 +236,7 @@ export const Toolbar: FunctionComponent<Props> = ({
           data-tour="interactive-mode"
           title="Interactive Mode"
           onClick={() => {
-            setSelectedElement(undefined);
+            clearSelectedElement();
             setSelectMode(undefined);
           }}
         >

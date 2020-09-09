@@ -4,17 +4,28 @@ import { Observable, Subject } from "rxjs";
 import { SelectModeType } from "../../constants";
 import { useObservableCallback } from "../../hooks/useObservableCallback";
 import { Project } from "../../lib/project/Project";
-import { onMoveResizeCallback, SelectedElement } from "../../types/paint";
-import { Draggable } from "../Draggable";
 import {
-  CompilerComponentViewRef,
-  getComponentElementsFromEvent,
-} from "./CompilerComponentView";
+  onMoveResizeCallback,
+  SelectedElement,
+  ViewContext,
+} from "../../types/paint";
+import { Draggable } from "../Draggable";
+
+const getComponentElementsFromEvent = (
+  event: React.MouseEvent<HTMLDivElement, MouseEvent>,
+  viewContext: ViewContext | undefined,
+  scale: number
+) => {
+  const boundingBox = (event.target as HTMLDivElement).getBoundingClientRect();
+  const x = (event.clientX - boundingBox.x) / scale;
+  const y = (event.clientY - boundingBox.y) / scale;
+  return viewContext?.getElementsAtPoint(x, y) || [];
+};
 
 let lastDragResizeHandled = 0;
 export function useOverlay(
   project: Project | undefined,
-  componentView: CompilerComponentViewRef | null | undefined,
+  viewContext: ViewContext | undefined,
   frameSize: { width: number; height: number },
   addTempStylesObservable: Observable<unknown>,
   scaleRef: MutableRefObject<number>,
@@ -29,7 +40,7 @@ export function useOverlay(
   ) => {
     const componentElements = getComponentElementsFromEvent(
       event,
-      componentView,
+      viewContext,
       scaleRef.current
     );
 
@@ -54,7 +65,7 @@ export function useOverlay(
     lastDragResizeHandled = 0;
     const componentElements = getComponentElementsFromEvent(
       event,
-      componentView,
+      viewContext,
       scaleRef.current
     );
 
@@ -69,7 +80,7 @@ export function useOverlay(
   const calculateBoundingBox = () => {
     if (!selectedElement) return {};
 
-    const componentElements = componentView?.getElementsByLookupId(
+    const componentElements = viewContext?.getElementsByLookupId(
       selectedElement?.lookupId
     );
     const pbcr = (selectedElement?.computedStyles.position === "static" &&

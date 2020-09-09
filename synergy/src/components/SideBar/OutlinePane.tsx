@@ -4,37 +4,82 @@ import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import TreeItem from "@material-ui/lab/TreeItem";
 import TreeView from "@material-ui/lab/TreeView";
+import { produce } from "immer";
 
+import { useCompilerContextRecoil } from "../../hooks/recoil/useCompilerContextRecoil";
+import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil";
+import { useSelectRecoil } from "../../hooks/recoil/useSelectRecoil";
+import { useBusSubscription } from "../../hooks/useBusSubscription";
+import {
+  componentViewCompileEnd,
+  componentViewReload,
+  componentViewRouteChange,
+} from "../../lib/events";
 import { Project } from "../../lib/project/Project";
 import { renderSeparator } from "../../lib/render-utils";
 import { getElementUniqueId } from "../../lib/utils";
-import {
-  OutlineElement,
-  RenderEntry,
-  SelectedElement,
-} from "../../types/paint";
+import { OutlineElement, RenderEntry } from "../../types/paint";
 import { IconButton } from "../IconButton";
 import { Tour } from "../Tour";
 
-interface Props {
-  project: Project;
-  outlineMap: Record<string, OutlineElement[] | undefined>;
-  refreshOutline: (renderId: string) => void;
-  selectedElement: SelectedElement | undefined;
-  selectElement: (renderId: string, componentElement: HTMLElement) => void;
-}
+const buildOutline = (
+  project: Project,
+  renderId: string,
+  element: Element
+): OutlineElement[] =>
+  Array.from(element.children)
+    .map((child) => {
+      const lookupId = project.primaryElementEditor.getLookupIdFromHTMLElement(
+        child as HTMLElement
+      );
+      if (lookupId) {
+        return [
+          {
+            tag: child.tagName.toLowerCase(),
+            renderId,
+            lookupId,
+            element: child as HTMLElement,
+            children: buildOutline(project, renderId, child),
+          },
+        ];
+      }
+      return buildOutline(project, renderId, child);
+    })
+    .reduce((p, c) => [...p, ...c], []);
 
-export const OutlinePane: FunctionComponent<Props> = ({
-  project,
-  outlineMap,
-  refreshOutline,
-  selectedElement,
-  selectElement,
-}) => {
+export const OutlinePane: FunctionComponent = () => {
+  const { project } = useProjectRecoil();
+  const { getViewContext } = useCompilerContextRecoil();
+  const { selectedElement, selectElement } = useSelectRecoil();
+
+  const [outlineMap, setOutlineMap] = useState<
+    Record<string, OutlineElement[] | undefined>
+  >({});
+  const calculateOutline = (renderId: string) => {
+    const root = getViewContext(renderId)?.getRootElement();
+    setOutlineMap(
+      produce((currentOutlineMap) => {
+        currentOutlineMap[renderId] = root
+          ? buildOutline(project!, renderId, root)
+          : undefined;
+      })
+    );
+  };
+  const calculateOutlineWithEntry = ({
+    renderEntry,
+  }: {
+    renderEntry: RenderEntry;
+  }) => calculateOutline(renderEntry.id);
+
+  // recalculate the component view outline when the component view compiles, reloads, or changes its route
+  useBusSubscription(componentViewCompileEnd, calculateOutlineWithEntry);
+  useBusSubscription(componentViewReload, calculateOutlineWithEntry);
+  useBusSubscription(componentViewRouteChange, calculateOutlineWithEntry);
+
   const outlines = Object.entries(outlineMap)
     .map(([key, value]) => ({
       outline: value,
-      renderEntry: project.renderEntries.find(({ id }) => id === key),
+      renderEntry: project?.renderEntries.find(({ id }) => id === key),
     }))
     .filter(
       (
@@ -67,7 +112,7 @@ export const OutlinePane: FunctionComponent<Props> = ({
           <IconButton
             title="Refresh Outline"
             icon={faSync}
-            onClick={() => refreshOutline(node.renderId)}
+            onClick={() => calculateOutline(node.renderId)}
           />
         )}
       </div>
@@ -79,7 +124,12 @@ export const OutlinePane: FunctionComponent<Props> = ({
         label={treeLabel}
         onLabelClick={(e) => {
           e.preventDefault();
-          if (node.element) selectElement(node.renderId, node.element);
+          if (node.element) {
+            const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
+              node.element
+            );
+            if (lookupId) selectElement(node.renderId, lookupId);
+          }
         }}
       >
         {node.children.map(renderTree)}
@@ -102,7 +152,7 @@ export const OutlinePane: FunctionComponent<Props> = ({
   const [collapsedNodes, setCollapsedNodes] = useState<string[]>([]);
   return (
     <>
-      {project.renderEntries.length > 0 && (
+      {(project?.renderEntries.length || 0) > 0 && (
         <Tour
           name="outline-tab"
           beaconStyle={{

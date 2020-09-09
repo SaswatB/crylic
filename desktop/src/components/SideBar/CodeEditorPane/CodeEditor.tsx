@@ -1,9 +1,9 @@
 import React, { FunctionComponent, useEffect, useRef } from "react";
 import MonacoEditor from "react-monaco-editor";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-import { useBus } from "ts-bus/react";
 
 import { useBoundState } from "synergy/src/hooks/useBoundState";
+import { useBusSubscription } from "synergy/src/hooks/useBusSubscription";
 import { useDebounce } from "synergy/src/hooks/useDebounce";
 import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
 import { JSXActionProvider } from "synergy/src/lib/ast/providers/JSXActionProvider";
@@ -37,7 +37,6 @@ export const CodeEditor: FunctionComponent<Props> = ({
   onSelectElement,
   isActiveEditor,
 }) => {
-  const bus = useBus();
   const editorRef = useRef<MonacoEditor>(null);
   const [localValue, setLocalValue] = useBoundState(codeEntry.code);
   const localValueRef = useUpdatingRef(localValue);
@@ -171,35 +170,26 @@ export const CodeEditor: FunctionComponent<Props> = ({
   }, [codeEntry, selectedElementId]);
 
   // listen for layout changes
-  useEffect(
-    () =>
-      bus.subscribe(editorResize, () => editorRef.current?.editor?.layout()),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+  useBusSubscription(editorResize, () => editorRef.current?.editor?.layout());
 
   // listen for editor open requests
   const openHighlight = useRef<string[]>([]);
-  useEffect(
-    () =>
-      bus.subscribe(editorOpenLocation, ({ payload }) => {
-        if (codeEntry.id === payload.codeEntry.id && isDefined(payload.line)) {
-          editorRef.current?.editor?.revealLineInCenter(payload.line);
-          openHighlight.current =
-            editorRef.current?.editor?.deltaDecorations(openHighlight.current, [
-              {
-                range: new monaco.Range(payload.line, 1, payload.line, 1),
-                options: {
-                  isWholeLine: true,
-                  className: "selected-style-group-code-line-highlight",
-                },
-              },
-            ]) || [];
-        }
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+  useBusSubscription(editorOpenLocation, (payload) => {
+    if (codeEntry.id === payload.codeEntry.id && isDefined(payload.line)) {
+      editorRef.current?.editor?.revealLineInCenter(payload.line);
+      openHighlight.current =
+        editorRef.current?.editor?.deltaDecorations(openHighlight.current, [
+          {
+            range: new monaco.Range(payload.line, 1, payload.line, 1),
+            options: {
+              isWholeLine: true,
+              className: "selected-style-group-code-line-highlight",
+            },
+          },
+        ]) || [];
+    }
+  });
+
   // clear the open line highlight if the selected element changes
   useEffect(() => {
     openHighlight.current =

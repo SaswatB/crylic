@@ -1,4 +1,5 @@
-import { ViewContext } from "../components/ComponentView/CompilerComponentView";
+import { Observable } from "rxjs";
+
 import {
   EditContext,
   ElementASTEditor,
@@ -145,3 +146,19 @@ export enum ComponentViewZoomAction {
   ZOOM_IN = "zoomin",
   ZOOM_OUT = "zoomout",
 }
+
+export type ViewContext = {
+  iframe: HTMLIFrameElement;
+  onRoutesDefined: Observable<RouteDefinition>;
+  onRouteChange: Observable<string>;
+
+  getRootElement(): HTMLBodyElement | undefined;
+  getElementsAtPoint: (x: number, y: number) => HTMLElement[];
+  getElementsByLookupId: (lookupId: string) => HTMLElement[];
+  // cleared on next compile
+  addTempStyles: (
+    lookupId: string,
+    styles: Styles,
+    persistRender: boolean
+  ) => void;
+};

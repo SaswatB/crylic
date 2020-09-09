@@ -4,10 +4,12 @@ import blue from "@material-ui/core/colors/blue";
 import purple from "@material-ui/core/colors/purple";
 import { SnackbarProvider } from "notistack";
 import { loadWASM } from "onigasm";
+import { RecoilRoot } from "recoil";
 import { BusProvider } from "ts-bus/react";
 
 import { ModalContainer } from "synergy/src/components/PromiseModal";
 import { TourProvider } from "synergy/src/components/Tour";
+import { StateManager } from "synergy/src/components/Workspace/StateManager";
 import { bus } from "synergy/src/lib/events";
 
 loadWASM(require("onigasm/lib/onigasm.wasm").default);
@@ -21,14 +23,17 @@ const darkTheme = createMuiTheme({
 });
 
 export const Bootstrap: FunctionComponent = ({ children }) => (
-  <BusProvider value={bus}>
-    <SnackbarProvider maxSnack={3}>
-      <ThemeProvider theme={darkTheme}>
-        <TourProvider>
-          <ModalContainer />
-          {children}
-        </TourProvider>
-      </ThemeProvider>
-    </SnackbarProvider>
-  </BusProvider>
+  <RecoilRoot>
+    <BusProvider value={bus}>
+      <SnackbarProvider maxSnack={3}>
+        <ThemeProvider theme={darkTheme}>
+          <TourProvider>
+            <ModalContainer />
+            <StateManager />
+            {children}
+          </TourProvider>
+        </ThemeProvider>
+      </SnackbarProvider>
+    </BusProvider>
+  </RecoilRoot>
 );

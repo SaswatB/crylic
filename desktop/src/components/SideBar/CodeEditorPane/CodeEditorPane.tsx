@@ -1,36 +1,22 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
-import { useBus } from "ts-bus/react";
 
-import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
+import { useProjectRecoil } from "synergy/src/hooks/recoil/useProjectRecoil";
+import { useSelectRecoil } from "synergy/src/hooks/recoil/useSelectRecoil";
+import { useBusSubscription } from "synergy/src/hooks/useBusSubscription";
 import { editorOpenLocation } from "synergy/src/lib/events";
-import { Project } from "synergy/src/lib/project/Project";
 import {
   getFriendlyName,
   isDefined,
   isImageEntry,
 } from "synergy/src/lib/utils";
-import { CodeEntry } from "synergy/src/types/paint";
 
 import { CodeEditor } from "./CodeEditor";
 import { CodeEditorTabs } from "./CodeEditorTabs";
 import { ImageViewer } from "./ImageViewer";
 
-interface Props {
-  project: Project | undefined;
-  onCodeChange: (codeId: string, newCode: string) => void;
-  onCloseCodeEntry: (codeEntry: CodeEntry) => void;
-  selectedElementId: string | undefined;
-  onSelectElement: (lookupId: string) => void;
-}
-
-export const CodeEditorPane: FunctionComponent<Props> = ({
-  project,
-  onCodeChange,
-  onCloseCodeEntry,
-  selectedElementId,
-  onSelectElement,
-}) => {
-  const bus = useBus();
+export const CodeEditorPane: FunctionComponent = () => {
+  const { project, toggleCodeEntryEdit, setCode } = useProjectRecoil();
+  const { selectedElement } = useSelectRecoil();
   const [activeTab, setActiveTab] = useState(0);
 
   // get all the code entries being edited
@@ -40,9 +26,9 @@ export const CodeEditorPane: FunctionComponent<Props> = ({
 
   // switch to the editor that the selected element belongs to when it's selected
   useEffect(() => {
-    if (selectedElementId) {
+    if (selectedElement?.lookupId) {
       const codeId = project?.primaryElementEditor.getCodeIdFromLookupId(
-        selectedElementId
+        selectedElement?.lookupId
       );
       const codeIndex =
         editableEntries?.findIndex((entry) => entry.id === codeId) ?? -1;
@@ -51,24 +37,16 @@ export const CodeEditorPane: FunctionComponent<Props> = ({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedElementId]);
+  }, [selectedElement?.lookupId]);
 
   // listen for editor open requests
-  const openEditorRef = useUpdatingRef((codeEntry: CodeEntry) => {
+  useBusSubscription(editorOpenLocation, ({ codeEntry }) => {
     const editorIndex =
       editableEntries?.findIndex((e) => e.id === codeEntry.id) ?? -1;
     if (editorIndex !== -1 && activeTab !== editorIndex) {
       setActiveTab(editorIndex);
     }
   });
-  useEffect(
-    () =>
-      bus.subscribe(editorOpenLocation, ({ payload }) =>
-        openEditorRef.current(payload.codeEntry)
-      ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
 
   return (
     <CodeEditorTabs
@@ -85,13 +63,29 @@ export const CodeEditorPane: FunctionComponent<Props> = ({
             <CodeEditor
               project={project!}
               codeEntry={codeEntry}
-              onCodeChange={onCodeChange}
-              selectedElementId={selectedElementId}
-              onSelectElement={onSelectElement}
+              onCodeChange={(id, code) => setCode(() => ({ id, code }))}
+              selectedElementId={selectedElement?.lookupId}
+              onSelectElement={(lookupId) => {
+                // todo reenable
+                // const newSelectedComponent = Object.values(componentViews.current)
+                //   .map((componentView) =>
+                //     componentView?.getElementsByLookupId(lookupId)
+                //   )
+                //   .filter((e) => !!e)[0];
+                // if (newSelectedComponent) {
+                //   console.log(
+                //     "setting selected element through editor cursor update",
+                //     project?.primaryElementEditor.getLookupIdFromHTMLElement(
+                //       newSelectedComponent as HTMLElement
+                //     )
+                //   );
+                //   selectElement(newSelectedComponent as HTMLElement);
+                // }
+              }}
               isActiveEditor={activeTab === index}
             />
           ),
-        onClose: () => onCloseCodeEntry(codeEntry),
+        onClose: () => toggleCodeEntryEdit(codeEntry),
       }))}
     />
   );

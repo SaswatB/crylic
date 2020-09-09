@@ -14,7 +14,12 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { startCase, uniq } from "lodash";
 import path from "path";
+import { useBus } from "ts-bus/react";
 
+import { usePackageInstallerRecoil } from "../../hooks/recoil/usePackageInstallerRecoil";
+import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil";
+import { updateStyleGroupHelper } from "../../hooks/recoil/useProjectRecoil/code-edit-helpers";
+import { useSelectRecoil } from "../../hooks/recoil/useSelectRecoil";
 import { useDebouncedFunction } from "../../hooks/useDebouncedFunction";
 import {
   useAutocomplete,
@@ -28,16 +33,10 @@ import {
 import { useObservable } from "../../hooks/useObservable";
 import { StyleGroup } from "../../lib/ast/editors/ASTEditor";
 import { linkComponent } from "../../lib/defs/react-router-dom";
-import { Project } from "../../lib/project/Project";
+import { editorOpenLocation } from "../../lib/events";
 import { renderSeparator } from "../../lib/render-utils";
 import { isImageEntry } from "../../lib/utils";
-import {
-  CodeEntry,
-  PackageInstaller,
-  SelectedElement,
-  Styles,
-  UpdateSelectedElement,
-} from "../../types/paint";
+import { CodeEntry } from "../../types/paint";
 import { AnimationEditorModal } from "../Animation/AnimationEditorModal";
 import { Collapsible } from "../Collapsible";
 import { IconButton } from "../IconButton";
@@ -66,10 +65,74 @@ type EditorHook<T> = useInputFunction<
   { className?: string; style?: CSSProperties }
 >;
 
+const StylePropNameMap: { [index in keyof CSSStyleDeclaration]?: string } = {
+  backgroundColor: "Fill",
+  backgroundImage: "Image",
+  backgroundSize: "Image Size",
+  flexDirection: "Direction",
+  flexWrap: "Wrap",
+  alignItems: "Align",
+  justifyContent: "Justify",
+  textAlign: "Align",
+  fontSize: "Size",
+  fontWeight: "Weight",
+  fontFamily: "Font",
+  textDecorationLine: "Decoration",
+};
+
 const useBoundTextInput: useInputFunction = (config) =>
   useTextInput({ ...config, bindInitialValue: true });
 const useBoundCSSLengthInput: useInputFunction = (config) =>
   useCSSLengthInput({ ...config, bindInitialValue: true });
+
+const useSelectedElementImageEditor = (imageProp: "backgroundImage") => {
+  const { project, setCodeAstEdit } = useProjectRecoil();
+  const { selectedElement, selectedStyleGroup } = useSelectRecoil();
+
+  const onChange = (assetEntry: CodeEntry) => {
+    if (!selectedStyleGroup) return;
+    setCodeAstEdit(
+      updateStyleGroupHelper(selectedStyleGroup, (editor, editContext) =>
+        editor.updateElementImage(editContext, imageProp, assetEntry)
+      )
+    );
+  };
+  const label = StylePropNameMap[imageProp] || startCase(`${imageProp || ""}`);
+  const initialValue =
+    selectedElement?.inlineStyles[imageProp] ||
+    selectedElement?.computedStyles[imageProp] ||
+    "";
+
+  const [, renderMenu, openMenu, closeMenu] = useMenuInput({
+    options: (project?.codeEntries || []).filter(isImageEntry).map((entry) => ({
+      name: path.basename(entry.filePath),
+      value: entry.id,
+    })),
+    disableSelection: true,
+    onChange: (newCodeId: string) => {
+      closeMenu();
+      onChange(project!.getCodeEntry(newCodeId)!);
+    },
+  });
+
+  const [selectedElementValue, renderValueInput] = useBoundTextInput({
+    label,
+    initialValue: `${initialValue}`,
+  });
+
+  return [
+    selectedElementValue,
+    (props?: {
+      className?: string | undefined;
+      style?: React.CSSProperties | undefined;
+    }) => (
+      <>
+        {renderValueInput({ ...props, onClick: openMenu })}
+        {renderMenu()}
+      </>
+    ),
+  ] as const;
+};
 
 const TEXT_TAGS = [
   "span",
@@ -84,56 +147,39 @@ const TEXT_TAGS = [
   "a",
 ];
 
-interface Props {
-  project: Project | undefined;
-  selectedElement: SelectedElement | undefined;
-  updateSelectedElementStyle: (
-    styleGroup: StyleGroup,
-    styleProp: keyof CSSStyleDeclaration,
-    newValue: string,
-    preview?: boolean
-  ) => void;
-  updateSelectedElementStyles: (
-    styleGroup: StyleGroup,
-    styles: Styles,
-    preview?: boolean
-  ) => void;
-  updateSelectedElement: UpdateSelectedElement;
-  updateSelectedElementImage: (
-    styleGroup: StyleGroup,
-    imageProp: "backgroundImage",
-    assetEntry: CodeEntry
-  ) => void;
-  openInEditor: (styleGroup: StyleGroup) => void;
-  installPackage: PackageInstaller;
-}
+export const ElementEditorPane: FunctionComponent = () => {
+  const bus = useBus();
+  const { project, toggleCodeEntryEdit } = useProjectRecoil();
+  const { installPackages } = usePackageInstallerRecoil();
+  const {
+    selectedElement,
+    updateSelectedElement,
+    selectedStyleGroup,
+    updateSelectedStyleGroup,
+    setSelectedStyleGroup,
+  } = useSelectRecoil();
 
-export const ElementEditorPane: FunctionComponent<Props> = ({
-  project,
-  selectedElement,
-  updateSelectedElementStyle,
-  updateSelectedElementStyles,
-  updateSelectedElement,
-  updateSelectedElementImage,
-  openInEditor,
-  installPackage,
-}: Props) => {
-  const updateSelectedElementAttributes = (
-    attributes: Record<string, unknown>
-  ) => {
-    updateSelectedElement((editor, editContext) =>
-      editor.updateElementAttributes(editContext, attributes)
+  const openInEditor = ({ editor, lookupId }: StyleGroup) => {
+    const codeId = editor.getCodeIdFromLookupId(lookupId);
+    if (!codeId) return;
+    const codeEntry = project?.getCodeEntry(codeId);
+    if (!codeEntry) return;
+    const line = editor.getCodeLineFromLookupId(
+      { codeEntry, ast: codeEntry.ast },
+      lookupId
+    );
+    console.log("openInEditor", codeEntry, line);
+    let timeout = 0;
+    if (!project?.editEntries.find((e) => e.codeId === codeEntry.id)) {
+      toggleCodeEntryEdit(codeEntry);
+      // todo don't cheat with a timeout here
+      timeout = 500;
+    }
+    setTimeout(
+      () => bus.publish(editorOpenLocation({ codeEntry, line })),
+      timeout
     );
   };
-
-  const [selectedStyleGroup, setSelectedStyleGroup] = useState(
-    selectedElement?.styleGroups[0]
-  );
-  useEffect(() => {
-    setSelectedStyleGroup(selectedElement?.styleGroups[0]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedElement?.lookupId]);
-
   // don't allow text edits on elements with non-text nodes
   // TODO: allow partial edits
   // allow editing elements with text or elements that are supposed to have text
@@ -167,7 +213,10 @@ export const ElementEditorPane: FunctionComponent<Props> = ({
   });
 
   const [, renderIDInput] = useBoundTextInput({
-    onChange: (newID) => updateSelectedElementAttributes({ id: newID }),
+    onChange: (newID) =>
+      updateSelectedElement((editor, editContext) =>
+        editor.updateElementAttributes(editContext, { id: newID })
+      ),
     label: "Identifier",
     initialValue: selectedElement?.element.id ?? undefined,
   });
@@ -234,20 +283,6 @@ export const ElementEditorPane: FunctionComponent<Props> = ({
     initialValue: selectedStyleGroup,
   });
 
-  const StylePropNameMap: { [index in keyof CSSStyleDeclaration]?: string } = {
-    backgroundColor: "Fill",
-    backgroundImage: "Image",
-    backgroundSize: "Image Size",
-    flexDirection: "Direction",
-    flexWrap: "Wrap",
-    alignItems: "Align",
-    justifyContent: "Justify",
-    textAlign: "Align",
-    fontSize: "Size",
-    fontWeight: "Weight",
-    fontFamily: "Font",
-    textDecorationLine: "Decoration",
-  };
   const useSelectedElementEditor = <T extends {} | undefined = undefined>(
     styleProp: keyof CSSStyleDeclaration,
     ...rest: (T extends undefined ? [EditorHook<{}>] : [EditorHook<T>, T]) | []
@@ -255,10 +290,8 @@ export const ElementEditorPane: FunctionComponent<Props> = ({
     const useEditorHook = rest[0] || useBoundCSSLengthInput;
     const editorHookConfig = rest[1] || {};
     const onChange = (newValue: string, preview?: boolean) =>
-      updateSelectedElementStyle(
-        selectedStyleGroup!,
-        styleProp,
-        newValue,
+      updateSelectedStyleGroup(
+        [{ styleName: styleProp, styleValue: newValue }],
         preview
       );
     const label =
@@ -288,7 +321,7 @@ export const ElementEditorPane: FunctionComponent<Props> = ({
         onClick={() => {
           setShowBreakdown(true);
           // todo only update styles if prop is defined for this style group
-          updateSelectedElementStyles(selectedStyleGroup!, [
+          updateSelectedStyleGroup([
             {
               styleName: prop,
               styleValue: null,
@@ -321,7 +354,7 @@ export const ElementEditorPane: FunctionComponent<Props> = ({
         onClick={() => {
           setShowBreakdown(false);
           // todo only update styles if prop is defined for this style group
-          updateSelectedElementStyles(selectedStyleGroup!, [
+          updateSelectedStyleGroup([
             {
               styleName: prop,
               // todo do an average or pick min/max
@@ -502,49 +535,6 @@ export const ElementEditorPane: FunctionComponent<Props> = ({
     useColorPicker
   );
 
-  const useSelectedElementImageEditor = (imageProp: "backgroundImage") => {
-    const onChange = (newValue: CodeEntry) =>
-      updateSelectedElementImage(selectedStyleGroup!, imageProp, newValue);
-    const label =
-      StylePropNameMap[imageProp] || startCase(`${imageProp || ""}`);
-    const initialValue =
-      selectedElement?.inlineStyles[imageProp] ||
-      selectedElement?.computedStyles[imageProp] ||
-      "";
-
-    const [, renderMenu, openMenu, closeMenu] = useMenuInput({
-      options: (project?.codeEntries || [])
-        .filter(isImageEntry)
-        .map((entry) => ({
-          name: path.basename(entry.filePath),
-          value: entry.id,
-        })),
-      disableSelection: true,
-      onChange: (newCodeId: string) => {
-        closeMenu();
-        onChange(project!.getCodeEntry(newCodeId)!);
-      },
-    });
-
-    const [selectedElementValue, renderValueInput] = useBoundTextInput({
-      label,
-      initialValue: `${initialValue}`,
-    });
-
-    return [
-      selectedElementValue,
-      (props?: {
-        className?: string | undefined;
-        style?: React.CSSProperties | undefined;
-      }) => (
-        <>
-          {renderValueInput({ ...props, onClick: openMenu })}
-          {renderMenu()}
-        </>
-      ),
-    ] as const;
-  };
-
   const [
     selectedElementBackgroundImage,
     renderBackgroundImageInput,
@@ -606,7 +596,7 @@ export const ElementEditorPane: FunctionComponent<Props> = ({
           <div className="text-center">Framer Motion is not installed</div>
           <button
             className="btn mt-2 w-full"
-            onClick={() => installPackage("framer-motion")}
+            onClick={() => installPackages("framer-motion")}
           >
             Install
           </button>
@@ -640,13 +630,7 @@ export const ElementEditorPane: FunctionComponent<Props> = ({
       return "Animation is not enabled for element";
     }
     return (
-      <button
-        className="btn w-full"
-        onClick={() => {
-          if (selectedElement)
-            AnimationEditorModal({ selectedElement, updateSelectedElement });
-        }}
-      >
+      <button className="btn w-full" onClick={() => AnimationEditorModal({})}>
         Edit Animation
       </button>
     );
