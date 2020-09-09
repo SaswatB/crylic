@@ -7010,6 +7010,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"customize-cra@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "customize-cra@npm:1.0.0"
+  dependencies:
+    lodash.flow: ^3.5.0
+  checksum: 577bd3a9fecfbb38b482eb03aa476b8535a1d0e59ef09eef49fc32a3e90a08760cf7de0b507e999c87e86ad045be496c3998fbdba830f42198810149582a60b8
+  languageName: node
+  linkType: hard
+
 "cyclist@npm:^1.0.1":
   version: 1.0.1
   resolution: "cyclist@npm:1.0.1"
@@ -13033,6 +13042,13 @@ immer@6.0.3:
   languageName: node
   linkType: hard
 
+"lodash.flow@npm:^3.5.0":
+  version: 3.5.0
+  resolution: "lodash.flow@npm:3.5.0"
+  checksum: 52204602c6ec53e78497387751bf2cf432a9db7b0982e62b01b489be847b68efde8f7efed6fbeaeaeb66d7c7bd171d389c32d548908eafc00958bba8d462e55a
+  languageName: node
+  linkType: hard
+
 "lodash.isplainobject@npm:^4.0.6":
   version: 4.0.6
   resolution: "lodash.isplainobject@npm:4.0.6"
@@ -17169,6 +17185,19 @@ immer@6.0.3:
   languageName: node
   linkType: hard
 
+"react-app-rewired@npm:^2.1.6":
+  version: 2.1.6
+  resolution: "react-app-rewired@npm:2.1.6"
+  dependencies:
+    semver: ^5.6.0
+  peerDependencies:
+    react-scripts: ">=2.1.3"
+  bin:
+    react-app-rewired: ./bin/index.js
+  checksum: 18cdbe10c5a5eb1e4d30c27c00fc4f20e558a5674988bf471b8629dae8522ab41deeba92278466a7a1e2e11ca37dd4693a34f539d2d0d8a0f52e108f37f480a2
+  languageName: node
+  linkType: hard
+
 "react-dev-utils@npm:^10.2.1":
   version: 10.2.1
   resolution: "react-dev-utils@npm:10.2.1"
@@ -21014,6 +21043,7 @@ sassjs-loader@2.0.0:
   version: 0.0.0-use.local
   resolution: "web@workspace:web"
   dependencies:
+    "@pmmmwh/react-refresh-webpack-plugin": ^0.4.1
     "@testing-library/jest-dom": ^4.2.4
     "@testing-library/react": ^9.5.0
     "@testing-library/user-event": ^7.2.1
@@ -21021,8 +21051,11 @@ sassjs-loader@2.0.0:
     "@types/node": ^12.12.54
     "@types/react": ^16.9.48
     "@types/react-dom": ^16.9.8
+    customize-cra: ^1.0.0
     react: ^16.13.1
+    react-app-rewired: ^2.1.6
     react-dom: ^16.13.1
+    react-refresh: ^0.8.3
     react-scripts: 3.4.3
     typescript: 4.0.2
   languageName: unknown
