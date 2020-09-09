@@ -7,9 +7,8 @@ import {
   DialogTitle,
 } from "@material-ui/core";
 
-import { Terminal } from "synergy/src/components/Terminal";
-
 import { usePackageInstallerRecoil } from "../../hooks/recoil/usePackageInstallerRecoil";
+import { Terminal } from "../Terminal";
 
 export const InstallDialog: FunctionComponent = () => {
   const {

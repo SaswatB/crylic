@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useRef } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 
-import { ComponentViewZoomAction } from "synergy/src/types/paint";
+import { ComponentViewZoomAction } from "../types/paint";
 
 interface Props {
   zoomAction: ComponentViewZoomAction | undefined;
