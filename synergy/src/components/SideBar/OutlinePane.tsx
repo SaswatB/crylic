@@ -7,7 +7,7 @@ import TreeView from "@material-ui/lab/TreeView";
 import { produce } from "immer";
 
 import { useCompilerContextRecoil } from "../../hooks/recoil/useCompilerContextRecoil";
-import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil";
+import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useSelectRecoil } from "../../hooks/recoil/useSelectRecoil";
 import { useBusSubscription } from "../../hooks/useBusSubscription";
 import {
@@ -20,7 +20,7 @@ import { renderSeparator } from "../../lib/render-utils";
 import { getElementUniqueId } from "../../lib/utils";
 import { OutlineElement, RenderEntry } from "../../types/paint";
 import { IconButton } from "../IconButton";
-import { Tour } from "../Tour";
+import { Tour } from "../Tour/Tour";
 
 const buildOutline = (
   project: Project,

@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
 
-import { useProjectRecoil } from "synergy/src/hooks/recoil/useProjectRecoil";
+import { useProjectRecoil } from "synergy/src/hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useSelectRecoil } from "synergy/src/hooks/recoil/useSelectRecoil";
 import { useBusSubscription } from "synergy/src/hooks/useBusSubscription";
 import { editorOpenLocation } from "synergy/src/lib/events";

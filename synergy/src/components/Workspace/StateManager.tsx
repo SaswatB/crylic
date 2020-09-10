@@ -2,7 +2,7 @@ import { FunctionComponent, useEffect } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 
 import { useCompilerContextRecoil } from "../../hooks/recoil/useCompilerContextRecoil";
-import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil";
+import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import {
   useReselectGuard,
   useSelectRecoil,

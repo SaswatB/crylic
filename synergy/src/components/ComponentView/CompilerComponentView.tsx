@@ -12,7 +12,7 @@ import { distinctUntilChanged } from "rxjs/operators";
 import { useBus } from "ts-bus/react";
 
 import { useCompilerContextRecoil } from "../../hooks/recoil/useCompilerContextRecoil";
-import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil";
+import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useDebounce } from "../../hooks/useDebounce";
 import { componentViewCompileEnd, componentViewReload } from "../../lib/events";
 import { RouteDefinition } from "../../lib/react-router-proxy";

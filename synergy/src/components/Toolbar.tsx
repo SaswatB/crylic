@@ -31,14 +31,14 @@ import {
 
 import { SelectMode, SelectModeType } from "../constants";
 import { usePackageInstallerRecoil } from "../hooks/recoil/usePackageInstallerRecoil";
-import { useProjectRecoil } from "../hooks/recoil/useProjectRecoil";
+import { useProjectRecoil } from "../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useSelectRecoil } from "../hooks/recoil/useSelectRecoil";
 import { useGlobalConfig } from "../hooks/useGlobalConfig";
 import { useSelectInput } from "../hooks/useInput";
 import { Project } from "../lib/project/Project";
 import { renderSeparator } from "../lib/render-utils";
 import { ComponentViewZoomAction, PackageInstaller } from "../types/paint";
-import { Tour } from "./Tour";
+import { Tour } from "./Tour/Tour";
 
 const useAdderTab = (
   project: Project | undefined,

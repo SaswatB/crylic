@@ -13,8 +13,8 @@ import {
   updateElementHelper,
   updateStyleGroupHelper,
 } from "./useProjectRecoil/code-edit-helpers";
+import { useProjectRecoil } from "./useProjectRecoil/useProjectRecoil";
 import { useCompilerContextRecoil } from "./useCompilerContextRecoil";
-import { useProjectRecoil } from "./useProjectRecoil";
 
 const selectModeState = atom<SelectMode | undefined>({
   key: "selectMode",

@@ -3,7 +3,7 @@ import { atom, useRecoilState } from "recoil";
 import { Subject } from "rxjs";
 
 import { PackageInstaller } from "../../types/paint";
-import { useProjectRecoil } from "./useProjectRecoil";
+import { useProjectRecoil } from "./useProjectRecoil/useProjectRecoil";
 
 const installingPackagesState = atom<boolean>({
   key: "installingPackages",

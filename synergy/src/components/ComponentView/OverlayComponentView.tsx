@@ -24,8 +24,8 @@ import {
   SelectModeType,
 } from "../../constants";
 import { useCompilerContextRecoil } from "../../hooks/recoil/useCompilerContextRecoil";
-import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil";
 import { addElementHelper } from "../../hooks/recoil/useProjectRecoil/code-edit-helpers";
+import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useSelectRecoil } from "../../hooks/recoil/useSelectRecoil";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useMenuInput } from "../../hooks/useInput";

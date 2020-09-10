@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from "react";
 
-import { Tour } from "synergy/src/components/Tour";
+import { Tour } from "synergy/src/components/Tour/Tour";
 
 interface Props {
   onNewProject: () => void;

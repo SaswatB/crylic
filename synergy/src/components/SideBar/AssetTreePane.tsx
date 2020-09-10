@@ -13,7 +13,7 @@ import { camelCase, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
 
 import { getBoilerPlateComponent, SelectModeType } from "../../constants";
-import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil";
+import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useSelectRecoil } from "../../hooks/recoil/useSelectRecoil";
 import { useMenuInput } from "../../hooks/useInput";
 import { renderSeparator } from "../../lib/render-utils";
@@ -27,7 +27,7 @@ import {
 import { CodeEntry } from "../../types/paint";
 import { IconButton } from "../IconButton";
 import { InputModal } from "../InputModal";
-import { Tour } from "../Tour";
+import { Tour } from "../Tour/Tour";
 
 interface Tree {
   id: string;

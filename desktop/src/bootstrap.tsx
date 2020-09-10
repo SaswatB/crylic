@@ -8,7 +8,7 @@ import { RecoilRoot } from "recoil";
 import { BusProvider } from "ts-bus/react";
 
 import { ModalContainer } from "synergy/src/components/PromiseModal";
-import { TourProvider } from "synergy/src/components/Tour";
+import { TourProvider } from "synergy/src/components/Tour/Tour";
 import { StateManager } from "synergy/src/components/Workspace/StateManager";
 import { bus } from "synergy/src/lib/events";
 

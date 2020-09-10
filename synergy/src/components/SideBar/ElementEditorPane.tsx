@@ -17,8 +17,8 @@ import path from "path";
 import { useBus } from "ts-bus/react";
 
 import { usePackageInstallerRecoil } from "../../hooks/recoil/usePackageInstallerRecoil";
-import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil";
 import { updateStyleGroupHelper } from "../../hooks/recoil/useProjectRecoil/code-edit-helpers";
+import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useSelectRecoil } from "../../hooks/recoil/useSelectRecoil";
 import { useDebouncedFunction } from "../../hooks/useDebouncedFunction";
 import {
@@ -40,7 +40,7 @@ import { CodeEntry } from "../../types/paint";
 import { AnimationEditorModal } from "../Animation/AnimationEditorModal";
 import { Collapsible } from "../Collapsible";
 import { IconButton } from "../IconButton";
-import { Tour } from "../Tour";
+import { Tour } from "../Tour/Tour";
 import {
   CSS_ALIGN_ITEMS_OPTIONS,
   CSS_BACKGROUND_SIZE_OPTIONS,
