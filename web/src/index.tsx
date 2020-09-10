@@ -1,12 +1,14 @@
 import React from "react";
 import ReactDOM from "react-dom";
+
 import App from "./App";
+import { Bootstrap } from "./bootstrap";
 import * as serviceWorker from "./serviceWorker";
 
 ReactDOM.render(
-  <React.StrictMode>
+  <Bootstrap>
     <App />
-  </React.StrictMode>,
+  </Bootstrap>,
   document.getElementById("root")
 );
 

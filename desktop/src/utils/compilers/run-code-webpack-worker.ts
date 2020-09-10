@@ -105,7 +105,11 @@ ${errorBoundaryComponent
 
 ReactDOM.render((
   <ErrorBoundary>
-    ${bootstrapCodeEntry ? `<Bootstrap><Component /></Bootstrap>` : `<App />`}
+    ${
+      bootstrapCodeEntry
+        ? `<Bootstrap><Component /></Bootstrap>`
+        : `<Component />`
+    }
   </ErrorBoundary>),
   document.getElementById("${
     project.config.configFile?.htmlTemplate?.rootSelector ||

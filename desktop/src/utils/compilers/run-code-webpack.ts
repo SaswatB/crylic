@@ -2,6 +2,8 @@
 import { cloneDeep } from "lodash";
 import { AddressInfo } from "net";
 
+import { requireUncached } from "../utils";
+
 import baseAppEntry from "!!raw-loader!../../assets/base-app-entry.html";
 
 type IFs = import("memfs").IFs;
@@ -27,8 +29,6 @@ let dotenv: typeof import("dotenv");
 const ENABLE_FAST_REFRESH = true;
 const NODE_ENV = "development";
 const REACT_APP = /^REACT_APP_/i;
-
-const overrideConfigCache: Record<string, Function | undefined> = {};
 
 export function initialize(nodeModulesPath = "") {
   // needed to resolve loaders and babel plugins/presets
@@ -320,6 +320,7 @@ export const webpackRunCode = async (
       });
   };
 
+  // todo clear cache on project close
   if (!webpackCache[primaryCodeEntry.id]) {
     const env = getEnvVars(paths.projectFolder);
 
@@ -430,10 +431,7 @@ export const webpackRunCode = async (
     // handle a config override specified for this project
     if (paths.overrideWebpackConfig) {
       // todo verify this require returns a function, also maybe run it in a vm are pass an instance of webpack
-      const overrideConfig =
-        overrideConfigCache[paths.overrideWebpackConfig] ||
-        __non_webpack_require__(paths.overrideWebpackConfig);
-      overrideConfigCache[paths.overrideWebpackConfig] = overrideConfig;
+      const overrideConfig = requireUncached(paths.overrideWebpackConfig);
 
       const result = await overrideConfig(
         options,

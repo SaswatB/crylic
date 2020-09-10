@@ -8,3 +8,8 @@ export function streamToString(stream: Readable) {
     stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
   });
 }
+
+export function requireUncached(module: string) {
+  delete __non_webpack_require__.cache[__non_webpack_require__.resolve(module)];
+  return __non_webpack_require__(module);
+}

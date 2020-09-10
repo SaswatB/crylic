@@ -1,0 +1,28 @@
+// todo enable for keyboard use
+* {
+  outline: none !important;
+}
+
+body {
+  background-color: #1b1b1b;
+  overflow: hidden;
+}
+
+div[role="tooltip"] {
+  z-index: 1;
+}
+
+::-webkit-scrollbar {
+  width: 16px;
+}
+
+::-webkit-scrollbar-track {
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.8);
+  border-left: 10px solid rgba(0, 0, 0, 0);
+  background-clip: padding-box;
+  border-radius: 10px;
+}

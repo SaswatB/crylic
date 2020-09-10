@@ -13,6 +13,7 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.3",
+    "tailwindcss": "^1.8.6",
     "typescript": "4.0.2"
   },
   "scripts": {
@@ -22,7 +23,7 @@
     "eject": "react-app-rewired eject"
   },
   "eslintConfig": {
-    "extends": "react-app"
+    "extends": "../.eslintrc"
   },
   "browserslist": {
     "production": [

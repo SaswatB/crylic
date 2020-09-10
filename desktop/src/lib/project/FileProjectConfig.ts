@@ -8,14 +8,10 @@ import {
 } from "synergy/src/lib/project/ProjectConfig";
 
 import { CONFIG_FILE_NAME } from "../../utils/constants";
+import { requireUncached } from "../../utils/utils";
 import { InbuiltPackageManager } from "../packageManager/InbuiltPackageManager";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
-
-function requireUncached(module: string) {
-  delete __non_webpack_require__.cache[__non_webpack_require__.resolve(module)];
-  return __non_webpack_require__(module);
-}
 
 export class FileProjectConfig extends ProjectConfig {
   public static createProjectConfigFromDirectory(projectPath: string) {

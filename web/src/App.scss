@@ -1,0 +1,5 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+// todo investigate why a node modules reference doesn't work when running in crylic, seems related to yarn workspaces
+@import "../../synergy/src/shared.scss";

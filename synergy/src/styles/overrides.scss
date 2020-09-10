@@ -1,0 +1,31 @@
+// material ui overrides
+.MuiTreeItem-label,
+fieldset {
+  @apply default-transition;
+}
+
+#root .MuiBackdrop-root {
+  z-index: 11;
+}
+
+.rc-color-picker {
+  z-index: 10000;
+}
+
+body {
+  .MuiCircularProgress-colorPrimary {
+    color: white;
+  }
+
+  .MuiAutocomplete-groupLabel {
+    line-height: unset;
+    padding-top: 7px;
+    padding-bottom: 1px;
+    font-size: 0.68rem;
+  }
+}
+
+.react-transform-component {
+  width: 100% !important;
+  height: 100% !important;
+}
