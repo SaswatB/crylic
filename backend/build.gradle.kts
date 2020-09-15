@@ -1,3 +1,4 @@
+import nu.studer.gradle.jooq.JooqEdition
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -5,6 +6,7 @@ plugins {
 	id("io.spring.dependency-management") version "1.0.10.RELEASE"
 	kotlin("jvm") version "1.3.72"
 	kotlin("plugin.spring") version "1.3.72"
+	id("nu.studer.jooq") version "5.0.2"
 }
 
 group = "com.hstar"
@@ -13,6 +15,7 @@ java.sourceCompatibility = JavaVersion.VERSION_11
 
 repositories {
 	mavenCentral()
+    jcenter()
 }
 
 dependencies {
@@ -25,8 +28,11 @@ dependencies {
 	implementation("org.flywaydb:flyway-core")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	runtimeOnly("org.postgresql:postgresql")
+	jooqGenerator("org.postgresql:postgresql:42.2.14")
+
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
 		exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
 	}
@@ -34,6 +40,42 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-test")
 }
 
+jooq {
+    configurations {
+        create("main") {  // name of the jOOQ configuration
+            generateSchemaSourceOnCompilation.set(true)  // default (can be omitted)
+
+            jooqConfiguration.apply {
+                logging = org.jooq.meta.jaxb.Logging.WARN
+                jdbc.apply {
+                    driver = "org.postgresql.Driver"
+                    url = "jdbc:postgresql://localhost:5432/crylic"
+                    user = "root"
+                    password = "admin"
+                }
+                generator.apply {
+                    name = "org.jooq.codegen.DefaultGenerator"
+                    database.apply {
+                        name = "org.jooq.meta.postgres.PostgresDatabase"
+                        inputSchema = "public"
+                    }
+                    generate.apply {
+                        isDeprecated = false
+                        isRecords = true
+                        isImmutablePojos = true
+                        isFluentSetters = true
+                        isRoutines = false
+                    }
+                    target.apply {
+                        packageName = "com.hstar.crylic.db.generated"
+                        directory = "src/main/kotlin"  // default (can be omitted)
+                    }
+                    strategy.name = "org.jooq.codegen.DefaultGeneratorStrategy"
+                }
+            }
+        }
+    }
+}
 tasks.withType<Test> {
 	useJUnitPlatform()
 }
