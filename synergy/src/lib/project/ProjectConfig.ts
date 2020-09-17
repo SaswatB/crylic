@@ -78,8 +78,9 @@ export abstract class ProjectConfig {
 
   public getFullSourceFolderPath() {
     return path.join(
-      this.projectPath,
-      this.configFile?.sourceFolder || DEFAULT_PROJECT_SOURCE_FOLDER
+      this.projectPath.replace(/\\/g, "/"),
+      this.configFile?.sourceFolder?.replace(/\\/g, "/") ||
+        DEFAULT_PROJECT_SOURCE_FOLDER
     );
   }
   public getFullOverrideWebpackPath() {

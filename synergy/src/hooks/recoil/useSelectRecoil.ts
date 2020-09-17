@@ -9,6 +9,7 @@ import {
 } from "../../lib/ast/editors/ASTEditor";
 import { ASTType } from "../../lib/ast/types";
 import { SelectedElement, Styles } from "../../types/paint";
+import { useUpdatingRef } from "../useUpdatingRef";
 import {
   updateElementHelper,
   updateStyleGroupHelper,
@@ -34,6 +35,7 @@ export type SelectElement = (renderId: string, lookupId: string) => void;
 
 export function useSelectRecoil() {
   const { project, setCodeAstEdit } = useProjectRecoil();
+  const projectRef = useUpdatingRef(project);
   const [selectMode, setSelectMode] = useRecoilState(selectModeState);
   const [selectedElement, setSelectedElement] = useRecoilState(
     selectedElementState
@@ -48,14 +50,14 @@ export function useSelectRecoil() {
 
   const selectElement: SelectElement = (renderId, lookupId) => {
     const { getElementsByLookupId } = getViewContext(renderId) || {};
-    const codeId = project?.primaryElementEditor.getCodeIdFromLookupId(
+    const codeId = projectRef.current?.primaryElementEditor.getCodeIdFromLookupId(
       lookupId
     );
     if (!codeId) {
       console.log("dropping element select, no code id");
       return;
     }
-    const codeEntry = project?.getCodeEntry(codeId);
+    const codeEntry = projectRef.current?.getCodeEntry(codeId);
     if (!codeEntry) {
       console.log("dropping element select, no code entry");
       return;
@@ -68,7 +70,7 @@ export function useSelectRecoil() {
 
     const styleGroups: StyleGroup[] = [];
 
-    project?.editorEntries.forEach(({ editor }) => {
+    projectRef.current?.editorEntries.forEach(({ editor }) => {
       styleGroups.push(
         ...editor.getStyleGroupsFromHTMLElement(componentElements[0])
       );
@@ -77,7 +79,7 @@ export function useSelectRecoil() {
     setSelectedElement({
       renderId,
       lookupId,
-      sourceMetadata: project!.primaryElementEditor.getSourceMetaDataFromLookupId(
+      sourceMetadata: projectRef.current!.primaryElementEditor.getSourceMetaDataFromLookupId(
         { ast: codeEntry.ast, codeEntry },
         lookupId
       ),

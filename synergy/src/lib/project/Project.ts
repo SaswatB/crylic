@@ -167,8 +167,9 @@ export abstract class Project {
 
       const isBootstrap =
         !!this.config?.configFile?.bootstrap &&
-        path.join(this.path, this.config.configFile?.bootstrap) ===
-          codeEntry.filePath;
+        path
+          .join(this.path, this.config.configFile.bootstrap)
+          .replace(/\\/g, "/") === codeEntry.filePath.replace(/\\/g, "/");
       // check if the file is a component
       const isRenderableScript =
         // todo add an option to support other types of scripts
