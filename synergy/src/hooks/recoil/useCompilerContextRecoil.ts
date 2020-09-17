@@ -38,6 +38,7 @@ export function useCompilerContextRecoil() {
   };
   const runCompileTasks = (renderId: string, viewContext: ViewContext) => {
     compileTasksRef.current[renderId]?.forEach((task) => task(viewContext));
+    compileTasksRef.current[renderId] = [];
   };
 
   return {
