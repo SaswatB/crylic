@@ -42,8 +42,24 @@ export type useInputFunction<
   } & S
 ) => R;
 
-export const useTextInput: useInputFunction<{ bindInitialValue?: boolean }> = ({
+export const useTextInput: useInputFunction<
+  {
+    bindInitialValue?: boolean;
+    password?: boolean;
+    validate?: (v: string) => boolean;
+  },
+  TextFieldProps,
+  string,
+  readonly [
+    string,
+    (props?: TextFieldProps) => JSX.Element,
+    boolean,
+    (v?: boolean) => void
+  ]
+> = ({
   bindInitialValue,
+  password,
+  validate,
   onChange,
   label,
   initialValue,
@@ -53,12 +69,20 @@ export const useTextInput: useInputFunction<{ bindInitialValue?: boolean }> = ({
     initialValue || "",
     bindInitialValue && !focused
   );
+  const isValid = validate?.(value) ?? true;
+  const [allowError, setAllowError] = useState(false);
+
+  useEffect(() => {
+    if (focused && !allowError) setAllowError(true);
+  }, [focused, allowError]);
 
   const render = (props?: TextFieldProps) => (
     <TextField
       {...props}
       label={label}
       variant="outlined"
+      type={password ? "password" : undefined}
+      error={!isValid && allowError && !focused}
       value={value}
       onChange={(e) => {
         setValue(e.target.value);
@@ -69,7 +93,13 @@ export const useTextInput: useInputFunction<{ bindInitialValue?: boolean }> = ({
     />
   );
 
-  return [value, render];
+  return [value, render, isValid, (v) => setAllowError(v ?? true)];
+};
+export const useTextInputStructured = (
+  props: Parameters<typeof useTextInput>[0]
+) => {
+  const [value, render, isValid, triggerValidation] = useTextInput(props);
+  return { value, render, isValid, triggerValidation };
 };
 export const TextInput: FunctionComponent<
   Parameters<typeof useTextInput>[0]

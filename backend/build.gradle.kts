@@ -7,6 +7,7 @@ plugins {
 	kotlin("jvm") version "1.3.72"
 	kotlin("plugin.spring") version "1.3.72"
 	id("nu.studer.jooq") version "5.0.2"
+    id("com.diffplug.spotless") version "5.5.1"
 }
 
 group = "com.hstar"
@@ -19,19 +20,27 @@ repositories {
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-amqp")
+    implementation("com.graphql-java-kickstart:graphql-spring-boot-starter:5.11.1")
+    implementation("org.springframework.boot:spring-boot-starter-amqp")
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 	implementation("org.springframework.boot:spring-boot-starter-jooq")
 	implementation("org.springframework.boot:spring-boot-starter-security")
-	implementation("org.springframework.boot:spring-boot-starter-web")
-	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.flywaydb:flyway-core")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
-	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
 
-	developmentOnly("org.springframework.boot:spring-boot-devtools")
-	runtimeOnly("org.postgresql:postgresql")
-	jooqGenerator("org.postgresql:postgresql:42.2.14")
+    compileOnly("io.jsonwebtoken:jjwt-api:0.11.2")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.2")
+    // Uncomment the next line if you want to use RSASSA-PSS (PS256, PS384, PS512) algorithms:
+    // runtimeOnly("org.bouncycastle:bcprov-jdk15on:1.60")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.2")
+
+    runtimeOnly("org.postgresql:postgresql")
+    jooqGenerator("org.postgresql:postgresql:42.2.14")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
 		exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
@@ -76,6 +85,15 @@ jooq {
         }
     }
 }
+// remove the default automatic jooq generation
+//project.tasks.getByName("compileJava").dependsOn.remove("generateDefaultJooqSchemaSource")
+
+spotless {
+    kotlin {
+        ktlint().userData(mapOf("disabled_rules" to "no-wildcard-imports"))
+    }
+}
+
 tasks.withType<Test> {
 	useJUnitPlatform()
 }

@@ -95,3 +95,8 @@ export function isDefined<T>(v: T | undefined | null): v is T {
 
 export const sleep = (duration: number) =>
   new Promise((resolve) => setTimeout(resolve, duration));
+
+const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+export function validateEmail(email: string) {
+  return emailRegex.test(String(email).toLowerCase());
+}

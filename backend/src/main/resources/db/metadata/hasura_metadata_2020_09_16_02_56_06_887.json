@@ -1,0 +1,53 @@
+{
+  "version": 2,
+  "tables": [
+    {
+      "table": {
+        "schema": "public",
+        "name": "User"
+      },
+      "configuration": {
+        "custom_root_fields": {},
+        "custom_column_names": {
+          "first_name": "firstName",
+          "last_name": "lastName"
+        }
+      },
+      "select_permissions": [
+        {
+          "role": "user",
+          "permission": {
+            "columns": [
+              "email",
+              "first_name",
+              "id",
+              "last_name"
+            ],
+            "filter": {
+              "id": {
+                "_eq": "X-Hasura-User-Id"
+              }
+            }
+          }
+        }
+      ],
+      "update_permissions": [
+        {
+          "role": "user",
+          "permission": {
+            "columns": [
+              "first_name",
+              "last_name"
+            ],
+            "filter": {
+              "id": {
+                "_eq": "X-Hasura-User-Id"
+              }
+            },
+            "check": null
+          }
+        }
+      ]
+    }
+  ]
+}

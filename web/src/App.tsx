@@ -20,6 +20,8 @@ import { editorResize } from "synergy/src/lib/events";
 import { Project } from "synergy/src/lib/project/Project";
 import { ComponentViewZoomAction } from "synergy/src/types/paint";
 
+import { Authenticate } from "./components/Account/Authenticate";
+import { useAuth } from "./hooks/recoil/useAuth";
 import { remoteWebpackWorker } from "./lib/remote-webpack-worker";
 import "./App.scss";
 
@@ -27,7 +29,9 @@ function App() {
   const { project, setProject, closeProject } = useProjectRecoil();
   const { enqueueSnackbar } = useSnackbar();
   const bus = useBus();
-  const [loading, setLoading] = useState(0);
+  const auth = useAuth();
+  const [loadingState, setLoading] = useState(0);
+  const loading = loadingState > 0 || auth.isLoading;
 
   const renderIntro = () => (
     <div className="btngrp-v w-full">
@@ -62,6 +66,9 @@ function App() {
         }}
       >
         Open Project
+      </button>
+      <button className="btn w-full" onClick={auth.logout}>
+        Logout
       </button>
     </div>
   );
@@ -159,7 +166,7 @@ function App() {
       className="flex flex-col items-stretch w-screen h-screen relative overflow-hidden text-white"
       data-tour="start"
     >
-      <Backdrop open={loading > 0}>
+      <Backdrop open={loading}>
         <CircularProgress disableShrink />
       </Backdrop>
       <InstallDialog />
@@ -199,7 +206,11 @@ function App() {
           )}
           {!project && (
             <div className="flex flex-1 w-64 absolute items-center justify-center z-10">
-              {renderIntro()}
+              {auth.isAuthenticated ? (
+                renderIntro()
+              ) : !auth.isLoading ? (
+                <Authenticate />
+              ) : null}
             </div>
           )}
           <TransformContainer
