@@ -230,3 +230,19 @@
     border-radius: unset;
   }
 }
+
+.blue-hue {
+  background-image: linear-gradient(135deg, #ABDCFF 10%, #0396FF 100%);
+}
+
+.dark-blue-hue {
+  background-image: linear-gradient(135deg, #6B73FF 10%, #000DFF 100%);
+}
+
+.red-hue {
+  background-image: linear-gradient(135deg, #F05F57 10%, #360940 100%);
+}
+
+.green-hue {
+  background-image: linear-gradient(135deg, #79F1A4 10%, #0E5CAD 100%);
+}

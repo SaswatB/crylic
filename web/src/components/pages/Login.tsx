@@ -1,4 +1,5 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
+import { CircularProgress } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
@@ -8,21 +9,16 @@ import { isEmpty } from "lodash";
 import { useSnackbar } from "notistack";
 
 import { useTextInputStructured } from "synergy/src/hooks/useInput";
-import { validateEmail } from "synergy/src/lib/utils";
+import { onEnter, validateEmail } from "synergy/src/lib/utils";
 
 import { useAuth } from "../../hooks/recoil/useAuth";
 import { AuthService } from "../../lib/api/AuthService";
+import { BodyColor } from "../BodyColor";
 
-interface Array<T> {
-  map<U>(
-    callbackfn: (value: T, index: number, array: T[]) => U,
-    thisArg?: any
-  ): { [K in keyof this]: U };
-}
-
-export const Authenticate: FunctionComponent = () => {
+export const Login: FunctionComponent = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { setAuthToken } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
 
@@ -63,6 +59,7 @@ export const Authenticate: FunctionComponent = () => {
     )
       return;
 
+    setLoading(true);
     AuthService.register(
       firstNameInput.value,
       lastNameInput.value,
@@ -76,7 +73,8 @@ export const Authenticate: FunctionComponent = () => {
       .catch((e) => {
         enqueueSnackbar("Failed to register " + e.message);
         console.log("Failed to register", e);
-      });
+      })
+      .finally(() => setLoading(false));
   };
 
   const login = () => {
@@ -88,6 +86,7 @@ export const Authenticate: FunctionComponent = () => {
     )
       return;
 
+    setLoading(true);
     AuthService.login(emailInput.value, passwordInput.value)
       .then((d) => {
         if (!d.data?.success) throw new Error();
@@ -99,12 +98,16 @@ export const Authenticate: FunctionComponent = () => {
       .catch((e) => {
         enqueueSnackbar("Failed to login " + e.message);
         console.log("Failed to login", e);
-      });
+      })
+      .finally(() => setLoading(false));
   };
 
   return (
     <>
-      <Dialog open={showRegister}>
+      <Dialog
+        open={showRegister}
+        onClose={() => !loading && setShowRegister(false)}
+      >
         <DialogTitle>Sign Up</DialogTitle>
         <DialogContent className="flex flex-col">
           {firstNameInput.render()}
@@ -113,40 +116,46 @@ export const Authenticate: FunctionComponent = () => {
           <div className="mb-3" />
           {emailInput.render()}
           <div className="mb-3" />
-          {passwordInput.render()}
+          {passwordInput.render({ onKeyPress: onEnter(register) })}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowRegister(false)} color="primary">
+          <Button onClick={() => setShowRegister(false)} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={register} color="primary">
-            Register
+          <Button onClick={register} disabled={loading} color="primary">
+            {loading ? <CircularProgress size={15} /> : "Register"}
           </Button>
         </DialogActions>
       </Dialog>
-      <Dialog open={showLogin}>
+      <Dialog
+        open={showLogin}
+        onClose={() => !loading && setShowRegister(false)}
+      >
         <DialogTitle>Sign In</DialogTitle>
         <DialogContent className="flex flex-col">
           {emailInput.render()}
           <div className="mb-3" />
-          {passwordInput.render()}
+          {passwordInput.render({ onKeyPress: onEnter(login) })}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowLogin(false)} color="primary">
+          <Button onClick={() => setShowLogin(false)} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={login} color="primary">
-            Login
+          <Button onClick={login} disabled={loading} color="primary">
+            {loading ? <CircularProgress size={15} /> : "Login"}
           </Button>
         </DialogActions>
       </Dialog>
-      <div className="btngrp-v w-full">
-        <button className="btn" onClick={() => setShowLogin(true)}>
-          Log In
-        </button>
-        <button className="btn" onClick={() => setShowRegister(true)}>
-          Sign Up
-        </button>
+      <div className="flex justify-center items-center h-screen">
+        <BodyColor className="red-hue" />
+        <div className="btngrp-v w-64">
+          <button className="btn" onClick={() => setShowLogin(true)}>
+            Log In
+          </button>
+          <button className="btn" onClick={() => setShowRegister(true)}>
+            Sign Up
+          </button>
+        </div>
       </div>
     </>
   );

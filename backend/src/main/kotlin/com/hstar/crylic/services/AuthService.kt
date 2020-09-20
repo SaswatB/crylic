@@ -2,17 +2,15 @@ package com.hstar.crylic.services
 
 import com.hstar.crylic.db.generated.Tables
 import com.hstar.crylic.db.generated.tables.pojos.User
-import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.SignatureAlgorithm
-import io.jsonwebtoken.security.Keys
-import java.security.Key
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.util.*
-import javax.annotation.PostConstruct
-import javax.crypto.spec.SecretKeySpec
-import javax.validation.constraints.Email
-import javax.validation.constraints.NotBlank
+import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.JWSHeader
+import com.nimbusds.jose.JWSObject
+import com.nimbusds.jose.Payload
+import com.nimbusds.jose.crypto.RSASSASigner
+import com.nimbusds.jose.jwk.KeyUse
+import com.nimbusds.jose.jwk.RSAKey
+import com.nimbusds.jose.jwk.gen.RSAKeyGenerator
+import com.nimbusds.jwt.JWTClaimsSet
 import org.jooq.DSLContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
@@ -21,6 +19,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.server.ResponseStatusException
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.util.*
+import java.util.UUID
+import javax.annotation.PostConstruct
+import javax.validation.constraints.Email
+import javax.validation.constraints.NotBlank
+
 
 private const val TOKEN_EXPIRATION_DAYS = 30L
 const val REDIS_AUTH_KEY = "auth:signature"
@@ -33,17 +39,21 @@ class AuthService {
     private lateinit var dsl: DSLContext
     @Autowired
     private lateinit var template: RedisTemplate<String, String>
-    private lateinit var key: Key
+    private lateinit var key: RSAKey
+    private lateinit var signer: RSASSASigner
 
     @PostConstruct
     fun init() {
         if (template.hasKey(REDIS_AUTH_KEY)) {
-            val decodedKey = Base64.getDecoder().decode(template.boundValueOps(REDIS_AUTH_KEY).get())
-            key = Keys.hmacShaKeyFor(decodedKey)
+            key = RSAKey.parse(template.boundValueOps(REDIS_AUTH_KEY).get())
         } else {
-            key = Keys.secretKeyFor(SignatureAlgorithm.HS256)
-            template.boundValueOps(REDIS_AUTH_KEY).set(Base64.getEncoder().encodeToString(key.encoded))
+            key = RSAKeyGenerator(2048)
+                    .keyUse(KeyUse.SIGNATURE) // indicate the intended use of the key
+                    .keyID(UUID.randomUUID().toString()) // give the key a unique ID
+                    .generate()
+            template.boundValueOps(REDIS_AUTH_KEY).set(key.toJSONString())
         }
+        signer = RSASSASigner(key.toRSAPrivateKey())
     }
 
     fun login(@NotBlank email: String, @NotBlank password: String): String {
@@ -51,22 +61,20 @@ class AuthService {
             val user = dsl.selectFrom(Tables.USER.where(Tables.USER.EMAIL.eq(email))).fetchAny().into(User::class.java)
 
             if (user != null && passwordEncoder.matches(password, user.password.toString())) {
-                return Jwts
-                    .builder()
-                    .setExpiration(
-                            Date.from(LocalDateTime.now().plusDays(TOKEN_EXPIRATION_DAYS).atZone(ZoneId.systemDefault()).toInstant()))
-                    .addClaims(mapOf(
-                        "userId" to user.id,
-                        "pTag" to user.password.substring(0, 3),
+                val claims = JWTClaimsSet.Builder()
+                        .expirationTime(Date.from(LocalDateTime.now().plusDays(TOKEN_EXPIRATION_DAYS).atZone(ZoneId.systemDefault()).toInstant()))
+                        .claim("userId", user.id)
+                        .claim("pTag", user.password.substring(0, 3))
                         // todo add revoke id
-                        "https://hasura.io/jwt/claims" to mapOf(
-                            "x-hasura-allowed-roles" to arrayOf("user"),
-                            "x-hasura-default-role" to "user",
-                            "x-hasura-user-id" to user.id
-                        )
-                    ))
-                    .signWith(key)
-                    .compact()
+                        .claim("https://hasura.io/jwt/claims", mapOf(
+                                "x-hasura-allowed-roles" to arrayOf("user"),
+                                "x-hasura-default-role" to "user",
+                                "x-hasura-user-id" to user.id.toString()
+                        ))
+                        .build()
+                val jwsObject = JWSObject(JWSHeader(JWSAlgorithm.RS256), Payload(claims.toJSONObject()))
+                jwsObject.sign(signer)
+                return jwsObject.serialize()
             }
         } catch (e: Exception) {
             println(e)
@@ -81,4 +89,6 @@ class AuthService {
                 .values(email, passwordEncoder.encode(password), firstName, lastName)
                 .execute()
     }
+
+    fun jwk() = key.toPublicJWK().toJSONObject()
 }

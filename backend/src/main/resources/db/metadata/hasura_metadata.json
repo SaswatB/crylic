@@ -4,6 +4,28 @@
     {
       "table": {
         "schema": "public",
+        "name": "Integrations"
+      },
+      "select_permissions": [
+        {
+          "role": "user",
+          "permission": {
+            "columns": [
+              "token",
+              "type"
+            ],
+            "filter": {
+              "user_id": {
+                "_eq": "X-Hasura-User-Id"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "table": {
+        "schema": "public",
         "name": "User"
       },
       "configuration": {
@@ -13,6 +35,20 @@
           "last_name": "lastName"
         }
       },
+      "array_relationships": [
+        {
+          "name": "Integrations",
+          "using": {
+            "foreign_key_constraint_on": {
+              "column": "user_id",
+              "table": {
+                "schema": "public",
+                "name": "Integrations"
+              }
+            }
+          }
+        }
+      ],
       "select_permissions": [
         {
           "role": "user",
@@ -48,6 +84,17 @@
           }
         }
       ]
+    }
+  ],
+  "functions": [
+    {
+      "function": {
+        "schema": "public",
+        "name": "viewer"
+      },
+      "configuration": {
+        "session_argument": "hasura_session"
+      }
     }
   ]
 }

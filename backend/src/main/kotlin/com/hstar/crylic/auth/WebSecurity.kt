@@ -19,6 +19,7 @@ class WebSecurity : WebSecurityConfigurerAdapter() {
                 .and().authorizeRequests()
                 .antMatchers("/login").permitAll()
                 .antMatchers("/register").permitAll()
+                .antMatchers("/jwks").permitAll()
                 .anyRequest().authenticated()
     }
 }

@@ -100,3 +100,7 @@ const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+")
 export function validateEmail(email: string) {
   return emailRegex.test(String(email).toLowerCase());
 }
+
+export const onEnter = (apply: () => void) => (event: { key: string }) => {
+  if (event.key === "Enter") apply();
+};
