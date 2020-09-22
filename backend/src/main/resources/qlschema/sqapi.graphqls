@@ -1,0 +1,15 @@
+type GithubProject {
+
+}
+type Github {
+    name: String!
+    projects: [GithubProject!]!
+}
+
+
+type Query {
+    github: Github
+}
+type Mutation {
+
+}

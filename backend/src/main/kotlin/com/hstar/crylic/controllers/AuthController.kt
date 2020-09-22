@@ -1,6 +1,9 @@
 package com.hstar.crylic.controllers
 
 import com.hstar.crylic.services.AuthService
+import java.util.concurrent.*
+import javax.servlet.http.HttpServletResponse
+import javax.validation.ConstraintViolationException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.http.CacheControl
@@ -8,35 +11,32 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
-import java.util.concurrent.*
-import javax.servlet.http.HttpServletResponse
-import javax.validation.ConstraintViolationException
-
 
 @RestController
+@RequestMapping("/auth")
 class AuthController {
     @Autowired
     private lateinit var authService: AuthService
 
     @PostMapping("/login")
-    fun login(@RequestParam("email") email: String, @RequestParam("password") password: String): Map<String, Any> {
+    fun login(@RequestParam email: String, @RequestParam password: String): Map<String, Any> {
         val token = authService.login(email, password)
         return mapOf("success" to true, "token" to token)
     }
 
     @PostMapping("/register")
     fun register(
-            @RequestParam("email") email: String,
-            @RequestParam("password") password: String,
-            @RequestParam("firstName") firstName: String,
-            @RequestParam("lastName") lastName: String
+        @RequestParam email: String,
+        @RequestParam password: String,
+        @RequestParam firstName: String,
+        @RequestParam lastName: String
     ): Map<String, Any> {
         try {
             authService.register(email, password, firstName, lastName)
         } catch (ex: DuplicateKeyException) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "User already exists")
         }
-        return mapOf("success" to true);
+        return mapOf("success" to true)
     }
 
     @GetMapping("/jwks")

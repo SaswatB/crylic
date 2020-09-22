@@ -4,9 +4,13 @@
 package com.hstar.crylic.db.generated;
 
 
+import com.hstar.crylic.db.generated.tables.FlywaySchemaHistory;
+import com.hstar.crylic.db.generated.tables.Integrations;
 import com.hstar.crylic.db.generated.tables.PgpArmorHeaders;
 import com.hstar.crylic.db.generated.tables.User;
+import com.hstar.crylic.db.generated.tables.Viewer;
 import com.hstar.crylic.db.generated.tables.records.PgpArmorHeadersRecord;
+import com.hstar.crylic.db.generated.tables.records.ViewerRecord;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,7 +18,9 @@ import java.util.List;
 import org.jooq.Catalog;
 import org.jooq.Configuration;
 import org.jooq.Field;
+import org.jooq.JSON;
 import org.jooq.Result;
+import org.jooq.Sequence;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
@@ -25,12 +31,22 @@ import org.jooq.impl.SchemaImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Public extends SchemaImpl {
 
-    private static final long serialVersionUID = -1067589863;
+    private static final long serialVersionUID = -1773281265;
 
     /**
      * The reference instance of <code>public</code>
      */
     public static final Public PUBLIC = new Public();
+
+    /**
+     * The table <code>public.flyway_schema_history</code>.
+     */
+    public final FlywaySchemaHistory FLYWAY_SCHEMA_HISTORY = FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY;
+
+    /**
+     * The table <code>public.Integrations</code>.
+     */
+    public final Integrations INTEGRATIONS = Integrations.INTEGRATIONS;
 
     /**
      * The table <code>public.pgp_armor_headers</code>.
@@ -64,6 +80,32 @@ public class Public extends SchemaImpl {
     public final User USER = User.USER;
 
     /**
+     * The table <code>public.viewer</code>.
+     */
+    public final Viewer VIEWER = Viewer.VIEWER;
+
+    /**
+     * Call <code>public.viewer</code>.
+     */
+    public static Result<ViewerRecord> VIEWER(Configuration configuration, JSON hasuraSession) {
+        return configuration.dsl().selectFrom(com.hstar.crylic.db.generated.tables.Viewer.VIEWER.call(hasuraSession)).fetch();
+    }
+
+    /**
+     * Get <code>public.viewer</code> as a table.
+     */
+    public static Viewer VIEWER(JSON hasuraSession) {
+        return com.hstar.crylic.db.generated.tables.Viewer.VIEWER.call(hasuraSession);
+    }
+
+    /**
+     * Get <code>public.viewer</code> as a table.
+     */
+    public static Viewer VIEWER(Field<JSON> hasuraSession) {
+        return com.hstar.crylic.db.generated.tables.Viewer.VIEWER.call(hasuraSession);
+    }
+
+    /**
      * No further instances allowed
      */
     private Public() {
@@ -77,9 +119,18 @@ public class Public extends SchemaImpl {
     }
 
     @Override
+    public final List<Sequence<?>> getSequences() {
+        return Arrays.<Sequence<?>>asList(
+            Sequences.INTEGRATIONS_ID_SEQ);
+    }
+
+    @Override
     public final List<Table<?>> getTables() {
         return Arrays.<Table<?>>asList(
+            FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY,
+            Integrations.INTEGRATIONS,
             PgpArmorHeaders.PGP_ARMOR_HEADERS,
-            User.USER);
+            User.USER,
+            Viewer.VIEWER);
     }
 }

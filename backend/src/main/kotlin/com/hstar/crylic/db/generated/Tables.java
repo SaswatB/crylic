@@ -4,12 +4,17 @@
 package com.hstar.crylic.db.generated;
 
 
+import com.hstar.crylic.db.generated.tables.FlywaySchemaHistory;
+import com.hstar.crylic.db.generated.tables.Integrations;
 import com.hstar.crylic.db.generated.tables.PgpArmorHeaders;
 import com.hstar.crylic.db.generated.tables.User;
+import com.hstar.crylic.db.generated.tables.Viewer;
 import com.hstar.crylic.db.generated.tables.records.PgpArmorHeadersRecord;
+import com.hstar.crylic.db.generated.tables.records.ViewerRecord;
 
 import org.jooq.Configuration;
 import org.jooq.Field;
+import org.jooq.JSON;
 import org.jooq.Result;
 
 
@@ -18,6 +23,16 @@ import org.jooq.Result;
  */
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Tables {
+
+    /**
+     * The table <code>public.flyway_schema_history</code>.
+     */
+    public static final FlywaySchemaHistory FLYWAY_SCHEMA_HISTORY = FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY;
+
+    /**
+     * The table <code>public.Integrations</code>.
+     */
+    public static final Integrations INTEGRATIONS = Integrations.INTEGRATIONS;
 
     /**
      * The table <code>public.pgp_armor_headers</code>.
@@ -49,4 +64,30 @@ public class Tables {
      * The table <code>public.User</code>.
      */
     public static final User USER = User.USER;
+
+    /**
+     * The table <code>public.viewer</code>.
+     */
+    public static final Viewer VIEWER = Viewer.VIEWER;
+
+    /**
+     * Call <code>public.viewer</code>.
+     */
+    public static Result<ViewerRecord> VIEWER(Configuration configuration, JSON hasuraSession) {
+        return configuration.dsl().selectFrom(com.hstar.crylic.db.generated.tables.Viewer.VIEWER.call(hasuraSession)).fetch();
+    }
+
+    /**
+     * Get <code>public.viewer</code> as a table.
+     */
+    public static Viewer VIEWER(JSON hasuraSession) {
+        return com.hstar.crylic.db.generated.tables.Viewer.VIEWER.call(hasuraSession);
+    }
+
+    /**
+     * Get <code>public.viewer</code> as a table.
+     */
+    public static Viewer VIEWER(Field<JSON> hasuraSession) {
+        return com.hstar.crylic.db.generated.tables.Viewer.VIEWER.call(hasuraSession);
+    }
 }

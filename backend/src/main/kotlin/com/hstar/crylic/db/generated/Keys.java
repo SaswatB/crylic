@@ -4,9 +4,15 @@
 package com.hstar.crylic.db.generated;
 
 
+import com.hstar.crylic.db.generated.tables.FlywaySchemaHistory;
+import com.hstar.crylic.db.generated.tables.Integrations;
 import com.hstar.crylic.db.generated.tables.User;
+import com.hstar.crylic.db.generated.tables.records.FlywaySchemaHistoryRecord;
+import com.hstar.crylic.db.generated.tables.records.IntegrationsRecord;
 import com.hstar.crylic.db.generated.tables.records.UserRecord;
 
+import org.jooq.ForeignKey;
+import org.jooq.Identity;
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.Internal;
@@ -23,23 +29,37 @@ public class Keys {
     // IDENTITY definitions
     // -------------------------------------------------------------------------
 
+    public static final Identity<IntegrationsRecord, Integer> IDENTITY_INTEGRATIONS = Identities0.IDENTITY_INTEGRATIONS;
 
     // -------------------------------------------------------------------------
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
+    public static final UniqueKey<FlywaySchemaHistoryRecord> FLYWAY_SCHEMA_HISTORY_PK = UniqueKeys0.FLYWAY_SCHEMA_HISTORY_PK;
+    public static final UniqueKey<IntegrationsRecord> INTEGRATIONS_PKEY = UniqueKeys0.INTEGRATIONS_PKEY;
     public static final UniqueKey<UserRecord> USER_PKEY = UniqueKeys0.USER_PKEY;
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
+    public static final ForeignKey<IntegrationsRecord, UserRecord> INTEGRATIONS__INTEGRATIONS_USER_ID_FKEY = ForeignKeys0.INTEGRATIONS__INTEGRATIONS_USER_ID_FKEY;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
     // -------------------------------------------------------------------------
 
+    private static class Identities0 {
+        public static Identity<IntegrationsRecord, Integer> IDENTITY_INTEGRATIONS = Internal.createIdentity(Integrations.INTEGRATIONS, Integrations.INTEGRATIONS.ID);
+    }
+
     private static class UniqueKeys0 {
+        public static final UniqueKey<FlywaySchemaHistoryRecord> FLYWAY_SCHEMA_HISTORY_PK = Internal.createUniqueKey(FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY, "flyway_schema_history_pk", new TableField[] { FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY.INSTALLED_RANK }, true);
+        public static final UniqueKey<IntegrationsRecord> INTEGRATIONS_PKEY = Internal.createUniqueKey(Integrations.INTEGRATIONS, "Integrations_pkey", new TableField[] { Integrations.INTEGRATIONS.ID }, true);
         public static final UniqueKey<UserRecord> USER_PKEY = Internal.createUniqueKey(User.USER, "User_pkey", new TableField[] { User.USER.ID }, true);
+    }
+
+    private static class ForeignKeys0 {
+        public static final ForeignKey<IntegrationsRecord, UserRecord> INTEGRATIONS__INTEGRATIONS_USER_ID_FKEY = Internal.createForeignKey(Keys.USER_PKEY, Integrations.INTEGRATIONS, "Integrations_user_id_fkey", new TableField[] { Integrations.INTEGRATIONS.USER_ID }, true);
     }
 }

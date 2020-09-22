@@ -12,13 +12,13 @@ export const AuthService = {
     formData.append("lastName", lastName);
     formData.append("email", email);
     formData.append("password", password);
-    return Axios.post("/api/register", formData);
+    return Axios.post("/api/auth/register", formData);
   },
 
   login(email: string, password: string) {
     const formData = new FormData();
     formData.append("email", email);
     formData.append("password", password);
-    return Axios.post("/api/login", formData);
+    return Axios.post("/api/auth/login", formData);
   },
 };

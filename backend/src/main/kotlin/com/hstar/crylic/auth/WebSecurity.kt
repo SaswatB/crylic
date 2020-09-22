@@ -17,9 +17,10 @@ class WebSecurity : WebSecurityConfigurerAdapter() {
                 .and().and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) // stateless!
                 .and().authorizeRequests()
-                .antMatchers("/login").permitAll()
-                .antMatchers("/register").permitAll()
-                .antMatchers("/jwks").permitAll()
+                .antMatchers("/auth/login").permitAll()
+                .antMatchers("/auth/register").permitAll()
+                .antMatchers("/auth/jwks").permitAll()
+                .antMatchers("/redirect/github").permitAll()
                 .anyRequest().authenticated()
     }
 }

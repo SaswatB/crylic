@@ -8,6 +8,7 @@ plugins {
 	kotlin("plugin.spring") version "1.3.72"
 	id("nu.studer.jooq") version "5.0.2"
     id("com.diffplug.spotless") version "5.5.1"
+    id("com.apollographql.apollo") version("2.3.1")
 }
 
 group = "com.hstar"
@@ -27,11 +28,17 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.flywaydb:flyway-core")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
     implementation("com.nimbusds:nimbus-jose-jwt:9.0.1")
+    implementation("com.apollographql.apollo:apollo-runtime:2.3.1")
+    implementation("com.apollographql.apollo:apollo-coroutines-support:2.3.1")
+    implementation("com.konghq:unirest-java:3.10.00")
+
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
     runtimeOnly("org.postgresql:postgresql")
@@ -82,6 +89,11 @@ jooq {
 }
 // remove the default automatic jooq generation
 //project.tasks.getByName("compileJava").dependsOn.remove("generateDefaultJooqSchemaSource")
+
+// instruct the compiler to generate Kotlin models
+apollo {
+    generateKotlinModels.set(true)
+}
 
 spotless {
     kotlin {

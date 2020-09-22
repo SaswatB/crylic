@@ -11,6 +11,13 @@ import com.nimbusds.jose.jwk.KeyUse
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator
 import com.nimbusds.jwt.JWTClaimsSet
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.util.*
+import java.util.UUID
+import javax.annotation.PostConstruct
+import javax.validation.constraints.Email
+import javax.validation.constraints.NotBlank
 import org.jooq.DSLContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
@@ -19,14 +26,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.server.ResponseStatusException
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.util.*
-import java.util.UUID
-import javax.annotation.PostConstruct
-import javax.validation.constraints.Email
-import javax.validation.constraints.NotBlank
-
 
 private const val TOKEN_EXPIRATION_DAYS = 30L
 const val REDIS_AUTH_KEY = "auth:signature"
