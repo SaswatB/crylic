@@ -49,6 +49,24 @@
           }
         }
       ],
+      "remote_relationships": [
+        {
+          "definition": {
+            "remote_field": {
+              "github": {
+                "arguments": {
+                  "userId": "$id"
+                }
+              }
+            },
+            "hasura_fields": [
+              "id"
+            ],
+            "remote_schema": "Spring"
+          },
+          "name": "github"
+        }
+      ],
       "select_permissions": [
         {
           "role": "user",
@@ -94,6 +112,16 @@
       },
       "configuration": {
         "session_argument": "hasura_session"
+      }
+    }
+  ],
+  "remote_schemas": [
+    {
+      "name": "Spring",
+      "definition": {
+        "url": "https://crylic.ngrok.io/api/graphql",
+        "timeout_seconds": 60,
+        "forward_client_headers": true
       }
     }
   ]

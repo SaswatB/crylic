@@ -2,11 +2,9 @@ package com.hstar.crylic.services
 
 import com.hstar.crylic.db.generated.Tables
 import com.hstar.crylic.db.generated.tables.pojos.User
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.JWSHeader
-import com.nimbusds.jose.JWSObject
-import com.nimbusds.jose.Payload
+import com.nimbusds.jose.*
 import com.nimbusds.jose.crypto.RSASSASigner
+import com.nimbusds.jose.crypto.RSASSAVerifier
 import com.nimbusds.jose.jwk.KeyUse
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator
@@ -40,6 +38,7 @@ class AuthService {
     private lateinit var template: RedisTemplate<String, String>
     private lateinit var key: RSAKey
     private lateinit var signer: RSASSASigner
+    private lateinit var verifier: RSASSAVerifier
 
     @PostConstruct
     fun init() {
@@ -53,6 +52,7 @@ class AuthService {
             template.boundValueOps(REDIS_AUTH_KEY).set(key.toJSONString())
         }
         signer = RSASSASigner(key.toRSAPrivateKey())
+        verifier = RSASSAVerifier(key.toRSAPublicKey())
     }
 
     fun login(@NotBlank email: String, @NotBlank password: String): String {
@@ -62,7 +62,7 @@ class AuthService {
             if (user != null && passwordEncoder.matches(password, user.password.toString())) {
                 val claims = JWTClaimsSet.Builder()
                         .expirationTime(Date.from(LocalDateTime.now().plusDays(TOKEN_EXPIRATION_DAYS).atZone(ZoneId.systemDefault()).toInstant()))
-                        .claim("userId", user.id)
+                        .claim("userId", user.id.toString())
                         .claim("pTag", user.password.substring(0, 3))
                         // todo add revoke id
                         .claim("https://hasura.io/jwt/claims", mapOf(
@@ -90,4 +90,6 @@ class AuthService {
     }
 
     fun jwk() = key.toPublicJWK().toJSONObject()
+
+    fun verify(token: String) = JWSObject.parse(token).takeIf { it.verify(verifier) }?.payload?.toJSONObject()
 }
