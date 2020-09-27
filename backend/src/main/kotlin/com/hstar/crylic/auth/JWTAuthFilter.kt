@@ -21,20 +21,22 @@ class JWTAuthFilter : OncePerRequestFilter() {
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
         val requestTokenHeader = request.getHeader("Authorization")
 
-        if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ", ignoreCase = true)) {
-            try {
-                val username = authService.verify(requestTokenHeader.substring(7))?.get("userId")?.toString()
-                if (username != null) {
-                    val userDetails = User(username, "", listOf())
-                    val usernamePasswordAuthenticationToken = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
-                    usernamePasswordAuthenticationToken.details = WebAuthenticationDetailsSource().buildDetails(request)
-                    SecurityContextHolder.getContext().authentication = usernamePasswordAuthenticationToken
+        if (requestTokenHeader != null) {
+            if (requestTokenHeader.startsWith("Bearer ", ignoreCase = true)) {
+                try {
+                    val username = authService.verify(requestTokenHeader.substring(7))?.get("userId")?.toString()
+                    if (username != null) {
+                        val userDetails = User(username, "", listOf())
+                        val usernamePasswordAuthenticationToken = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
+                        usernamePasswordAuthenticationToken.details = WebAuthenticationDetailsSource().buildDetails(request)
+                        SecurityContextHolder.getContext().authentication = usernamePasswordAuthenticationToken
+                    }
+                } catch (e: Exception) {
+                    logger.warn("Unable to get JWT Token", e)
                 }
-            } catch (e: Exception) {
-                logger.warn("Unable to get JWT Token", e)
+            } else {
+                logger.warn("JWT Token does not begin with Bearer String")
             }
-        } else {
-            logger.warn("JWT Token does not begin with Bearer String")
         }
 
         filterChain.doFilter(request, response)

@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: graphql-engine
+  name: graphql-engine
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: graphql-engine
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: graphql-engine
+    spec:
+      containers:
+        - env:
+            - name: HASURA_GRAPHQL_ADMIN_SECRET
+              value: admin
+            - name: HASURA_GRAPHQL_DATABASE_URL
+              value: postgres://root:admin@db:5432/crylic
+            - name: HASURA_GRAPHQL_DEV_MODE
+              value: "true"
+            - name: HASURA_GRAPHQL_ENABLED_LOG_TYPES
+              value: startup, http-log, webhook-log, websocket-log, query-log
+            - name: HASURA_GRAPHQL_ENABLE_CONSOLE
+              value: "true"
+            - name: HASURA_GRAPHQL_JWT_SECRET
+              value: '{"type":"RS256", "jwk_url": "https://crylic.ngrok.io/api/auth/jwks"}'
+          image: hasura/graphql-engine:v1.3.2
+          imagePullPolicy: "IfNotPresent"
+          name: graphql-engine
+          ports:
+            - containerPort: 8080
+          resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: graphql-engine
+  name: graphql-engine
+spec:
+  ports:
+    - name: "8090"
+      port: 8090
+      targetPort: 8080
+  selector:
+    app: graphql-engine
+status:
+  loadBalancer: {}

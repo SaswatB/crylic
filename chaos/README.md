@@ -1,0 +1,28 @@
+# K8s deployment
+
+## Setup
+
+```bash
+# Create the namespace and set it as the default
+kubectl apply -f ./crylic-namespace.yaml
+kubectl config set-context --current --namespace=crylic
+
+# Install Istio
+istioctl install --set profile=demo
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.7/samples/addons/prometheus.yaml
+helm install --namespace istio-system --set auth.strategy="anonymous" --repo https://kiali.org/helm-charts kiali-server kiali-server
+kubectl label namespace crylic istio-injection=enabled
+
+# Run all the services
+k apply -f ./chaos/
+```
+
+## Other
+
+```bash
+# Check if the config is valid for Istio
+istioctl analyze
+
+# Access Istio dashboard
+istioctl dashboard kiali
+```

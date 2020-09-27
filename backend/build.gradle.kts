@@ -54,7 +54,7 @@ dependencies {
 jooq {
     configurations {
         create("main") {  // name of the jOOQ configuration
-            generateSchemaSourceOnCompilation.set(true)  // default (can be omitted)
+            generateSchemaSourceOnCompilation.set(false)  // default (can be omitted)
 
             jooqConfiguration.apply {
                 logging = org.jooq.meta.jaxb.Logging.WARN

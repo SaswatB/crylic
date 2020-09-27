@@ -16,6 +16,14 @@ export const ProjectCreator: FunctionComponent = () => {
         Integrations {
           type
         }
+        github {
+          name
+          projects {
+            name
+            url
+            primaryLanguage
+          }
+        }
       }
     }
   `);
@@ -42,7 +50,13 @@ export const ProjectCreator: FunctionComponent = () => {
     </button>
   );
 
-  const renderGithubProjects = () => <div />;
+  const renderGithubProjects = () => {
+    const projects = data?.viewer?.[0]?.github?.projects || [];
+    if (projects.length === 0) return <div>No projects found on GitHub</div>;
+    return projects.map((project: any) => (
+      <div className="p-4">{project.name}</div>
+    ));
+  };
 
   return (
     <div className="flex justify-center items-center h-screen">

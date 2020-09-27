@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: messaging
+  name: messaging
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: messaging
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: messaging
+    spec:
+      containers:
+        - image: rabbitmq
+          imagePullPolicy: "IfNotPresent"
+          name: messaging
+          ports:
+            - containerPort: 5672
+            - containerPort: 15672
+            - containerPort: 25672
+          resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: messaging
+  name: messaging
+spec:
+  ports:
+    - name: "5672"
+      port: 5672
+      targetPort: 5672
+    - name: "15672"
+      port: 15672
+      targetPort: 15672
+    - name: "25672"
+      port: 25672
+      targetPort: 25672
+  selector:
+    app: messaging
+status:
+  loadBalancer: {}
