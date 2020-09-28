@@ -8,8 +8,9 @@ kubectl apply -f ./crylic-namespace.yaml
 kubectl config set-context --current --namespace=crylic
 
 # Install Istio
-istioctl install --set profile=demo
+istioctl install --set profile=demo --set meshConfig.accessLogFile=/dev/stdout
 kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.7/samples/addons/prometheus.yaml
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.7/samples/addons/jaeger.yaml
 helm install --namespace istio-system --set auth.strategy="anonymous" --repo https://kiali.org/helm-charts kiali-server kiali-server
 kubectl label namespace crylic istio-injection=enabled
 
@@ -25,4 +26,7 @@ istioctl analyze
 
 # Access Istio dashboard
 istioctl dashboard kiali
+
+# Get istio external ip
+kubectl get svc istio-ingressgateway -n istio-system
 ```

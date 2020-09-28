@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: crylic-backend
+  name: crylic-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crylic-backend
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: crylic-backend
+    spec:
+      containers:
+        - image: crylic/backend:latest
+          imagePullPolicy: "Never"
+          name: crylic-backend
+          ports:
+            - containerPort: 8080
+          resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: crylic-backend
+  name: crylic-backend
+spec:
+  ports:
+    - name: "80"
+      port: 80
+      targetPort: 8080
+  selector:
+    app: crylic-backend
+status:
+  loadBalancer: {}

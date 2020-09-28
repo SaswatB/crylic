@@ -96,6 +96,7 @@ apollo {
 }
 
 spotless {
+    isEnforceCheck = false
     kotlin {
         ktlint().userData(mapOf("disabled_rules" to "no-wildcard-imports"))
     }

@@ -2,18 +2,18 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: graphql-engine
-  name: graphql-engine
+    app: hasura
+  name: hasura
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: graphql-engine
+      app: hasura
   strategy: {}
   template:
     metadata:
       labels:
-        app: graphql-engine
+        app: hasura
     spec:
       containers:
         - env:
@@ -28,10 +28,10 @@ spec:
             - name: HASURA_GRAPHQL_ENABLE_CONSOLE
               value: "true"
             - name: HASURA_GRAPHQL_JWT_SECRET
-              value: '{"type":"RS256", "jwk_url": "https://crylic.ngrok.io/api/auth/jwks"}'
+              value: '{"type":"RS256", "jwk_url": "http://crylic-backend/auth/jwks"}'
           image: hasura/graphql-engine:v1.3.2
           imagePullPolicy: "IfNotPresent"
-          name: graphql-engine
+          name: hasura
           ports:
             - containerPort: 8080
           resources: {}
@@ -43,14 +43,14 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: graphql-engine
-  name: graphql-engine
+    app: hasura
+  name: hasura
 spec:
   ports:
-    - name: "8090"
-      port: 8090
+    - name: "80"
+      port: 80
       targetPort: 8080
   selector:
-    app: graphql-engine
+    app: hasura
 status:
   loadBalancer: {}

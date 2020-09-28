@@ -1,0 +1,72 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: crylic-gateway
+spec:
+  selector:
+    istio: ingressgateway # use Istio default gateway implementation
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: crylic-router
+spec:
+  hosts:
+    - "*"
+  gateways:
+    - crylic-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /api/
+      rewrite:
+        uri: /
+      route:
+        - destination:
+            port:
+              number: 80
+            host: crylic-backend
+    - match:
+        - uri:
+            prefix: /graphql
+      rewrite:
+        uri: /v1/graphql
+      route:
+        - destination:
+            port:
+              number: 80
+            host: hasura
+    # todo remove for prod
+    - match:
+        - uri:
+            prefix: /v1
+      rewrite:
+        uri: /v1
+      route:
+        - destination:
+            port:
+              number: 80
+            host: hasura
+    # todo remove for prod
+    - match:
+        - uri:
+            prefix: /console
+      rewrite:
+        uri: /console
+      route:
+        - destination:
+            port:
+              number: 80
+            host: hasura
+    - route:
+        - destination:
+            port:
+              number: 80
+            host: crylic-web
