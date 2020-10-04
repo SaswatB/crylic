@@ -42,8 +42,8 @@
   "devDependencies": {
     "@pmmmwh/react-refresh-webpack-plugin": "^0.4.1",
     "customize-cra": "^1.0.0",
-    "http-proxy-middleware": "^1.0.5",
     "react-app-rewired": "^2.1.6",
     "react-refresh": "^0.8.3"
-  }
+  },
+  "proxy": "http://localhost"
 }

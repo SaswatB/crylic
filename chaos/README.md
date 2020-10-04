@@ -36,7 +36,7 @@ helm install --namespace istio-system --set auth.strategy="anonymous" --repo htt
 kubectl label namespace crylic istio-injection=enabled
 
 # Run all the services
-k apply -f ./chaos/
+k apply -f ./
 ```
 
 ## Istio extras
