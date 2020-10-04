@@ -1,6 +1,27 @@
 # K8s deployment
 
-## Setup
+## Build containers
+
+```bash
+cd ..
+
+# build backend
+pushd backend
+./gradlew.bat bootBuildImage --imageName=crylic/backend
+popd
+
+# build frontend
+pushd web
+docker build . -t crylic/web
+popd
+
+# build dev container (optional)
+pushd chaos/routing
+docker build . -t crylic/routing
+popd
+```
+
+## Deploy K8s
 
 ```bash
 # Create the namespace and set it as the default
@@ -18,7 +39,7 @@ kubectl label namespace crylic istio-injection=enabled
 k apply -f ./chaos/
 ```
 
-## Other
+## Istio extras
 
 ```bash
 # Check if the config is valid for Istio
