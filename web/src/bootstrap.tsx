@@ -20,7 +20,7 @@ import { TourProvider } from "synergy/src/components/Tour/Tour";
 import { StateManager } from "synergy/src/components/Workspace/StateManager";
 import { bus } from "synergy/src/lib/events";
 
-import { AUTH_LOCAL_STORAGE_KEY } from "./hooks/recoil/useAuth";
+import { getVerifiedAuthToken } from "./hooks/recoil/useAuth";
 // loadWASM(require("onigasm/lib/onigasm.wasm").default);
 
 const darkTheme = createMuiTheme({
@@ -35,9 +35,9 @@ const httpLink = createHttpLink({
   uri: "/graphql",
 });
 
-const authLink = setContext((_, { headers }) => {
+const authLink = setContext(async (_, { headers }) => {
   const newHeaders = { ...headers };
-  const token = localStorage.getItem(AUTH_LOCAL_STORAGE_KEY);
+  const token = await getVerifiedAuthToken();
   if (token) newHeaders.Authorization = `Bearer ${token}`;
   return { headers: newHeaders };
 });

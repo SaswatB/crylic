@@ -39,6 +39,10 @@ class AuthController {
         return mapOf("success" to true)
     }
 
+    // this route is authenticated, so if the auth token is valid it'll return ok
+    @PostMapping("/check_token")
+    fun checkToken() = ResponseEntity.ok().body(mapOf("result" to "ok"))
+
     @GetMapping("/jwks")
     fun jwks() = ResponseEntity.ok().cacheControl(CacheControl.maxAge(10, TimeUnit.MINUTES)).body(mapOf("keys" to arrayOf(authService.jwk())))
 

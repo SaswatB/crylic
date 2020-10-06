@@ -21,4 +21,12 @@ export const AuthService = {
     formData.append("password", password);
     return Axios.post("/api/auth/login", formData);
   },
+
+  checkToken(token: string) {
+    return Axios.post(
+      "/api/auth/check_token",
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  },
 };

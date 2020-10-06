@@ -6,17 +6,9 @@ k patch deployment crylic-backend --type='json' --patch "$(get-content backend-d
 
 # Forward the ssh server to localhost
 k port-forward $(k get pods --selector='app=crylic-backend' -o name) 2222:22
+# Run the backend within the host path volume (should be at /opt/run/desktop/mnt/host/c/ for wsl2)
+./gradlew bootRun
 
 # Restore old backend image (this doesn't delete the volume)
 k apply -f ../backend.yaml
-```
-
-## Initialize dev container
-
-```bash
-wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add -
-apt-get install -y software-properties-common
-add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/
-apt-get update
-apt-get install -y adoptopenjdk-11-hotspot
 ```
