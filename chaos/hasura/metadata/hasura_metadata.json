@@ -4,7 +4,7 @@
     {
       "table": {
         "schema": "public",
-        "name": "Integrations"
+        "name": "Integration"
       },
       "select_permissions": [
         {
@@ -37,13 +37,13 @@
       },
       "array_relationships": [
         {
-          "name": "Integrations",
+          "name": "integrations",
           "using": {
             "foreign_key_constraint_on": {
               "column": "user_id",
               "table": {
                 "schema": "public",
-                "name": "Integrations"
+                "name": "Integration"
               }
             }
           }

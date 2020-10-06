@@ -2,7 +2,7 @@ package com.hstar.crylic.graphql.server
 
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import com.hstar.crylic.services.GithubService
-import com.hstar.crylic.services.IntegrationsService
+import com.hstar.crylic.services.IntegrationService
 import com.hstar.crylic.utils.CurrentUser
 import java.util.*
 import kotlin.collections.ArrayList
@@ -17,7 +17,7 @@ class Query : GraphQLQueryResolver {
     @Autowired
     private lateinit var githubString: GithubService
     @Autowired
-    private lateinit var integrationService: IntegrationsService
+    private lateinit var integrationService: IntegrationService
 
     fun github(@CurrentUser userId: String): Github? {
         val integration = integrationService.getIntegration(UUID.fromString(userId)) ?: return null

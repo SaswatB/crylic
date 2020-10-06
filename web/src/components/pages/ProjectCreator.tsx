@@ -16,7 +16,7 @@ export const ProjectCreator: FunctionComponent = () => {
       viewer {
         id
         email
-        Integrations {
+        integrations {
           type
         }
         github {
@@ -30,7 +30,8 @@ export const ProjectCreator: FunctionComponent = () => {
       }
     }
   `);
-  const hasGithub = !!data?.viewer?.[0]?.Integrations?.find(
+
+  const hasGithub = !!data?.viewer?.[0]?.integrations?.find(
     (i: any) => i.type === "github"
   );
   console.log("data", data);

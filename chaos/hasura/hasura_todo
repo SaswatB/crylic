@@ -1,3 +1,3 @@
 switch viewer to a function that returns a single result when this is resolved: https://github.com/hasura/graphql-engine/issues/4299
 unique on email
-unique on integrations type/userid
+unique on integration type/userid
