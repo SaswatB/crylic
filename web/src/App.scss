@@ -6,5 +6,30 @@
 
 body {
   color: white;
-  transition: background 300ms;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  background-color: black;
+
+  a {
+    position: relative;
+    display: block;
+    padding: 10px 20px;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, .4);
+    }
+
+    &.active::before {
+      content: ' ';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 3px;
+      background-color: #039be5;
+    }
+  }
 }

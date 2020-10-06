@@ -1,7 +1,10 @@
 import React, { FunctionComponent } from "react";
 import { gql, useQuery } from "@apollo/client";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { Backdrop, CircularProgress } from "@material-ui/core";
 import { useSnackbar } from "notistack";
+
+import { IconButton } from "synergy/src/components/IconButton";
 
 import { openSignInWindow } from "../../lib/oauth-popup";
 import { BodyColor } from "../BodyColor";
@@ -53,9 +56,19 @@ export const ProjectCreator: FunctionComponent = () => {
   const renderGithubProjects = () => {
     const projects = data?.viewer?.[0]?.github?.projects || [];
     if (projects.length === 0) return <div>No projects found on GitHub</div>;
-    return projects.map((project: any) => (
-      <div className="p-4">{project.name}</div>
-    ));
+    return (
+      <div className="flex flex-col m-4">
+        <div className="mb-4 text-center text-lg">Import a GitHub Project</div>
+        <div className="flex flex-wrap gap-4">
+          {projects.map((project: any) => (
+            <div className="p-4 rounded overflow-hidden shadow-lg bg-green-900">
+              {project.name}
+              <IconButton className="ml-4" icon={faPlus} title="Import" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (

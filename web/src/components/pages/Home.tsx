@@ -4,11 +4,9 @@ import { Link } from "react-router-dom";
 import { Tour } from "synergy/src/components/Tour/Tour";
 
 import { Routes } from "../../App";
-import { useAuth } from "../../hooks/recoil/useAuth";
 import { BodyColor } from "../BodyColor";
 
 export const Home: FunctionComponent = () => {
-  const auth = useAuth();
   return (
     <div
       className="flex justify-center items-center h-screen"
@@ -60,9 +58,6 @@ export const Home: FunctionComponent = () => {
         >
           Open Project
         </Link>
-        <button className="btn w-full" onClick={auth.logout}>
-          Logout
-        </button>
       </div>
     </div>
   );

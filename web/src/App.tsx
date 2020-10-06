@@ -2,6 +2,7 @@ import React from "react";
 import { Route, Switch } from "react-router-dom";
 import { Backdrop, CircularProgress } from "@material-ui/core";
 
+import { Header } from "./components/Header";
 import { Home } from "./components/pages/Home";
 import { Login } from "./components/pages/Login";
 import { ProjectCreator } from "./components/pages/ProjectCreator";
@@ -17,6 +18,7 @@ function createStaticRoute(path: string) {
   };
 }
 export const Routes = {
+  HOME: createStaticRoute("/"),
   NEW_PROJECT: createStaticRoute("/projects/new"),
   LIST_PROJECTS: createStaticRoute("/projects/all"),
   EDIT_PROJECTS: {
@@ -39,20 +41,23 @@ function App() {
     return <Login />;
   }
   return (
-    <Switch>
-      <Route path={Routes.NEW_PROJECT.template}>
-        <ProjectCreator />
-      </Route>
-      <Route path={Routes.LIST_PROJECTS.template}>
-        <ProjectSelector />
-      </Route>
-      <Route path={Routes.EDIT_PROJECTS.template}>
-        <ProjectEditor />
-      </Route>
-      <Route path="/">
-        <Home />
-      </Route>
-    </Switch>
+    <>
+      <Header />
+      <Switch>
+        <Route path={Routes.NEW_PROJECT.template}>
+          <ProjectCreator />
+        </Route>
+        <Route path={Routes.LIST_PROJECTS.template}>
+          <ProjectSelector />
+        </Route>
+        <Route path={Routes.EDIT_PROJECTS.template}>
+          <ProjectEditor />
+        </Route>
+        <Route path={Routes.HOME.template}>
+          <Home />
+        </Route>
+      </Switch>
+    </>
   );
 }
 
