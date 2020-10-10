@@ -10,7 +10,7 @@ pushd backend
 ./gradlew.bat bootBuildImage --imageName=crylic/backend
 popd
 
-# build frontend
+# build frontend (yarn build may need to be run first in this directory)
 pushd web
 docker build . -t crylic/web
 popd

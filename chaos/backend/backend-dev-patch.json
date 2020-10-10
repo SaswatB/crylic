@@ -3,15 +3,5 @@
     "op": "replace",
     "path": "/spec/template/spec/containers/0/image",
     "value": "crylic/routing:latest"
-  },
-  {
-    "op": "add",
-    "path": "/spec/template/spec/volumes",
-    "value": [{ "name": "host", "hostPath": { "path": "/" } }]
-  },
-  {
-    "op": "add",
-    "path": "/spec/template/spec/containers/0/volumeMounts",
-    "value": [{ "mountPath": "/opt", "name": "host" }]
   }
 ]

@@ -1,14 +1,13 @@
 ## Develop backend
 
 ```bash
-# Replace the backend with a blank java image that can be ssh'd into and a volume to access host
+# Replace the backend with a blank image that can be ssh'd into
 k patch deployment crylic-backend --type='json' --patch "$(get-content backend-dev-patch.json -raw)"
 
-# Forward the ssh server to localhost
-k port-forward $(k get pods --selector='app=crylic-backend' -o name) 2222:22
-# Run the backend within the host path volume (should be at /opt/run/desktop/mnt/host/c/ for wsl2)
-./gradlew bootRun
+# Run telepresence (as admin)
+../routing/telepresence.ps1
+# Now run the backend locally
 
-# Restore old backend image (this doesn't delete the volume)
+# Restore old backend image
 k apply -f ../backend.yaml
 ```

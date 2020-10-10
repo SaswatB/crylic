@@ -73,5 +73,5 @@ npm i
 cd app
 npm ci
 cd ..
-yarn package
+npm run package
 ```
