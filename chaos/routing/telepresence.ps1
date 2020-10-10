@@ -94,7 +94,7 @@ try {
 
     # add a hosts entry to redirect traffic with the service name to the chosen local ip
     echo "Adding hosts entry for $($service.name) to $localIp"
-    Set-HostsEntry -IPAddress $localIp -HostName $service.name -Description "k8s ${$service.name}"
+    Set-HostsEntry -IPAddress $localIp -HostName $service.name -Description "k8s"
     $hostEntries += $service.name
     echo "Finished $($service.name)!"
     echo ""
