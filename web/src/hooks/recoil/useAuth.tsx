@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useApolloClient } from "@apollo/client";
 import { atom, useRecoilState } from "recoil";
 
@@ -40,8 +40,13 @@ export function useAuth() {
     client.resetStore();
   };
 
+  const authTokenPresent = useMemo(
+    () => !!localStorage.getItem(AUTH_LOCAL_STORAGE_KEY),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [!!authToken]
+  );
   // initially load and verify the login token
-  const [isLoading, setLoading] = useState(false);
+  const [isLoading, setLoading] = useState(authTokenPresent);
   useEffect(() => {
     setLoading(true);
     getVerifiedAuthToken().then((token) => {
@@ -53,6 +58,7 @@ export function useAuth() {
 
   return {
     isLoading,
+    isAuthSaved: authTokenPresent,
     isAuthenticated: !isLoading && !!authToken,
     authToken,
     setAuthToken,

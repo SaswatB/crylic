@@ -1,19 +1,24 @@
 import React, { FunctionComponent } from "react";
+import { useHistory } from "react-router-dom";
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
-import { Backdrop, CircularProgress } from "@material-ui/core";
 import { useSnackbar } from "notistack";
 
 import { IconButton } from "synergy/src/components/IconButton";
 
+import { Routes } from "../../App";
 import { openSignInWindow } from "../../lib/oauth-popup";
-import { BodyColor } from "../BodyColor";
-import { AddProject } from "./__generated__/AddProject";
+import { PageFrame } from "../PageFrame";
+import { AddProject, AddProjectVariables } from "./__generated__/AddProject";
 import { GetGitHubProjects } from "./__generated__/GetGitHubProjects";
 
 export const ProjectCreator: FunctionComponent = () => {
   const { enqueueSnackbar } = useSnackbar();
-  const { data, loading, refetch } = useQuery<GetGitHubProjects>(gql`
+  const history = useHistory();
+
+  const { data, loading: queryLoading, refetch } = useQuery<
+    GetGitHubProjects
+  >(gql`
     query GetGitHubProjects {
       viewer {
         id
@@ -32,7 +37,10 @@ export const ProjectCreator: FunctionComponent = () => {
       }
     }
   `);
-  const [addProject, { error }] = useMutation<AddProject>(gql`
+  const [addProject, { error, loading: addProjectLoading }] = useMutation<
+    AddProject,
+    AddProjectVariables
+  >(gql`
     mutation AddProject($name: String!, $githubUrl: String!) {
       addProject(name: $name, githubUrl: $githubUrl)
     }
@@ -42,6 +50,7 @@ export const ProjectCreator: FunctionComponent = () => {
     (i: any) => i.type === "github"
   );
   console.log("data", data, error);
+  const loading = queryLoading || addProjectLoading;
 
   const renderAddGithub = () => (
     <button
@@ -62,7 +71,7 @@ export const ProjectCreator: FunctionComponent = () => {
   );
 
   const renderGithubProjects = () => {
-    const projects = data?.viewer?.[0]?.github?.projects || [];
+    const projects = data?.viewer[0]?.github?.projects || [];
     if (projects.length === 0) return <div>No projects found on GitHub</div>;
     return (
       <div className="flex flex-col m-4">
@@ -78,9 +87,20 @@ export const ProjectCreator: FunctionComponent = () => {
                 onClick={() =>
                   addProject({
                     variables: { name: project.name, githubUrl: project.url },
-                  }).catch((err) =>
-                    enqueueSnackbar(`Failed to create project ${err?.message}`)
-                  )
+                  })
+                    .then(({ data }) => {
+                      if (!data?.addProject) throw new Error("No ID");
+
+                      history.push(
+                        Routes.EDIT_PROJECTS.getPath(data.addProject)
+                      );
+                      enqueueSnackbar("Project created successfully");
+                    })
+                    .catch((err) =>
+                      enqueueSnackbar(
+                        `Failed to create project ${err?.message}`
+                      )
+                    )
                 }
               />
             </div>
@@ -91,12 +111,8 @@ export const ProjectCreator: FunctionComponent = () => {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen">
-      <Backdrop open={loading}>
-        <CircularProgress disableShrink />
-      </Backdrop>
-      <BodyColor className="green-hue" />
-      {!loading && (hasGithub ? renderGithubProjects() : renderAddGithub())}
-    </div>
+    <PageFrame bodyColor="green-hue" loading={loading}>
+      {hasGithub ? renderGithubProjects() : renderAddGithub()}
+    </PageFrame>
   );
 };

@@ -4,15 +4,11 @@ import { Link } from "react-router-dom";
 import { Tour } from "synergy/src/components/Tour/Tour";
 
 import { Routes } from "../../App";
-import { BodyColor } from "../BodyColor";
+import { PageFrame } from "../PageFrame";
 
 export const Home: FunctionComponent = () => {
   return (
-    <div
-      className="flex justify-center items-center h-screen"
-      data-tour="start"
-    >
-      <BodyColor className="dark-blue-hue" />
+    <PageFrame bodyColor="dark-blue-hue">
       <Tour
         name="start"
         autoOpen
@@ -59,6 +55,6 @@ export const Home: FunctionComponent = () => {
           Open Project
         </Link>
       </div>
-    </div>
+    </PageFrame>
   );
 };

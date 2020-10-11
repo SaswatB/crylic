@@ -13,7 +13,7 @@ import { onEnter, validateEmail } from "synergy/src/lib/utils";
 
 import { useAuth } from "../../hooks/recoil/useAuth";
 import { AuthService } from "../../lib/api/AuthService";
-import { BodyColor } from "../BodyColor";
+import { PageFrame } from "../PageFrame";
 
 export const Login: FunctionComponent = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -146,8 +146,7 @@ export const Login: FunctionComponent = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      <div className="flex justify-center items-center h-screen">
-        <BodyColor className="red-hue" />
+      <PageFrame bodyColor="red-hue">
         <div className="btngrp-v w-64">
           <button className="btn" onClick={() => setShowLogin(true)}>
             Log In
@@ -156,7 +155,7 @@ export const Login: FunctionComponent = () => {
             Sign Up
           </button>
         </div>
-      </div>
+      </PageFrame>
     </>
   );
 };

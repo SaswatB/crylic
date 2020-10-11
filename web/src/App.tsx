@@ -1,6 +1,5 @@
 import React from "react";
 import { Route, Switch } from "react-router-dom";
-import { Backdrop, CircularProgress } from "@material-ui/core";
 
 import { Header } from "./components/Header";
 import { Home } from "./components/pages/Home";
@@ -31,13 +30,7 @@ export const Routes = {
 function App() {
   const auth = useAuth();
 
-  if (auth.isLoading) {
-    return (
-      <Backdrop open={auth.isLoading}>
-        <CircularProgress disableShrink />
-      </Backdrop>
-    );
-  } else if (!auth.isAuthenticated) {
+  if (!auth.isAuthenticated && (!auth.isLoading || !auth.isAuthSaved)) {
     return <Login />;
   }
   return (
