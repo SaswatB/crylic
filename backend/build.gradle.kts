@@ -6,6 +6,7 @@ plugins {
 	id("io.spring.dependency-management") version "1.0.10.RELEASE"
 	kotlin("jvm") version "1.3.72"
 	kotlin("plugin.spring") version "1.3.72"
+    kotlin("kapt") version "1.4.10"
 	id("nu.studer.jooq") version "5.0.2"
     id("com.diffplug.spotless") version "5.5.1"
     id("com.apollographql.apollo") version("2.3.1")
@@ -38,6 +39,8 @@ dependencies {
     implementation("com.apollographql.apollo:apollo-runtime:2.3.1")
     implementation("com.apollographql.apollo:apollo-coroutines-support:2.3.1")
     implementation("com.konghq:unirest-java:3.10.00")
+    implementation("com.squareup.moshi:moshi:1.11.0")
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.11.0")
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 

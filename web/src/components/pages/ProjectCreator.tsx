@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from "react";
-import { gql, useQuery } from "@apollo/client";
+import { gql, useMutation, useQuery } from "@apollo/client";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { Backdrop, CircularProgress } from "@material-ui/core";
 import { useSnackbar } from "notistack";
@@ -12,7 +12,7 @@ import { BodyColor } from "../BodyColor";
 export const ProjectCreator: FunctionComponent = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { data, loading, refetch } = useQuery(gql`
-    {
+    query GetGitHubProjects {
       viewer {
         id
         email
@@ -30,11 +30,18 @@ export const ProjectCreator: FunctionComponent = () => {
       }
     }
   `);
+  const [addProject, { error }] = useMutation(gql`
+    mutation AddProject($name: String!, $githubUrl: String!) {
+      addProject(name: $name, githubUrl: $githubUrl) {
+        id
+      }
+    }
+  `);
 
   const hasGithub = !!data?.viewer?.[0]?.integrations?.find(
     (i: any) => i.type === "github"
   );
-  console.log("data", data);
+  console.log("data", data, error);
 
   const renderAddGithub = () => (
     <button
@@ -64,7 +71,18 @@ export const ProjectCreator: FunctionComponent = () => {
           {projects.map((project: any) => (
             <div className="p-4 rounded overflow-hidden shadow-lg bg-green-900">
               {project.name}
-              <IconButton className="ml-4" icon={faPlus} title="Import" />
+              <IconButton
+                className="ml-4"
+                icon={faPlus}
+                title="Import"
+                onClick={() =>
+                  addProject({
+                    variables: { name: project.name, githubUrl: project.url },
+                  }).catch((err) =>
+                    enqueueSnackbar(`Failed to create project ${err?.message}`)
+                  )
+                }
+              />
             </div>
           ))}
         </div>

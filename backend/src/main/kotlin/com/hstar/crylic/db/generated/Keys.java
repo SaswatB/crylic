@@ -6,9 +6,11 @@ package com.hstar.crylic.db.generated;
 
 import com.hstar.crylic.db.generated.tables.FlywaySchemaHistory;
 import com.hstar.crylic.db.generated.tables.Integration;
+import com.hstar.crylic.db.generated.tables.Project;
 import com.hstar.crylic.db.generated.tables.User;
 import com.hstar.crylic.db.generated.tables.records.FlywaySchemaHistoryRecord;
 import com.hstar.crylic.db.generated.tables.records.IntegrationRecord;
+import com.hstar.crylic.db.generated.tables.records.ProjectRecord;
 import com.hstar.crylic.db.generated.tables.records.UserRecord;
 
 import org.jooq.ForeignKey;
@@ -37,6 +39,7 @@ public class Keys {
 
     public static final UniqueKey<FlywaySchemaHistoryRecord> FLYWAY_SCHEMA_HISTORY_PK = UniqueKeys0.FLYWAY_SCHEMA_HISTORY_PK;
     public static final UniqueKey<IntegrationRecord> INTEGRATIONS_PKEY = UniqueKeys0.INTEGRATIONS_PKEY;
+    public static final UniqueKey<ProjectRecord> PROJECT_PKEY = UniqueKeys0.PROJECT_PKEY;
     public static final UniqueKey<UserRecord> USER_PKEY = UniqueKeys0.USER_PKEY;
 
     // -------------------------------------------------------------------------
@@ -44,6 +47,7 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final ForeignKey<IntegrationRecord, UserRecord> INTEGRATION__INTEGRATIONS_USER_ID_FKEY = ForeignKeys0.INTEGRATION__INTEGRATIONS_USER_ID_FKEY;
+    public static final ForeignKey<ProjectRecord, UserRecord> PROJECT__PROJECT_OWNER_ID_FKEY = ForeignKeys0.PROJECT__PROJECT_OWNER_ID_FKEY;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
@@ -56,10 +60,12 @@ public class Keys {
     private static class UniqueKeys0 {
         public static final UniqueKey<FlywaySchemaHistoryRecord> FLYWAY_SCHEMA_HISTORY_PK = Internal.createUniqueKey(FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY, "flyway_schema_history_pk", new TableField[] { FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY.INSTALLED_RANK }, true);
         public static final UniqueKey<IntegrationRecord> INTEGRATIONS_PKEY = Internal.createUniqueKey(Integration.INTEGRATION, "Integrations_pkey", new TableField[] { Integration.INTEGRATION.ID }, true);
+        public static final UniqueKey<ProjectRecord> PROJECT_PKEY = Internal.createUniqueKey(Project.PROJECT, "Project_pkey", new TableField[] { Project.PROJECT.ID }, true);
         public static final UniqueKey<UserRecord> USER_PKEY = Internal.createUniqueKey(User.USER, "User_pkey", new TableField[] { User.USER.ID }, true);
     }
 
     private static class ForeignKeys0 {
         public static final ForeignKey<IntegrationRecord, UserRecord> INTEGRATION__INTEGRATIONS_USER_ID_FKEY = Internal.createForeignKey(Keys.USER_PKEY, Integration.INTEGRATION, "Integrations_user_id_fkey", new TableField[] { Integration.INTEGRATION.USER_ID }, true);
+        public static final ForeignKey<ProjectRecord, UserRecord> PROJECT__PROJECT_OWNER_ID_FKEY = Internal.createForeignKey(Keys.USER_PKEY, Project.PROJECT, "Project_owner_id_fkey", new TableField[] { Project.PROJECT.OWNER_ID }, true);
     }
 }

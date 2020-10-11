@@ -26,6 +26,36 @@
     {
       "table": {
         "schema": "public",
+        "name": "Project"
+      },
+      "configuration": {
+        "custom_root_fields": {},
+        "custom_column_names": {
+          "owner_id": "ownerId"
+        }
+      },
+      "select_permissions": [
+        {
+          "role": "user",
+          "permission": {
+            "columns": [
+              "id",
+              "name",
+              "owner_id",
+              "type"
+            ],
+            "filter": {
+              "owner_id": {
+                "_eq": "X-Hasura-User-Id"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "table": {
+        "schema": "public",
         "name": "User"
       },
       "configuration": {
@@ -44,6 +74,18 @@
               "table": {
                 "schema": "public",
                 "name": "Integration"
+              }
+            }
+          }
+        },
+        {
+          "name": "projects",
+          "using": {
+            "foreign_key_constraint_on": {
+              "column": "owner_id",
+              "table": {
+                "schema": "public",
+                "name": "Project"
               }
             }
           }

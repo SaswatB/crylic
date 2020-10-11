@@ -7,6 +7,7 @@ package com.hstar.crylic.db.generated;
 import com.hstar.crylic.db.generated.tables.FlywaySchemaHistory;
 import com.hstar.crylic.db.generated.tables.Integration;
 import com.hstar.crylic.db.generated.tables.PgpArmorHeaders;
+import com.hstar.crylic.db.generated.tables.Project;
 import com.hstar.crylic.db.generated.tables.User;
 import com.hstar.crylic.db.generated.tables.Viewer;
 import com.hstar.crylic.db.generated.tables.records.PgpArmorHeadersRecord;
@@ -59,6 +60,11 @@ public class Tables {
     public static PgpArmorHeaders PGP_ARMOR_HEADERS(Field<String> __1) {
         return com.hstar.crylic.db.generated.tables.PgpArmorHeaders.PGP_ARMOR_HEADERS.call(__1);
     }
+
+    /**
+     * The table <code>public.Project</code>.
+     */
+    public static final Project PROJECT = Project.PROJECT;
 
     /**
      * The table <code>public.User</code>.

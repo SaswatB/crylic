@@ -15,13 +15,13 @@ import org.springframework.validation.annotation.Validated
 @Suppress("unused")
 class Query : GraphQLQueryResolver {
     @Autowired
-    private lateinit var githubString: GithubService
+    private lateinit var githubService: GithubService
     @Autowired
     private lateinit var integrationService: IntegrationService
 
     fun github(@CurrentUser userId: String): Github? {
         val integration = integrationService.getIntegration(UUID.fromString(userId)) ?: return null
-        val response = githubString.getProjectData(integration.token)
+        val response = githubService.getProjectData(integration.token)
         val viewer = response.getJSONObject("data").getJSONObject("viewer")
         val repos = viewer.getJSONObject("repositories").getJSONArray("nodes")
 

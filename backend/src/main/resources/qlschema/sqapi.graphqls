@@ -1,22 +1,18 @@
 scalar uuid
 
 type GithubProject {
-    name: String!
-    url: String!
-    primaryLanguage: String
+  name: String!
+  url: String!
+  primaryLanguage: String
 }
 type Github {
-    name: String!
-    projects: [GithubProject!]!
-}
-
-type Project {
-    id: String!
+  name: String!
+  projects: [GithubProject!]!
 }
 
 type Query {
-    github(userId: uuid!): Github
+  github(userId: uuid!): Github
 }
 type Mutation {
-    addProject(githubUrl: String!): Project!
+  addProject(name: String!, githubUrl: String!): uuid!
 }

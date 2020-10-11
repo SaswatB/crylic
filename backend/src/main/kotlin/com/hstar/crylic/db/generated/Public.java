@@ -7,6 +7,7 @@ package com.hstar.crylic.db.generated;
 import com.hstar.crylic.db.generated.tables.FlywaySchemaHistory;
 import com.hstar.crylic.db.generated.tables.Integration;
 import com.hstar.crylic.db.generated.tables.PgpArmorHeaders;
+import com.hstar.crylic.db.generated.tables.Project;
 import com.hstar.crylic.db.generated.tables.User;
 import com.hstar.crylic.db.generated.tables.Viewer;
 import com.hstar.crylic.db.generated.tables.records.PgpArmorHeadersRecord;
@@ -31,7 +32,7 @@ import org.jooq.impl.SchemaImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Public extends SchemaImpl {
 
-    private static final long serialVersionUID = 144479083;
+    private static final long serialVersionUID = 2051803842;
 
     /**
      * The reference instance of <code>public</code>
@@ -73,6 +74,11 @@ public class Public extends SchemaImpl {
     public static PgpArmorHeaders PGP_ARMOR_HEADERS(Field<String> __1) {
         return com.hstar.crylic.db.generated.tables.PgpArmorHeaders.PGP_ARMOR_HEADERS.call(__1);
     }
+
+    /**
+     * The table <code>public.Project</code>.
+     */
+    public final Project PROJECT = Project.PROJECT;
 
     /**
      * The table <code>public.User</code>.
@@ -130,6 +136,7 @@ public class Public extends SchemaImpl {
             FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY,
             Integration.INTEGRATION,
             PgpArmorHeaders.PGP_ARMOR_HEADERS,
+            Project.PROJECT,
             User.USER,
             Viewer.VIEWER);
     }

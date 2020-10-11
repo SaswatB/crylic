@@ -1,11 +1,13 @@
 package com.hstar.crylic.utils
 
+import org.springframework.security.core.AuthenticationException
 import javax.validation.Constraint
 import javax.validation.ConstraintValidator
 import javax.validation.ConstraintValidatorContext
 import javax.validation.Payload
 import kotlin.reflect.KClass
 import org.springframework.security.core.context.SecurityContextHolder
+import java.util.*
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
@@ -21,3 +23,6 @@ class CurrentUserValidator : ConstraintValidator<CurrentUser, String> {
     override fun isValid(value: String?, context: ConstraintValidatorContext) =
             SecurityContextHolder.getContext().authentication.let { it.isAuthenticated && it.name == (value) }
 }
+
+// todo use a better exception class
+fun getCurrentUser() = UUID.fromString(SecurityContextHolder.getContext().authentication.also { if (!it.isAuthenticated) throw Exception("Not Authenticated") }.name)
