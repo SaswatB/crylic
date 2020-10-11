@@ -27,8 +27,8 @@ export function useProjectRecoil() {
     clearChangeHistory,
   } = useCodeChangeStack(setProject);
 
-  const closeProject = () => {
-    setProject(undefined);
+  const resetProject = (project?: Project) => {
+    setProject(project);
     clearChangeHistory();
   };
 
@@ -69,7 +69,8 @@ export function useProjectRecoil() {
   return {
     project,
     setProject,
-    closeProject,
+    initProject: (project: Project) => resetProject(project),
+    closeProject: () => resetProject(),
     undoCodeChange,
     redoCodeChange,
     addCodeEntry,

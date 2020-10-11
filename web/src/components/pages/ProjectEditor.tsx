@@ -5,6 +5,8 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { useParams } from "react-router-dom";
+import { gql, useQuery } from "@apollo/client";
 import { faBars } from "@fortawesome/free-solid-svg-icons";
 import { useSnackbar } from "notistack";
 import { Resizable } from "re-resizable";
@@ -25,11 +27,43 @@ import { editorResize } from "synergy/src/lib/events";
 import { ComponentViewZoomAction } from "synergy/src/types/paint";
 
 import { remoteWebpackWorker } from "../../lib/remote-webpack-worker";
+import { PageFrame } from "../PageFrame";
+import {
+  GetUserCurrrentProject,
+  GetUserCurrrentProjectVariables,
+} from "./__generated__/GetUserCurrrentProject";
 
 export const ProjectEditor: FunctionComponent = () => {
-  const { project, closeProject } = useProjectRecoil();
   const { enqueueSnackbar } = useSnackbar();
   const bus = useBus();
+  const { projectId } = useParams<{ projectId: string }>();
+
+  const { data, loading: queryLoading } = useQuery<
+    GetUserCurrrentProject,
+    GetUserCurrrentProjectVariables
+  >(
+    gql`
+      query GetUserCurrrentProject($projectId: uuid!) {
+        viewer {
+          projects(where: { id: { _eq: $projectId } }) {
+            id
+            name
+          }
+        }
+      }
+    `,
+    { variables: { projectId } }
+  );
+
+  const { project, initProject } = useProjectRecoil();
+  const [projectInitLoading, setProjectInitLoading] = useState(false);
+  useEffect(() => {
+    if (!queryLoading && (!project || (project as any).id !== projectId)) {
+      setProjectInitLoading(true);
+      // initProject();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, queryLoading]);
 
   const { tourDisabled, setTourDisabled, resetTour } = useContext(TourContext);
   const [
@@ -40,7 +74,7 @@ export const ProjectEditor: FunctionComponent = () => {
   ] = useMenuInput({
     options: [
       { name: "Save Project", value: "save" },
-      { name: "Close Project", value: "close" },
+      // todo move tour settings to header
       {
         name: tourDisabled ? "Enable Tour" : "Disable Tour",
         value: "toggleTour",
@@ -59,9 +93,6 @@ export const ProjectEditor: FunctionComponent = () => {
             alert(`There was an error while saving: ${error.message}`);
           }
           break;
-        case "close":
-          closeProject();
-          break;
         case "toggleTour":
           setTourDisabled(!tourDisabled);
           break;
@@ -72,10 +103,12 @@ export const ProjectEditor: FunctionComponent = () => {
     },
   });
 
+  const loading = queryLoading || projectInitLoading;
+
   const renderLeftPane = () => (
     <>
       <div className="flex">
-        {project?.config.name || "Loading..."}
+        {data?.viewer[0].projects[0]?.name || "Loading..."}
         <div className="flex-1" />
         <IconButton
           className="ml-2"
@@ -119,7 +152,11 @@ export const ProjectEditor: FunctionComponent = () => {
       />
     ));
   return (
-    <div className="flex flex-1 flex-row">
+    <PageFrame
+      className="flex flex-1 flex-row"
+      bodyColor="bg-gray-600"
+      loading={loading}
+    >
       <InstallDialog />
       <Resizable
         className="flex flex-col p-4 pb-0 h-screen bg-gray-800 z-10"
@@ -130,7 +167,7 @@ export const ProjectEditor: FunctionComponent = () => {
       >
         {renderLeftPane()}
       </Resizable>
-      <div className="flex flex-col flex-1 relative bg-gray-600 items-center justify-center overflow-hidden">
+      <div className="flex flex-col flex-1 relative items-center justify-center overflow-hidden">
         {(project?.renderEntries.length || 0) > 0 && (
           <div className="toolbar flex absolute top-0 right-0 left-0 bg-gray-800 z-10">
             <Toolbar setZoomAction={setZoomAction} />
@@ -164,6 +201,6 @@ export const ProjectEditor: FunctionComponent = () => {
             <CodeEditorPane />
           </Resizable>
         )} */}
-    </div>
+    </PageFrame>
   );
 };

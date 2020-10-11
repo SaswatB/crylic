@@ -6,11 +6,13 @@ import { BodyColor } from "./BodyColor";
 
 interface Props {
   loading?: boolean;
+  className?: string;
   bodyColor?: string;
 }
 
 export const PageFrame: FunctionComponent<Props> = ({
   loading: loadingProp,
+  className,
   bodyColor,
   children,
 }) => {
@@ -23,7 +25,7 @@ export const PageFrame: FunctionComponent<Props> = ({
   }, [initiallyLoaded, loading]);
 
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className={className || "flex justify-center items-center h-screen"}>
       <Backdrop open={loading || false}>
         <CircularProgress disableShrink />
       </Backdrop>

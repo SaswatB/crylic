@@ -2,12 +2,12 @@ import { fold } from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
 import path from "path";
 
+import { CONFIG_FILE_NAME } from "synergy/src/constants";
 import {
   ProjectConfig,
   ProjectConfigFile,
 } from "synergy/src/lib/project/ProjectConfig";
 
-import { CONFIG_FILE_NAME } from "../../utils/constants";
 import { requireUncached } from "../../utils/utils";
 import { InbuiltPackageManager } from "../packageManager/InbuiltPackageManager";
 
