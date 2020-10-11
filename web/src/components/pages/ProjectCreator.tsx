@@ -8,10 +8,12 @@ import { IconButton } from "synergy/src/components/IconButton";
 
 import { openSignInWindow } from "../../lib/oauth-popup";
 import { BodyColor } from "../BodyColor";
+import { AddProject } from "./__generated__/AddProject";
+import { GetGitHubProjects } from "./__generated__/GetGitHubProjects";
 
 export const ProjectCreator: FunctionComponent = () => {
   const { enqueueSnackbar } = useSnackbar();
-  const { data, loading, refetch } = useQuery(gql`
+  const { data, loading, refetch } = useQuery<GetGitHubProjects>(gql`
     query GetGitHubProjects {
       viewer {
         id
@@ -30,11 +32,9 @@ export const ProjectCreator: FunctionComponent = () => {
       }
     }
   `);
-  const [addProject, { error }] = useMutation(gql`
+  const [addProject, { error }] = useMutation<AddProject>(gql`
     mutation AddProject($name: String!, $githubUrl: String!) {
-      addProject(name: $name, githubUrl: $githubUrl) {
-        id
-      }
+      addProject(name: $name, githubUrl: $githubUrl)
     }
   `);
 
@@ -48,7 +48,7 @@ export const ProjectCreator: FunctionComponent = () => {
       className="btn w-64 text-center"
       onClick={() =>
         openSignInWindow(
-          `https://github.com/login/oauth/authorize?client_id=93b6802c9ec33bc8fdee&scope=repo&state=${data.viewer[0].id}`,
+          `https://github.com/login/oauth/authorize?client_id=93b6802c9ec33bc8fdee&scope=repo&state=${data?.viewer[0].id}`,
           "GitHub Login",
           () => {
             enqueueSnackbar("GitHub account connected!");
