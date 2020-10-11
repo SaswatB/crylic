@@ -20,9 +20,10 @@ export const ProjectSelector: FunctionComponent = () => {
 
   const renderProjectList = () =>
     data?.viewer[0]?.projects.map((project) => (
+      // todo wrap
       <Link
         key={project.id}
-        className="p-4 m-3 bg-purple-900 default-transition hover:bg-purple-800"
+        className="p-4 m-3 rounded shadow-lg bg-purple-900 default-transition hover:bg-purple-800"
         to={Routes.EDIT_PROJECTS.getPath(project.id)}
       >
         {project.name}

@@ -22,7 +22,7 @@ export const Routes = {
   LIST_PROJECTS: createStaticRoute("/projects/all"),
   EDIT_PROJECTS: {
     //todo try better types when ts 4.1 releases
-    getPath: (projectId: string) => `/project/${projectId}/edit`,
+    getPath: (projectId: string) => `/projects/${projectId}/edit`,
     template: "/projects/:projectId/edit",
   },
 };

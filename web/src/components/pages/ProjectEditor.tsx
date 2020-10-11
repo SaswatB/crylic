@@ -31,8 +31,6 @@ export const ProjectEditor: FunctionComponent = () => {
   const { enqueueSnackbar } = useSnackbar();
   const bus = useBus();
 
-  if (!project) throw new Error("Unexpected state");
-
   const { tourDisabled, setTourDisabled, resetTour } = useContext(TourContext);
   const [
     ,
@@ -55,7 +53,7 @@ export const ProjectEditor: FunctionComponent = () => {
       switch (value) {
         case "save":
           try {
-            project.saveFiles();
+            project?.saveFiles();
             enqueueSnackbar("Files Saved!");
           } catch (error) {
             alert(`There was an error while saving: ${error.message}`);
@@ -77,7 +75,7 @@ export const ProjectEditor: FunctionComponent = () => {
   const renderLeftPane = () => (
     <>
       <div className="flex">
-        {project.config.name}
+        {project?.config.name || "Loading..."}
         <div className="flex-1" />
         <IconButton
           className="ml-2"
@@ -107,7 +105,7 @@ export const ProjectEditor: FunctionComponent = () => {
 
   const scaleRef = useRef(1);
   const renderComponentViews = () =>
-    project.renderEntries.map((entry) => (
+    project?.renderEntries.map((entry) => (
       <OverlayComponentView
         key={entry.id}
         compilerProps={{
@@ -133,7 +131,7 @@ export const ProjectEditor: FunctionComponent = () => {
         {renderLeftPane()}
       </Resizable>
       <div className="flex flex-col flex-1 relative bg-gray-600 items-center justify-center overflow-hidden">
-        {project.renderEntries.length > 0 && (
+        {(project?.renderEntries.length || 0) > 0 && (
           <div className="toolbar flex absolute top-0 right-0 left-0 bg-gray-800 z-10">
             <Toolbar setZoomAction={setZoomAction} />
           </div>
@@ -142,7 +140,7 @@ export const ProjectEditor: FunctionComponent = () => {
           zoomAction={zoomAction}
           onZoomChange={(scale) => (scaleRef.current = scale)}
         >
-          {renderComponentViews()}
+          {renderComponentViews() || null}
         </TransformContainer>
       </div>
       <Resizable
