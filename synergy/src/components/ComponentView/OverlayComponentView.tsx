@@ -137,26 +137,20 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
         !height
       )
         return;
-      const styles: Styles = [];
+      const styles: Styles = {};
       if (deltaX || totalDeltaX) {
         const currentMarginLeft = parseInt(
           selectedElement?.computedStyles.marginLeft.replace("px", "") || "0"
         );
         const newMarginLeft = (currentMarginLeft + deltaX!).toFixed(0);
-        styles.push({
-          styleName: "marginLeft",
-          styleValue: `${newMarginLeft}px`,
-        });
+        styles["marginLeft"] = `${newMarginLeft}px`;
       }
       if (deltaY || totalDeltaY) {
         const currentMarginTop = parseInt(
           selectedElement?.computedStyles.marginTop.replace("px", "") || "0"
         );
         const newMarginTop = (currentMarginTop + deltaY!).toFixed(0);
-        styles.push({
-          styleName: "marginTop",
-          styleValue: `${newMarginTop}px`,
-        });
+        styles["marginTop"] = `${newMarginTop}px`;
       }
       if (width) {
         let effectiveWidth = width;
@@ -179,10 +173,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           );
           effectiveWidth = `${contentWidth}px`;
         }
-        styles.push({
-          styleName: "width",
-          styleValue: effectiveWidth,
-        });
+        styles["width"] = effectiveWidth;
       }
       if (height) {
         let effectiveHeight = height;
@@ -205,10 +196,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           );
           effectiveHeight = `${contentHeight}px`;
         }
-        styles.push({
-          styleName: "height",
-          styleValue: effectiveHeight,
-        });
+        styles["height"] = effectiveHeight;
       }
       updateSelectedStyleGroup(styles, preview);
     }

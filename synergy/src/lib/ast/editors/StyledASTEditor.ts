@@ -156,7 +156,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
     >,
     styles: Styles
   ) => {
-    styles.forEach(({ styleName, styleValue }) => {
+    Object.entries(styles).forEach(([styleName, styleValue]) => {
       const cssStyleName = kebabCase(`${styleName}`);
       const styleMatcherRule = getStyleMatcherRule(cssStyleName);
       const styleMatcher = new RegExp(styleMatcherRule);

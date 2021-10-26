@@ -12,6 +12,7 @@ import {
   ComponentDefinition,
   CustomComponentDefinition,
   SourceMetadata,
+  StyleKeys,
   Styles,
 } from "../../../types/paint";
 import { getRelativeImportPath } from "../../utils";
@@ -410,12 +411,9 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     this.getJSXElementByLookupId(ast, lookupId, (path) =>
       this.applyJSXInlineStyleAttribute(
         path,
-        styles.map((style) => ({
-          styleName: style.styleName,
-          styleValue:
-            style.styleValue !== null
-              ? b.stringLiteral(style.styleValue)
-              : null,
+        Object.entries(styles).map(([styleName, styleValue]) => ({
+          styleName: styleName as StyleKeys,
+          styleValue: styleValue !== null ? b.stringLiteral(styleValue) : null,
         }))
       )
     );
@@ -550,7 +548,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
   protected applyJSXInlineStyleAttribute(
     path: NodePath<types.namedTypes.JSXElement, t.JSXElement>,
     styles: {
-      styleName: keyof CSSStyleDeclaration;
+      styleName: StyleKeys;
       styleValue: t.StringLiteral | t.TemplateLiteral | null;
     }[]
   ) {

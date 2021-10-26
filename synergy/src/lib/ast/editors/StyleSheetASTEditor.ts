@@ -224,7 +224,7 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
   ) => {
     const ruleBlock = this.getRuleBlock(path)!;
     const ruleBlockContent = pipe(ruleBlock, getContent, ifArray) || [];
-    styles.forEach(({ styleName, styleValue }) => {
+    Object.entries(styles).forEach(([styleName, styleValue]) => {
       const cssStyleName = kebabCase(`${styleName}`);
 
       const existingRuleDeclarationIndex = ruleBlockContent.findIndex(

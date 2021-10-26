@@ -3,9 +3,7 @@ import React, {
   useEffect,
   useLayoutEffect,
   useRef,
-  useState,
 } from "react";
-import produce from "immer";
 import { flatten, isEqual, uniq } from "lodash";
 import { Observable, ReplaySubject } from "rxjs";
 import { distinctUntilChanged } from "rxjs/operators";
@@ -14,12 +12,14 @@ import { useBus } from "ts-bus/react";
 import { useCompilerContextRecoil } from "../../hooks/recoil/useCompilerContextRecoil";
 import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useDebounce } from "../../hooks/useDebounce";
+import { useRerender } from "../../hooks/useRerender";
 import { componentViewCompileEnd, componentViewReload } from "../../lib/events";
 import { RouteDefinition } from "../../lib/react-router-proxy";
 import { isDefined } from "../../lib/utils";
 import {
   RenderEntry,
   RenderEntryDeployerContext,
+  StyleKeys,
   Styles,
   ViewContext,
 } from "../../types/paint";
@@ -53,6 +53,7 @@ export const CompilerComponentView: FunctionComponent<
   ...props
 }) => {
   const bus = useBus();
+  const rerender = useRerender();
   const { project } = useProjectRecoil();
   const { setViewContext, runCompileTasks } = useCompilerContextRecoil();
   const frame = useRef<{
@@ -83,20 +84,19 @@ export const CompilerComponentView: FunctionComponent<
   };
 
   // handle temp styles
-  const applyTempStyles = (newTempStyles: typeof tempStyles) => {
-    Object.entries(newTempStyles).forEach(([lookupId, styles]) => {
+  const tempStyles = useRef<Record<string, Styles>>({});
+  const applyTempStyles = () => {
+    Object.entries(tempStyles.current).forEach(([lookupId, styles]) => {
       const elements = getElementsByLookupId(lookupId);
       console.log("applying temp styles");
-      styles.forEach(({ styleName, styleValue }) => {
+      Object.entries(styles).forEach(([styleName, styleValue]) => {
         elements.forEach((element) => {
-          // @ts-ignore ignore read-only css props
-          element.style[styleName] = styleValue;
+          element.style[styleName as StyleKeys] = styleValue!;
         });
       });
     });
   };
-  const [tempStyles, setTempStyles] = useState<Record<string, Styles>>({});
-  useLayoutEffect(() => applyTempStyles(tempStyles));
+  useLayoutEffect(() => applyTempStyles());
 
   const errorBoundary = useRef<ErrorBoundary>(null);
   const [debouncedCodeEntries] = useDebounce(project?.codeEntries, 150);
@@ -173,7 +173,9 @@ export const CompilerComponentView: FunctionComponent<
             refreshRouteChange();
           },
         });
-        setTempStyles({});
+
+        // clear temp styles
+        tempStyles.current = {};
 
         if (errorBoundary.current?.hasError()) {
           errorBoundary.current.resetError();
@@ -207,11 +209,15 @@ export const CompilerComponentView: FunctionComponent<
               },
               getElementsByLookupId,
               addTempStyles(lookupId, styles, persistRender) {
-                const newTempStyles = produce(tempStyles, (draft) => {
-                  draft[lookupId] = [...(draft[lookupId] || []), ...styles];
+                tempStyles.current[lookupId] =
+                  tempStyles.current[lookupId] || {};
+                Object.entries(styles).forEach(([styleName, styleValue]) => {
+                  tempStyles.current[lookupId][
+                    styleName as StyleKeys
+                  ] = styleValue;
                 });
-                applyTempStyles(newTempStyles);
-                if (persistRender) setTempStyles(newTempStyles);
+                applyTempStyles();
+                if (persistRender) rerender();
               },
             };
             // save the new context

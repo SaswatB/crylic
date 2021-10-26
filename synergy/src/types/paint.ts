@@ -98,10 +98,28 @@ export type onMoveResizeCallback = (
   preview?: boolean
 ) => void;
 
-export type Styles = {
-  styleName: keyof CSSStyleDeclaration;
-  styleValue: string | null;
-}[];
+// https://github.com/Microsoft/TypeScript/issues/27024#issuecomment-421529650
+type IfEquals<X, Y, A, B> = (<T>() => T extends X ? 1 : 2) extends <
+  T
+>() => T extends Y ? 1 : 2
+  ? A
+  : B;
+
+export type StyleKeys<
+  T extends keyof CSSStyleDeclaration = keyof CSSStyleDeclaration
+> =
+  // filter out symbol keys
+  T extends string
+    ? // filter out readonly properties
+      IfEquals<
+        Pick<CSSStyleDeclaration, T>,
+        { -readonly [Q in T]: CSSStyleDeclaration[T] },
+        // filter out keys that refer to functions
+        CSSStyleDeclaration[T] extends Function ? never : T,
+        never
+      >
+    : never;
+export type Styles = { [P in StyleKeys]?: string | null };
 
 export interface CustomComponentDefinition {
   name: string;

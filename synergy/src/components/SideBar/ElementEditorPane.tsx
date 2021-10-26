@@ -36,7 +36,7 @@ import { linkComponent } from "../../lib/defs/react-router-dom";
 import { editorOpenLocation } from "../../lib/events";
 import { renderSeparator } from "../../lib/render-utils";
 import { isImageEntry } from "../../lib/utils";
-import { CodeEntry } from "../../types/paint";
+import { CodeEntry, StyleKeys } from "../../types/paint";
 import { AnimationEditorModal } from "../Animation/AnimationEditorModal";
 import { Collapsible } from "../Collapsible";
 import { IconButton } from "../IconButton";
@@ -65,7 +65,7 @@ type EditorHook<T> = useInputFunction<
   { className?: string; style?: CSSProperties }
 >;
 
-const StylePropNameMap: { [index in keyof CSSStyleDeclaration]?: string } = {
+const StylePropNameMap: { [index in StyleKeys]?: string } = {
   backgroundColor: "Fill",
   backgroundImage: "Image",
   backgroundSize: "Image Size",
@@ -284,16 +284,13 @@ export const ElementEditorPane: FunctionComponent = () => {
   });
 
   const useSelectedElementEditor = <T extends {} | undefined = undefined>(
-    styleProp: keyof CSSStyleDeclaration,
+    styleProp: StyleKeys,
     ...rest: (T extends undefined ? [EditorHook<{}>] : [EditorHook<T>, T]) | []
   ) => {
     const useEditorHook = rest[0] || useBoundCSSLengthInput;
     const editorHookConfig = rest[1] || {};
     const onChange = (newValue: string, preview?: boolean) =>
-      updateSelectedStyleGroup(
-        [{ styleName: styleProp, styleValue: newValue }],
-        preview
-      );
+      updateSelectedStyleGroup({ [styleProp]: newValue }, preview);
     const label =
       StylePropNameMap[styleProp] || startCase(`${styleProp || ""}`);
     const initialValue =
@@ -321,28 +318,13 @@ export const ElementEditorPane: FunctionComponent = () => {
         onClick={() => {
           setShowBreakdown(true);
           // todo only update styles if prop is defined for this style group
-          updateSelectedStyleGroup([
-            {
-              styleName: prop,
-              styleValue: null,
-            },
-            {
-              styleName: `${prop}Top` as keyof CSSStyleDeclaration,
-              styleValue: selectedElement!.computedStyles[prop],
-            },
-            {
-              styleName: `${prop}Bottom` as keyof CSSStyleDeclaration,
-              styleValue: selectedElement!.computedStyles[prop],
-            },
-            {
-              styleName: `${prop}Left` as keyof CSSStyleDeclaration,
-              styleValue: selectedElement!.computedStyles[prop],
-            },
-            {
-              styleName: `${prop}Right` as keyof CSSStyleDeclaration,
-              styleValue: selectedElement!.computedStyles[prop],
-            },
-          ]);
+          updateSelectedStyleGroup({
+            [prop]: null,
+            [`${prop}Top`]: selectedElement!.computedStyles[prop],
+            [`${prop}Bottom`]: selectedElement!.computedStyles[prop],
+            [`${prop}Left`]: selectedElement!.computedStyles[prop],
+            [`${prop}Right`]: selectedElement!.computedStyles[prop],
+          });
         }}
       >
         <FontAwesomeIcon icon={faExpand} />
@@ -354,31 +336,14 @@ export const ElementEditorPane: FunctionComponent = () => {
         onClick={() => {
           setShowBreakdown(false);
           // todo only update styles if prop is defined for this style group
-          updateSelectedStyleGroup([
-            {
-              styleName: prop,
-              // todo do an average or pick min/max
-              styleValue: selectedElement!.computedStyles[
-                `${prop}Top` as keyof CSSStyleDeclaration
-              ] as string,
-            },
-            {
-              styleName: `${prop}Top` as keyof CSSStyleDeclaration,
-              styleValue: null,
-            },
-            {
-              styleName: `${prop}Bottom` as keyof CSSStyleDeclaration,
-              styleValue: null,
-            },
-            {
-              styleName: `${prop}Left` as keyof CSSStyleDeclaration,
-              styleValue: null,
-            },
-            {
-              styleName: `${prop}Right` as keyof CSSStyleDeclaration,
-              styleValue: null,
-            },
-          ]);
+          updateSelectedStyleGroup({
+            // todo do an average or pick min/max
+            [prop]: selectedElement!.computedStyles[`${prop}Top`],
+            [`${prop}Top`]: null,
+            [`${prop}Bottom`]: null,
+            [`${prop}Left`]: null,
+            [`${prop}Right`]: null,
+          });
         }}
       >
         <FontAwesomeIcon icon={faCompress} />
@@ -387,47 +352,31 @@ export const ElementEditorPane: FunctionComponent = () => {
     const [
       selectedElementPropTop,
       renderPropTopInput,
-    ] = useSelectedElementEditor(
-      `${prop}Top` as keyof CSSStyleDeclaration,
-      useCSSLengthInput,
-      {
-        bindInitialValue: true,
-        endAddon: renderCollapse(),
-      }
-    );
+    ] = useSelectedElementEditor(`${prop}Top`, useCSSLengthInput, {
+      bindInitialValue: true,
+      endAddon: renderCollapse(),
+    });
     const [
       selectedElementPropBottom,
       renderPropBottomInput,
-    ] = useSelectedElementEditor(
-      `${prop}Bottom` as keyof CSSStyleDeclaration,
-      useCSSLengthInput,
-      {
-        bindInitialValue: true,
-        endAddon: renderCollapse(),
-      }
-    );
+    ] = useSelectedElementEditor(`${prop}Bottom`, useCSSLengthInput, {
+      bindInitialValue: true,
+      endAddon: renderCollapse(),
+    });
     const [
       selectedElementPropLeft,
       renderPropLeftInput,
-    ] = useSelectedElementEditor(
-      `${prop}Left` as keyof CSSStyleDeclaration,
-      useCSSLengthInput,
-      {
-        bindInitialValue: true,
-        endAddon: renderCollapse(),
-      }
-    );
+    ] = useSelectedElementEditor(`${prop}Left`, useCSSLengthInput, {
+      bindInitialValue: true,
+      endAddon: renderCollapse(),
+    });
     const [
       selectedElementPropRight,
       renderPropRightInput,
-    ] = useSelectedElementEditor(
-      `${prop}Right` as keyof CSSStyleDeclaration,
-      useCSSLengthInput,
-      {
-        bindInitialValue: true,
-        endAddon: renderCollapse(),
-      }
-    );
+    ] = useSelectedElementEditor(`${prop}Right`, useCSSLengthInput, {
+      bindInitialValue: true,
+      endAddon: renderCollapse(),
+    });
 
     // reset breakdown visibility on selected element change
     const refreshBreakdown = (allowUnset = false) => {
