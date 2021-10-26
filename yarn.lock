@@ -5025,19 +5025,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ast-types@npm:0.13.3":
-  version: 0.13.3
-  resolution: "ast-types@npm:0.13.3"
-  checksum: 684ff566539c6a3812480e6ad8e7484472bfed78e0abcd3f18c0618b2f49360e930b9adc8a22d5d372084a3a1074d7ae45c1e1fa3394ee878c5df4e8befb58d8
-  languageName: node
-  linkType: hard
-
-"ast-types@npm:0.14.1, ast-types@npm:^0.14.0, ast-types@npm:^0.14.1":
-  version: 0.14.1
-  resolution: "ast-types@npm:0.14.1"
+"ast-types@npm:0.14.2, ast-types@npm:^0.14.0, ast-types@npm:^0.14.1":
+  version: 0.14.2
+  resolution: "ast-types@npm:0.14.2"
   dependencies:
     tslib: ^2.0.1
-  checksum: 541d59784bca00f2d4a510dd548669279d04313e32ed196fee6100a253014eae55565bc523d926c54e4ad5d7db2104fe1a65d6efa762b2bacf88083a13486cae
+  checksum: 42bb8a72ce90e3cf726220f93f772ff136aa857d99c1cb6b1fb2bdfa9369b15de54cd9d1ed17ba903a5ef82081676704b93f03eccd1335d7c71da3c5dac88109
   languageName: node
   linkType: hard
 
@@ -7444,7 +7437,7 @@ __metadata:
     react-placeholder: ^4.0.3
     react-refresh: ^0.8.3
     react-zoom-pan-pinch: ^1.6.1
-    recast: ^0.18.8
+    recast: ^0.20.5
     recoil: ^0.0.10
     resolve: ^1.15.0
     resolve-url-loader: ^3.1.1
@@ -17972,13 +17965,6 @@ immer@6.0.3:
   languageName: node
   linkType: hard
 
-"private@npm:^0.1.8":
-  version: 0.1.8
-  resolution: "private@npm:0.1.8"
-  checksum: 4507890e0e59e27909b714e52d6e8de7e06c83c731721e8c974117bfa96c720173c2aeff048022a0ba5faefa8a354f15120fb4088729b1241fc22e78f3a25912
-  languageName: node
-  linkType: hard
-
 "process-nextick-args@npm:~2.0.0":
   version: 2.0.1
   resolution: "process-nextick-args@npm:2.0.1"
@@ -19064,28 +19050,15 @@ react-refresh@0.8.3:
   languageName: node
   linkType: hard
 
-"recast@npm:^0.18.8":
-  version: 0.18.10
-  resolution: "recast@npm:0.18.10"
+"recast@npm:^0.20.0, recast@npm:^0.20.5":
+  version: 0.20.5
+  resolution: "recast@npm:0.20.5"
   dependencies:
-    ast-types: 0.13.3
+    ast-types: 0.14.2
     esprima: ~4.0.0
-    private: ^0.1.8
-    source-map: ~0.6.1
-  checksum: c289294ca9e914c19adc6606e25c9ec44e2a58659ed22c32f064f3cb63820fe5af2acaba0b3768d3aeed2ab104da31590462477e7d682c177889978b3e2ee87a
-  languageName: node
-  linkType: hard
-
-"recast@npm:^0.20.0, recast@npm:^0.20.3":
-  version: 0.20.3
-  resolution: "recast@npm:0.20.3"
-  dependencies:
-    ast-types: 0.14.1
-    esprima: ~4.0.0
-    private: ^0.1.8
     source-map: ~0.6.1
     tslib: ^2.0.1
-  checksum: b11fd8a9dc8ab3dfc624972c5c6670dcdcfd7e16e30854cb15e72efbaa5d8f4123cd7bed408fa0d1102dbbdc497d7903533dd603042d0f7b483887d138b34822
+  checksum: 6862c68d17842b7a332ec2aa8fc6c8b746d68ab4f9b0dd89c2ad9efc10aece80a018897e75c3e87d0c04dd485dd4d4de558224c988c31890dad658a8375ef2a6
   languageName: node
   linkType: hard
 
@@ -21241,7 +21214,7 @@ sassjs-loader@2.0.0:
     react-draggable: ^4.4.3
     react-hotkeys-hook: ^2.3.1
     react-router-dom: ^5.2.0
-    recast: ^0.20.3
+    recast: ^0.20.5
     recoil: ^0.0.10
     resolve-pathname: ^3.0.0
     rgb-hex: ^3.0.0

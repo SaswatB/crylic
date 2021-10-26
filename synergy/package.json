@@ -39,7 +39,7 @@
     "react-draggable": "^4.4.3",
     "react-hotkeys-hook": "^2.3.1",
     "react-router-dom": "^5.2.0",
-    "recast": "^0.20.3",
+    "recast": "^0.20.5",
     "recoil": "^0.0.10",
     "resolve-pathname": "^3.0.0",
     "rgb-hex": "^3.0.0",

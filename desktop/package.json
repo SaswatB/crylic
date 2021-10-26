@@ -119,7 +119,7 @@
     "react-placeholder": "^4.0.3",
     "react-refresh": "^0.8.3",
     "react-zoom-pan-pinch": "^1.6.1",
-    "recast": "^0.18.8",
+    "recast": "^0.20.5",
     "recoil": "^0.0.10",
     "resolve": "^1.15.0",
     "resolve-url-loader": "^3.1.1",
