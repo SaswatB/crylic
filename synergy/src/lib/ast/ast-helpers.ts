@@ -302,6 +302,7 @@ export const traverseJSXElements = (
       const result = visitor(path, count++);
       if (result === false) return false;
       this.traverse(path);
+      return undefined;
     },
   });
 };
@@ -395,10 +396,10 @@ export const getComponentExport = (
 
     // get the identifier for the given variable
     const varIdentifier = astIdentifiers.find((ai) => ai.name === varName);
-    if (!varIdentifier) return false;
+    if (!varIdentifier || varIdentifier.parents.length === 0) return false;
 
     // get the identifier parent
-    const varParent = varIdentifier.parents[varIdentifier.parents.length - 1];
+    const varParent = varIdentifier.parents[varIdentifier.parents.length - 1]!;
 
     // check whether the parent is a function (not exhaustive)
     return (
@@ -488,7 +489,7 @@ export const getComponentExport = (
         (f) => f.node.type === "ExportDefaultDeclaration"
       ) ||
       exportedFunctions.find((f) => f.name?.match(/^[A-Z]/)) ||
-      exportedFunctions[exportedFunctions.length - 1];
+      exportedFunctions[exportedFunctions.length - 1]!;
 
     if (bestExportedFunction.node.type === "ExportDefaultDeclaration") {
       return { isDefault: true };

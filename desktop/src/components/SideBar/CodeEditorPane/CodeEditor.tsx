@@ -80,8 +80,8 @@ export const CodeEditor: FunctionComponent<Props> = ({
             // center to the first decoration if the editor doesn't currently have focus
             if (!editorRef.current?.editor?.hasTextFocus()) {
               editorRef.current?.editor?.revealPositionInCenter({
-                lineNumber: decorations[0].range.startLineNumber,
-                column: decorations[0].range.startColumn,
+                lineNumber: decorations[0]!.range.startLineNumber,
+                column: decorations[0]!.range.startColumn,
               });
             }
           }
@@ -219,7 +219,9 @@ export const CodeEditor: FunctionComponent<Props> = ({
             try {
               fs.writeFileSync(codeEntry.filePath, localValueRef.current);
             } catch (error) {
-              alert(`There was an error while saving: ${error.message}`);
+              alert(
+                `There was an error while saving: ${(error as Error).message}`
+              );
             }
           }
         );

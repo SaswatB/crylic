@@ -52,7 +52,7 @@ export abstract class ASTEditor<ASTType> {
     return lookupId.split("-")[0];
   }
   protected getElementIndexFromLookupId(lookupId: string) {
-    return parseInt(lookupId.split("-")[1]);
+    return parseInt(lookupId.split("-")[1]!);
   }
   public abstract getCodeLineFromLookupId(
     readContext: ReadContext<ASTType>,

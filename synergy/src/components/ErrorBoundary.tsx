@@ -4,9 +4,9 @@ export class ErrorBoundary extends React.Component<{
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
   error?: Error;
 }> {
-  state = { error: false as Error | false };
+  override state = { error: false as Error | false };
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.props.onError?.(error, errorInfo);
     this.setState({ error });
   }
@@ -23,7 +23,7 @@ export class ErrorBoundary extends React.Component<{
     this.setState({ error: false });
   }
 
-  render() {
+  override render() {
     const error = this.state.error || this.props.error;
     if (error) {
       return (

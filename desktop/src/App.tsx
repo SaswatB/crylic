@@ -87,7 +87,9 @@ function App() {
             project?.saveFiles();
             enqueueSnackbar("Files Saved!");
           } catch (error) {
-            alert(`There was an error while saving: ${error.message}`);
+            alert(
+              `There was an error while saving: ${(error as Error).message}`
+            );
           }
           break;
         case "close":

@@ -80,8 +80,10 @@ const StylePropNameMap: { [index in StyleKeys]?: string } = {
   textDecorationLine: "Decoration",
 };
 
-const useBoundTextInput: useInputFunction = (config) =>
-  useTextInput({ ...config, bindInitialValue: true });
+const useBoundTextInput: useInputFunction = (config) => {
+  const [value, render] = useTextInput({ ...config, bindInitialValue: true });
+  return [value, render];
+};
 const useBoundCSSLengthInput: useInputFunction = (config) =>
   useCSSLengthInput({ ...config, bindInitialValue: true });
 

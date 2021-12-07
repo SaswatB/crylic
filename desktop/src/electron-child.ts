@@ -23,7 +23,7 @@ __non_webpack_require__(sentryPath);
 // handle commands
 if (process.argv[2] === "npm-install") {
   const npm = __non_webpack_require__("npm") as typeof import("npm");
-  process.chdir(process.argv[3]);
+  process.chdir(process.argv[3]!);
   npm.load((err) => {
     if (err) {
       console.error(err);

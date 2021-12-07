@@ -37,7 +37,7 @@ interface Tree {
 }
 
 interface Props {
-  onImportImageFile: () => Promise<string | null>;
+  onImportImageFile: () => Promise<string | undefined | null>;
 }
 
 export const AssetTreePane: FunctionComponent<Props> = ({
@@ -147,11 +147,11 @@ export const AssetTreePane: FunctionComponent<Props> = ({
             // and its name matches the directory or is 'index'
             if (
               node.children.length === 1 &&
-              (node.name === node.children[0].name ||
-                node.children[0].name === "index") &&
-              node.children[0].children.length === 0
+              (node.name === node.children[0]!.name ||
+                node.children[0]!.name === "index") &&
+              node.children[0]!.children.length === 0
             ) {
-              node.codeEntry = node.children[0].codeEntry;
+              node.codeEntry = node.children[0]!.codeEntry;
               node.children = [];
               return;
             }

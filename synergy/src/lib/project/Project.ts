@@ -60,7 +60,7 @@ export abstract class Project {
   }
 
   public get primaryElementEditor() {
-    return this.elementEditorEntries[0].editor;
+    return this.elementEditorEntries[0]!.editor;
   }
 
   public getEditorsForCodeEntry(codeEntry: CodeEntry) {

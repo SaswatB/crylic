@@ -48,7 +48,7 @@ let publishPort = 0;
 const initPublishServer = () => {
   if (publishServer) return Promise.resolve();
 
-  return new Promise((resolve) => {
+  return new Promise<void>((resolve) => {
     publicSecurityToken = crypto
       .randomBytes(32)
       .toString("base64")
@@ -60,7 +60,7 @@ const initPublishServer = () => {
     // todo see if anything needs to be done for react router on this route
     publishServer.get(`/publish/${publicSecurityToken}/:codeId`, (req, res) => {
       console.log("bundle request at", req.params.codeId);
-      const bundle = bundleMap[req.params.codeId];
+      const bundle = bundleMap[req.params.codeId!];
       if (!bundle) {
         return res.status(404).send();
       }

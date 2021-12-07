@@ -38,8 +38,9 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
     let lookupIds: string[] = [];
     traverseStyledTemplatesElements(ast, (path, index) => {
       const lookupId = this.createLookupId(codeEntry, index);
-      const { value } = path.value.quasi.quasis[0];
-      value.raw = `${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookupId}: 1;${value.raw}`;
+      const { value } = path.value.quasi.quasis[0] || {};
+      if (value)
+        value.raw = `${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookupId}: 1;${value.raw}`;
       // get a name for the component by the variable declaration
       // todo support more scenarios
       const parent: NodePath<types.namedTypes.ASTNode, t.ASTNode> | undefined =
@@ -62,8 +63,8 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
 
   protected removeLookupDataFromAST({ ast }: { ast: t.File }) {
     traverseStyledTemplatesElements(ast, (path) => {
-      const { value } = path.value.quasi.quasis[0];
-      value.raw = value.raw.replace(STYLED_LOOKUP_MATCHER, "");
+      const { value } = path.value.quasi.quasis[0] || {};
+      if (value) value.raw = value.raw.replace(STYLED_LOOKUP_MATCHER, "");
     });
   }
 
@@ -78,7 +79,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
     return line;
   }
 
-  public onASTRender(iframe: HTMLIFrameElement) {
+  public override onASTRender(iframe: HTMLIFrameElement) {
     // prevent property inheritance for data lookup ids
     this.createdIds.forEach((lookupId) =>
       registerUninheritedCSSProperty(
@@ -143,7 +144,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
   ) {
     traverseStyledTemplatesElements(ast, (path) => {
       const res = STYLED_LOOKUP_MATCHER.exec(
-        path.value.quasi.quasis[0].value.raw
+        path.value.quasi.quasis[0]?.value.raw || ""
       );
       if (res?.[1] === lookupId) apply(path);
     });
@@ -183,8 +184,9 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
       if (found || styleValue === null) return;
 
       // add rule to the end of the template
-      const quasiValue =
-        path.value.quasi.quasis[path.value.quasi.quasis.length - 1].value;
+      const quasiValue = path.value.quasi.quasis[
+        path.value.quasi.quasis.length - 1
+      ]!.value;
       const indent =
         new RegExp(getStyleMatcherRule("[^\\s]+")).exec(quasiValue.raw)?.[1] ||
         "";

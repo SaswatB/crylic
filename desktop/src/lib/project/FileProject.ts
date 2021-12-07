@@ -25,7 +25,7 @@ export class FileProject extends Project {
     if (!fs.existsSync) fs.mkdirSync(folderPath, { recursive: true });
 
     let canceled = false;
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       yauzl.fromBuffer(projectTemplate, {}, (err, zipFile) => {
         if (err || !zipFile) throw new Error("Failed to read project template");
 

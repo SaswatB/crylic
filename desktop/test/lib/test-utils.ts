@@ -7,8 +7,7 @@ import {
 } from "synergy/src/lib/ast/ast-helpers";
 import { ASTEditor } from "synergy/src/lib/ast/editors/ASTEditor";
 import { ProjectConfigFile } from "synergy/src/lib/project/ProjectConfig";
-import { PackageJson } from "synergy/src/types/paint";
-import { CodeEntry } from "synergy/src/types/paint";
+import { PackageJson, CodeEntry } from "synergy/src/types/paint";
 
 import { FileProject } from "../../src/lib/project/FileProject";
 import { FileProjectConfig } from "../../src/lib/project/FileProjectConfig";
@@ -26,7 +25,7 @@ export class TestProject extends FileProject {
   public constructor(config = new TestProjectConfig()) {
     super("", "", config);
   }
-  public getCodeEntryMetaData(codeEntry: CodeEntry) {
+  public override getCodeEntryMetaData(codeEntry: CodeEntry) {
     return super.getCodeEntryMetaData(codeEntry);
   }
 }

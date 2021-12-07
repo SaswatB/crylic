@@ -84,7 +84,7 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
     return line;
   }
 
-  public onASTRender(iframe: HTMLIFrameElement) {
+  public override onASTRender(iframe: HTMLIFrameElement) {
     // prevent property inheritance for data lookup ids
     this.createdIds.forEach((lookupId) =>
       registerUninheritedCSSProperty(
@@ -180,7 +180,7 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
     const ruleBlockContent = pipe(ruleBlock, getContent, ifArray) || [];
     for (let index = 0; index < ruleBlockContent.length; index += 1) {
       let blockNode = ruleBlockContent[index];
-      if (blockNode.type !== "declaration") continue;
+      if (blockNode?.type !== "declaration") continue;
 
       const lookupId = pipe(
         blockNode,

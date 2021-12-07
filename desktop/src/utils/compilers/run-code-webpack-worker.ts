@@ -207,7 +207,7 @@ ReactDOM.render((
     try {
       (frame!.contentWindow! as any).paintBundle();
     } catch (error) {
-      errorHandler(error);
+      errorHandler(error as Error);
     }
     delete (frame!.contentWindow! as any).exports;
     delete (frame!.contentWindow! as any).require;

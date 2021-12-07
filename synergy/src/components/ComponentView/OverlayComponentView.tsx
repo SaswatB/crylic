@@ -110,7 +110,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
             })
           );
         } catch (e) {
-          enqueueSnackbar(e?.message || e);
+          enqueueSnackbar((e as Error)?.message || `${e}`);
         }
         break;
     }

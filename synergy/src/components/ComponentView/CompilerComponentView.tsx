@@ -121,7 +121,7 @@ export const CompilerComponentView: FunctionComponent<
           if (switches.length > 0) {
             const arg = {
               // todo add ability to select switch to target instead of choosing the first one here
-              ...switches[0],
+              ...switches[0]!,
               // combine all the routes defined by all the switches
               routes: uniq(flatten(switches.map((s) => s.routes))),
             };
@@ -132,7 +132,7 @@ export const CompilerComponentView: FunctionComponent<
           const routes = Object.values(routeContext).filter(isDefined);
           if (routes.length) {
             // get the most specific route
-            let route = routes[0];
+            let route = routes[0]!;
             routes.forEach((r) => {
               if (r.length > route.length) route = r;
             });
@@ -212,7 +212,7 @@ export const CompilerComponentView: FunctionComponent<
                 tempStyles.current[lookupId] =
                   tempStyles.current[lookupId] || {};
                 Object.entries(styles).forEach(([styleName, styleValue]) => {
-                  tempStyles.current[lookupId][
+                  tempStyles.current[lookupId]![
                     styleName as StyleKeys
                   ] = styleValue;
                 });
@@ -236,8 +236,8 @@ export const CompilerComponentView: FunctionComponent<
         );
       } catch (e) {
         console.log(e);
-        errorBoundary.current?.setError(e);
-        onCompileError?.(e);
+        errorBoundary.current?.setError(e as Error);
+        onCompileError?.(e as Error);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps

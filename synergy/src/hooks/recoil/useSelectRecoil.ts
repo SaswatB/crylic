@@ -72,7 +72,7 @@ export function useSelectRecoil() {
 
     projectRef.current?.editorEntries.forEach(({ editor }) => {
       styleGroups.push(
-        ...editor.getStyleGroupsFromHTMLElement(componentElements[0])
+        ...editor.getStyleGroupsFromHTMLElement(componentElements[0]!)
       );
     });
 
@@ -84,12 +84,12 @@ export function useSelectRecoil() {
         lookupId
       ),
       viewContext: getViewContext(renderId),
-      element: componentElements[0],
+      element: componentElements[0]!,
       elements: componentElements,
       styleGroups,
       // todo properly support multiple elements instead of taking the first one
-      computedStyles: window.getComputedStyle(componentElements[0]),
-      inlineStyles: componentElements[0].style,
+      computedStyles: window.getComputedStyle(componentElements[0]!),
+      inlineStyles: componentElements[0]!.style,
     });
     setSelectedStyleGroup(styleGroups[0]);
   };
