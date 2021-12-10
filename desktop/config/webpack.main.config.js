@@ -18,14 +18,13 @@ module.exports = (env, argv) => ({
     rules: [
       {
         // Include ts, tsx, js, and jsx files.
-        test: /\.(ts|js)x?$/,
+        test: /\.[tj]sx?$/,
         exclude: /node_modules/,
-        loader: "babel-loader",
-        options: {
-          presets: [
-            ["@babel/preset-env", { targets: { electron: "8" } }],
-            "@babel/preset-typescript",
-          ],
+        use: {
+          loader: "swc-loader",
+          options: {
+            env: { targets: { electron: "8" } },
+          },
         },
       },
     ],
