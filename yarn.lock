@@ -1994,6 +1994,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jest/create-cache-key-function@npm:^27.3.1":
+  version: 27.4.2
+  resolution: "@jest/create-cache-key-function@npm:27.4.2"
+  dependencies:
+    "@jest/types": ^27.4.2
+  checksum: 46eeb4460798c6bba9da5bba6d07030012a9290ee6d2e3537e49110e57e6bcb118d9075a942ec3c1b1a2eebb50746d231bc9b15749980dd3817c41db3179c27a
+  languageName: node
+  linkType: hard
+
 "@jest/environment@npm:^24.3.0, @jest/environment@npm:^24.9.0":
   version: 24.9.0
   resolution: "@jest/environment@npm:24.9.0"
@@ -2124,6 +2133,19 @@ __metadata:
     "@types/yargs": ^15.0.0
     chalk: ^3.0.0
   checksum: 785b67521a2c54f290ad4b53f49fec6b14fa25828bf26a838f7bbe08dd42122f27f71a620ea9a33286346786e9b120dd370abf589e6ef8c5fde9dc56906880b1
+  languageName: node
+  linkType: hard
+
+"@jest/types@npm:^27.4.2":
+  version: 27.4.2
+  resolution: "@jest/types@npm:27.4.2"
+  dependencies:
+    "@types/istanbul-lib-coverage": ^2.0.0
+    "@types/istanbul-reports": ^3.0.0
+    "@types/node": "*"
+    "@types/yargs": ^16.0.0
+    chalk: ^4.0.0
+  checksum: 1191022023e32763063cc1c8b1143fa316fb05db2f9698280a7bdbafcabd989e5fd64f8eb875b8a2e54c53f25dba45ed2eea8ced394d9e484da0fda674cd17a5
   languageName: node
   linkType: hard
 
@@ -2979,6 +3001,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@swc/jest@npm:^0.2.12":
+  version: 0.2.12
+  resolution: "@swc/jest@npm:0.2.12"
+  dependencies:
+    "@jest/create-cache-key-function": ^27.3.1
+  peerDependencies:
+    "@swc/core": "*"
+  checksum: 8a8f255a12146308e4dc2f67ebbf57f27f8f99e761638f8bce053f23d201ace4648b097029ccd17d9ee559c61ff50d96ba86599c5fd03426e93b41eb13cd0c22
+  languageName: node
+  linkType: hard
+
 "@szmarczak/http-timer@npm:^1.1.2":
   version: 1.1.2
   resolution: "@szmarczak/http-timer@npm:1.1.2"
@@ -3316,6 +3349,15 @@ __metadata:
     "@types/istanbul-lib-coverage": "*"
     "@types/istanbul-lib-report": "*"
   checksum: 00866e815d1e68d0a590d691506937b79d8d65ad8eab5ed34dbfee66136c7c0f4ea65327d32046d5fe469f22abea2b294987591dc66365ebc3991f7e413b2d78
+  languageName: node
+  linkType: hard
+
+"@types/istanbul-reports@npm:^3.0.0":
+  version: 3.0.1
+  resolution: "@types/istanbul-reports@npm:3.0.1"
+  dependencies:
+    "@types/istanbul-lib-report": "*"
+  checksum: f1ad54bc68f37f60b30c7915886b92f86b847033e597f9b34f2415acdbe5ed742fa559a0a40050d74cdba3b6a63c342cac1f3a64dba5b68b66a6941f4abd7903
   languageName: node
   linkType: hard
 
@@ -3710,6 +3752,15 @@ __metadata:
   dependencies:
     "@types/yargs-parser": "*"
   checksum: fe56199c6ffc539948bb80b17fa8ffff8d7ed77e8cb21f11b5aea434582b72f03751fe5e681bff0b195724d8ea60faa5102c3051292df560b96bb2741327b2dc
+  languageName: node
+  linkType: hard
+
+"@types/yargs@npm:^16.0.0":
+  version: 16.0.4
+  resolution: "@types/yargs@npm:16.0.4"
+  dependencies:
+    "@types/yargs-parser": "*"
+  checksum: caa21d2c957592fe2184a8368c8cbe5a82a6c2e2f2893722e489f842dc5963293d2f3120bc06fe3933d60a3a0d1e2eb269649fd6b1947fe1820f8841ba611dd9
   languageName: node
   linkType: hard
 
@@ -7412,6 +7463,7 @@ __metadata:
     "@sentry/webpack-plugin": ^1.11.1
     "@svgr/webpack": ^4.3.3
     "@swc/core": ^1.2.118
+    "@swc/jest": ^0.2.12
     "@testing-library/jest-dom": ^4.2.4
     "@testing-library/react": ^9.3.2
     "@testing-library/user-event": ^7.1.2
@@ -7438,7 +7490,6 @@ __metadata:
     autoprefixer: ^9.7.5
     axios: ^0.19.2
     babel-eslint: ^10.1.0
-    babel-jest: ^24.9.0
     babel-plugin-macros: ^2.8.0
     babel-plugin-named-asset-import: ^0.3.6
     babel-preset-react-app: ^9.1.2

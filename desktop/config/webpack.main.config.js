@@ -23,7 +23,8 @@ module.exports = (env, argv) => ({
         use: {
           loader: "swc-loader",
           options: {
-            env: { targets: { electron: "8" } },
+            // lm_a95a542d63 electron version
+            env: { targets: { electron: "9" } },
           },
         },
       },

@@ -1,13 +1,18 @@
-// @ts-nocheck ts can't properly check this file due to the jest fixture transformer
 import { namedTypes as t } from "ast-types";
 
 import { JSXASTEditor } from "synergy/src/lib/ast/editors/JSXASTEditor";
 
-import existingStyleBase from "./fixtures/styles/inline/existing-style-base.fixture";
-import existingStyleFinal from "./fixtures/styles/inline/existing-style-final.fixture";
-import noStyleBase from "./fixtures/styles/inline/no-style-base.fixture";
-import noStyleFinal from "./fixtures/styles/inline/no-style-final.fixture";
-import { runEditor } from "./lib/test-utils";
+import existingStyleBaseFixture from "./fixtures/styles/inline/existing-style-base.fixture";
+import existingStyleFinalFixture from "./fixtures/styles/inline/existing-style-final.fixture";
+import noStyleBaseFixture from "./fixtures/styles/inline/no-style-base.fixture";
+import noStyleFinalFixture from "./fixtures/styles/inline/no-style-final.fixture";
+import { runEditor, runEditorApply } from "./lib/test-utils";
+
+// these are imported as fixtures so they're actually strings
+const existingStyleBase = (existingStyleBaseFixture as unknown) as string;
+const existingStyleFinal = (existingStyleFinalFixture as unknown) as string;
+const noStyleBase = (noStyleBaseFixture as unknown) as string;
+const noStyleFinal = (noStyleFinalFixture as unknown) as string;
 
 const runJSXEditor = (
   code: string,
@@ -19,12 +24,15 @@ describe("JSXASTEditor tests", () => {
     const newCode = runJSXEditor(
       noStyleBase,
       ({ editor, ast, codeEntry, lookupIds }) =>
-        editor.applyStyles({ ast, codeEntry, lookupId: lookupIds[0] }, [
-          { styleName: "display", styleValue: "flex" },
-          { styleName: "backgroundColor", styleValue: "#000000" },
-          // null styles are ignored/removed
-          { styleName: "color", styleValue: null },
-        ])
+        editor.applyStyles(
+          { ast, codeEntry, lookupId: lookupIds[0]! },
+          {
+            display: "flex",
+            backgroundColor: "#000000",
+            // null styles are ignored/removed
+            color: null,
+          }
+        )
     );
     expect(newCode).toEqual(noStyleFinal.replace(/\r/g, ""));
   });
@@ -32,13 +40,16 @@ describe("JSXASTEditor tests", () => {
     const newCode = runJSXEditor(
       existingStyleBase,
       ({ editor, ast, codeEntry, lookupIds }) =>
-        editor.applyStyles({ ast, codeEntry, lookupId: lookupIds[0] }, [
-          { styleName: "display", styleValue: "flex" },
-          { styleName: "backgroundColor", styleValue: "#000000" },
-          { styleName: "padding", styleValue: "10px" },
-          // null styles are ignored/removed
-          { styleName: "color", styleValue: null },
-        ])
+        editor.applyStyles(
+          { ast, codeEntry, lookupId: lookupIds[0]! },
+          {
+            display: "flex",
+            backgroundColor: "#000000",
+            padding: "10px",
+            // null styles are ignored/removed
+            color: null,
+          }
+        )
     );
     expect(newCode).toEqual(existingStyleFinal.replace(/\r/g, ""));
   });

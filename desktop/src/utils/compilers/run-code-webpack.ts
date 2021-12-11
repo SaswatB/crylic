@@ -29,6 +29,7 @@ let dotenv: typeof import("dotenv");
 const ENABLE_FAST_REFRESH = true;
 const NODE_ENV = "development";
 const REACT_APP = /^REACT_APP_/i;
+const ENABLE_BABEL_COMPAT = false;
 
 export function initialize(nodeModulesPath = "") {
   // needed to resolve loaders and babel plugins/presets
@@ -122,8 +123,23 @@ const getWebpackModules = async (
       },
     },
 
-    // handle project code
-    {
+    // handle project code (swc)
+    !ENABLE_BABEL_COMPAT && {
+      // Include ts, tsx, js, and jsx files.
+      test: /\.(jsx?|tsx?|mjs)$/,
+      exclude: /node_modules/,
+      use: {
+        loader: "swc-loader",
+        options: {
+          // lm_a95a542d63 electron version
+          // todo change on publish or support more options
+          env: { targets: { electron: "9" } },
+        },
+      },
+    },
+
+    // handle project code (babel)
+    ENABLE_BABEL_COMPAT && {
       test: /\.(jsx?|tsx?|mjs)$/,
       include: sourceInclude,
       loader: "babel-loader",
@@ -133,8 +149,9 @@ const getWebpackModules = async (
             "@babel/preset-env",
             {
               targets: {
+                // lm_a95a542d63 electron version
                 // todo change on publish or support more options
-                electron: "8",
+                electron: "9",
               },
             },
           ],
@@ -178,8 +195,9 @@ const getWebpackModules = async (
         ],
       },
     },
-    // handle js outside of project's source directory
-    {
+
+    // handle js outside of project's source directory (babel)
+    ENABLE_BABEL_COMPAT && {
       test: /\.m?js$/,
       exclude: /@babel(?:\/|\\{1,2})runtime/,
       loader: "babel-loader",
@@ -193,8 +211,9 @@ const getWebpackModules = async (
             "@babel/preset-env",
             {
               targets: {
+                // lm_a95a542d63 electron version
                 // todo change on publish or support more options
-                electron: "8",
+                electron: "9",
               },
               useBuiltIns: "entry",
               modules: false,
@@ -221,7 +240,6 @@ const getWebpackModules = async (
     },
 
     // style loaders for css/scss/less
-
     {
       test: /\.css$/,
       use: ["style-loader", "css-loader"],
@@ -258,7 +276,7 @@ const getWebpackModules = async (
       exclude: [/\.(js|mjs|jsx|ts|tsx)$/, /\.html$/, /\.json$/],
       options: fileLoaderOptions,
     },
-  ];
+  ].filter(<T>(l: T | boolean): l is T => !!l);
 
   return { rules: [{ oneOf: loaders }] };
 };

