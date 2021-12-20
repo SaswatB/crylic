@@ -1,6 +1,7 @@
 import { createEventDefinition, EventBus } from "ts-bus";
 
-import { CodeEntry, RenderEntry, ViewContext } from "../types/paint";
+import { RenderEntry, ViewContext } from "../types/paint";
+import { CodeEntry } from "./project/CodeEntry";
 
 export const bus = new EventBus();
 

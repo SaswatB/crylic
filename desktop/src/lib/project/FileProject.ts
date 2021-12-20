@@ -1,16 +1,15 @@
 import { MakeDirectoryOptions } from "fs";
-import produce from "immer";
 import path from "path";
 import { Readable } from "stream";
 import yauzl from "yauzl";
 
-import { Project } from "synergy/src/lib/project/Project";
 import {
+  CodeEntry,
   IMAGE_EXTENSION_REGEX,
   SCRIPT_EXTENSION_REGEX,
   STYLE_EXTENSION_REGEX,
-} from "synergy/src/lib/utils";
-import { Mutable } from "synergy/src/types/paint";
+} from "synergy/src/lib/project/CodeEntry";
+import { Project } from "synergy/src/lib/project/Project";
 
 import { streamToString } from "../../utils/utils";
 import { FileProjectConfig } from "./FileProjectConfig";
@@ -111,13 +110,11 @@ export class FileProject extends Project {
     const config = FileProjectConfig.createProjectConfigFromDirectory(
       folderPath
     );
+    const srcFolderPath = config.getFullSourceFolderPath();
+    const project = new FileProject(folderPath, srcFolderPath, config);
 
     // process all the source files
-    const fileCodeEntries: {
-      filePath: string;
-      code: string | undefined;
-    }[] = [];
-    const srcFolderPath = config.getFullSourceFolderPath();
+    const fileCodeEntries: CodeEntry[] = [];
     if (fs.existsSync(srcFolderPath)) {
       // recursive function for creating code entries from a folder
       const read = (subFolderPath: string) =>
@@ -131,16 +128,11 @@ export class FileProject extends Project {
             file.match(STYLE_EXTENSION_REGEX)
           ) {
             // add scripts/styles as code entries
-            fileCodeEntries.push({
-              filePath,
-              code: fs.readFileSync(filePath, { encoding: "utf-8" }),
-            });
+            const code = fs.readFileSync(filePath, { encoding: "utf-8" });
+            fileCodeEntries.push(new CodeEntry(project, filePath, code));
           } else if (file.match(IMAGE_EXTENSION_REGEX)) {
             // add images as code entries without text code
-            fileCodeEntries.push({
-              filePath,
-              code: undefined,
-            });
+            fileCodeEntries.push(new CodeEntry(project, filePath, undefined));
           } else {
             console.log("ignoring file", filePath);
           }
@@ -152,47 +144,42 @@ export class FileProject extends Project {
     // set the window name
     document.title = `${config.name} - Crylic`;
 
-    return new FileProject(folderPath, srcFolderPath, config).addCodeEntries(
-      fileCodeEntries
-    );
+    project.addCodeEntries(fileCodeEntries);
+    return project;
   }
 
   public saveFiles() {
-    this.codeEntries
-      .filter(
-        ({ code, codeRevisionId }) => code !== undefined && codeRevisionId !== 1
-      )
-      .forEach(({ filePath, code }) => fs.writeFileSync(filePath, code));
+    this.codeEntries$
+      .getValue()
+      .filter((e) => e.code$.getValue() !== undefined && e.codeRevisionId !== 1)
+      .forEach(({ filePath, code$ }) =>
+        fs.writeFileSync(filePath, code$.getValue())
+      );
   }
 
   public refreshConfig() {
-    return produce(this, (draft: Mutable<Project>) => {
-      draft.config = FileProjectConfig.createProjectConfigFromDirectory(
-        this.path
-      );
-    });
+    // todo refresh all config dependencies as well
+    this.config = FileProjectConfig.createProjectConfigFromDirectory(this.path);
   }
 
   public addAsset(filePath: string) {
-    return produce(this, (draft: Project) => {
-      const fileName = path.basename(filePath);
-      const assetPath = { path: this.getNewAssetPath(fileName) };
-      let counter = 1;
-      while (
-        this.codeEntries.find((entry) => entry.filePath === assetPath.path)
-      ) {
-        assetPath.path = this.getNewAssetPath(
-          fileName.replace(/\./, `-${counter++}.`)
-        );
-      }
-      fs.writeFileSync(
-        assetPath.path,
-        fs.readFileSync(filePath, { encoding: null }),
-        { encoding: null }
+    const fileName = path.basename(filePath);
+    const assetPath = { path: this.getNewAssetPath(fileName) };
+    let counter = 1;
+    while (
+      this.codeEntries$
+        .getValue()
+        .find((entry) => entry.filePath === assetPath.path)
+    ) {
+      assetPath.path = this.getNewAssetPath(
+        fileName.replace(/\./, `-${counter++}.`)
       );
-      draft.codeEntries.push(
-        this.createCodeEntry({ filePath: assetPath.path })
-      );
-    });
+    }
+    fs.writeFileSync(
+      assetPath.path,
+      fs.readFileSync(filePath, { encoding: null }),
+      { encoding: null }
+    );
+    this.addCodeEntries([new CodeEntry(this, assetPath.path, undefined)]);
   }
 }

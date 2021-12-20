@@ -2,8 +2,10 @@ import React from "react";
 import ReactDOMServer from "react-dom/server";
 
 import { ErrorBoundary } from "synergy/src/components/ErrorBoundary";
+import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
 import { getReactRouterProxy } from "synergy/src/lib/react-router-proxy";
-import { CodeEntry, RenderEntryDeployerContext } from "synergy/src/types/paint";
+import { takeNext } from "synergy/src/lib/utils";
+import { RenderEntryDeployerContext } from "synergy/src/types/paint";
 
 import { DEFAULT_HTML_TEMPLATE_SELECTOR } from "../constants";
 import { publishComponent, unpublishComponent } from "../publish-component";
@@ -75,22 +77,33 @@ export const webpackRunCodeWithWorker = async ({
 
   const getImport = (declaration: string, source: string) =>
     `import ${declaration} from "${source.replace(/\\/g, "\\\\")}";`;
-  const getImportFromCodeEntry = (local: string, codeEntry: CodeEntry) =>
-    getImport(
-      codeEntry.exportIsDefault || !codeEntry.exportName
-        ? local
-        : codeEntry.exportName === local
-        ? `{ ${local} }`
-        : `{ ${codeEntry.exportName} as ${local} }`,
-      codeEntry.filePath
-    );
-  const componentImport = getImportFromCodeEntry(
+  const getImportFromCodeEntry = async (
+    local: string,
+    codeEntry: CodeEntry
+  ) => {
+    const exportIsDefault = await takeNext(codeEntry.exportIsDefault$);
+    const exportName = await takeNext(codeEntry.exportName$);
+
+    let declaration;
+    if (exportIsDefault || !exportName) {
+      declaration = local;
+      return getImport(local, codeEntry.filePath);
+    } else if (exportName === local) {
+      declaration = `{ ${local} }`;
+    } else {
+      declaration = `{ ${exportName} as ${local} }`;
+    }
+    return getImport(declaration, codeEntry.filePath);
+  };
+  const componentImport = await getImportFromCodeEntry(
     "Component",
-    project.getCodeEntry(renderEntry.codeId)!
+    project.getCodeEntryValue(renderEntry.codeId)!
   );
-  const bootstrapCodeEntry = project.codeEntries.find((c) => c.isBootstrap);
+  const bootstrapCodeEntry = project.codeEntries$
+    .getValue()
+    .find((c) => c.isBootstrap());
   const bootstrapImport = bootstrapCodeEntry
-    ? getImportFromCodeEntry("Bootstrap", bootstrapCodeEntry)
+    ? await getImportFromCodeEntry("Bootstrap", bootstrapCodeEntry)
     : "";
 
   const bundleCode = `
@@ -107,8 +120,8 @@ ReactDOM.render((
   <ErrorBoundary>
     ${
       bootstrapCodeEntry
-        ? `<Bootstrap><Component /></Bootstrap>`
-        : `<Component />`
+        ? "<Bootstrap><Component /></Bootstrap>"
+        : "<Component />"
     }
   </ErrorBoundary>),
   document.getElementById("${
@@ -120,22 +133,26 @@ ReactDOM.render((
   console.log("bundleCode", bundleCode);
 
   const bundleId = `bundle-${renderEntry.codeId}`;
-  const codeEntries = project.codeEntries
-    .map((codeEntry) => ({
-      id: codeEntry.id,
-      filePath: codeEntry.filePath,
-      code: codeEntry.codeWithLookupData || codeEntry.code,
-      codeRevisionId: codeEntry.codeRevisionId,
-    }))
-    .concat([
-      {
-        id: bundleId,
-        code: bundleCode,
-        // todo add random string to filename
-        filePath: path.join(project.sourceFolderPath, "paintbundle.tsx"),
-        codeRevisionId: 0,
-      },
-    ]);
+  const codeEntries = (
+    await Promise.all(
+      project.codeEntries$.getValue().map(async (codeEntry) => ({
+        id: codeEntry.id,
+        filePath: codeEntry.filePath,
+        code:
+          (await takeNext(codeEntry.codeWithLookupData$)) ||
+          codeEntry.code$.getValue(),
+        codeRevisionId: codeEntry.codeRevisionId,
+      }))
+    )
+  ).concat([
+    {
+      id: bundleId,
+      code: bundleCode,
+      // todo add random string to filename
+      filePath: path.join(project.sourceFolderPath, "paintbundle.tsx"),
+      codeRevisionId: 0,
+    },
+  ]);
 
   const paths = {
     projectFolder: project.path,
@@ -187,7 +204,7 @@ ReactDOM.render((
       errorHandler(e.error)
     );
 
-    // run the resuulting bundle on the provided iframe, with stubs
+    // run the resulting bundle on the provided iframe, with stubs
     (frame!.contentWindow! as any).require = (name: string) => {
       if (name === "react") return require("react");
       if (name === "react-dom") return require("react-dom");

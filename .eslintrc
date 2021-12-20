@@ -1,24 +1,14 @@
 {
   "extends": "react-app",
-  "plugins": [
-    "simple-import-sort",
-    "import"
-  ],
+  "plugins": ["simple-import-sort", "import"],
   "rules": {
     "simple-import-sort/sort": [
       "error",
       {
         "groups": [
-          [
-            "^react",
-            "^@?\\w"
-          ],
-          [
-            "^synergy"
-          ],
-          [
-            "^\\u0000"
-          ],
+          ["^react", "^@?\\w"],
+          ["^synergy"],
+          ["^\\u0000"],
           [
             "^\\.\\.(?!/?$)",
             "^\\.\\./?$",
@@ -33,8 +23,9 @@
     "import/no-webpack-loader-syntax": 0,
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": [
-      "warn", {
-        "additionalHooks": "useRecoilCallback"
+      "warn",
+      {
+        "additionalHooks": "useRecoilCallback|useMemoObservable"
       }
     ]
   }

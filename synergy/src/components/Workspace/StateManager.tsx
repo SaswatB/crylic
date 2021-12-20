@@ -16,12 +16,7 @@ import {
 import { sleep } from "../../lib/utils";
 
 export const StateManager: FunctionComponent = () => {
-  const {
-    project,
-    setProject,
-    undoCodeChange,
-    redoCodeChange,
-  } = useProjectRecoil();
+  const { project } = useProjectRecoil();
   const {
     setSelectMode,
     selectedElement,
@@ -34,8 +29,8 @@ export const StateManager: FunctionComponent = () => {
 
   // handle save/undo/redo hotkeys
   useHotkeys("ctrl+s", () => project?.saveFiles());
-  useHotkeys("ctrl+z", undoCodeChange);
-  useHotkeys("ctrl+shift+z", redoCodeChange);
+  useHotkeys("ctrl+z", () => project?.undoCodeChange());
+  useHotkeys("ctrl+shift+z", () => project?.redoCodeChange());
 
   // clear select mode on escape hotkey
   useHotkeys("escape", () => setSelectMode(undefined));
@@ -51,9 +46,7 @@ export const StateManager: FunctionComponent = () => {
 
   // persist route changes in the project
   useBusSubscription(componentViewRouteChange, ({ renderEntry, route }) => {
-    setProject((currentProject) =>
-      currentProject?.editRenderEntry(renderEntry.id, { route })
-    );
+    project?.editRenderEntry(renderEntry.id, { route });
   });
 
   /* Select Management */

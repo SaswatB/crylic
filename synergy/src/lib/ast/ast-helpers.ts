@@ -17,9 +17,9 @@ import prettierParsesPostcss from "prettier/parser-postcss";
 import { format } from "prettier/standalone";
 import { parse, print, types, visit } from "recast";
 
-import { CodeEntry } from "../../types/paint";
+import { CodeEntry } from "../project/CodeEntry";
 import { ProjectConfig } from "../project/ProjectConfig";
-import { getStyleEntryExtension, isDefined, isStyleEntry } from "../utils";
+import { isDefined } from "../utils";
 import { babelTsParser } from "./babel-ts";
 
 const { builders: b } = types;
@@ -34,8 +34,8 @@ const prettyPrintAST = (ast: t.File) =>
   format(printAST(ast), { parser: "babel-ts", plugins: [prettierParserBabel] });
 
 export const parseStyleSheetAST = (codeEntry: CodeEntry) => {
-  const syntax = getStyleEntryExtension(codeEntry);
-  const ast = gonzales.parse(codeEntry.code || "", {
+  const syntax = codeEntry.styleEntryExtension;
+  const ast = gonzales.parse(codeEntry.code$.getValue() || "", {
     syntax,
   });
   // fill in a default syntax if the ast has none (which can happen for empty files)
@@ -44,7 +44,7 @@ export const parseStyleSheetAST = (codeEntry: CodeEntry) => {
 };
 const printStyleSheetAST = (ast: CSSASTNode) => ast.toString();
 const prettyPrintStyleSheetAST = (codeEntry: CodeEntry, ast: CSSASTNode) => {
-  const syntax = getStyleEntryExtension(codeEntry);
+  const syntax = codeEntry.styleEntryExtension;
   const code = printStyleSheetAST(ast);
 
   // prettier doesn't support sass https://github.com/prettier/prettier/issues/4948
@@ -56,14 +56,14 @@ const prettyPrintStyleSheetAST = (codeEntry: CodeEntry, ast: CSSASTNode) => {
 };
 
 export const parseCodeEntryAST = (codeEntry: CodeEntry) =>
-  isStyleEntry(codeEntry)
+  codeEntry.isStyleEntry
     ? parseStyleSheetAST(codeEntry)
-    : parseAST(codeEntry.code || "");
+    : parseAST(codeEntry.code$.getValue() || "");
 export const printCodeEntryAST = (
   codeEntry: CodeEntry,
   ast: CSSASTNode | t.File
 ) =>
-  isStyleEntry(codeEntry)
+  codeEntry.isStyleEntry
     ? printStyleSheetAST(ast as CSSASTNode)
     : printAST(ast as t.File);
 export const prettyPrintCodeEntryAST = (
@@ -73,7 +73,7 @@ export const prettyPrintCodeEntryAST = (
 ) => {
   if (!config.isPrettierEnabled()) return printCodeEntryAST(codeEntry, ast);
 
-  return isStyleEntry(codeEntry)
+  return codeEntry.isStyleEntry
     ? prettyPrintStyleSheetAST(codeEntry, ast as CSSASTNode)
     : prettyPrintAST(ast as t.File);
 };

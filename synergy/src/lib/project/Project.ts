@@ -1,27 +1,21 @@
-import clone from "clone";
-import deepFreeze from "deep-freeze-strict";
-import produce, { immerable } from "immer";
-import { camelCase, uniqueId, upperFirst } from "lodash";
-import path from "path";
-
-import { CodeEntry, EditEntry, RenderEntry } from "../../types/paint";
+import { uniqueId } from "lodash";
+import fspath from "path";
+import { BehaviorSubject } from "rxjs";
 import {
-  getComponentExport,
-  hashString,
-  parseCodeEntryAST,
-  printCodeEntryAST,
-} from "../ast/ast-helpers";
+  bufferCount,
+  distinctUntilChanged,
+  map,
+  mergeAll,
+  mergeMap,
+} from "rxjs/operators";
+
+import { EditEntry, RenderEntry } from "../../types/paint";
 import { ElementASTEditor, StyleASTEditor } from "../ast/editors/ASTEditor";
 import { JSXASTEditor } from "../ast/editors/JSXASTEditor";
 import { StyledASTEditor } from "../ast/editors/StyledASTEditor";
 import { StyleSheetASTEditor } from "../ast/editors/StyleSheetASTEditor";
-import {
-  getFriendlyName,
-  isImageEntry,
-  isScriptEntry,
-  isStyleEntry,
-  SCRIPT_EXTENSION_REGEX,
-} from "../utils";
+import { produceNext } from "../utils";
+import { CodeEntry } from "./CodeEntry";
 import { ProjectConfig } from "./ProjectConfig";
 
 type EditorEntry<T> = {
@@ -30,30 +24,30 @@ type EditorEntry<T> = {
 };
 
 export abstract class Project {
-  private [immerable] = true; // enable immer support
-
-  public readonly codeEntries: CodeEntry[] = [];
-  public readonly editEntries: EditEntry[] = [];
-  public readonly renderEntries: RenderEntry[] = [];
-  public readonly elementEditorEntries: EditorEntry<ElementASTEditor<any>>[];
-  public readonly styleEditorEntries: EditorEntry<StyleASTEditor<any>>[];
+  public readonly codeEntries$ = new BehaviorSubject<CodeEntry[]>([]); // lm_9dfd4feb9b entries cannot be removed
+  public readonly editEntries$ = new BehaviorSubject<EditEntry[]>([]);
+  public readonly renderEntries$ = new BehaviorSubject<RenderEntry[]>([]);
+  private readonly elementEditorEntries: EditorEntry<ElementASTEditor<any>>[];
+  private readonly styleEditorEntries: EditorEntry<StyleASTEditor<any>>[];
 
   protected constructor(
     public readonly path: string,
     public readonly sourceFolderPath: string,
-    public readonly config: ProjectConfig
+    public config: ProjectConfig
   ) {
     this.elementEditorEntries = [
-      { editor: new JSXASTEditor(), shouldApply: isScriptEntry },
+      { editor: new JSXASTEditor(), shouldApply: (e) => e.isScriptEntry },
     ];
     this.styleEditorEntries = [
-      { editor: new StyledASTEditor(), shouldApply: isScriptEntry },
-      { editor: new StyleSheetASTEditor(), shouldApply: isStyleEntry },
+      { editor: new StyledASTEditor(), shouldApply: (e) => e.isScriptEntry },
+      { editor: new StyleSheetASTEditor(), shouldApply: (e) => e.isStyleEntry },
     ];
+    this.initUndoRedo();
   }
 
   public abstract saveFiles(): void;
-  public abstract addAsset(filePath: string): Project;
+  public abstract addAsset(filePath: string): void;
+  public abstract refreshConfig(): void;
 
   public get editorEntries() {
     return [...this.elementEditorEntries, ...this.styleEditorEntries];
@@ -63,6 +57,8 @@ export abstract class Project {
     return this.elementEditorEntries[0]!.editor;
   }
 
+  // #region code entries
+
   public getEditorsForCodeEntry(codeEntry: CodeEntry) {
     return this.editorEntries
       .filter(({ shouldApply }) => shouldApply(codeEntry))
@@ -70,210 +66,158 @@ export abstract class Project {
   }
 
   public getCodeEntry(codeId: string) {
-    return this.codeEntries.find(({ id }) => id === codeId);
-  }
-
-  public getNewComponentPath(name: string) {
-    return path.join(this.path, `src/components/${name}.tsx`);
-  }
-
-  public getNewStyleSheetPath(name: string) {
-    return path.join(this.path, `src/styles/${name}.css`);
-  }
-
-  public getNewAssetPath(fileName: string) {
-    return path.join(this.path, `src/assets/${fileName}`);
-  }
-
-  // Project is immutable so these functions return a new copy with modifications
-
-  public abstract refreshConfig(): Project;
-
-  public addCodeEntries(
-    partialEntries: (Partial<CodeEntry> & { filePath: string })[],
-    options?: { render?: boolean; edit?: boolean }
-  ) {
-    return produce(this, (draft: Project) => {
-      const newCodeEntries = partialEntries.map((partialEntry) =>
-        this.createCodeEntry(partialEntry)
-      );
-      draft.codeEntries.push(...newCodeEntries);
-
-      // if these code entries are edited/rendered by default, add those respective entries
-      if (options?.edit || options?.render) {
-        newCodeEntries.forEach((newCodeEntry) => {
-          if (options.edit) this.addEditEntryToDraft(draft, newCodeEntry);
-          if (options.render) this.addRenderEntryToDraft(draft, newCodeEntry);
-        });
-      }
-    });
-  }
-
-  public editCodeEntry(codeId: string, updates: Partial<CodeEntry>) {
-    return produce(this, (draft: Project) => {
-      const codeEntry = draft?.codeEntries.find(({ id }) => id === codeId);
-      if (!codeEntry) return;
-
-      Object.entries(updates).forEach(([key, value]) => {
-        // @ts-ignore ignore assignment
-        codeEntry[key] = value;
-
-        // recalculate metadata on code change
-        if (key === "code") {
-          const {
-            ast,
-            codeWithLookupData,
-            isRenderable,
-            isEditable,
-            exportName,
-            exportIsDefault,
-          } = this.getCodeEntryMetaData(codeEntry);
-
-          codeEntry.codeRevisionId = codeEntry.codeRevisionId + 1;
-          codeEntry.ast = ast;
-          codeEntry.codeWithLookupData = codeWithLookupData;
-          codeEntry.isRenderable = isRenderable;
-          codeEntry.isEditable = isEditable;
-          codeEntry.exportName = exportName;
-          codeEntry.exportIsDefault = exportIsDefault;
-        }
-      });
-    });
-  }
-
-  protected createCodeEntry(
-    partialEntry: Partial<CodeEntry> & { filePath: string }
-  ): CodeEntry {
-    const codeEntry: CodeEntry = {
-      id: hashString(partialEntry.filePath),
-      code: undefined,
-      codeRevisionId: 1,
-      ...partialEntry,
-    };
-    return {
-      ...codeEntry,
-      ...this.getCodeEntryMetaData(codeEntry),
-    };
-  }
-
-  protected getCodeEntryMetaData(codeEntry: CodeEntry) {
-    if (!isScriptEntry(codeEntry) && !isStyleEntry(codeEntry)) {
-      return { isRenderable: false, isEditable: isImageEntry(codeEntry) };
-    }
-
-    try {
-      // parse ast data
-      let ast = parseCodeEntryAST(codeEntry);
-
-      const isBootstrap =
-        !!this.config?.configFile?.bootstrap &&
-        path
-          .join(this.path, this.config.configFile.bootstrap)
-          .replace(/\\/g, "/") === codeEntry.filePath.replace(/\\/g, "/");
-      // check if the file is a component
-      const isRenderableScript =
-        // todo add an option to support other types of scripts
-        isScriptEntry(codeEntry) &&
-        // by default component files must start with an uppercase letter
-        (this.config.configFile?.analyzer?.allowLowerCaseComponentFiles ||
-          !!codeEntry.filePath.match(/(^|\\|\/)[A-Z][^/\\]*$/)) &&
-        // by default test and declaration files are ignored)
-        (this.config.configFile?.analyzer?.allowTestComponentFiles ||
-          !codeEntry.filePath.match(/\.test\.[jt]sx?$/)) &&
-        (this.config.configFile?.analyzer?.allowDeclarationComponentFiles ||
-          !codeEntry.filePath.match(/\.d\.ts$/));
-
-      let isRenderable = false;
-      let exportName = undefined;
-      let exportIsDefault = undefined;
-      if (isRenderableScript || isBootstrap) {
-        const componentExport = getComponentExport(ast as any);
-        const baseComponentName = upperFirst(
-          camelCase(
-            path
-              .basename(codeEntry.filePath)
-              .replace(SCRIPT_EXTENSION_REGEX, "")
-          )
-        );
-        if (componentExport) {
-          isRenderable = !isBootstrap;
-          exportName = componentExport.name || baseComponentName;
-          exportIsDefault =
-            this.config.configFile?.analyzer?.forceUseComponentDefaultExports ||
-            componentExport.isDefault;
-        } else if (
-          this.config.configFile?.analyzer?.disableComponentExportsGuard
-        ) {
-          // since static analysis failed but we still need allow this file as a component guess that it's a default export
-          isRenderable = !isBootstrap;
-          exportName = baseComponentName;
-          exportIsDefault = true;
-        }
-      }
-
-      // add lookup data from each editor to the ast
-      this.getEditorsForCodeEntry(codeEntry).forEach((editor) => {
-        ({ ast } = editor.addLookupData({ ast, codeEntry }));
-      });
-      // return the modified ast and code
-      console.log("codeTransformer", codeEntry.filePath);
-      return {
-        ast: deepFreeze(clone(ast, undefined, undefined, undefined, true)),
-        codeWithLookupData: printCodeEntryAST(codeEntry, ast),
-        isRenderable,
-        // this code entry has to be a script or style entry by this point so it's editable
-        isEditable: true,
-        isBootstrap,
-        exportName,
-        exportIsDefault,
-      };
-    } catch (e) {
-      console.log(e);
-      return {};
-    }
-  }
-
-  private addEditEntryToDraft(draft: Project, codeEntry: CodeEntry) {
-    draft.editEntries.push({
-      codeId: codeEntry.id,
-    });
-  }
-  public addEditEntry(codeEntry: CodeEntry) {
-    return produce(this, (draft: Project) =>
-      this.addEditEntryToDraft(draft, codeEntry)
+    return this.codeEntries$.pipe(
+      map((entries) => entries.find(({ id }) => id === codeId))
     );
   }
 
-  public removeEditEntry(codeEntry: CodeEntry) {
-    return produce(this, (draft: Project) => {
-      draft.editEntries.splice(
-        draft.editEntries.findIndex((entry) => entry.codeId === codeEntry.id),
-        1
-      );
-    });
+  public getCodeEntryValue(codeId: string) {
+    return this.codeEntries$.getValue().find(({ id }) => id === codeId);
   }
 
-  private addRenderEntryToDraft(draft: Project, codeEntry: CodeEntry) {
-    let baseName = getFriendlyName(draft, codeEntry.id);
-    const name = { current: baseName };
-    let index = 1;
-    while (
-      draft.renderEntries.find(
-        (renderEntry) => renderEntry.name === name.current
+  public addCodeEntries(
+    entries: CodeEntry[],
+    options?: { render?: boolean; edit?: boolean }
+  ) {
+    produceNext(this.codeEntries$, (draft) => draft.push(...entries));
+
+    // if these code entries are edited/rendered by default, add those respective entries
+    if (options?.edit) this.addEditEntries(...entries);
+    if (options?.render) this.addRenderEntries(...entries);
+  }
+
+  // #endregion
+
+  // #region undo/redo
+
+  protected codeChangeStacks = {
+    prev: [] as { codeEntry: CodeEntry; code: string }[],
+    next: [] as { codeEntry: CodeEntry; code: string }[],
+    // CodeEntry.updateCode doesn't have any metadata that indicates that
+    // a code update was by the user or for an undo/redo, this keeps track
+    // externally and depends on lm_d1c6d7683b
+    queuedAction: undefined as "undo" | "redo" | undefined,
+  };
+  protected initUndoRedo() {
+    this.codeEntries$
+      .pipe(
+        mergeMap((codeEntries) =>
+          codeEntries.map((codeEntry) =>
+            codeEntry.code$.pipe(
+              distinctUntilChanged(),
+              bufferCount(2),
+              map(([oldCode, newCode]) => ({ codeEntry, oldCode, newCode }))
+            )
+          )
+        ),
+        mergeAll()
       )
-    ) {
-      name.current = `${baseName} (${index++})`;
-    }
+      .subscribe((change) => {
+        const { codeEntry, oldCode, newCode } = change || {};
 
-    draft.renderEntries.push({
-      id: uniqueId(),
-      name: name.current,
-      codeId: codeEntry.id,
+        if (!codeEntry || oldCode === undefined || newCode === undefined) {
+          return;
+        }
+
+        // check whether there are any changes
+        if (oldCode === newCode) return;
+
+        // keep track of undo/redo state
+        const changeEntry = { codeEntry, code: oldCode };
+        if (this.codeChangeStacks.queuedAction === "undo") {
+          // save the old state in the redo stack for undos
+          this.codeChangeStacks.next.push(changeEntry);
+        } else {
+          // save changes in the undo stack
+          this.codeChangeStacks.prev.push(changeEntry);
+
+          // clear the redo stack if the change isn't an undo or redo
+          if (this.codeChangeStacks.queuedAction !== "redo") {
+            this.codeChangeStacks.next = [];
+          }
+        }
+      });
+  }
+
+  public undoCodeChange() {
+    const change = this.codeChangeStacks.prev.pop();
+    console.log("undo", change);
+    if (change) {
+      this.codeChangeStacks.queuedAction = "undo";
+      // lm_d1c6d7683b this is assumed to be synchronous
+      change.codeEntry.updateCode(change.code);
+      this.codeChangeStacks.queuedAction = undefined;
+    }
+  }
+  public redoCodeChange() {
+    const change = this.codeChangeStacks.next.pop();
+    console.log("redo", change);
+    if (change) {
+      this.codeChangeStacks.queuedAction = "redo";
+      // lm_d1c6d7683b this is assumed to be synchronous
+      change.codeEntry.updateCode(change.code);
+      this.codeChangeStacks.queuedAction = undefined;
+    }
+  }
+
+  public clearChangeHistory() {
+    this.codeChangeStacks.prev = [];
+    this.codeChangeStacks.next = [];
+  }
+
+  // #endregion
+
+  // #region edit & render entries
+
+  public addEditEntries(...codeEntries: CodeEntry[]) {
+    const newEditEntries = codeEntries.map((entry) => ({
+      codeId: entry.id,
+    }));
+    produceNext(this.editEntries$, (draft) => draft.push(...newEditEntries));
+  }
+
+  public removeEditEntry(codeEntry: CodeEntry) {
+    produceNext(this.editEntries$, (draft) => {
+      const index = draft.findIndex((entry) => entry.codeId === codeEntry.id);
+      if (index === -1) {
+        console.trace("removeEditEntry: code entry not found", {
+          codeId: codeEntry.id,
+        });
+        return;
+      }
+
+      draft.splice(index, 1);
     });
   }
-  public addRenderEntry(codeEntry: CodeEntry) {
-    return produce(this, (draft: Project) =>
-      this.addRenderEntryToDraft(draft, codeEntry)
+
+  public toggleEditEntry(codeEntry: CodeEntry) {
+    if (this.editEntries$.getValue().find((e) => e.codeId === codeEntry.id))
+      this.removeEditEntry(codeEntry);
+    else this.addEditEntries(codeEntry);
+  }
+
+  public addRenderEntries(...codeEntries: CodeEntry[]) {
+    const newRenderEntries: RenderEntry[] = [];
+    codeEntries.forEach((codeEntry) => {
+      let baseName = codeEntry.friendlyName;
+      const name = { current: baseName };
+      let index = 1;
+      while (
+        [...this.renderEntries$.getValue(), ...newRenderEntries].find(
+          (renderEntry) => renderEntry.name === name.current
+        )
+      ) {
+        name.current = `${baseName} (${index++})`;
+      }
+
+      newRenderEntries.push({
+        id: uniqueId(),
+        name: name.current,
+        codeId: codeEntry.id,
+      });
+    });
+    produceNext(this.renderEntries$, (draft) =>
+      draft.push(...newRenderEntries)
     );
   }
 
@@ -281,10 +225,8 @@ export abstract class Project {
     renderId: string,
     partialRenderEntry: Partial<Omit<RenderEntry, "id" | "codeId">>
   ) {
-    return produce(this, (draft: Project) => {
-      const renderEntry = draft.renderEntries.find(
-        (entry) => entry.id === renderId
-      );
+    produceNext(this.renderEntries$, (draft) => {
+      const renderEntry = draft.find((e) => e.id === renderId);
       Object.entries(partialRenderEntry).forEach(([key, value]) => {
         // @ts-ignore ignore type error
         renderEntry[key] = value;
@@ -293,11 +235,34 @@ export abstract class Project {
   }
 
   public removeRenderEntry(renderId: string) {
-    return produce(this, (draft: Project) => {
-      draft.renderEntries.splice(
-        draft.renderEntries.findIndex((entry) => entry.id === renderId),
-        1
-      );
+    produceNext(this.renderEntries$, (draft) => {
+      const index = draft.findIndex((entry) => entry.id === renderId);
+      if (index === -1) {
+        console.trace("removeRenderEntry: render entry not found", {
+          renderId,
+        });
+        return;
+      }
+
+      draft.splice(index, 1);
     });
   }
+
+  // #endregion
+
+  // #region new paths
+
+  public getNewComponentPath(name: string) {
+    return fspath.join(this.path, `src/components/${name}.tsx`);
+  }
+
+  public getNewStyleSheetPath(name: string) {
+    return fspath.join(this.path, `src/styles/${name}.css`);
+  }
+
+  public getNewAssetPath(fileName: string) {
+    return fspath.join(this.path, `src/assets/${fileName}`);
+  }
+
+  // #endregion
 }

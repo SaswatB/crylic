@@ -3,6 +3,7 @@ import { faBars } from "@fortawesome/free-solid-svg-icons";
 import { Backdrop, CircularProgress } from "@material-ui/core";
 import { useSnackbar } from "notistack";
 import { Resizable } from "re-resizable";
+import { distinctUntilChanged, map } from "rxjs/operators";
 import { useBus } from "ts-bus/react";
 
 import { OverlayComponentView } from "synergy/src/components/ComponentView/OverlayComponentView";
@@ -16,8 +17,11 @@ import { TransformContainer } from "synergy/src/components/TransformContainer";
 import { InstallDialog } from "synergy/src/components/Workspace/InstallDialog";
 import { useProjectRecoil } from "synergy/src/hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useMenuInput } from "synergy/src/hooks/useInput";
+import {
+  useMemoObservable,
+  useObservable,
+} from "synergy/src/hooks/useObservable";
 import { editorResize } from "synergy/src/lib/events";
-import { Project } from "synergy/src/lib/project/Project";
 import { ComponentViewZoomAction } from "synergy/src/types/paint";
 
 import { CodeEditorPane } from "./components/SideBar/CodeEditorPane/CodeEditorPane";
@@ -34,6 +38,15 @@ function App() {
   const { enqueueSnackbar } = useSnackbar();
   const bus = useBus();
   const [loading, setLoading] = useState(0);
+  const renderEntries = useObservable(project?.renderEntries$);
+  const hasEditEntries = useMemoObservable(
+    () =>
+      project?.editEntries$.pipe(
+        map((editEntries) => (editEntries.length ?? 0) > 0),
+        distinctUntilChanged()
+      ),
+    [project]
+  );
 
   const renderIntro = () => (
     <Intro
@@ -105,10 +118,10 @@ function App() {
     },
   });
 
-  const renderLeftPane = (project: Project) => (
+  const renderLeftPane = (projectName: string) => (
     <>
       <div className="flex">
-        {project.config.name}
+        {projectName}
         <div className="flex-1" />
         <IconButton
           className="ml-2"
@@ -148,7 +161,7 @@ function App() {
 
   const scaleRef = useRef(1);
   const renderComponentViews = () =>
-    project?.renderEntries.map((entry) => (
+    renderEntries?.map((entry) => (
       <OverlayComponentView
         key={entry.id}
         compilerProps={{
@@ -197,11 +210,11 @@ function App() {
             defaultSize={{ height: "100vh", width: 300 }}
             enable={{ right: true }}
           >
-            {renderLeftPane(project)}
+            {renderLeftPane(project.config.name)}
           </Resizable>
         )}
         <div className="flex flex-col flex-1 relative bg-gray-600 items-center justify-center overflow-hidden">
-          {project && (project?.renderEntries.length ?? 0) > 0 && (
+          {project && (renderEntries?.length ?? 0) > 0 && (
             <div className="toolbar flex absolute top-0 right-0 left-0 bg-gray-800 z-10">
               <Toolbar setZoomAction={setZoomAction} />
             </div>
@@ -229,7 +242,7 @@ function App() {
             <ElementEditorPane />
           </Resizable>
         )}
-        {project && project.editEntries.length > 0 && (
+        {hasEditEntries && (
           <Resizable
             minWidth={200}
             maxWidth={1200}

@@ -1,4 +1,4 @@
-import { CodeEntry } from "../../../types/paint";
+import { CodeEntry } from "../../project/CodeEntry";
 import { Project } from "../../project/Project";
 
 export interface EditorAction<EditorActionPayload> {

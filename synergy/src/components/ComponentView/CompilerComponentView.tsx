@@ -6,16 +6,17 @@ import React, {
 } from "react";
 import { flatten, isEqual, uniq } from "lodash";
 import { Observable, ReplaySubject } from "rxjs";
-import { distinctUntilChanged } from "rxjs/operators";
+import { distinctUntilChanged, map } from "rxjs/operators";
 import { useBus } from "ts-bus/react";
 
 import { useCompilerContextRecoil } from "../../hooks/recoil/useCompilerContextRecoil";
 import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useDebounce } from "../../hooks/useDebounce";
+import { useMemoObservable } from "../../hooks/useObservable";
 import { useRerender } from "../../hooks/useRerender";
 import { componentViewCompileEnd, componentViewReload } from "../../lib/events";
 import { RouteDefinition } from "../../lib/react-router-proxy";
-import { isDefined } from "../../lib/utils";
+import { arrayMap, isDefined } from "../../lib/utils";
 import {
   RenderEntry,
   RenderEntryDeployerContext,
@@ -99,7 +100,18 @@ export const CompilerComponentView: FunctionComponent<
   useLayoutEffect(() => applyTempStyles());
 
   const errorBoundary = useRef<ErrorBoundary>(null);
-  const [debouncedCodeEntries] = useDebounce(project?.codeEntries, 150);
+
+  const codeEntriesWithCode = useMemoObservable(
+    () =>
+      project?.codeEntries$.pipe(
+        arrayMap(
+          (e) => e.code$.pipe(map((c) => ({ c, e }))),
+          (v) => v.e.id
+        )
+      ),
+    [project]
+  );
+  const [debouncedCodeEntries] = useDebounce(codeEntriesWithCode, 150);
   useEffect(() => {
     (async () => {
       if (!project || !debouncedCodeEntries?.length) return;

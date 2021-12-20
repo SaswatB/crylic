@@ -3,7 +3,8 @@ import { NodePath } from "ast-types/lib/node-path";
 import { kebabCase } from "lodash";
 import { types } from "recast";
 
-import { CodeEntry, Styles } from "../../../types/paint";
+import { Styles } from "../../../types/paint";
+import { CodeEntry } from "../../project/CodeEntry";
 import {
   registerUninheritedCSSProperty,
   traverseStyledTemplatesElements,

@@ -5,16 +5,13 @@ import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { useBoundState } from "synergy/src/hooks/useBoundState";
 import { useBusSubscription } from "synergy/src/hooks/useBusSubscription";
 import { useDebounce } from "synergy/src/hooks/useDebounce";
+import { useObservable } from "synergy/src/hooks/useObservable";
 import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
 import { JSXActionProvider } from "synergy/src/lib/ast/providers/JSXActionProvider";
 import { editorOpenLocation, editorResize } from "synergy/src/lib/events";
+import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
 import { Project } from "synergy/src/lib/project/Project";
-import {
-  getFileExtensionLanguage,
-  isDefined,
-  isScriptEntry,
-} from "synergy/src/lib/utils";
-import { CodeEntry } from "synergy/src/types/paint";
+import { isDefined, takeNext } from "synergy/src/lib/utils";
 
 import { setupLanguageService } from "../../../utils/moncao-helpers";
 
@@ -38,11 +35,12 @@ export const CodeEditor: FunctionComponent<Props> = ({
   isActiveEditor,
 }) => {
   const editorRef = useRef<MonacoEditor>(null);
-  const [localValue, setLocalValue] = useBoundState(codeEntry.code);
+  const code = useObservable(codeEntry.code$);
+  const [localValue, setLocalValue] = useBoundState(code);
   const localValueRef = useUpdatingRef(localValue);
   const [debouncedLocalValue] = useDebounce(localValue, 1000);
   useEffect(() => {
-    if (debouncedLocalValue !== codeEntry.code) {
+    if (debouncedLocalValue !== code) {
       onCodeChange(codeEntry.id, debouncedLocalValue || "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -59,7 +57,7 @@ export const CodeEditor: FunctionComponent<Props> = ({
   const activeActions = useRef<string[]>([]);
   useEffect(() => {
     requestAnimationFrame(() => {
-      setTimeout(() => {
+      setTimeout(async () => {
         let decorations: monaco.editor.IModelDeltaDecoration[] = [];
         if (
           selectedElementId &&
@@ -69,7 +67,7 @@ export const CodeEditor: FunctionComponent<Props> = ({
         ) {
           try {
             decorations = project.primaryElementEditor.getEditorDecorationsForElement(
-              { ast: codeEntry.ast, codeEntry },
+              { ast: (await takeNext(codeEntry.ast$))!, codeEntry },
               selectedElementId
             );
           } catch (err) {
@@ -104,7 +102,7 @@ export const CodeEditor: FunctionComponent<Props> = ({
             changeAccessor.removeZone(viewZoneId)
           );
           activeActions.current = [];
-          if (!isScriptEntry(codeEntry)) return;
+          if (!codeEntry.isScriptEntry) return;
 
           try {
             const actions = new JSXActionProvider().getEditorActions(codeEntry);
@@ -120,7 +118,7 @@ export const CodeEditor: FunctionComponent<Props> = ({
                   action,
                   project
                 );
-                changes.forEach(({ id, code }) => onCodeChange(id, code));
+                changes.forEach((c) => onCodeChange(c.id, c.code));
               };
               const domNode = document.createElement("div");
               domNode.appendChild(linkNode);
@@ -143,16 +141,16 @@ export const CodeEditor: FunctionComponent<Props> = ({
 
   // try to select the element the editor cursor is at
   useEffect(() => {
-    if (!isScriptEntry(codeEntry)) return undefined;
+    if (!codeEntry.isScriptEntry) return undefined;
 
-    return editorRef.current?.editor?.onDidChangeCursorPosition((e) => {
-      if (!codeEntry.code || !editorRef.current?.editor?.hasTextFocus()) return;
+    return editorRef.current?.editor?.onDidChangeCursorPosition(async (e) => {
+      if (!code || !editorRef.current?.editor?.hasTextFocus()) return;
 
       // try to find an element at the cursor location in the latest code ast
       let lookupId;
       try {
         lookupId = project.primaryElementEditor.getElementLookupIdAtCodePosition(
-          { ast: codeEntry.ast, codeEntry },
+          { ast: (await takeNext(codeEntry.ast$))!, codeEntry },
           e.position.lineNumber,
           e.position.column
         );
@@ -200,7 +198,7 @@ export const CodeEditor: FunctionComponent<Props> = ({
   return (
     <MonacoEditor
       ref={editorRef}
-      language={getFileExtensionLanguage(codeEntry)}
+      language={codeEntry.fileExtensionLanguage}
       theme="darkVsPlus"
       value={localValue}
       options={{

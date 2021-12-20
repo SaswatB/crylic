@@ -34,9 +34,10 @@ import { useObservable } from "../../hooks/useObservable";
 import { StyleGroup } from "../../lib/ast/editors/ASTEditor";
 import { linkComponent } from "../../lib/defs/react-router-dom";
 import { editorOpenLocation } from "../../lib/events";
+import { CodeEntry } from "../../lib/project/CodeEntry";
 import { renderSeparator } from "../../lib/render-utils";
-import { isImageEntry } from "../../lib/utils";
-import { CodeEntry, StyleKeys } from "../../types/paint";
+import { takeNext } from "../../lib/utils";
+import { StyleKeys } from "../../types/paint";
 import { AnimationEditorModal } from "../Animation/AnimationEditorModal";
 import { Collapsible } from "../Collapsible";
 import { IconButton } from "../IconButton";
@@ -88,15 +89,16 @@ const useBoundCSSLengthInput: useInputFunction = (config) =>
   useCSSLengthInput({ ...config, bindInitialValue: true });
 
 const useSelectedElementImageEditor = (imageProp: "backgroundImage") => {
-  const { project, setCodeAstEdit } = useProjectRecoil();
+  const { project } = useProjectRecoil();
   const { selectedElement, selectedStyleGroup } = useSelectRecoil();
 
   const onChange = (assetEntry: CodeEntry) => {
     if (!selectedStyleGroup) return;
-    setCodeAstEdit(
-      updateStyleGroupHelper(selectedStyleGroup, (editor, editContext) =>
+    updateStyleGroupHelper(
+      project!,
+      selectedStyleGroup,
+      (editor, editContext) =>
         editor.updateElementImage(editContext, imageProp, assetEntry)
-      )
     );
   };
   const label = StylePropNameMap[imageProp] || startCase(`${imageProp || ""}`);
@@ -106,14 +108,16 @@ const useSelectedElementImageEditor = (imageProp: "backgroundImage") => {
     "";
 
   const [, renderMenu, openMenu, closeMenu] = useMenuInput({
-    options: (project?.codeEntries || []).filter(isImageEntry).map((entry) => ({
-      name: path.basename(entry.filePath),
-      value: entry.id,
-    })),
+    options: (project?.codeEntries$.getValue() || [])
+      .filter((e) => e.isImageEntry)
+      .map((entry) => ({
+        name: path.basename(entry.filePath),
+        value: entry.id,
+      })),
     disableSelection: true,
     onChange: (newCodeId: string) => {
       closeMenu();
-      onChange(project!.getCodeEntry(newCodeId)!);
+      onChange(project!.getCodeEntryValue(newCodeId)!);
     },
   });
 
@@ -151,7 +155,7 @@ const TEXT_TAGS = [
 
 export const ElementEditorPane: FunctionComponent = () => {
   const bus = useBus();
-  const { project, toggleCodeEntryEdit } = useProjectRecoil();
+  const { project } = useProjectRecoil();
   const { installPackages } = usePackageInstallerRecoil();
   const {
     selectedElement,
@@ -164,16 +168,18 @@ export const ElementEditorPane: FunctionComponent = () => {
   const openInEditor = ({ editor, lookupId }: StyleGroup) => {
     const codeId = editor.getCodeIdFromLookupId(lookupId);
     if (!codeId) return;
-    const codeEntry = project?.getCodeEntry(codeId);
+    const codeEntry = project?.getCodeEntryValue(codeId);
     if (!codeEntry) return;
     const line = editor.getCodeLineFromLookupId(
-      { codeEntry, ast: codeEntry.ast },
+      { codeEntry, ast: takeNext(codeEntry.ast$) },
       lookupId
     );
     console.log("openInEditor", codeEntry, line);
     let timeout = 0;
-    if (!project?.editEntries.find((e) => e.codeId === codeEntry.id)) {
-      toggleCodeEntryEdit(codeEntry);
+    if (
+      !project?.editEntries$.getValue().find((e) => e.codeId === codeEntry.id)
+    ) {
+      project?.addEditEntries(codeEntry);
       // todo don't cheat with a timeout here
       timeout = 500;
     }

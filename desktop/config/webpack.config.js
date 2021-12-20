@@ -359,6 +359,11 @@ module.exports = function (webpackEnv) {
                       syntax: "typescript",
                       tsx: true,
                       jsx: true,
+                      decorators: true,
+                    },
+                    transform: {
+                      legacyDecorator: true,
+                      decoratorMetadata: true,
                     },
                   },
                 },

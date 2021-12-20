@@ -3,7 +3,8 @@ import { pipe } from "fp-ts/lib/pipeable";
 import { CSSASTNode } from "gonzales-pe";
 import { kebabCase } from "lodash";
 
-import { CodeEntry, Styles } from "../../../types/paint";
+import { Styles } from "../../../types/paint";
+import { CodeEntry } from "../../project/CodeEntry";
 import {
   createCSSPropertyDeclaration,
   eitherContent,

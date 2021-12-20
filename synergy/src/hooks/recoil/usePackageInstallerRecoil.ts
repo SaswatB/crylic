@@ -16,7 +16,7 @@ const installPackagesOutputState = atom<MutableRefObject<Subject<Buffer>>>({
 });
 
 export function usePackageInstallerRecoil() {
-  const { project, setProject } = useProjectRecoil();
+  const { project } = useProjectRecoil();
   const [installingPackages, setInstallingPackages] = useRecoilState(
     installingPackagesState
   );
@@ -36,7 +36,7 @@ export function usePackageInstallerRecoil() {
     );
     childProcess.on("exit", () => {
       setInstallingPackages(false);
-      setProject((project) => project?.refreshConfig());
+      project?.refreshConfig();
     });
   };
 

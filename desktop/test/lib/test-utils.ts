@@ -6,8 +6,9 @@ import {
   prettyPrintCodeEntryAST,
 } from "synergy/src/lib/ast/ast-helpers";
 import { ASTEditor } from "synergy/src/lib/ast/editors/ASTEditor";
+import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
 import { ProjectConfigFile } from "synergy/src/lib/project/ProjectConfig";
-import { PackageJson, CodeEntry } from "synergy/src/types/paint";
+import { PackageJson } from "synergy/src/types/paint";
 
 import { FileProject } from "../../src/lib/project/FileProject";
 import { FileProjectConfig } from "../../src/lib/project/FileProjectConfig";
@@ -24,9 +25,6 @@ class TestProjectConfig extends FileProjectConfig {
 export class TestProject extends FileProject {
   public constructor(config = new TestProjectConfig()) {
     super("", "", config);
-  }
-  public override getCodeEntryMetaData(codeEntry: CodeEntry) {
-    return super.getCodeEntryMetaData(codeEntry);
   }
 }
 
@@ -46,12 +44,13 @@ export const runEditor = <
   codeExtension: string,
   apply: runEditorApply<T, S>
 ) => {
-  const codeEntry: CodeEntry = {
-    id: "0",
-    filePath: `/file.${codeExtension}`,
+  const config = new TestProjectConfig();
+  const codeEntry = new CodeEntry(
+    new TestProject(config),
+    `/file.${codeExtension}`,
     code,
-    codeRevisionId: 0,
-  };
+    0
+  );
   let ast: S = parseCodeEntryAST(codeEntry) as S;
   let lookupIds;
   ({ ast, lookupIds } = editor.addLookupData({
@@ -60,5 +59,5 @@ export const runEditor = <
   }));
   ast = apply({ editor, ast, codeEntry, lookupIds });
   ast = editor.removeLookupData({ ast, codeEntry });
-  return prettyPrintCodeEntryAST(new TestProjectConfig(), codeEntry, ast);
+  return prettyPrintCodeEntryAST(config, codeEntry, ast);
 };

@@ -3,7 +3,7 @@ import {
   SourceMetadata,
   Styles,
 } from "../../../types/paint";
-import { CodeEntry } from "../../../types/paint";
+import { CodeEntry } from "../../project/CodeEntry";
 import { editAST } from "../ast-helpers";
 
 export interface StyleGroup {

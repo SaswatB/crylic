@@ -62,7 +62,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   const bus = useBus();
   const [loading, setLoading] = useState(false);
   const [debouncedLoading, skipLoadingDebounce] = useDebounce(loading, 700);
-  const { project, setProject, setCodeAstEdit } = useProjectRecoil();
+  const { project } = useProjectRecoil();
   const {
     selectMode,
     setSelectMode,
@@ -102,13 +102,11 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
         break;
       case SelectModeType.AddElement:
         try {
-          setCodeAstEdit(
-            addElementHelper(componentElement, selectMode, {
-              renderId,
-              addCompileTask,
-              selectElement,
-            })
-          );
+          addElementHelper(project!, componentElement, selectMode, {
+            renderId,
+            addCompileTask,
+            selectElement,
+          });
         } catch (e) {
           enqueueSnackbar((e as Error)?.message || `${e}`);
         }
@@ -216,33 +214,25 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
     // todo show preview of name in dialog
     const name = snakeCase(inputName.replace(/[^a-z0-9]/g, ""));
     const path = `/${name}`;
-    setCodeAstEdit((project) => {
-      const switchLookupId = project.primaryElementEditor.getLookupIdFromProps(
-        routeDefinition!.switchProps
-      )!;
-      return addElementHelper(switchLookupId, {
-        component: routeComponent,
-        attributes: { path },
-      })(project);
+    const switchLookupId = project!.primaryElementEditor.getLookupIdFromProps(
+      routeDefinition!.switchProps
+    )!;
+    await addElementHelper(project!, switchLookupId, {
+      component: routeComponent,
+      attributes: { path },
     });
-    setProject((project) =>
-      project?.editRenderEntry(renderEntry.id, { route: path })
-    );
+    project!.editRenderEntry(renderEntry.id, { route: path });
   };
 
   const onTogglePublish = () => {
     console.log("onTogglePublish");
-    setProject((currentProject) =>
-      currentProject?.editRenderEntry(renderEntry.id, {
-        publish: !renderEntry.publish,
-      })
-    );
+    project?.editRenderEntry(renderEntry.id, {
+      publish: !renderEntry.publish,
+    });
   };
 
   const onRemoveComponentView = () =>
-    setProject((currentProject) =>
-      currentProject?.removeRenderEntry(renderEntry.id)
-    );
+    project?.removeRenderEntry(renderEntry.id);
 
   // fire an event whenever the route changes
   useEffect(() => {

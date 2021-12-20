@@ -8,14 +8,13 @@ import path from "path";
 import { types } from "recast";
 
 import {
-  CodeEntry,
   ComponentDefinition,
   CustomComponentDefinition,
   SourceMetadata,
   StyleKeys,
   Styles,
 } from "../../../types/paint";
-import { getRelativeImportPath } from "../../utils";
+import { CodeEntry } from "../../project/CodeEntry";
 import {
   copyJSXName,
   eitherIf,
@@ -218,8 +217,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     assetEntry: CodeEntry
   ) {
     // get the import for the asset
-    const relativeAssetPath = getRelativeImportPath(
-      codeEntry,
+    const relativeAssetPath = codeEntry.getRelativeImportPath(
       assetEntry.filePath
     );
     const assetDefaultName = `Asset${startCase(
@@ -635,7 +633,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     codeEntry: CodeEntry,
     component: CustomComponentDefinition
   ) {
-    const importPath = getRelativeImportPath(codeEntry, component.import.path);
+    const importPath = codeEntry.getRelativeImportPath(component.import.path);
     const importName =
       component.import.namespace || component.import.name || component.name;
 

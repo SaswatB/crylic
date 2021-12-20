@@ -6,7 +6,7 @@ import {
 } from "../../../lib/ast/editors/ASTEditor";
 import { ASTType } from "../../../lib/ast/types";
 import { Project } from "../../../lib/project/Project";
-import { sleep } from "../../../lib/utils";
+import { sleep, takeNext } from "../../../lib/utils";
 import { ComponentDefinition, SelectedElement } from "../../../types/paint";
 import { AddCompileTask } from "../useCompilerContextRecoil";
 import { SelectElement } from "../useSelectRecoil";
@@ -17,12 +17,13 @@ interface SelectContext {
   selectElement: SelectElement;
 }
 
-export const addElementHelper = (
+export const addElementHelper = async (
+  project: Project,
   targetElement: HTMLElement | string, // element or lookupId
   component: ComponentDefinition,
   // set this to select the newly added element when it appears
   selectContext?: SelectContext
-) => (project: Project) => {
+) => {
   let lookupId;
   if (typeof targetElement === "string") {
     lookupId = targetElement;
@@ -30,16 +31,16 @@ export const addElementHelper = (
     lookupId = project.primaryElementEditor.getLookupIdFromHTMLElement(
       targetElement
     );
-    if (!lookupId) return undefined;
+    if (!lookupId) return;
   }
 
   const codeId = project.primaryElementEditor.getCodeIdFromLookupId(lookupId);
-  if (!codeId) return undefined;
+  if (!codeId) return;
 
-  const codeEntry = project.codeEntries.find(
-    (codeEntry) => codeEntry.id === codeId
-  );
-  if (!codeEntry) return undefined;
+  const codeEntry = project.codeEntries$
+    .getValue()
+    .find((e) => e.id === codeId);
+  if (!codeEntry) return;
 
   const componentPath =
     !component.isHTMLElement && component.component.import.path;
@@ -50,7 +51,7 @@ export const addElementHelper = (
   }
 
   let newAst = project.primaryElementEditor.addChildToElement(
-    { ast: codeEntry.ast, codeEntry, lookupId },
+    { ast: await takeNext(codeEntry.ast$), codeEntry, lookupId },
     component
   );
   const [newChildLookupId] =
@@ -65,7 +66,7 @@ export const addElementHelper = (
     addCompileTask(renderId, async ({ getElementsByLookupId }) => {
       let newChildComponent = undefined;
       for (let i = 0; i < 5 && !newChildComponent; i++) {
-        newChildComponent = getElementsByLookupId(newChildLookupId!)[0];
+        newChildComponent = getElementsByLookupId(newChildLookupId)[0];
         if (!newChildComponent) await sleep(100);
       }
       if (newChildComponent) {
@@ -78,15 +79,16 @@ export const addElementHelper = (
     });
   }
 
-  return { entry: codeEntry, ast: newAst };
+  codeEntry.updateAst(newAst);
 };
 
-export const updateElementHelper = <T extends ASTType>(
+export const updateElementHelper = async <T extends ASTType>(
+  project: Project,
   targetElement: SelectedElement | string, // element or lookupId
   apply: (editor: ElementASTEditor<T>, editContext: EditContext<T>) => T,
   // set this to select the updated element after compile
   selectContext?: SelectContext
-) => (project: Project) => {
+) => {
   let lookupId: string;
   if (typeof targetElement === "string") {
     lookupId = targetElement;
@@ -97,11 +99,15 @@ export const updateElementHelper = <T extends ASTType>(
   if (!editor) return;
   const codeId = editor.getCodeIdFromLookupId(lookupId);
   if (!codeId) return;
-  const codeEntry = project?.getCodeEntry(codeId);
+  const codeEntry = project?.getCodeEntryValue(codeId);
   if (!codeEntry) return;
 
   // update ast
-  const newAst = apply(editor, { ast: codeEntry.ast, codeEntry, lookupId });
+  const newAst = apply(editor, {
+    ast: (await takeNext(codeEntry.ast$)) as T,
+    codeEntry,
+    lookupId,
+  });
 
   if (selectContext) {
     const { renderId, addCompileTask, selectElement } = selectContext;
@@ -110,22 +116,27 @@ export const updateElementHelper = <T extends ASTType>(
     });
   }
 
-  return { entry: codeEntry, ast: newAst };
+  codeEntry.updateAst(newAst);
 };
 
-export const updateStyleGroupHelper = <T extends ASTType>(
+export const updateStyleGroupHelper = async <T extends ASTType>(
+  project: Project,
   styleGroup: StyleGroup,
   apply: (editor: StyleASTEditor<T>, editContext: EditContext<T>) => T
-) => (project: Project) => {
+) => {
   // gather prerequisites
   const { editor, lookupId } = styleGroup;
   const codeId = editor.getCodeIdFromLookupId(lookupId);
   if (!codeId) return;
-  const codeEntry = project?.getCodeEntry(codeId);
+  const codeEntry = project.getCodeEntryValue(codeId);
   if (!codeEntry) return;
 
   // update ast
-  const newAst = apply(editor, { ast: codeEntry.ast, codeEntry, lookupId });
+  const newAst = apply(editor, {
+    ast: (await takeNext(codeEntry.ast$)) as T,
+    codeEntry,
+    lookupId,
+  });
 
-  return { entry: codeEntry, ast: newAst };
+  codeEntry.updateAst(newAst);
 };

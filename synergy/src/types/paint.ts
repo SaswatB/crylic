@@ -15,22 +15,6 @@ export type PackageInstaller<
   T extends string | undefined = string | undefined
 > = (packageName: T, devDep?: boolean) => void;
 
-export interface CodeEntry {
-  id: string;
-  filePath: string;
-  code: string | undefined;
-  codeRevisionId: number;
-
-  // metadata generated from code
-  ast?: any;
-  codeWithLookupData?: string;
-  isRenderable?: boolean;
-  isEditable?: boolean;
-  isBootstrap?: boolean;
-  exportName?: string;
-  exportIsDefault?: boolean;
-}
-
 export interface EditEntry {
   codeId: string;
 }

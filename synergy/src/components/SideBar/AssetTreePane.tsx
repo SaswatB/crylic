@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useMemo } from "react";
+import React, { FunctionComponent, useState } from "react";
 import {
   faEdit,
   faEye,
@@ -11,20 +11,21 @@ import TreeItem from "@material-ui/lab/TreeItem";
 import TreeView from "@material-ui/lab/TreeView";
 import { camelCase, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
+import { distinctUntilChanged, map } from "rxjs/operators";
 
 import { getBoilerPlateComponent, SelectModeType } from "../../constants";
 import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useSelectRecoil } from "../../hooks/recoil/useSelectRecoil";
 import { useMenuInput } from "../../hooks/useInput";
-import { renderSeparator } from "../../lib/render-utils";
+import { useMemoObservable } from "../../hooks/useObservable";
 import {
+  CodeEntry,
   IMAGE_EXTENSION_REGEX,
-  isImageEntry,
-  isStyleEntry,
   SCRIPT_EXTENSION_REGEX,
   STYLE_EXTENSION_REGEX,
-} from "../../lib/utils";
-import { CodeEntry } from "../../types/paint";
+} from "../../lib/project/CodeEntry";
+import { renderSeparator } from "../../lib/render-utils";
+import { arrayMap, takeNext } from "../../lib/utils";
 import { IconButton } from "../IconButton";
 import { InputModal } from "../InputModal";
 import { Tour } from "../Tour/Tour";
@@ -34,6 +35,7 @@ interface Tree {
   name: string;
   children: Tree[];
   codeEntry?: CodeEntry;
+  isCodeEntryRenderable?: boolean;
 }
 
 interface Props {
@@ -43,15 +45,19 @@ interface Props {
 export const AssetTreePane: FunctionComponent<Props> = ({
   onImportImageFile,
 }) => {
-  const {
-    project,
-    setProject,
-    addCodeEntry,
-    toggleCodeEntryEdit,
-    addRenderEntry,
-  } = useProjectRecoil();
+  const { project } = useProjectRecoil();
   const { setSelectMode } = useSelectRecoil();
   const { enqueueSnackbar } = useSnackbar();
+  const [expandedTreeNodes, setExpandedTreeNodes] = useState<string[]>();
+
+  const hasRenderEntries = useMemoObservable(
+    () =>
+      project?.renderEntries$.pipe(
+        map((renderEntries) => (renderEntries.length ?? 0) > 0),
+        distinctUntilChanged()
+      ),
+    [project]
+  );
 
   const onNewComponent = async () => {
     const inputName = await InputModal({
@@ -63,7 +69,9 @@ export const AssetTreePane: FunctionComponent<Props> = ({
     const name = upperFirst(camelCase(inputName));
     const filePath = project!.getNewComponentPath(name);
     const code = getBoilerPlateComponent(name);
-    addCodeEntry({ filePath, code }, { render: true });
+    project?.addCodeEntries([new CodeEntry(project, filePath, code)], {
+      render: true,
+    });
     enqueueSnackbar("Started a new component!");
   };
   const onNewStyleSheet = async () => {
@@ -75,13 +83,15 @@ export const AssetTreePane: FunctionComponent<Props> = ({
     // todo add validation/duplicate checking to name
     const name = camelCase(inputName);
     const filePath = project!.getNewStyleSheetPath(name);
-    addCodeEntry({ filePath }, { edit: true });
+    project?.addCodeEntries([new CodeEntry(project, filePath, "")], {
+      edit: true,
+    });
     enqueueSnackbar("Started a new component!");
   };
   const onImportImage = async () => {
     const file = await onImportImageFile();
     if (!file) return;
-    setProject((currentProject) => currentProject?.addAsset(file));
+    project?.addAsset(file);
     enqueueSnackbar("Imported Image!");
   };
 
@@ -124,121 +134,153 @@ export const AssetTreePane: FunctionComponent<Props> = ({
     },
   });
 
-  const { projectTree, treeNodeIds } = useMemo(() => {
-    let codeEntries: CodeEntry[] | undefined;
-    // todo add an option to keep showing extensions
-    let extensionRegex: RegExp | undefined;
-    let projectTreePostProcess:
-      | ((projectTree: Tree) => void)
-      | undefined = undefined;
-    switch (assetsFilter) {
-      default:
-      case "all":
-        codeEntries = project?.codeEntries;
-        break;
-      case "components":
-        codeEntries = project?.codeEntries.filter(
-          (codeEntry) => codeEntry.isRenderable
-        );
-        extensionRegex = SCRIPT_EXTENSION_REGEX;
-        projectTreePostProcess = (projectTree) => {
-          const flattenComponents = (node: Tree) => {
-            // flatten tree node entries where the component is the only file in its directory
-            // and its name matches the directory or is 'index'
-            if (
-              node.children.length === 1 &&
-              (node.name === node.children[0]!.name ||
-                node.children[0]!.name === "index") &&
-              node.children[0]!.children.length === 0
-            ) {
-              node.codeEntry = node.children[0]!.codeEntry;
-              node.children = [];
-              return;
+  const { projectTree, treeNodeIds } =
+    useMemoObservable(() => {
+      let codeEntriesWithRenderable$ = project?.codeEntries$.pipe(
+        // lm_9dfd4feb9b since arrayMap is used here, deleting code entries is not supported
+        arrayMap(
+          (entry) =>
+            entry.isRenderable$.pipe(
+              map((isRenderable) => ({ entry, isRenderable }))
+            ),
+          (v) => v.entry.id
+        )
+      )!;
+
+      // todo add an option to keep showing extensions
+      let extensionRegex: RegExp | undefined;
+      let projectTreePostProcess:
+        | ((projectTree: Tree) => void)
+        | undefined = undefined;
+      switch (assetsFilter) {
+        case "components":
+          codeEntriesWithRenderable$ = codeEntriesWithRenderable$.pipe(
+            map((entries) => entries.filter(({ isRenderable }) => isRenderable))
+          );
+          extensionRegex = SCRIPT_EXTENSION_REGEX;
+          projectTreePostProcess = (newProjectTree) => {
+            const flattenComponents = (node: Tree) => {
+              // flatten tree node entries where the component is the only file in its directory
+              // and its name matches the directory or is 'index'
+              if (
+                node.children.length === 1 &&
+                (node.name === node.children[0]!.name ||
+                  node.children[0]!.name === "index") &&
+                node.children[0]!.children.length === 0
+              ) {
+                node.codeEntry = node.children[0]!.codeEntry;
+                node.isCodeEntryRenderable = node.children[0]!.isCodeEntryRenderable;
+                node.children = [];
+                return;
+              }
+              node.children.forEach(flattenComponents);
+            };
+            flattenComponents(newProjectTree);
+          };
+          break;
+        case "styles":
+          codeEntriesWithRenderable$ = codeEntriesWithRenderable$.pipe(
+            map((entries) => entries.filter(({ entry }) => entry.isStyleEntry))
+          );
+          extensionRegex = STYLE_EXTENSION_REGEX;
+          break;
+        case "images":
+          codeEntriesWithRenderable$ = codeEntriesWithRenderable$.pipe(
+            map((entries) => entries.filter(({ entry }) => entry.isImageEntry))
+          );
+          // todo show extensions if there are duplicate names for different extensions
+          extensionRegex = IMAGE_EXTENSION_REGEX;
+          break;
+        default:
+        case "all":
+          // noop
+          break;
+      }
+
+      return codeEntriesWithRenderable$.pipe(
+        map((codeEntriesWithRenderable) => {
+          const newTreeNodeIds = new Set<string>("root");
+          const newProjectTree: Tree = { id: "root", name: "", children: [] };
+          const projectPath = project?.sourceFolderPath.replace(/\\/g, "/");
+          codeEntriesWithRenderable.forEach(
+            ({ entry: codeEntry, isRenderable }) => {
+              const path = codeEntry.filePath
+                .replace(/\\/g, "/")
+                .replace(projectPath || "", "")
+                .replace(/^\//, "")
+                .replace(extensionRegex || "", "")
+                .split("/");
+
+              let node = newProjectTree;
+              let error = false;
+              path.forEach((pathPart, index) => {
+                if (error) return;
+
+                const id = path.slice(0, index + 1).join("/");
+                let child = node.children.find(
+                  (childNode) => childNode.id === id
+                );
+                if (!child) {
+                  child = {
+                    id,
+                    name: pathPart,
+                    children: [],
+                  };
+
+                  // it's very important not to render duplicate node ids https://github.com/mui-org/material-ui/issues/20832
+                  if (newTreeNodeIds.has(id)) {
+                    console.trace(
+                      "duplicate node id",
+                      id,
+                      newTreeNodeIds,
+                      codeEntriesWithRenderable?.map(
+                        ({ entry }) => entry.filePath
+                      )
+                    );
+                    error = true;
+                    return;
+                  }
+
+                  node.children.push(child);
+                  newTreeNodeIds.add(id);
+                }
+                node = child;
+              });
+              node.codeEntry = codeEntry;
+              node.isCodeEntryRenderable = isRenderable;
             }
-            node.children.forEach(flattenComponents);
-          };
-          flattenComponents(projectTree);
-        };
-        break;
-      case "styles":
-        codeEntries = project?.codeEntries.filter(isStyleEntry);
-        extensionRegex = STYLE_EXTENSION_REGEX;
-        break;
-      case "images":
-        codeEntries = project?.codeEntries.filter(isImageEntry);
-        // todo show extensions if there are duplicate names for different extensions
-        extensionRegex = IMAGE_EXTENSION_REGEX;
-        break;
-    }
-    const treeNodeIds = new Set<string>("root");
-    const projectTree: Tree = { id: "root", name: "", children: [] };
-    const projectPath = project?.sourceFolderPath.replace(/\\/g, "/");
-    codeEntries?.forEach((codeEntry) => {
-      const path = codeEntry.filePath
-        .replace(/\\/g, "/")
-        .replace(projectPath || "", "")
-        .replace(/^\//, "")
-        .replace(extensionRegex || "", "")
-        .split("/");
+          );
+          projectTreePostProcess?.(newProjectTree);
 
-      let node = projectTree;
-      let error = false;
-      path.forEach((pathPart, index) => {
-        if (error) return;
-
-        const id = path.slice(0, index + 1).join("/");
-        let child = node.children.find((childNode) => childNode.id === id);
-        if (!child) {
-          child = {
-            id,
-            name: pathPart,
-            children: [],
-          };
-
-          // it's very important not to render duplicate node ids https://github.com/mui-org/material-ui/issues/20832
-          if (treeNodeIds.has(id)) {
-            console.error(
-              "duplicate node id",
-              id,
-              treeNodeIds,
-              codeEntries?.map(({ filePath }) => filePath)
-            );
-            error = true;
-            return;
-          }
-
-          node.children.push(child);
-          treeNodeIds.add(id);
-        }
-        node = child;
-      });
-      node.codeEntry = codeEntry;
-    });
-    projectTreePostProcess?.(projectTree);
-
-    return { projectTree, treeNodeIds };
-  }, [assetsFilter, project]);
+          return { projectTree: newProjectTree, treeNodeIds: newTreeNodeIds };
+        })
+      );
+    }, [assetsFilter, project]) || {};
 
   /**
    * Handle adding a custom component to a frame
    */
-  const onAddToComponent = (name: string, codeEntry: CodeEntry) =>
+  const onAddToComponent = async (name: string, codeEntry: CodeEntry) =>
     setSelectMode({
       type: SelectModeType.AddElement,
       component: {
         name,
         import: {
           // todo throw an error if exportName isn't set
-          name: codeEntry.exportName!,
+          name: await takeNext(codeEntry.exportName$),
           path: codeEntry.filePath,
-          isDefault: codeEntry.exportIsDefault,
+          isDefault: await takeNext(codeEntry.exportIsDefault$),
         },
       },
     });
 
   let renderedFirstEditableNode = false;
   let renderedFirstRenderableNode = false;
-  const renderTreeLabel = ({ name, codeEntry }: Tree) => {
+  const renderTreeLabel = ({
+    name,
+    codeEntry,
+    isCodeEntryRenderable,
+  }: Tree) => {
     if (!codeEntry) return name;
 
     let isFirstEditableNode = false;
@@ -247,7 +289,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
       renderedFirstEditableNode = true;
     }
     let isFirstRenderableNode = false;
-    if (!renderedFirstRenderableNode && codeEntry.isRenderable) {
+    if (!renderedFirstRenderableNode && isCodeEntryRenderable) {
       isFirstRenderableNode = true;
       renderedFirstRenderableNode = true;
     }
@@ -256,7 +298,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
       <div className="flex">
         {name}
         <div className="flex-1" />
-        {codeEntry.isRenderable && (
+        {isCodeEntryRenderable && (
           <>
             {isFirstRenderableNode && (
               <Tour
@@ -282,11 +324,11 @@ export const AssetTreePane: FunctionComponent<Props> = ({
               title="View"
               className="mx-3"
               icon={faEye}
-              onClick={() => addRenderEntry(codeEntry)}
+              onClick={() => project?.addRenderEntries(codeEntry)}
             />
           </>
         )}
-        {codeEntry.isRenderable && (project?.renderEntries.length ?? 0) > 0 && (
+        {isCodeEntryRenderable && hasRenderEntries && (
           <IconButton
             className="mr-3"
             title="Add to Component"
@@ -313,7 +355,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
               data-tour={isFirstRenderableNode ? "asset-tree-edit" : undefined}
               title="Edit Code"
               icon={faEdit}
-              onClick={() => toggleCodeEntryEdit(codeEntry)}
+              onClick={() => project?.toggleEditEntry(codeEntry)}
             />
           </>
         )}
@@ -321,11 +363,12 @@ export const AssetTreePane: FunctionComponent<Props> = ({
     );
   };
 
-  const renderTree = (node = projectTree) => (
-    <TreeItem key={node.id} nodeId={node.id} label={renderTreeLabel(node)}>
-      {node.children.map(renderTree)}
-    </TreeItem>
-  );
+  const renderTree = (node = projectTree) =>
+    node ? (
+      <TreeItem key={node.id} nodeId={node.id} label={renderTreeLabel(node)}>
+        {node.children.map(renderTree)}
+      </TreeItem>
+    ) : null;
 
   return (
     <>
@@ -376,16 +419,19 @@ export const AssetTreePane: FunctionComponent<Props> = ({
         )}
         {renderAssetsFilterMenu()}
         {renderAddMenu()}
-        <div className="flex-1 overflow-auto">
-          <TreeView
-            defaultCollapseIcon={<ExpandMoreIcon />}
-            defaultExpandIcon={<ChevronRightIcon />}
-            defaultExpanded={Array.from(treeNodeIds)}
-            selected={null as any}
-          >
-            {projectTree.children.map(renderTree)}
-          </TreeView>
-        </div>
+        {projectTree && treeNodeIds ? (
+          <div className="flex-1 overflow-auto">
+            <TreeView
+              defaultCollapseIcon={<ExpandMoreIcon />}
+              defaultExpandIcon={<ChevronRightIcon />}
+              expanded={expandedTreeNodes || Array.from(treeNodeIds)}
+              onNodeToggle={(event, nodeIds) => setExpandedTreeNodes(nodeIds)}
+              selected={null as any}
+            >
+              {projectTree.children.map(renderTree)}
+            </TreeView>
+          </div>
+        ) : null}
       </div>
     </>
   );

@@ -2,8 +2,7 @@ import { wireTmGrammars } from "monaco-editor-textmate";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { Registry } from "monaco-textmate";
 
-import { getFileExtensionLanguage } from "synergy/src/lib/utils";
-import { CodeEntry } from "synergy/src/types/paint";
+import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
 import darkVs from "synergy/src/vendor/dark-vs.json";
 
 import reactTypes from "!!raw-loader!@types/react/index.d.ts";
@@ -34,7 +33,7 @@ export function setupLanguageService(
   editorMonaco: monaco.editor.IStandaloneCodeEditor,
   codeEntry: CodeEntry
 ) {
-  const language = getFileExtensionLanguage(codeEntry);
+  const language = codeEntry.fileExtensionLanguage;
   // setup typescript autocomplete
   if (language === "typescript") {
     const fileUrl = monaco.Uri.parse(
@@ -45,12 +44,16 @@ export function setupLanguageService(
     );
     const model =
       modelCache[fileUrl.toString()] ||
-      monaco.editor.createModel(codeEntry.code || "", language, fileUrl);
+      monaco.editor.createModel(
+        codeEntry.code$.getValue() || "",
+        language,
+        fileUrl
+      );
     modelCache[fileUrl.toString()] = model;
     editorMonaco.setModel(null);
     editorMonaco.setModel(model);
     monaco.languages.typescript.typescriptDefaults.addExtraLib(
-      codeEntry.code || "",
+      codeEntry.code$.getValue() || "",
       fileUrl.toString()
     );
     // add react types

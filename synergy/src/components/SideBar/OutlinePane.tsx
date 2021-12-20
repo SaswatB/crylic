@@ -10,6 +10,7 @@ import { useCompilerContextRecoil } from "../../hooks/recoil/useCompilerContextR
 import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useSelectRecoil } from "../../hooks/recoil/useSelectRecoil";
 import { useBusSubscription } from "../../hooks/useBusSubscription";
+import { useObservable } from "../../hooks/useObservable";
 import {
   componentViewCompileEnd,
   componentViewReload,
@@ -75,11 +76,12 @@ export const OutlinePane: FunctionComponent = () => {
   useBusSubscription(componentViewCompileEnd, calculateOutlineWithEntry);
   useBusSubscription(componentViewReload, calculateOutlineWithEntry);
   useBusSubscription(componentViewRouteChange, calculateOutlineWithEntry);
+  const renderEntries = useObservable(project?.renderEntries$);
 
   const outlines = Object.entries(outlineMap)
     .map(([key, value]) => ({
       outline: value,
-      renderEntry: project?.renderEntries.find(({ id }) => id === key),
+      renderEntry: renderEntries!.find(({ id }) => id === key),
     }))
     .filter(
       (
@@ -152,7 +154,7 @@ export const OutlinePane: FunctionComponent = () => {
   const [collapsedNodes, setCollapsedNodes] = useState<string[]>([]);
   return (
     <>
-      {(project?.renderEntries.length || 0) > 0 && (
+      {(renderEntries?.length || 0) > 0 && (
         <Tour
           name="outline-tab"
           beaconStyle={{

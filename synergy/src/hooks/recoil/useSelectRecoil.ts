@@ -8,6 +8,7 @@ import {
   StyleGroup,
 } from "../../lib/ast/editors/ASTEditor";
 import { ASTType } from "../../lib/ast/types";
+import { takeNext } from "../../lib/utils";
 import { SelectedElement, Styles } from "../../types/paint";
 import { useUpdatingRef } from "../useUpdatingRef";
 import {
@@ -34,7 +35,7 @@ const selectedStyleGroupState = atom<StyleGroup | undefined>({
 export type SelectElement = (renderId: string, lookupId: string) => void;
 
 export function useSelectRecoil() {
-  const { project, setCodeAstEdit } = useProjectRecoil();
+  const { project } = useProjectRecoil();
   const projectRef = useUpdatingRef(project);
   const [selectMode, setSelectMode] = useRecoilState(selectModeState);
   const [selectedElement, setSelectedElement] = useRecoilState(
@@ -48,7 +49,7 @@ export function useSelectRecoil() {
 
   const { getViewContext, addCompileTask } = useCompilerContextRecoil();
 
-  const selectElement: SelectElement = (renderId, lookupId) => {
+  const selectElement: SelectElement = async (renderId, lookupId) => {
     const { getElementsByLookupId } = getViewContext(renderId) || {};
     const codeId = projectRef.current?.primaryElementEditor.getCodeIdFromLookupId(
       lookupId
@@ -57,7 +58,7 @@ export function useSelectRecoil() {
       console.log("dropping element select, no code id");
       return;
     }
-    const codeEntry = projectRef.current?.getCodeEntry(codeId);
+    const codeEntry = projectRef.current?.getCodeEntryValue(codeId);
     if (!codeEntry) {
       console.log("dropping element select, no code entry");
       return;
@@ -80,7 +81,7 @@ export function useSelectRecoil() {
       renderId,
       lookupId,
       sourceMetadata: projectRef.current!.primaryElementEditor.getSourceMetaDataFromLookupId(
-        { ast: codeEntry.ast, codeEntry },
+        { ast: (await takeNext(codeEntry.ast$)) as ASTType, codeEntry },
         lookupId
       ),
       viewContext: getViewContext(renderId),
@@ -99,14 +100,12 @@ export function useSelectRecoil() {
   ) => {
     if (!selectedElement) return;
 
-    setCodeAstEdit(
-      updateElementHelper(selectedElement, apply, {
-        // refresh the selected element after compile to get the new ast metadata
-        renderId: selectedElement.renderId,
-        addCompileTask,
-        selectElement,
-      })
-    );
+    updateElementHelper(project!, selectedElement, apply, {
+      // refresh the selected element after compile to get the new ast metadata
+      renderId: selectedElement.renderId,
+      addCompileTask,
+      selectElement,
+    });
   };
 
   const updateSelectedStyleGroup = (styles: Styles, preview?: boolean) => {
@@ -125,10 +124,10 @@ export function useSelectRecoil() {
 
     if (!selectedStyleGroup) return;
 
-    setCodeAstEdit(
-      updateStyleGroupHelper(selectedStyleGroup, (editor, editContext) =>
-        editor.applyStyles(editContext, styles)
-      )
+    updateStyleGroupHelper(
+      project!,
+      selectedStyleGroup,
+      (editor, editContext) => editor.applyStyles(editContext, styles)
     );
   };
 

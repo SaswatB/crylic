@@ -1,28 +1,36 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
+import { combineLatest } from "rxjs";
+import { map } from "rxjs/operators";
 
 import { useProjectRecoil } from "synergy/src/hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useSelectRecoil } from "synergy/src/hooks/recoil/useSelectRecoil";
 import { useBusSubscription } from "synergy/src/hooks/useBusSubscription";
+import { useMemoObservable } from "synergy/src/hooks/useObservable";
 import { editorOpenLocation } from "synergy/src/lib/events";
-import {
-  getFriendlyName,
-  isDefined,
-  isImageEntry,
-} from "synergy/src/lib/utils";
+import { isDefined } from "synergy/src/lib/utils";
 
 import { CodeEditor } from "./CodeEditor";
 import { CodeEditorTabs } from "./CodeEditorTabs";
 import { ImageViewer } from "./ImageViewer";
 
 export const CodeEditorPane: FunctionComponent = () => {
-  const { project, toggleCodeEntryEdit, setCode } = useProjectRecoil();
+  const { project } = useProjectRecoil();
   const { selectedElement } = useSelectRecoil();
   const [activeTab, setActiveTab] = useState(0);
 
   // get all the code entries being edited
-  const editableEntries = project?.editEntries
-    .map((e) => project.getCodeEntry(e.codeId))
-    .filter(isDefined);
+  const editableEntries = useMemoObservable(
+    () =>
+      project &&
+      combineLatest([project.editEntries$, project.codeEntries$]).pipe(
+        map(([editEntries, codeEntries]) =>
+          editEntries
+            .map((e) => codeEntries.find((c) => c.id === e.codeId))
+            .filter(isDefined)
+        )
+      ),
+    [project]
+  );
 
   // switch to the editor that the selected element belongs to when it's selected
   useEffect(() => {
@@ -54,16 +62,16 @@ export const CodeEditorPane: FunctionComponent = () => {
       onChange={setActiveTab}
       tabs={editableEntries?.map((codeEntry, index) => ({
         key: codeEntry.id,
-        name: getFriendlyName(project!, codeEntry.id),
+        name: codeEntry.friendlyName,
         title: codeEntry.filePath,
         render: () =>
-          isImageEntry(codeEntry) ? (
+          codeEntry.isImageEntry ? (
             <ImageViewer codeEntry={codeEntry} />
           ) : (
             <CodeEditor
               project={project!}
               codeEntry={codeEntry}
-              onCodeChange={(id, code) => setCode(() => ({ id, code }))}
+              onCodeChange={(id, code) => codeEntry.updateCode(code)}
               selectedElementId={selectedElement?.lookupId}
               onSelectElement={(lookupId) => {
                 // todo reenable
@@ -85,7 +93,7 @@ export const CodeEditorPane: FunctionComponent = () => {
               isActiveEditor={activeTab === index}
             />
           ),
-        onClose: () => toggleCodeEntryEdit(codeEntry),
+        onClose: () => project?.toggleEditEntry(codeEntry),
       }))}
     />
   );

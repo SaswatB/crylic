@@ -4,9 +4,8 @@ import { CSSASTNode } from "gonzales-pe";
 import { flatten, kebabCase } from "lodash";
 import { types } from "recast";
 
-import { CodeEntry } from "../../../types/paint";
+import { CodeEntry } from "../../project/CodeEntry";
 import { Project } from "../../project/Project";
-import { getFriendlyName, isStyleEntry } from "../../utils";
 import {
   createCSSPropertyDeclaration,
   CSSASTBuilder as cb,
@@ -30,7 +29,7 @@ type JSXASTEditorAction = {
 
 export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
   public getEditorActions(codeEntry: CodeEntry) {
-    const ast = parseAST(codeEntry.code || "");
+    const ast = parseAST(codeEntry.code$.getValue() || "");
     const actions: EditorAction<JSXASTEditorAction>[] = [];
     traverseJSXElements(ast, (path, index) => {
       const styleAttr = path.node.openingElement.attributes?.find(
@@ -70,10 +69,8 @@ export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
     project: Project
   ) {
     if (action.action.type === "MoveStyleToStyleSheet") {
-      const codeEntry = project.codeEntries.find(
-        (codeEntry) => codeEntry.id === action.codeId
-      )!;
-      const ast = parseAST(codeEntry.code || "");
+      const codeEntry = project.getCodeEntryValue(action.codeId)!;
+      const ast = parseAST(codeEntry.code$.getValue() || "");
       let styleClassName = "";
       let style: { name: string; value: string }[] = [];
       traverseJSXElements(ast, (path, index) => {
@@ -114,10 +111,7 @@ export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
             (_) => _?.name
           );
           // todo allow the user to give the class name
-          styleClassName = `st-${getFriendlyName(
-            project,
-            codeEntry.id
-          ).toLowerCase()}-${elementName}-${index}`;
+          styleClassName = `st-${codeEntry.friendlyName.toLowerCase()}-${elementName}-${index}`;
           path.node.openingElement.attributes = path.node.openingElement.attributes?.filter(
             (attr) => attr.type !== "JSXAttribute" || attr.name.name !== "style"
           );
@@ -131,9 +125,9 @@ export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
         }
       });
       // todo allow the user to select a different style file
-      const styleCodeEntry = project.codeEntries.find((codeEntry) =>
-        isStyleEntry(codeEntry)
-      )!;
+      const styleCodeEntry = project.codeEntries$
+        .getValue()
+        .find((e) => e.isStyleEntry)!;
       const styleAst = parseStyleSheetAST(styleCodeEntry);
       (styleAst.content as CSSASTNode[]).push(
         cb.ruleset([
