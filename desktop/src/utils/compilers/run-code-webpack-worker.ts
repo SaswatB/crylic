@@ -7,6 +7,10 @@ import { getReactRouterProxy } from "synergy/src/lib/react-router-proxy";
 import { takeNext } from "synergy/src/lib/utils";
 import { RenderEntryDeployerContext } from "synergy/src/types/paint";
 
+import {
+  WebpackRendererMessagePayload_CompileFinished,
+  WebpackRendererMessagePayload_PercentUpdate,
+} from "../../types/ipc";
 import { DEFAULT_HTML_TEMPLATE_SELECTOR } from "../constants";
 import { publishComponent, unpublishComponent } from "../publish-component";
 import { webpackRunCode } from "./run-code-webpack";
@@ -22,8 +26,15 @@ const { ipcRenderer } = __non_webpack_require__(
 
 const WORKER_ENABLED = true;
 
-const progressCallbacks: Record<number, Function> = {};
-const compileCallbacks: Record<number, Function> = {};
+const progressCallbacks: Record<
+  number,
+  (data: WebpackRendererMessagePayload_PercentUpdate) => void
+> = {};
+const compileCallbacks: Record<
+  number,
+  (data: WebpackRendererMessagePayload_CompileFinished) => void
+> = {};
+
 if (WORKER_ENABLED) {
   // start the worker
   console.log("starting webpack worker");
@@ -161,10 +172,10 @@ ReactDOM.render((
     htmlTemplate: project.config.getFullHtmlTemplatePath(),
   };
 
-  let devport;
+  let devport: number | null;
   if (WORKER_ENABLED) {
     // register a callback for then the worker completes
-    const workerCallback = new Promise<{ result: number }>((resolve) => {
+    const workerCallback = new Promise<{ result: number | null }>((resolve) => {
       compileCallbacks[compileId] = resolve;
     });
     progressCallbacks[compileId] = onProgress;
@@ -179,7 +190,7 @@ ReactDOM.render((
     });
 
     // wait for the worker to compile
-    ({ result: devport } = await workerCallback!);
+    ({ result: devport } = await workerCallback);
 
     delete compileCallbacks[compileId];
     delete progressCallbacks[compileId];
