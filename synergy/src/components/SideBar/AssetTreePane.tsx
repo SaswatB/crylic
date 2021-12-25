@@ -11,7 +11,7 @@ import TreeItem from "@material-ui/lab/TreeItem";
 import TreeView from "@material-ui/lab/TreeView";
 import { camelCase, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
-import { distinctUntilChanged, map } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 
 import { getBoilerPlateComponent, SelectModeType } from "../../constants";
 import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
@@ -144,7 +144,8 @@ export const AssetTreePane: FunctionComponent<Props> = ({
               map((isRenderable) => ({ entry, isRenderable }))
             ),
           (v) => v.entry.id
-        )
+        ),
+        debounceTime(100)
       )!;
 
       // todo add an option to keep showing extensions

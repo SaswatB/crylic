@@ -6,12 +6,11 @@ import React, {
 } from "react";
 import { flatten, isEqual, uniq } from "lodash";
 import { Observable, ReplaySubject } from "rxjs";
-import { distinctUntilChanged, map } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 import { useBus } from "ts-bus/react";
 
 import { useCompilerContextRecoil } from "../../hooks/recoil/useCompilerContextRecoil";
 import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
-import { useDebounce } from "../../hooks/useDebounce";
 import { useMemoObservable } from "../../hooks/useObservable";
 import { useRerender } from "../../hooks/useRerender";
 import { componentViewCompileEnd, componentViewReload } from "../../lib/events";
@@ -101,17 +100,17 @@ export const CompilerComponentView: FunctionComponent<
 
   const errorBoundary = useRef<ErrorBoundary>(null);
 
-  const codeEntriesWithCode = useMemoObservable(
+  const debouncedCodeEntries = useMemoObservable(
     () =>
       project?.codeEntries$.pipe(
         arrayMap(
           (e) => e.code$.pipe(map((c) => ({ c, e }))),
           (v) => v.e.id
-        )
+        ),
+        debounceTime(150)
       ),
     [project]
   );
-  const [debouncedCodeEntries] = useDebounce(codeEntriesWithCode, 150);
   useEffect(() => {
     (async () => {
       if (!project || !debouncedCodeEntries?.length) return;

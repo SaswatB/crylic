@@ -1,3 +1,4 @@
+import { namedTypes as t } from "ast-types";
 import clone from "clone";
 import deepFreeze from "deep-freeze-strict";
 import { camelCase, startCase, upperFirst } from "lodash";
@@ -171,7 +172,7 @@ export class CodeEntry {
         let exportName = undefined;
         let exportIsDefault = undefined;
         if (this.isRenderableScriptExtension() || this.isBootstrap()) {
-          const componentExport = getComponentExport(ast as any);
+          const componentExport = getComponentExport(ast as t.File);
           const baseComponentName = upperFirst(
             camelCase(
               path.basename(this.filePath).replace(SCRIPT_EXTENSION_REGEX, "")
@@ -194,14 +195,10 @@ export class CodeEntry {
           }
         }
 
-        // add lookup data from each editor to the ast
-        this.project.getEditorsForCodeEntry(this).forEach((editor) => {
-          ({ ast } = editor.addLookupData({ ast, codeEntry: this }));
-        });
         // return the modified ast and code
-        console.trace("codeTransformer", this.filePath);
+        console.log("compute metadata", this.filePath);
         return {
-          ast: deepFreeze(clone(ast, undefined, undefined, undefined, true)),
+          rawAst: ast, // this might get modified if ast$ is run
           isRenderable,
           // this code entry has to be a script or style entry by this point so it's editable
           exportName,
@@ -222,11 +219,27 @@ export class CodeEntry {
   public readonly exportIsDefault$ = this.metadata$.pipe(
     map((m) => m.exportIsDefault)
   );
-  public readonly codeWithLookupData$ = this.metadata$.pipe(
-    map((m) => (m.ast ? printCodeEntryAST(this, m.ast) : undefined)),
+  public readonly ast$ = this.metadata$.pipe(
+    map((m) => {
+      if (!m.rawAst) return undefined;
+
+      let ast = m.rawAst;
+
+      // add lookup data from each editor to the ast
+      this.project.getEditorsForCodeEntry(this).forEach((editor) => {
+        const lookupData = editor.addLookupData({ ast, codeEntry: this });
+        ast = lookupData.ast;
+      });
+
+      console.log("compute ast", this.filePath);
+      return deepFreeze(clone(ast, undefined, undefined, undefined, true));
+    }),
     shareReplay(1)
   );
-  public readonly ast$ = this.metadata$.pipe(map((m) => m.ast));
+  public readonly codeWithLookupData$ = this.ast$.pipe(
+    map((ast) => (ast ? printCodeEntryAST(this, ast) : undefined)),
+    shareReplay(1)
+  );
 
   // #endregion
 }
