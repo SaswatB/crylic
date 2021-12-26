@@ -34,7 +34,7 @@ describe("JSXASTEditor tests", () => {
           }
         )
     );
-    expect(newCode).toEqual(noStyleFinal.replace(/\r/g, ""));
+    expect(newCode).toEqual(noStyleFinal);
   });
   test("applyStyles updates an existing style attribute", () => {
     const newCode = runJSXEditor(
@@ -51,6 +51,6 @@ describe("JSXASTEditor tests", () => {
           }
         )
     );
-    expect(newCode).toEqual(existingStyleFinal.replace(/\r/g, ""));
+    expect(newCode).toEqual(existingStyleFinal);
   });
 });

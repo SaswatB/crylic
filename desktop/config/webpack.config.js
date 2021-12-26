@@ -353,20 +353,7 @@ module.exports = function (webpackEnv) {
               exclude: /node_modules/,
               use: {
                 loader: "swc-loader",
-                options: {
-                  jsc: {
-                    parser: {
-                      syntax: "typescript",
-                      tsx: true,
-                      jsx: true,
-                      decorators: true,
-                    },
-                    transform: {
-                      legacyDecorator: true,
-                      decoratorMetadata: true,
-                    },
-                  },
-                },
+                options: require("../swc.config"),
               },
             },
             // "postcss" loader applies autoprefixer to our CSS.

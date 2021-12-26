@@ -27,6 +27,7 @@ describe("StyleSheetASTEditor tests", () => {
           }
         )
     );
-    expect(newCode).toEqual(existingStyleFinal.replace(/\r/g, ""));
+
+    expect(newCode).toEqual(existingStyleFinal);
   });
 });

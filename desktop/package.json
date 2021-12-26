@@ -9,7 +9,7 @@
     "start": "node ./scripts/start",
     "build": "rimraf app/build && rimraf app/build-main && webpack --config config/webpack.main.config.js --mode production && node --max-old-space-size=8192 ./scripts/build && cpy --parents build-main app/ && cpy --parents build app/ && rimraf --glob ./app/build*/**/*.map && node ./scripts/postbuild.js",
     "electron-dev": "webpack --config config/webpack.main.config.js --mode development && electron --remote-debugging-port=9222 .",
-    "test": "node ./scripts/test",
+    "test": "jest",
     "package": "electron-builder",
     "lint": "eslint --ext .ts,.tsx,.js src/.",
     "lint:fix": "eslint --ext .ts,.tsx,.js --fix src/.",
@@ -60,10 +60,6 @@
     "identity-obj-proxy": "^3.0.0",
     "immer": "^6.0.3",
     "io-ts": "^2.2.1",
-    "jest": "^24.9.0",
-    "jest-environment-jsdom-fourteen": "^1.0.1",
-    "jest-resolve": "^24.9.0",
-    "jest-watch-typeahead": "^0.4.2",
     "less": "^3.11.1",
     "less-loader": "^6.1.0",
     "lodash": "^4.17.15",
@@ -161,7 +157,10 @@
     "electron-rebuild": "^1.10.1",
     "eslint": "^6.8.0",
     "eslint-plugin-simple-import-sort": "^5.0.2",
+    "jest": "^27.4.5",
+    "jest-environment-jsdom": "^27.4.4",
     "jest-raw-loader": "^1.0.1",
+    "jest-watch-typeahead": "^1.0.0",
     "node-gyp": "^6.1.0",
     "prettier": "^2.1.1",
     "rimraf": "^3.0.2",
@@ -198,53 +197,5 @@
     "directories": {
       "buildResources": "assets"
     }
-  },
-  "jest": {
-    "roots": [
-      "<rootDir>/src"
-    ],
-    "collectCoverageFrom": [
-      "src/**/*.{js,jsx,ts,tsx}",
-      "!src/**/*.d.ts"
-    ],
-    "setupFiles": [
-      "react-app-polyfill/jsdom"
-    ],
-    "setupFilesAfterEnv": [],
-    "testMatch": [
-      "<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}",
-      "<rootDir>/src/**/*.{spec,test}.{js,jsx,ts,tsx}"
-    ],
-    "testEnvironment": "jest-environment-jsdom-fourteen",
-    "transform": {
-      "^.+\\.(js|jsx|ts|tsx)$": "<rootDir>/node_modules/babel-jest",
-      "^.+\\.css$": "<rootDir>/config/jest/cssTransform.js",
-      "^(?!.*\\.(js|jsx|ts|tsx|css|json)$)": "<rootDir>/config/jest/fileTransform.js"
-    },
-    "transformIgnorePatterns": [
-      "[/\\\\]node_modules[/\\\\].+\\.(js|jsx|ts|tsx)$",
-      "^.+\\.module\\.(css|sass|scss)$"
-    ],
-    "modulePaths": [],
-    "moduleNameMapper": {
-      "^react-native$": "react-native-web",
-      "^.+\\.module\\.(css|sass|scss)$": "identity-obj-proxy"
-    },
-    "moduleFileExtensions": [
-      "web.js",
-      "js",
-      "web.ts",
-      "ts",
-      "web.tsx",
-      "tsx",
-      "json",
-      "web.jsx",
-      "jsx",
-      "node"
-    ],
-    "watchPlugins": [
-      "jest-watch-typeahead/filename",
-      "jest-watch-typeahead/testname"
-    ]
   }
 }

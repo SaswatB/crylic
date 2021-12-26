@@ -31,6 +31,6 @@ describe("StyledASTEditor tests", () => {
           }
         )
     );
-    expect(newCode).toEqual(existingStyleFinal.replace(/\r/g, ""));
+    expect(newCode).toEqual(existingStyleFinal);
   });
 });
