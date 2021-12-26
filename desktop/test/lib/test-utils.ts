@@ -51,7 +51,7 @@ export const runEditor = <
     code,
     0
   );
-  let ast: S = parseCodeEntryAST(codeEntry) as S;
+  let ast: S = parseCodeEntryAST(codeEntry.getRemoteCodeEntry()) as S;
   let lookupIds;
   ({ ast, lookupIds } = editor.addLookupData({
     ast: ast,
@@ -59,5 +59,5 @@ export const runEditor = <
   }));
   ast = apply({ editor, ast, codeEntry, lookupIds });
   ast = editor.removeLookupData({ ast, codeEntry });
-  return prettyPrintCodeEntryAST(config, codeEntry, ast);
+  return prettyPrintCodeEntryAST(config, codeEntry.getRemoteCodeEntry(), ast);
 };

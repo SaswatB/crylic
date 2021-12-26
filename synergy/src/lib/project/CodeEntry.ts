@@ -21,6 +21,15 @@ export const STYLE_EXTENSION_REGEX = /\.(css|s[ac]ss|less)$/i;
 export const SCRIPT_EXTENSION_REGEX = /\.[jt]sx?$/i;
 export const IMAGE_EXTENSION_REGEX = /\.(jpe?g|png|gif|svg)$/i;
 
+/**
+ * A partial, resolved CodeEntry for use with remote async code
+ */
+export interface RemoteCodeEntry {
+  code: string | undefined;
+  isStyleEntry: CodeEntry["isStyleEntry"];
+  styleEntryExtension: CodeEntry["styleEntryExtension"];
+}
+
 export class CodeEntry {
   public readonly id = hashString(this.filePath);
   public readonly code$ = new BehaviorSubject(this._code);
@@ -50,7 +59,11 @@ export class CodeEntry {
 
     // save the edited code
     this.updateCode(
-      prettyPrintCodeEntryAST(this.project.config, this, editedAst)
+      prettyPrintCodeEntryAST(
+        this.project.config,
+        this.getRemoteCodeEntry(),
+        editedAst
+      )
     );
   }
 
@@ -155,6 +168,14 @@ export class CodeEntry {
     );
   }
 
+  public getRemoteCodeEntry(): RemoteCodeEntry {
+    return {
+      code: this.code$.getValue(),
+      isStyleEntry: this.isStyleEntry,
+      styleEntryExtension: this.styleEntryExtension,
+    };
+  }
+
   // #region metadata
 
   private metadata$ = this.code$.pipe(
@@ -165,7 +186,7 @@ export class CodeEntry {
 
       try {
         // parse ast data
-        let ast = parseCodeEntryAST(this);
+        let ast = parseCodeEntryAST(this.getRemoteCodeEntry());
 
         // check if the file is a component
         let isRenderable = false;
@@ -237,7 +258,9 @@ export class CodeEntry {
     shareReplay(1)
   );
   public readonly codeWithLookupData$ = this.ast$.pipe(
-    map((ast) => (ast ? printCodeEntryAST(this, ast) : undefined)),
+    map((ast) =>
+      ast ? printCodeEntryAST(this.getRemoteCodeEntry(), ast) : undefined
+    ),
     shareReplay(1)
   );
 

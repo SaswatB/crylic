@@ -1,5 +1,5 @@
 import { namedTypes as t } from "ast-types";
-import { LiteralKind } from "ast-types/gen/kinds";
+import { ExpressionKind, LiteralKind } from "ast-types/gen/kinds";
 import { NodePath } from "ast-types/lib/node-path";
 import clone from "clone";
 import deepFreeze from "deep-freeze-strict";
@@ -11,13 +11,13 @@ import gonzales, {
   CSSASTNodeType,
   CSSASTSyntax,
 } from "gonzales-pe";
-import { isArray } from "lodash";
+import { isArray, last } from "lodash";
 import prettierParserBabel from "prettier/parser-babel";
 import prettierParsesPostcss from "prettier/parser-postcss";
 import { format } from "prettier/standalone";
 import { parse, print, types, visit } from "recast";
 
-import { CodeEntry } from "../project/CodeEntry";
+import { RemoteCodeEntry } from "../project/CodeEntry";
 import { ProjectConfig } from "../project/ProjectConfig";
 import { isDefined } from "../utils";
 import { babelTsParser } from "./babel-ts";
@@ -33,9 +33,9 @@ const printAST = (ast: t.File) =>
 const prettyPrintAST = (ast: t.File) =>
   format(printAST(ast), { parser: "babel-ts", plugins: [prettierParserBabel] });
 
-export const parseStyleSheetAST = (codeEntry: CodeEntry) => {
+export const parseStyleSheetAST = (codeEntry: RemoteCodeEntry) => {
   const syntax = codeEntry.styleEntryExtension;
-  const ast = gonzales.parse(codeEntry.code$.getValue() || "", {
+  const ast = gonzales.parse(codeEntry.code || "", {
     syntax,
   });
   // fill in a default syntax if the ast has none (which can happen for empty files)
@@ -43,7 +43,10 @@ export const parseStyleSheetAST = (codeEntry: CodeEntry) => {
   return ast;
 };
 const printStyleSheetAST = (ast: CSSASTNode) => ast.toString();
-const prettyPrintStyleSheetAST = (codeEntry: CodeEntry, ast: CSSASTNode) => {
+const prettyPrintStyleSheetAST = (
+  codeEntry: RemoteCodeEntry,
+  ast: CSSASTNode
+) => {
   const syntax = codeEntry.styleEntryExtension;
   const code = printStyleSheetAST(ast);
 
@@ -55,12 +58,12 @@ const prettyPrintStyleSheetAST = (codeEntry: CodeEntry, ast: CSSASTNode) => {
   return format(code, { parser: syntax, plugins: [prettierParsesPostcss] });
 };
 
-export const parseCodeEntryAST = (codeEntry: CodeEntry) =>
+export const parseCodeEntryAST = (codeEntry: RemoteCodeEntry) =>
   codeEntry.isStyleEntry
     ? parseStyleSheetAST(codeEntry)
-    : parseAST(codeEntry.code$.getValue() || "");
+    : parseAST(codeEntry.code || "");
 export const printCodeEntryAST = (
-  codeEntry: CodeEntry,
+  codeEntry: RemoteCodeEntry,
   ast: CSSASTNode | t.File
 ) =>
   codeEntry.isStyleEntry
@@ -68,7 +71,7 @@ export const printCodeEntryAST = (
     : printAST(ast as t.File);
 export const prettyPrintCodeEntryAST = (
   config: ProjectConfig,
-  codeEntry: CodeEntry,
+  codeEntry: RemoteCodeEntry,
   ast: CSSASTNode | t.File
 ) => {
   if (!config.isPrettierEnabled()) return printCodeEntryAST(codeEntry, ast);
@@ -307,6 +310,9 @@ export const traverseJSXElements = (
   });
 };
 
+/**
+ * Gets all the variables defined at the top level of the program
+ */
 const getBlockIdentifiers = (nodes: t.ASTNode[], parents: t.ASTNode[] = []) => {
   const identifiers: {
     name: string;
@@ -324,6 +330,12 @@ const getBlockIdentifiers = (nodes: t.ASTNode[], parents: t.ASTNode[] = []) => {
         identifiers.push(
           ...getBlockIdentifiers(node.specifiers || [], newParents)
         );
+        break;
+      case "ImportDefaultSpecifier":
+      case "ImportSpecifier":
+        if (node.local) {
+          identifiers.push(...getBlockIdentifiers([node.local], newParents));
+        }
         break;
       case "ExportDefaultDeclaration":
       case "ExportNamedDeclaration":
@@ -387,28 +399,123 @@ export const getComponentExport = (
   // todo support class expressions
   // todo check class extends React.Component/React.PureComponent
 
-  /**
-   * Checks whether the given variable name refers to a function/class
-   */
-  const hasFunctionOrClassIdentifier = (varName: string) => {
-    // get all the variables defined at the top level of the program
-    const astIdentifiers = getBlockIdentifiers([ast.program]); // todo cache after first run & filter out ones past the target line
-
-    // get the identifier for the given variable
-    const varIdentifier = astIdentifiers.find((ai) => ai.name === varName);
-    if (!varIdentifier || varIdentifier.parents.length === 0) return false;
-
-    // get the identifier parent
-    const varParent = varIdentifier.parents[varIdentifier.parents.length - 1]!;
-
-    // check whether the parent is a function (not exhaustive)
+  // get all the variables defined at the top level of the program
+  let astIdentifiersCache: ReturnType<typeof getBlockIdentifiers>;
+  function getIdentifierDeclaration(identifier: string) {
     return (
-      varParent.type === "FunctionDeclaration" ||
-      varParent.type === "ClassDeclaration" ||
-      (varParent.type === "VariableDeclarator" &&
-        (varParent.init?.type === "ArrowFunctionExpression" ||
-          varParent.init?.type === "FunctionExpression"))
-    );
+      astIdentifiersCache ||
+      (astIdentifiersCache = getBlockIdentifiers([ast.program]))
+    ).find((ai) => ai.name === identifier);
+  }
+
+  /**
+   * Makes a guess as to whether the given expression refers to an HoC
+   *
+   * callee is assumed to be a top level expression
+   */
+  const isHoC = (callee: ExpressionKind) => {
+    let importPath;
+    let importMember;
+
+    if (callee.type === "Identifier") {
+      const varIdentifier = getIdentifierDeclaration(callee.name);
+      // support `import { memo } from "react"; memo()`
+      if (!varIdentifier || varIdentifier.parents.length === 0) return false;
+
+      varIdentifier?.parents.forEach((node) => {
+        if (node.type === "ImportSpecifier") {
+          importMember = node.imported.name;
+        }
+        if (
+          node.type === "ImportDeclaration" &&
+          node.source.type === "StringLiteral"
+        ) {
+          importPath = node.source.value;
+        }
+      });
+
+      console.log(varIdentifier);
+    } else if (
+      callee.type === "MemberExpression" &&
+      callee.object.type === "Identifier" &&
+      callee.property.type === "Identifier"
+    ) {
+      // support `import React from "react"; React.memo()`
+      const calleeObjectName = callee.object.name;
+      const calleePropertyName = callee.property.name;
+      const varIdentifier = getIdentifierDeclaration(calleeObjectName);
+
+      varIdentifier?.parents.forEach((node) => {
+        if (
+          varIdentifier.parents.some(
+            (p) => p.type === "ImportDefaultSpecifier"
+          ) &&
+          node.type === "ImportDeclaration" &&
+          node.source.type === "StringLiteral"
+        ) {
+          importPath = node.source.value;
+          importMember = calleePropertyName;
+        }
+      });
+    }
+
+    // currently only React.memo is supported
+    return importPath === "react" && importMember === "memo";
+  };
+
+  /**
+   * Checks whether the given top level declaration/expression refers to a function/class/hoc
+   */
+  const isComponentNode = (
+    node: t.ASTNode
+  ): { isComponent: boolean; name?: string } => {
+    switch (node.type) {
+      case "ClassDeclaration":
+      case "FunctionDeclaration":
+      case "ArrowFunctionExpression":
+      case "FunctionExpression": {
+        // support function and class components
+        return { isComponent: true, name: getIdName(node) };
+      }
+      case "VariableDeclaration": {
+        // search all variable declarations for function definitions
+        const componentValue = node.declarations
+          .map((declaration) => isComponentNode(declaration))
+          .filter((n) => n.isComponent)[0];
+        if (componentValue) return componentValue;
+        break;
+      }
+      case "VariableDeclarator":
+        if (node.init) {
+          return { ...isComponentNode(node.init), name: getIdName(node) };
+        }
+        break;
+      case "CallExpression":
+        // support HoCs like React.memo
+        return { isComponent: isHoC(node.callee) };
+      case "Identifier":
+      case "ExportSpecifier": {
+        // follow identifiers to their declaration
+        const varName =
+          node.type === "ExportSpecifier"
+            ? getIdName({ id: node.local }) || getIdName({ id: node.exported })
+            : node.name;
+        const exportedName =
+          (node.type === "ExportSpecifier" &&
+            getIdName({ id: node.exported })) ||
+          varName;
+        if (varName !== undefined) {
+          const varParent = last(getIdentifierDeclaration(varName)?.parents);
+          return {
+            isComponent: !!varParent && isComponentNode(varParent).isComponent,
+            name: exportedName,
+          };
+        }
+        break;
+      }
+    }
+
+    return { isComponent: false };
   };
 
   const exportedFunctions = exportNodes
@@ -417,87 +524,46 @@ export const getComponentExport = (
         node.type === "ExportNamedDeclaration" ||
         node.type === "ExportDefaultDeclaration"
     )
-    .map((node) => {
-      let name: string | undefined;
-      switch (node.declaration?.type) {
-        case "ClassDeclaration": {
-          // name doesn't matter for default export
-          if (node.type === "ExportDefaultDeclaration") return { node };
-          name = getIdName(node.declaration);
-          break;
-        }
-        case "FunctionDeclaration": {
-          // name doesn't matter (and may not exist) for default export
-          if (node.type === "ExportDefaultDeclaration") return { node };
-          name = getIdName(node.declaration);
-          break;
-        }
-        case "VariableDeclaration": {
-          // search all variable declarations for function definitions
-          name = node.declaration.declarations
-            .map((declaration) => {
-              if (declaration.type !== "VariableDeclarator") return undefined;
-              if (
-                declaration.init?.type !== "ArrowFunctionExpression" &&
-                declaration.init?.type !== "FunctionExpression" &&
-                declaration.init?.type !== "ClassExpression"
-              )
-                return undefined;
-
-              const declarationName = getIdName(declaration);
-              return declarationName;
-            })
-            .filter((n) => n !== undefined)[0];
-          break;
-        }
-        case "ArrowFunctionExpression":
-        case "FunctionExpression":
-          // these declarations should only be possible for default exports
-          if (node.type === "ExportDefaultDeclaration") return { node };
-          break;
-        case "Identifier":
-          // if a default export is exporting a variable, check if that variable is a function/class (this is handled under specifiers below for named exports)
-          if (
-            node.type === "ExportDefaultDeclaration" &&
-            hasFunctionOrClassIdentifier(node.declaration.name)
-          ) {
-            return { node };
+    .map(
+      (node): ReturnType<typeof getComponentExport> => {
+        // check whether the the export's declaration is a component
+        if (node.declaration) {
+          const { isComponent, name } = isComponentNode(node.declaration);
+          if (isComponent) {
+            // name doesn't matter (and may not exist) for default export
+            if (node.type === "ExportDefaultDeclaration")
+              return { isDefault: true };
+            // name is required for a non-default export
+            return name ? { name, isDefault: false } : undefined;
           }
-          break;
+        }
+
+        // check whether any named export specifiers are components
+        if (node.type === "ExportNamedDeclaration") {
+          const { name } =
+            node.specifiers
+              ?.map((specifier) => isComponentNode(specifier))
+              .filter((r) => r.isComponent)[0] || {};
+          // name is required for a non-default export
+          return name ? { name, isDefault: false } : undefined;
+        }
+
+        return undefined;
       }
-      if (node.type === "ExportNamedDeclaration") {
-        // check whether any specifiers are functions/classes
-        name =
-          node.specifiers?.map((specifier) => {
-            const varName =
-              getIdName({ id: specifier.local }) ||
-              getIdName({ id: specifier.exported });
-            return varName && hasFunctionOrClassIdentifier(varName)
-              ? varName
-              : undefined;
-          })[0] || name;
-      }
-      return name ? { name, node } : undefined;
-    })
+    )
     .filter(isDefined);
 
   // return whether an export was found
-  if (exportedFunctions.length > 0) {
-    // prefer default exports, then capitalized exports, and lastly the last export
-    let bestExportedFunction =
-      exportedFunctions.find(
-        (f) => f.node.type === "ExportDefaultDeclaration"
-      ) ||
-      exportedFunctions.find((f) => f.name?.match(/^[A-Z]/)) ||
-      exportedFunctions[exportedFunctions.length - 1]!;
-
-    if (bestExportedFunction.node.type === "ExportDefaultDeclaration") {
-      return { isDefault: true };
-    }
-    return { isDefault: false, name: bestExportedFunction.name! };
+  if (exportedFunctions.length === 0) {
+    return undefined;
   }
 
-  return undefined;
+  // prefer default exports, then capitalized exports, and lastly the last export
+  return (
+    exportedFunctions.find((f) => f.isDefault) ||
+    exportedFunctions.find((f) => f.name?.match(/^[A-Z]/)) ||
+    exportedFunctions[exportedFunctions.length - 1]!
+  );
 };
 
 export const traverseStyleSheetRuleSets = (
