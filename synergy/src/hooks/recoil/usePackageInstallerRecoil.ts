@@ -2,8 +2,8 @@ import { MutableRefObject } from "react";
 import { atom, useRecoilState } from "recoil";
 import { Subject } from "rxjs";
 
+import { useProject } from "../../services/ProjectService";
 import { PackageInstaller } from "../../types/paint";
-import { useProjectRecoil } from "./useProjectRecoil/useProjectRecoil";
 
 const installingPackagesState = atom<boolean>({
   key: "installingPackages",
@@ -16,7 +16,7 @@ const installPackagesOutputState = atom<MutableRefObject<Subject<Buffer>>>({
 });
 
 export function usePackageInstallerRecoil() {
-  const { project } = useProjectRecoil();
+  const project = useProject();
   const [installingPackages, setInstallingPackages] = useRecoilState(
     installingPackagesState
   );

@@ -2,7 +2,6 @@ import { FunctionComponent, useEffect } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 
 import { useCompilerContextRecoil } from "../../hooks/recoil/useCompilerContextRecoil";
-import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import {
   useReselectGuard,
   useSelectRecoil,
@@ -14,9 +13,10 @@ import {
   componentViewRouteChange,
 } from "../../lib/events";
 import { sleep } from "../../lib/utils";
+import { useProject } from "../../services/ProjectService";
 
 export const StateManager: FunctionComponent = () => {
-  const { project } = useProjectRecoil();
+  const project = useProject();
   const {
     setSelectMode,
     selectedElement,

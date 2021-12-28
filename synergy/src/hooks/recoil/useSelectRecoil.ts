@@ -9,13 +9,13 @@ import {
 } from "../../lib/ast/editors/ASTEditor";
 import { ASTType } from "../../lib/ast/types";
 import { takeNext } from "../../lib/utils";
+import { useProject } from "../../services/ProjectService";
 import { SelectedElement, Styles } from "../../types/paint";
 import { useUpdatingRef } from "../useUpdatingRef";
 import {
   updateElementHelper,
   updateStyleGroupHelper,
 } from "./useProjectRecoil/code-edit-helpers";
-import { useProjectRecoil } from "./useProjectRecoil/useProjectRecoil";
 import { useCompilerContextRecoil } from "./useCompilerContextRecoil";
 
 const selectModeState = atom<SelectMode | undefined>({
@@ -35,7 +35,7 @@ const selectedStyleGroupState = atom<StyleGroup | undefined>({
 export type SelectElement = (renderId: string, lookupId: string) => void;
 
 export function useSelectRecoil() {
-  const { project } = useProjectRecoil();
+  const project = useProject();
   const projectRef = useUpdatingRef(project);
   const [selectMode, setSelectMode] = useRecoilState(selectModeState);
   const [selectedElement, setSelectedElement] = useRecoilState(

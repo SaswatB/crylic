@@ -25,7 +25,6 @@ import {
 } from "../../constants";
 import { useCompilerContextRecoil } from "../../hooks/recoil/useCompilerContextRecoil";
 import { addElementHelper } from "../../hooks/recoil/useProjectRecoil/code-edit-helpers";
-import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useSelectRecoil } from "../../hooks/recoil/useSelectRecoil";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useMenuInput } from "../../hooks/useInput";
@@ -33,6 +32,7 @@ import { useObservable } from "../../hooks/useObservable";
 import { routeComponent } from "../../lib/defs/react-router-dom";
 import { componentViewRouteChange } from "../../lib/events";
 import { isDefined } from "../../lib/utils";
+import { useProject } from "../../services/ProjectService";
 import { Styles, ViewContext } from "../../types/paint";
 import { IconButton } from "../IconButton";
 import { InputModal } from "../InputModal";
@@ -62,7 +62,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   const bus = useBus();
   const [loading, setLoading] = useState(false);
   const [debouncedLoading, skipLoadingDebounce] = useDebounce(loading, 700);
-  const { project } = useProjectRecoil();
+  const project = useProject();
   const {
     selectMode,
     setSelectMode,

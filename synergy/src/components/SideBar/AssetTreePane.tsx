@@ -14,7 +14,6 @@ import { useSnackbar } from "notistack";
 import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 
 import { getBoilerPlateComponent, SelectModeType } from "../../constants";
-import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useSelectRecoil } from "../../hooks/recoil/useSelectRecoil";
 import { useMenuInput } from "../../hooks/useInput";
 import { useMemoObservable } from "../../hooks/useObservable";
@@ -26,6 +25,7 @@ import {
 } from "../../lib/project/CodeEntry";
 import { renderSeparator } from "../../lib/render-utils";
 import { arrayMap, takeNext } from "../../lib/utils";
+import { useProject } from "../../services/ProjectService";
 import { IconButton } from "../IconButton";
 import { InputModal } from "../InputModal";
 import { Tour } from "../Tour/Tour";
@@ -45,7 +45,7 @@ interface Props {
 export const AssetTreePane: FunctionComponent<Props> = ({
   onImportImageFile,
 }) => {
-  const { project } = useProjectRecoil();
+  const project = useProject();
   const { setSelectMode } = useSelectRecoil();
   const { enqueueSnackbar } = useSnackbar();
   const [expandedTreeNodes, setExpandedTreeNodes] = useState<string[]>();

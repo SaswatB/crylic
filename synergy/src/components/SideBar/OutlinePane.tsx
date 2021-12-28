@@ -7,7 +7,6 @@ import TreeView from "@material-ui/lab/TreeView";
 import { produce } from "immer";
 
 import { useCompilerContextRecoil } from "../../hooks/recoil/useCompilerContextRecoil";
-import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useSelectRecoil } from "../../hooks/recoil/useSelectRecoil";
 import { useBusSubscription } from "../../hooks/useBusSubscription";
 import { useObservable } from "../../hooks/useObservable";
@@ -19,6 +18,7 @@ import {
 import { Project } from "../../lib/project/Project";
 import { renderSeparator } from "../../lib/render-utils";
 import { getElementUniqueId } from "../../lib/utils";
+import { useProject } from "../../services/ProjectService";
 import { OutlineElement, RenderEntry } from "../../types/paint";
 import { IconButton } from "../IconButton";
 import { Tour } from "../Tour/Tour";
@@ -49,7 +49,7 @@ const buildOutline = (
     .reduce((p, c) => [...p, ...c], []);
 
 export const OutlinePane: FunctionComponent = () => {
-  const { project } = useProjectRecoil();
+  const project = useProject();
   const { getViewContext } = useCompilerContextRecoil();
   const { selectedElement, selectElement } = useSelectRecoil();
 

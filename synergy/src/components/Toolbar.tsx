@@ -31,12 +31,12 @@ import {
 
 import { SelectMode, SelectModeType } from "../constants";
 import { usePackageInstallerRecoil } from "../hooks/recoil/usePackageInstallerRecoil";
-import { useProjectRecoil } from "../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useSelectRecoil } from "../hooks/recoil/useSelectRecoil";
 import { useGlobalConfig } from "../hooks/useGlobalConfig";
 import { useSelectInput } from "../hooks/useInput";
 import { Project } from "../lib/project/Project";
 import { renderSeparator } from "../lib/render-utils";
+import { useProject } from "../services/ProjectService";
 import { ComponentViewZoomAction, PackageInstaller } from "../types/paint";
 import { Tour } from "./Tour/Tour";
 
@@ -191,7 +191,7 @@ interface Props {
   setZoomAction: (action: ComponentViewZoomAction) => void;
 }
 export const Toolbar: FunctionComponent<Props> = ({ setZoomAction }) => {
-  const { project } = useProjectRecoil();
+  const project = useProject();
   const { installPackages } = usePackageInstallerRecoil();
   const {
     selectMode,

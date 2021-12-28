@@ -217,6 +217,7 @@ ReactDOM.render((
 
     // run the resulting bundle on the provided iframe, with stubs
     (frame!.contentWindow! as any).require = (name: string) => {
+      // lm_c76a4fbc3b handle webpack externals
       if (name === "react") return require("react");
       if (name === "react-dom") return require("react-dom");
       if (name === "react-router-dom")

@@ -18,7 +18,6 @@ import { useBus } from "ts-bus/react";
 
 import { usePackageInstallerRecoil } from "../../hooks/recoil/usePackageInstallerRecoil";
 import { updateStyleGroupHelper } from "../../hooks/recoil/useProjectRecoil/code-edit-helpers";
-import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useSelectRecoil } from "../../hooks/recoil/useSelectRecoil";
 import { useDebouncedFunction } from "../../hooks/useDebouncedFunction";
 import {
@@ -37,6 +36,7 @@ import { editorOpenLocation } from "../../lib/events";
 import { CodeEntry } from "../../lib/project/CodeEntry";
 import { renderSeparator } from "../../lib/render-utils";
 import { takeNext } from "../../lib/utils";
+import { useProject } from "../../services/ProjectService";
 import { StyleKeys } from "../../types/paint";
 import { AnimationEditorModal } from "../Animation/AnimationEditorModal";
 import { Collapsible } from "../Collapsible";
@@ -89,7 +89,7 @@ const useBoundCSSLengthInput: useInputFunction = (config) =>
   useCSSLengthInput({ ...config, bindInitialValue: true });
 
 const useSelectedElementImageEditor = (imageProp: "backgroundImage") => {
-  const { project } = useProjectRecoil();
+  const project = useProject();
   const { selectedElement, selectedStyleGroup } = useSelectRecoil();
 
   const onChange = (assetEntry: CodeEntry) => {
@@ -155,7 +155,7 @@ const TEXT_TAGS = [
 
 export const ElementEditorPane: FunctionComponent = () => {
   const bus = useBus();
-  const { project } = useProjectRecoil();
+  const project = useProject();
   const { installPackages } = usePackageInstallerRecoil();
   const {
     selectedElement,

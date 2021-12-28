@@ -10,12 +10,12 @@ import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 import { useBus } from "ts-bus/react";
 
 import { useCompilerContextRecoil } from "../../hooks/recoil/useCompilerContextRecoil";
-import { useProjectRecoil } from "../../hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useMemoObservable } from "../../hooks/useObservable";
 import { useRerender } from "../../hooks/useRerender";
 import { componentViewCompileEnd, componentViewReload } from "../../lib/events";
 import { RouteDefinition } from "../../lib/react-router-proxy";
 import { arrayMap, isDefined } from "../../lib/utils";
+import { useProject } from "../../services/ProjectService";
 import {
   RenderEntry,
   RenderEntryDeployerContext,
@@ -54,7 +54,7 @@ export const CompilerComponentView: FunctionComponent<
 }) => {
   const bus = useBus();
   const rerender = useRerender();
-  const { project } = useProjectRecoil();
+  const project = useProject();
   const { setViewContext, runCompileTasks } = useCompilerContextRecoil();
   const frame = useRef<{
     frameElement: HTMLIFrameElement;

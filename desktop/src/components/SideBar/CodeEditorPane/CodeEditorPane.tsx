@@ -2,19 +2,19 @@ import React, { FunctionComponent, useEffect, useState } from "react";
 import { combineLatest } from "rxjs";
 import { map } from "rxjs/operators";
 
-import { useProjectRecoil } from "synergy/src/hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useSelectRecoil } from "synergy/src/hooks/recoil/useSelectRecoil";
 import { useBusSubscription } from "synergy/src/hooks/useBusSubscription";
 import { useMemoObservable } from "synergy/src/hooks/useObservable";
 import { editorOpenLocation } from "synergy/src/lib/events";
 import { isDefined } from "synergy/src/lib/utils";
+import { useProject } from "synergy/src/services/ProjectService";
 
 import { CodeEditor } from "./CodeEditor";
 import { CodeEditorTabs } from "./CodeEditorTabs";
 import { ImageViewer } from "./ImageViewer";
 
 export const CodeEditorPane: FunctionComponent = () => {
-  const { project } = useProjectRecoil();
+  const project = useProject();
   const { selectedElement } = useSelectRecoil();
   const [activeTab, setActiveTab] = useState(0);
 

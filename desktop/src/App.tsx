@@ -15,13 +15,14 @@ import { Toolbar } from "synergy/src/components/Toolbar";
 import { Tour, TourContext } from "synergy/src/components/Tour/Tour";
 import { TransformContainer } from "synergy/src/components/TransformContainer";
 import { InstallDialog } from "synergy/src/components/Workspace/InstallDialog";
-import { useProjectRecoil } from "synergy/src/hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useMenuInput } from "synergy/src/hooks/useInput";
 import {
   useMemoObservable,
   useObservable,
 } from "synergy/src/hooks/useObservable";
+import { useService } from "synergy/src/hooks/useService";
 import { editorResize } from "synergy/src/lib/events";
+import { ProjectService } from "synergy/src/services/ProjectService";
 import { ComponentViewZoomAction } from "synergy/src/types/paint";
 
 import { CodeEditorPane } from "./components/SideBar/CodeEditorPane/CodeEditorPane";
@@ -34,7 +35,8 @@ import "./App.scss";
 const open = __non_webpack_require__("open") as typeof import("open");
 
 function App() {
-  const { project, setProject, closeProject } = useProjectRecoil();
+  const projectService = useService(ProjectService);
+  const project = useObservable(projectService.project$);
   const { enqueueSnackbar } = useSnackbar();
   const bus = useBus();
   const [loading, setLoading] = useState(0);
@@ -54,7 +56,10 @@ function App() {
         saveFilePicker({
           filters: [{ name: "Project", extensions: [""] }],
         }).then((f) => {
-          if (f) FileProject.createNewProjectInDirectory(f).then(setProject);
+          if (f)
+            FileProject.createNewProjectInDirectory(f).then(
+              projectService.setProject
+            );
         })
       }
       onOpenProject={() =>
@@ -66,7 +71,7 @@ function App() {
           setTimeout(
             () =>
               FileProject.createProjectFromDirectory(filePath)
-                .then(setProject)
+                .then(projectService.setProject)
                 .finally(() => setLoading((l) => l - 1)),
             150
           );
@@ -106,7 +111,7 @@ function App() {
           }
           break;
         case "close":
-          closeProject();
+          projectService.setProject(undefined);
           break;
         case "toggleTour":
           setTourDisabled(!tourDisabled);

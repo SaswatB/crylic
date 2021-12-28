@@ -59,6 +59,7 @@
     "identity-obj-proxy": "^3.0.0",
     "immer": "^6.0.3",
     "io-ts": "^2.2.1",
+    "jsonc-parser": "^3.0.0",
     "less": "^3.11.1",
     "less-loader": "^6.1.0",
     "lodash": "^4.17.15",

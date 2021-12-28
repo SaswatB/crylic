@@ -9262,6 +9262,7 @@ __metadata:
     jest-environment-jsdom: ^27.4.4
     jest-raw-loader: ^1.0.1
     jest-watch-typeahead: ^1.0.0
+    jsonc-parser: ^3.0.0
     less: ^3.11.1
     less-loader: ^6.1.0
     lodash: ^4.17.15
@@ -16027,6 +16028,13 @@ immer@6.0.3:
   bin:
     json5: lib/cli.js
   checksum: b2de57a66520eca0fbb6c5ef59249b8308efb93fe89a8c75f5a6846e4f5f7d99a5a6f2e4db4d7a1c7047802dd816ed602a052d147a415d0e6b7f834885b62bc3
+  languageName: node
+  linkType: hard
+
+"jsonc-parser@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "jsonc-parser@npm:3.0.0"
+  checksum: 1df2326f1f9688de30c70ff19c5b2a83ba3b89a1036160da79821d1361090775e9db502dc57a67c11b56e1186fc1ed70b887f25c5febf9a3ec4f91435836c99d
   languageName: node
   linkType: hard
 

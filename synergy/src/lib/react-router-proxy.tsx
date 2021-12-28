@@ -24,7 +24,7 @@ export function getReactRouterProxy(
   onRouteDeactivate: (routeId: string) => void
 ) {
   const reactRouterDom = require("react-router-dom") as typeof import("react-router-dom");
-  const reactRouterDomProxy = {
+  return {
     ...reactRouterDom,
     BrowserRouter: (props: any) => {
       const historyRef = useRef<any>(
@@ -115,5 +115,4 @@ export function getReactRouterProxy(
       return <Switch {...props} />;
     },
   };
-  return reactRouterDomProxy;
 }

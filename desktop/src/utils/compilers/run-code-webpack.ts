@@ -3,6 +3,7 @@ import { cloneDeep } from "lodash";
 import { AddressInfo } from "net";
 
 import { requireUncached } from "../utils";
+import { getCraModules } from "./cra-modules";
 
 import baseAppEntry from "!!raw-loader!../../assets/base-app-entry.html";
 
@@ -133,7 +134,8 @@ const getWebpackModules = async (
         options: {
           // lm_a95a542d63 electron version
           // todo change on publish or support more options
-          env: { targets: { electron: "9" } },
+          // env: { targets: { electron: "9" } },
+          sourceMaps: "inline",
         },
       },
     },
@@ -151,7 +153,7 @@ const getWebpackModules = async (
               targets: {
                 // lm_a95a542d63 electron version
                 // todo change on publish or support more options
-                electron: "9",
+                // electron: "9",
               },
             },
           ],
@@ -213,7 +215,7 @@ const getWebpackModules = async (
               targets: {
                 // lm_a95a542d63 electron version
                 // todo change on publish or support more options
-                electron: "9",
+                // electron: "9",
               },
               useBuiltIns: "entry",
               modules: false,
@@ -304,8 +306,8 @@ export const webpackRunCode = async (
   }[],
   selectedCodeId: string,
   paths: {
-    projectFolder: string;
-    projectSrcFolder: string;
+    projectFolder: string; // appPath
+    projectSrcFolder: string; // appSrc
     overrideWebpackConfig?: string;
     htmlTemplate?: string;
   },
@@ -347,6 +349,12 @@ export const webpackRunCode = async (
         ? { template: paths.htmlTemplate }
         : { templateContent: baseAppEntry };
 
+    const projectNodeModules = path.resolve(
+      paths.projectFolder,
+      "node_modules"
+    ); // appNodeModules
+    const modules = getCraModules({ ...paths, projectNodeModules });
+
     let options: import("webpack").Configuration = {
       mode: NODE_ENV,
       // entry: [require.resolve('react-dev-utils/webpackHotDevClient'),primaryCodeEntry.filePath]
@@ -378,17 +386,18 @@ export const webpackRunCode = async (
       },
       module: await getWebpackModules(paths.projectSrcFolder, env),
       resolve: {
-        // modules: ['node_modules', paths.appNodeModules].concat(
-        //   modules.additionalModulePaths || []
-        // ),
+        modules: ["node_modules", projectNodeModules].concat(
+          modules.additionalModulePaths || []
+        ),
         extensions: [".mjs", ".js", ".jsx", ".ts", ".tsx", ".json"],
         alias: {
           "react-native": "react-native-web",
-          // src: paths.appSrc
+          ...(modules.webpackAliases || {}),
         },
         // plugins: [PnpWebpackPlugin]
       },
       // resolveLoader: { plugins: [PnpWebpackPlugin.moduleLoader(module)] },
+      // lm_c76a4fbc3b webpack externals
       externals: {
         react: {
           commonjs: "react",
@@ -494,7 +503,7 @@ export const webpackRunCode = async (
       disableHostCheck: true,
       compress: true,
       clientLogLevel: "none",
-      // contentBase: paths.appPublic,
+      contentBase: path.resolve(paths.projectFolder, "public"),
       // contentBasePublicPath: paths.publicUrlOrPath,
       // todo fix hmr behavior for non-source code assets
       // watchContentBase: true,

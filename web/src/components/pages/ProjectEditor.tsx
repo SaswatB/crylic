@@ -21,9 +21,9 @@ import { Toolbar } from "synergy/src/components/Toolbar";
 import { TourContext } from "synergy/src/components/Tour/Tour";
 import { TransformContainer } from "synergy/src/components/TransformContainer";
 import { InstallDialog } from "synergy/src/components/Workspace/InstallDialog";
-import { useProjectRecoil } from "synergy/src/hooks/recoil/useProjectRecoil/useProjectRecoil";
 import { useMenuInput } from "synergy/src/hooks/useInput";
 import { editorResize } from "synergy/src/lib/events";
+import { useProject } from "synergy/src/services/ProjectService";
 import { ComponentViewZoomAction } from "synergy/src/types/paint";
 
 import { remoteWebpackWorker } from "../../lib/remote-webpack-worker";
@@ -55,7 +55,7 @@ export const ProjectEditor: FunctionComponent = () => {
     { variables: { projectId } }
   );
 
-  const { project, initProject } = useProjectRecoil();
+  const project = useProject();
   const [projectInitLoading, setProjectInitLoading] = useState(false);
   useEffect(() => {
     if (!queryLoading && (!project || (project as any).id !== projectId)) {
@@ -108,7 +108,7 @@ export const ProjectEditor: FunctionComponent = () => {
   const renderLeftPane = () => (
     <>
       <div className="flex">
-        {data?.viewer[0].projects[0]?.name || "Loading..."}
+        {data?.viewer[0]?.projects[0]?.name || "Loading..."}
         <div className="flex-1" />
         <IconButton
           className="ml-2"
