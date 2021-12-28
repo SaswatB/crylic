@@ -35,7 +35,7 @@ const selectedStyleGroupState = atom<StyleGroup | undefined>({
 export type SelectElement = (renderId: string, lookupId: string) => void;
 
 export function useSelectRecoil() {
-  const project = useProject();
+  const project = useProject({ allowUndefined: true });
   const projectRef = useUpdatingRef(project);
   const [selectMode, setSelectMode] = useRecoilState(selectModeState);
   const [selectedElement, setSelectedElement] = useRecoilState(

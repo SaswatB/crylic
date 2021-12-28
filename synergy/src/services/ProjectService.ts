@@ -23,6 +23,11 @@ export class ProjectService {
   }
 }
 
-export function useProject() {
-  return useObservable(useService(ProjectService).project$);
+export function useProject<T extends true | false>(options?: {
+  allowUndefined?: T;
+}): T extends true ? Project | undefined : Project {
+  const project = useObservable(useService(ProjectService).project$);
+  if (!project && !options?.allowUndefined) throw new Error("No project");
+
+  return project as T extends true ? Project | undefined : Project;
 }

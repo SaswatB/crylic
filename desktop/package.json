@@ -102,6 +102,7 @@
     "react-zoom-pan-pinch": "^1.6.1",
     "recast": "^0.20.5",
     "recoil": "^0.0.10",
+    "reflect-metadata": "^0.1.13",
     "resolve": "^1.15.0",
     "resolve-url-loader": "^3.1.1",
     "rgb-hex": "^3.0.0",

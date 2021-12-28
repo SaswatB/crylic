@@ -9307,6 +9307,7 @@ __metadata:
     react-zoom-pan-pinch: ^1.6.1
     recast: ^0.20.5
     recoil: ^0.0.10
+    reflect-metadata: ^0.1.13
     resolve: ^1.15.0
     resolve-url-loader: ^3.1.1
     rgb-hex: ^3.0.0
@@ -21937,6 +21938,13 @@ react-refresh@0.8.3:
     css-unit-converter: ^1.1.1
     postcss-value-parser: ^3.3.0
   checksum: e2fc57ee2bba771dade04d97e6a3834b6e7216e6910bb10d58a55c1c41656345cf205dcb70d8c07a6ca00528c9dbdbc90b05a4331f39a1161ae308805f2f3bce
+  languageName: node
+  linkType: hard
+
+"reflect-metadata@npm:^0.1.13":
+  version: 0.1.13
+  resolution: "reflect-metadata@npm:0.1.13"
+  checksum: 798d379a7b6f6455501145419505c97dd11cbc23857a386add2b9ef15963ccf15a48d9d15507afe01d4cd74116df8a213247200bac00320bd7c11ddeaa5e8fb4
   languageName: node
   linkType: hard
 

@@ -16,7 +16,7 @@ import { sleep } from "../../lib/utils";
 import { useProject } from "../../services/ProjectService";
 
 export const StateManager: FunctionComponent = () => {
-  const project = useProject();
+  const project = useProject({ allowUndefined: true });
   const {
     setSelectMode,
     selectedElement,

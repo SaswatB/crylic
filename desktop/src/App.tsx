@@ -57,8 +57,8 @@ function App() {
           filters: [{ name: "Project", extensions: [""] }],
         }).then((f) => {
           if (f)
-            FileProject.createNewProjectInDirectory(f).then(
-              projectService.setProject
+            FileProject.createNewProjectInDirectory(f).then((p) =>
+              projectService.setProject(p)
             );
         })
       }
@@ -71,7 +71,7 @@ function App() {
           setTimeout(
             () =>
               FileProject.createProjectFromDirectory(filePath)
-                .then(projectService.setProject)
+                .then((p) => projectService.setProject(p))
                 .finally(() => setLoading((l) => l - 1)),
             150
           );
@@ -189,7 +189,7 @@ function App() {
       <Backdrop open={loading > 0}>
         <CircularProgress disableShrink />
       </Backdrop>
-      <InstallDialog />
+      {project && <InstallDialog />}
       <Tour
         name="start"
         autoOpen
