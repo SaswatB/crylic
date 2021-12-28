@@ -1,29 +1,22 @@
 import { FunctionComponent, useEffect } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 
-import { useCompilerContextRecoil } from "../../hooks/recoil/useCompilerContextRecoil";
-import {
-  useReselectGuard,
-  useSelectRecoil,
-} from "../../hooks/recoil/useSelectRecoil";
 import { useBusSubscription } from "../../hooks/useBusSubscription";
+import { useService } from "../../hooks/useService";
 import {
   componentViewCompileEnd,
   componentViewReload,
   componentViewRouteChange,
 } from "../../lib/events";
 import { sleep } from "../../lib/utils";
+import { CompilerContextService } from "../../services/CompilerContextService";
 import { useProject } from "../../services/ProjectService";
+import { SelectService } from "../../services/SelectService";
 
 export const StateManager: FunctionComponent = () => {
   const project = useProject({ allowUndefined: true });
-  const {
-    setSelectMode,
-    selectedElement,
-    selectElement,
-    clearSelectedElement,
-  } = useSelectRecoil();
-  const { getViewContext } = useCompilerContextRecoil();
+  const selectService = useService(SelectService);
+  const compilerContextService = useService(CompilerContextService);
 
   /* Hotkeys */
 
@@ -33,7 +26,7 @@ export const StateManager: FunctionComponent = () => {
   useHotkeys("ctrl+shift+z", () => project?.redoCodeChange());
 
   // clear select mode on escape hotkey
-  useHotkeys("escape", () => setSelectMode(undefined));
+  useHotkeys("escape", () => selectService.setSelectMode(undefined));
 
   /* Project Management */
 
@@ -51,22 +44,21 @@ export const StateManager: FunctionComponent = () => {
 
   /* Select Management */
 
-  // try to handle selectedElement being removed from and readded to the DOM
-  useReselectGuard();
-
   // clear the selected element if the component view changes its route
   useBusSubscription(componentViewRouteChange, ({ renderEntry }) => {
-    if (selectedElement?.renderId === renderEntry.id) clearSelectedElement();
+    if (selectService.selectedElement$.getValue()?.renderId === renderEntry.id)
+      selectService.clearSelectedElement();
   });
 
   // refresh the selected element when the iframe reloads, if possible
   useBusSubscription(componentViewReload, async ({ renderEntry }) => {
+    const selectedElement = selectService.selectedElement$.getValue();
     if (selectedElement?.renderId !== renderEntry.id) return;
     let newSelectedComponent = undefined;
     for (let i = 0; i < 5 && !newSelectedComponent; i++) {
-      newSelectedComponent = getViewContext(
-        renderEntry.id
-      )?.getElementsByLookupId(selectedElement.lookupId)[0];
+      newSelectedComponent = compilerContextService
+        .getViewContext(renderEntry.id)
+        ?.getElementsByLookupId(selectedElement.lookupId)[0];
       if (!newSelectedComponent) await sleep(100);
     }
 
@@ -75,21 +67,20 @@ export const StateManager: FunctionComponent = () => {
         "setting selected element post-iframe reload",
         selectedElement.lookupId
       );
-      selectElement(renderEntry.id, selectedElement.lookupId);
+      selectService.selectElement(renderEntry.id, selectedElement.lookupId);
     } else {
       console.log(
         "unable to reselect selected element post-iframe reload",
         selectedElement.lookupId
       );
-      clearSelectedElement();
+      selectService.clearSelectedElement();
     }
   });
 
   // clear the selected element if the project was closed
   useEffect(() => {
-    if (!project) clearSelectedElement();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [!project]);
+    if (!project) selectService.clearSelectedElement();
+  }, [project, selectService]);
 
   return null;
 };

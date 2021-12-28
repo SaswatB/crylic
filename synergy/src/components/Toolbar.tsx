@@ -31,12 +31,14 @@ import {
 
 import { SelectMode, SelectModeType } from "../constants";
 import { usePackageInstallerRecoil } from "../hooks/recoil/usePackageInstallerRecoil";
-import { useSelectRecoil } from "../hooks/recoil/useSelectRecoil";
 import { useGlobalConfig } from "../hooks/useGlobalConfig";
 import { useSelectInput } from "../hooks/useInput";
+import { useObservable } from "../hooks/useObservable";
+import { useService } from "../hooks/useService";
 import { Project } from "../lib/project/Project";
 import { renderSeparator } from "../lib/render-utils";
 import { useProject } from "../services/ProjectService";
+import { SelectService } from "../services/SelectService";
 import { ComponentViewZoomAction, PackageInstaller } from "../types/paint";
 import { Tour } from "./Tour/Tour";
 
@@ -193,12 +195,9 @@ interface Props {
 export const Toolbar: FunctionComponent<Props> = ({ setZoomAction }) => {
   const project = useProject();
   const { installPackages } = usePackageInstallerRecoil();
-  const {
-    selectMode,
-    setSelectMode,
-    selectedElement,
-    clearSelectedElement,
-  } = useSelectRecoil();
+  const selectService = useService(SelectService);
+  const selectMode = useObservable(selectService.selectMode$);
+  const selectedElement = useObservable(selectService.selectedElement$);
   const adderPopupState = usePopupState({
     variant: "popover",
     popupId: "adderPopup",
@@ -208,7 +207,7 @@ export const Toolbar: FunctionComponent<Props> = ({ setZoomAction }) => {
     selectMode,
     (mode) => {
       adderPopupState.close();
-      setSelectMode(mode);
+      selectService.setSelectMode(mode);
     },
     installPackages
   );
@@ -236,8 +235,8 @@ export const Toolbar: FunctionComponent<Props> = ({ setZoomAction }) => {
           data-tour="interactive-mode"
           title="Interactive Mode"
           onClick={() => {
-            clearSelectedElement();
-            setSelectMode(undefined);
+            selectService.clearSelectedElement();
+            selectService.setSelectMode(undefined);
           }}
         >
           <FontAwesomeIcon icon={faMousePointer} />
@@ -264,7 +263,9 @@ export const Toolbar: FunctionComponent<Props> = ({ setZoomAction }) => {
           }`}
           data-tour="select-mode"
           title="Select Element"
-          onClick={() => setSelectMode({ type: SelectModeType.SelectElement })}
+          onClick={() =>
+            selectService.setSelectMode({ type: SelectModeType.SelectElement })
+          }
         >
           <FontAwesomeIcon
             icon={faLocationArrow}

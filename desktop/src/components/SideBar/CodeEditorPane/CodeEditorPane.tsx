@@ -1,13 +1,14 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
 import { combineLatest } from "rxjs";
-import { map } from "rxjs/operators";
+import { distinctUntilChanged, map } from "rxjs/operators";
 
-import { useSelectRecoil } from "synergy/src/hooks/recoil/useSelectRecoil";
 import { useBusSubscription } from "synergy/src/hooks/useBusSubscription";
 import { useMemoObservable } from "synergy/src/hooks/useObservable";
+import { useService } from "synergy/src/hooks/useService";
 import { editorOpenLocation } from "synergy/src/lib/events";
 import { isDefined } from "synergy/src/lib/utils";
 import { useProject } from "synergy/src/services/ProjectService";
+import { SelectService } from "synergy/src/services/SelectService";
 
 import { CodeEditor } from "./CodeEditor";
 import { CodeEditorTabs } from "./CodeEditorTabs";
@@ -15,7 +16,15 @@ import { ImageViewer } from "./ImageViewer";
 
 export const CodeEditorPane: FunctionComponent = () => {
   const project = useProject();
-  const { selectedElement } = useSelectRecoil();
+  const selectService = useService(SelectService);
+  const selectedElementLookupId = useMemoObservable(
+    () =>
+      selectService.selectedElement$.pipe(
+        map((e) => e?.lookupId),
+        distinctUntilChanged()
+      ),
+    [selectService]
+  );
   const [activeTab, setActiveTab] = useState(0);
 
   // get all the code entries being edited
@@ -34,9 +43,9 @@ export const CodeEditorPane: FunctionComponent = () => {
 
   // switch to the editor that the selected element belongs to when it's selected
   useEffect(() => {
-    if (selectedElement?.lookupId) {
+    if (selectedElementLookupId) {
       const codeId = project?.primaryElementEditor.getCodeIdFromLookupId(
-        selectedElement?.lookupId
+        selectedElementLookupId
       );
       const codeIndex =
         editableEntries?.findIndex((entry) => entry.id === codeId) ?? -1;
@@ -45,7 +54,7 @@ export const CodeEditorPane: FunctionComponent = () => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedElement?.lookupId]);
+  }, [selectedElementLookupId]);
 
   // listen for editor open requests
   useBusSubscription(editorOpenLocation, ({ codeEntry }) => {
@@ -72,7 +81,7 @@ export const CodeEditorPane: FunctionComponent = () => {
               project={project!}
               codeEntry={codeEntry}
               onCodeChange={(id, code) => codeEntry.updateCode(code)}
-              selectedElementId={selectedElement?.lookupId}
+              selectedElementId={selectedElementLookupId}
               onSelectElement={(lookupId) => {
                 // todo reenable
                 // const newSelectedComponent = Object.values(componentViews.current)

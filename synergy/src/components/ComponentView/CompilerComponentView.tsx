@@ -9,12 +9,13 @@ import { Observable, ReplaySubject } from "rxjs";
 import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 import { useBus } from "ts-bus/react";
 
-import { useCompilerContextRecoil } from "../../hooks/recoil/useCompilerContextRecoil";
 import { useMemoObservable } from "../../hooks/useObservable";
 import { useRerender } from "../../hooks/useRerender";
+import { useService } from "../../hooks/useService";
 import { componentViewCompileEnd, componentViewReload } from "../../lib/events";
 import { RouteDefinition } from "../../lib/react-router-proxy";
 import { arrayMap, isDefined } from "../../lib/utils";
+import { CompilerContextService } from "../../services/CompilerContextService";
 import { useProject } from "../../services/ProjectService";
 import {
   RenderEntry,
@@ -55,7 +56,7 @@ export const CompilerComponentView: FunctionComponent<
   const bus = useBus();
   const rerender = useRerender();
   const project = useProject();
-  const { setViewContext, runCompileTasks } = useCompilerContextRecoil();
+  const compilerContextService = useService(CompilerContextService);
   const frame = useRef<{
     frameElement: HTMLIFrameElement;
   }>(null);
@@ -232,11 +233,11 @@ export const CompilerComponentView: FunctionComponent<
               },
             };
             // save the new context
-            setViewContext(renderEntry.id, viewContext);
+            compilerContextService.setViewContext(renderEntry.id, viewContext);
 
             // fire all related events
             onCompileEnd?.(renderEntry, viewContext);
-            runCompileTasks(renderEntry.id, viewContext);
+            compilerContextService.runCompileTasks(renderEntry.id, viewContext);
             bus.publish(
               componentViewCompileEnd({
                 renderEntry,

@@ -14,9 +14,9 @@ import { useSnackbar } from "notistack";
 import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 
 import { getBoilerPlateComponent, SelectModeType } from "../../constants";
-import { useSelectRecoil } from "../../hooks/recoil/useSelectRecoil";
 import { useMenuInput } from "../../hooks/useInput";
 import { useMemoObservable } from "../../hooks/useObservable";
+import { useService } from "../../hooks/useService";
 import {
   CodeEntry,
   IMAGE_EXTENSION_REGEX,
@@ -26,6 +26,7 @@ import {
 import { renderSeparator } from "../../lib/render-utils";
 import { arrayMap, takeNext } from "../../lib/utils";
 import { useProject } from "../../services/ProjectService";
+import { SelectService } from "../../services/SelectService";
 import { IconButton } from "../IconButton";
 import { InputModal } from "../InputModal";
 import { Tour } from "../Tour/Tour";
@@ -46,7 +47,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
   onImportImageFile,
 }) => {
   const project = useProject();
-  const { setSelectMode } = useSelectRecoil();
+  const selectService = useService(SelectService);
   const { enqueueSnackbar } = useSnackbar();
   const [expandedTreeNodes, setExpandedTreeNodes] = useState<string[]>();
 
@@ -262,7 +263,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
    * Handle adding a custom component to a frame
    */
   const onAddToComponent = async (name: string, codeEntry: CodeEntry) =>
-    setSelectMode({
+    selectService.setSelectMode({
       type: SelectModeType.AddElement,
       component: {
         name,

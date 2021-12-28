@@ -1,20 +1,25 @@
 import {
+  ComponentDefinition,
+  SelectedElement,
+  ViewContext,
+} from "../../types/paint";
+import { Project } from "../project/Project";
+import { sleep, takeNext } from "../utils";
+import {
   EditContext,
   ElementASTEditor,
   StyleASTEditor,
   StyleGroup,
-} from "../../../lib/ast/editors/ASTEditor";
-import { ASTType } from "../../../lib/ast/types";
-import { Project } from "../../../lib/project/Project";
-import { sleep, takeNext } from "../../../lib/utils";
-import { ComponentDefinition, SelectedElement } from "../../../types/paint";
-import { AddCompileTask } from "../useCompilerContextRecoil";
-import { SelectElement } from "../useSelectRecoil";
+} from "./editors/ASTEditor";
+import { ASTType } from "./types";
 
 interface SelectContext {
   renderId: string;
-  addCompileTask: AddCompileTask;
-  selectElement: SelectElement;
+  addCompileTask: (
+    renderId: string,
+    task: (viewContext: ViewContext) => void
+  ) => void;
+  selectElement: (renderId: string, lookupId: string) => void;
 }
 
 export const addElementHelper = async (

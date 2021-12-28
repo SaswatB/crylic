@@ -23,16 +23,17 @@ import {
   DEFAULT_FRAME_WIDTH,
   SelectModeType,
 } from "../../constants";
-import { useCompilerContextRecoil } from "../../hooks/recoil/useCompilerContextRecoil";
-import { addElementHelper } from "../../hooks/recoil/useProjectRecoil/code-edit-helpers";
-import { useSelectRecoil } from "../../hooks/recoil/useSelectRecoil";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useMenuInput } from "../../hooks/useInput";
 import { useObservable } from "../../hooks/useObservable";
+import { useService } from "../../hooks/useService";
+import { addElementHelper } from "../../lib/ast/code-edit-helpers";
 import { routeComponent } from "../../lib/defs/react-router-dom";
 import { componentViewRouteChange } from "../../lib/events";
 import { isDefined } from "../../lib/utils";
+import { CompilerContextService } from "../../services/CompilerContextService";
 import { useProject } from "../../services/ProjectService";
+import { SelectService } from "../../services/SelectService";
 import { Styles, ViewContext } from "../../types/paint";
 import { IconButton } from "../IconButton";
 import { InputModal } from "../InputModal";
@@ -63,14 +64,10 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   const [loading, setLoading] = useState(false);
   const [debouncedLoading, skipLoadingDebounce] = useDebounce(loading, 700);
   const project = useProject();
-  const {
-    selectMode,
-    setSelectMode,
-    selectedElement,
-    selectElement,
-    updateSelectedStyleGroup,
-  } = useSelectRecoil();
-  const { addCompileTask } = useCompilerContextRecoil();
+  const selectService = useService(SelectService);
+  const selectMode = useObservable(selectService.selectMode$);
+  const selectedElement = useObservable(selectService.selectedElement$);
+  const compilerContextService = useService(CompilerContextService);
   const { enqueueSnackbar } = useSnackbar();
   const { renderEntry } = compilerProps;
   const [viewContext, setViewContext] = useState<ViewContext>();
@@ -98,14 +95,16 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           componentElement
         );
         console.log("setting selected from manual selection", lookupId);
-        if (lookupId) selectElement(renderId, lookupId);
+        if (lookupId) selectService.selectElement(renderId, lookupId);
         break;
       case SelectModeType.AddElement:
         try {
           addElementHelper(project!, componentElement, selectMode, {
             renderId,
-            addCompileTask,
-            selectElement,
+            addCompileTask: compilerContextService.addCompileTask.bind(
+              compilerContextService
+            ),
+            selectElement: selectService.selectElement.bind(selectService),
           });
         } catch (e) {
           enqueueSnackbar((e as Error)?.message || `${e}`);
@@ -113,7 +112,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
         break;
     }
 
-    setSelectMode(undefined);
+    selectService.setSelectMode(undefined);
   };
 
   const [renderOverlay] = useOverlay(
@@ -196,7 +195,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
         }
         styles["height"] = effectiveHeight;
       }
-      updateSelectedStyleGroup(styles, preview);
+      selectService.updateSelectedStyleGroup(styles, preview);
     }
   );
 

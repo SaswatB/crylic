@@ -8,8 +8,10 @@ import { motion } from "framer-motion";
 import produce from "immer";
 import { capitalize } from "lodash";
 
-import { useSelectRecoil } from "../../hooks/recoil/useSelectRecoil";
 import { useSelectInput } from "../../hooks/useInput";
+import { useObservableCallback } from "../../hooks/useObservableCallback";
+import { useService } from "../../hooks/useService";
+import { SelectService } from "../../services/SelectService";
 import { IconButton } from "../IconButton";
 import { createModal } from "../PromiseModal";
 import { AnimationPropertyEditor } from "./AnimationPropertyEditor";
@@ -24,22 +26,19 @@ import {
 } from "./utils";
 
 export const AnimationEditorModal = createModal<{}, void>(({ resolve }) => {
-  const { selectedElement, updateSelectedElement } = useSelectRecoil();
+  const selectService = useService(SelectService);
 
   const [animationProperties, setAnimationProperties] = useState<
     AnimationPropertyMap
   >({});
-  useEffect(() => {
+  useObservableCallback(selectService.selectedElement$, (selectedElement) => {
     // convert the selected element's props to a map of animation properties per animation type
-    setAnimationProperties(
-      propsToAnimationPropertyMap(
-        selectedElement?.sourceMetadata?.directProps || {}
-      )
-    );
-  }, [selectedElement]);
+    const props = selectedElement?.sourceMetadata?.directProps || {};
+    setAnimationProperties(propsToAnimationPropertyMap(props));
+  });
   const onSave = () => {
     // save the animation properties in the selected element's attributes
-    updateSelectedElement((editor, editContext) =>
+    selectService.updateSelectedElement((editor, editContext) =>
       editor.updateElementAttributes(
         editContext,
         animationPropertyMapToProps(animationProperties)

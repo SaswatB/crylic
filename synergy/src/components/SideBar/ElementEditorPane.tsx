@@ -17,8 +17,6 @@ import path from "path";
 import { useBus } from "ts-bus/react";
 
 import { usePackageInstallerRecoil } from "../../hooks/recoil/usePackageInstallerRecoil";
-import { updateStyleGroupHelper } from "../../hooks/recoil/useProjectRecoil/code-edit-helpers";
-import { useSelectRecoil } from "../../hooks/recoil/useSelectRecoil";
 import { useDebouncedFunction } from "../../hooks/useDebouncedFunction";
 import {
   useAutocomplete,
@@ -30,6 +28,8 @@ import {
   useTextInput,
 } from "../../hooks/useInput";
 import { useObservable } from "../../hooks/useObservable";
+import { useService } from "../../hooks/useService";
+import { updateStyleGroupHelper } from "../../lib/ast/code-edit-helpers";
 import { StyleGroup } from "../../lib/ast/editors/ASTEditor";
 import { linkComponent } from "../../lib/defs/react-router-dom";
 import { editorOpenLocation } from "../../lib/events";
@@ -37,6 +37,7 @@ import { CodeEntry } from "../../lib/project/CodeEntry";
 import { renderSeparator } from "../../lib/render-utils";
 import { takeNext } from "../../lib/utils";
 import { useProject } from "../../services/ProjectService";
+import { SelectService } from "../../services/SelectService";
 import { StyleKeys } from "../../types/paint";
 import { AnimationEditorModal } from "../Animation/AnimationEditorModal";
 import { Collapsible } from "../Collapsible";
@@ -90,7 +91,9 @@ const useBoundCSSLengthInput: useInputFunction = (config) =>
 
 const useSelectedElementImageEditor = (imageProp: "backgroundImage") => {
   const project = useProject();
-  const { selectedElement, selectedStyleGroup } = useSelectRecoil();
+  const selectService = useService(SelectService);
+  const selectedElement = useObservable(selectService.selectedElement$);
+  const selectedStyleGroup = useObservable(selectService.selectedStyleGroup$);
 
   const onChange = (assetEntry: CodeEntry) => {
     if (!selectedStyleGroup) return;
@@ -128,10 +131,7 @@ const useSelectedElementImageEditor = (imageProp: "backgroundImage") => {
 
   return [
     selectedElementValue,
-    (props?: {
-      className?: string | undefined;
-      style?: React.CSSProperties | undefined;
-    }) => (
+    (props?: { className?: string; style?: React.CSSProperties }) => (
       <>
         {renderValueInput({ ...props, onClick: openMenu })}
         {renderMenu()}
@@ -157,13 +157,9 @@ export const ElementEditorPane: FunctionComponent = () => {
   const bus = useBus();
   const project = useProject();
   const { installPackages } = usePackageInstallerRecoil();
-  const {
-    selectedElement,
-    updateSelectedElement,
-    selectedStyleGroup,
-    updateSelectedStyleGroup,
-    setSelectedStyleGroup,
-  } = useSelectRecoil();
+  const selectService = useService(SelectService);
+  const selectedElement = useObservable(selectService.selectedElement$);
+  const selectedStyleGroup = useObservable(selectService.selectedStyleGroup$);
 
   const openInEditor = ({ editor, lookupId }: StyleGroup) => {
     const codeId = editor.getCodeIdFromLookupId(lookupId);
@@ -205,7 +201,7 @@ export const ElementEditorPane: FunctionComponent = () => {
 
   // debounce text entry
   const updateSelectedElementDebounced = useDebouncedFunction(
-    updateSelectedElement,
+    selectService.updateSelectedElement.bind(selectService),
     1000
   );
 
@@ -222,7 +218,7 @@ export const ElementEditorPane: FunctionComponent = () => {
 
   const [, renderIDInput] = useBoundTextInput({
     onChange: (newID) =>
-      updateSelectedElement((editor, editContext) =>
+      selectService.updateSelectedElement((editor, editContext) =>
         editor.updateElementAttributes(editContext, { id: newID })
       ),
     label: "Identifier",
@@ -245,7 +241,7 @@ export const ElementEditorPane: FunctionComponent = () => {
       const shouldBeRouterLink =
         !!routeDefinition &&
         (newHref?.startsWith("/") || newHref?.startsWith("."));
-      updateSelectedElement((editor, editContext) => {
+      selectService.updateSelectedElement((editor, editContext) => {
         let ast = editContext.ast;
         // rename the link component if it's better used as a router link
         // todo add option to disable this
@@ -286,7 +282,7 @@ export const ElementEditorPane: FunctionComponent = () => {
     // @ts-expect-error todo fix type error caused by generics
     options: styleGroupOptions,
     // @ts-expect-error todo fix type error caused by generics
-    onChange: setSelectedStyleGroup,
+    onChange: selectService.setSelectedStyleGroup.bind(selectService),
     // @ts-expect-error todo fix type error caused by generics
     initialValue: selectedStyleGroup,
   });
@@ -298,7 +294,10 @@ export const ElementEditorPane: FunctionComponent = () => {
     const useEditorHook = rest[0] || useBoundCSSLengthInput;
     const editorHookConfig = rest[1] || {};
     const onChange = (newValue: string, preview?: boolean) =>
-      updateSelectedStyleGroup({ [styleProp]: newValue }, preview);
+      selectService.updateSelectedStyleGroup(
+        { [styleProp]: newValue },
+        preview
+      );
     const label =
       StylePropNameMap[styleProp] || startCase(`${styleProp || ""}`);
     const initialValue =
@@ -326,7 +325,7 @@ export const ElementEditorPane: FunctionComponent = () => {
         onClick={() => {
           setShowBreakdown(true);
           // todo only update styles if prop is defined for this style group
-          updateSelectedStyleGroup({
+          selectService.updateSelectedStyleGroup({
             [prop]: null,
             [`${prop}Top`]: selectedElement!.computedStyles[prop],
             [`${prop}Bottom`]: selectedElement!.computedStyles[prop],
@@ -344,7 +343,7 @@ export const ElementEditorPane: FunctionComponent = () => {
         onClick={() => {
           setShowBreakdown(false);
           // todo only update styles if prop is defined for this style group
-          updateSelectedStyleGroup({
+          selectService.updateSelectedStyleGroup({
             // todo do an average or pick min/max
             [prop]: selectedElement!.computedStyles[`${prop}Top`],
             [`${prop}Top`]: null,
@@ -565,7 +564,7 @@ export const ElementEditorPane: FunctionComponent = () => {
       // todo support more elements for animation conversion
       if (["div", "a", "button", "span"].includes(componentName || "")) {
         const enableAnimation = () =>
-          updateSelectedElement((editor, editContext) =>
+          selectService.updateSelectedElement((editor, editContext) =>
             editor.updateElementComponent(editContext, {
               component: {
                 import: {
