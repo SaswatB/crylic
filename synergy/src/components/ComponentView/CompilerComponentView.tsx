@@ -103,9 +103,9 @@ export const CompilerComponentView: FunctionComponent<
 
   const debouncedCodeEntries = useMemoObservable(
     () =>
-      project?.codeEntries$.pipe(
+      project?.codeEntries$.toRXJS().pipe(
         arrayMap(
-          (e) => e.code$.pipe(map((c) => ({ c, e }))),
+          (e) => e.code$.toRXJS().pipe(map((c) => ({ c, e }))),
           (v) => v.e.id
         ),
         debounceTime(150)

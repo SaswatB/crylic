@@ -11,7 +11,7 @@ import { JSXActionProvider } from "synergy/src/lib/ast/providers/JSXActionProvid
 import { editorOpenLocation, editorResize } from "synergy/src/lib/events";
 import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
 import { Project } from "synergy/src/lib/project/Project";
-import { isDefined, takeNext } from "synergy/src/lib/utils";
+import { isDefined, ltTakeNext, takeNext } from "synergy/src/lib/utils";
 
 import { setupLanguageService } from "../../../utils/moncao-helpers";
 
@@ -67,7 +67,7 @@ export const CodeEditor: FunctionComponent<Props> = ({
         ) {
           try {
             decorations = project.primaryElementEditor.getEditorDecorationsForElement(
-              { ast: (await takeNext(codeEntry.ast$))!, codeEntry },
+              { ast: (await ltTakeNext(codeEntry.ast$))!, codeEntry },
               selectedElementId
             );
           } catch (err) {
@@ -150,7 +150,7 @@ export const CodeEditor: FunctionComponent<Props> = ({
       let lookupId;
       try {
         lookupId = project.primaryElementEditor.getElementLookupIdAtCodePosition(
-          { ast: (await takeNext(codeEntry.ast$))!, codeEntry },
+          { ast: (await ltTakeNext(codeEntry.ast$))!, codeEntry },
           e.position.lineNumber,
           e.position.column
         );

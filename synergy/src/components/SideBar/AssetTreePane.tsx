@@ -11,7 +11,12 @@ import TreeItem from "@material-ui/lab/TreeItem";
 import TreeView from "@material-ui/lab/TreeView";
 import { camelCase, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
-import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
+import {
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  mergeMap,
+} from "rxjs/operators";
 
 import { getBoilerPlateComponent, SelectModeType } from "../../constants";
 import { useMenuInput } from "../../hooks/useInput";
@@ -22,9 +27,14 @@ import {
   SCRIPT_EXTENSION_REGEX,
   STYLE_EXTENSION_REGEX,
 } from "../../lib/ext-regex";
+import {
+  ltDebounce,
+  ltEagerFlatten,
+  ltMap,
+} from "../../lib/lightObservable/LTOperator";
 import { CodeEntry } from "../../lib/project/CodeEntry";
 import { renderSeparator } from "../../lib/render-utils";
-import { arrayMap, takeNext } from "../../lib/utils";
+import { arrayMap, ltTakeNext, takeNext } from "../../lib/utils";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
 import { IconButton } from "../IconButton";
@@ -137,17 +147,18 @@ export const AssetTreePane: FunctionComponent<Props> = ({
 
   const { projectTree, treeNodeIds } =
     useMemoObservable(() => {
-      let codeEntriesWithRenderable$ = project?.codeEntries$.pipe(
-        // lm_9dfd4feb9b since arrayMap is used here, deleting code entries is not supported
-        arrayMap(
-          (entry) =>
-            entry.isRenderable$.pipe(
-              map((isRenderable) => ({ entry, isRenderable }))
-            ),
-          (v) => v.entry.id
-        ),
-        debounceTime(100)
-      )!;
+      let codeEntriesWithRenderable$ = project?.codeEntries$
+        .pipe(
+          ltMap((codeEntries) =>
+            codeEntries.map((codeEntry) =>
+              codeEntry.isRenderable$.pipe(
+                ltMap((isRenderable) => ({ codeEntry, isRenderable }))
+              )
+            )
+          )
+        )
+        .pipe(ltEagerFlatten())
+        .pipe(ltDebounce(100))!;
 
       // todo add an option to keep showing extensions
       let extensionRegex: RegExp | undefined;
@@ -157,7 +168,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
       switch (assetsFilter) {
         case "components":
           codeEntriesWithRenderable$ = codeEntriesWithRenderable$.pipe(
-            map((entries) => entries.filter(({ isRenderable }) => isRenderable))
+            ltMap((entries) => entries.filter((v) => v?.isRenderable))
           );
           extensionRegex = SCRIPT_EXTENSION_REGEX;
           projectTreePostProcess = (newProjectTree) => {
@@ -182,13 +193,13 @@ export const AssetTreePane: FunctionComponent<Props> = ({
           break;
         case "styles":
           codeEntriesWithRenderable$ = codeEntriesWithRenderable$.pipe(
-            map((entries) => entries.filter(({ entry }) => entry.isStyleEntry))
+            ltMap((entries) => entries.filter((v) => v?.codeEntry.isStyleEntry))
           );
           extensionRegex = STYLE_EXTENSION_REGEX;
           break;
         case "images":
           codeEntriesWithRenderable$ = codeEntriesWithRenderable$.pipe(
-            map((entries) => entries.filter(({ entry }) => entry.isImageEntry))
+            ltMap((entries) => entries.filter((v) => v?.codeEntry.isImageEntry))
           );
           // todo show extensions if there are duplicate names for different extensions
           extensionRegex = IMAGE_EXTENSION_REGEX;
@@ -200,58 +211,60 @@ export const AssetTreePane: FunctionComponent<Props> = ({
       }
 
       return codeEntriesWithRenderable$.pipe(
-        map((codeEntriesWithRenderable) => {
+        ltMap((codeEntriesWithRenderable) => {
           const newTreeNodeIds = new Set<string>("root");
           const newProjectTree: Tree = { id: "root", name: "", children: [] };
           const projectPath = project?.sourceFolderPath.replace(/\\/g, "/");
-          codeEntriesWithRenderable.forEach(
-            ({ entry: codeEntry, isRenderable }) => {
-              const path = codeEntry.filePath
-                .replace(/\\/g, "/")
-                .replace(projectPath || "", "")
-                .replace(/^\//, "")
-                .replace(extensionRegex || "", "")
-                .split("/");
+          codeEntriesWithRenderable.forEach((v) => {
+            if (!v) return;
 
-              let node = newProjectTree;
-              let error = false;
-              path.forEach((pathPart, index) => {
-                if (error) return;
+            const { codeEntry, isRenderable } = v;
 
-                const id = path.slice(0, index + 1).join("/");
-                let child = node.children.find(
-                  (childNode) => childNode.id === id
-                );
-                if (!child) {
-                  child = {
+            const path = codeEntry.filePath
+              .replace(/\\/g, "/")
+              .replace(projectPath || "", "")
+              .replace(/^\//, "")
+              .replace(extensionRegex || "", "")
+              .split("/");
+
+            let node = newProjectTree;
+            let error = false;
+            path.forEach((pathPart, index) => {
+              if (error) return;
+
+              const id = path.slice(0, index + 1).join("/");
+              let child = node.children.find(
+                (childNode) => childNode.id === id
+              );
+              if (!child) {
+                child = {
+                  id,
+                  name: pathPart,
+                  children: [],
+                };
+
+                // it's very important not to render duplicate node ids https://github.com/mui-org/material-ui/issues/20832
+                if (newTreeNodeIds.has(id)) {
+                  console.trace(
+                    "duplicate node id",
                     id,
-                    name: pathPart,
-                    children: [],
-                  };
-
-                  // it's very important not to render duplicate node ids https://github.com/mui-org/material-ui/issues/20832
-                  if (newTreeNodeIds.has(id)) {
-                    console.trace(
-                      "duplicate node id",
-                      id,
-                      newTreeNodeIds,
-                      codeEntriesWithRenderable?.map(
-                        ({ entry }) => entry.filePath
-                      )
-                    );
-                    error = true;
-                    return;
-                  }
-
-                  node.children.push(child);
-                  newTreeNodeIds.add(id);
+                    newTreeNodeIds,
+                    codeEntriesWithRenderable?.map(
+                      (sv) => sv?.codeEntry.filePath
+                    )
+                  );
+                  error = true;
+                  return;
                 }
-                node = child;
-              });
-              node.codeEntry = codeEntry;
-              node.isCodeEntryRenderable = isRenderable;
-            }
-          );
+
+                node.children.push(child);
+                newTreeNodeIds.add(id);
+              }
+              node = child;
+            });
+            node.codeEntry = codeEntry;
+            node.isCodeEntryRenderable = isRenderable;
+          });
           projectTreePostProcess?.(newProjectTree);
 
           return { projectTree: newProjectTree, treeNodeIds: newTreeNodeIds };
@@ -269,9 +282,9 @@ export const AssetTreePane: FunctionComponent<Props> = ({
         name,
         import: {
           // todo throw an error if exportName isn't set
-          name: await takeNext(codeEntry.exportName$),
+          name: await ltTakeNext(codeEntry.exportName$),
           path: codeEntry.filePath,
-          isDefault: await takeNext(codeEntry.exportIsDefault$),
+          isDefault: await ltTakeNext(codeEntry.exportIsDefault$),
         },
       },
     });

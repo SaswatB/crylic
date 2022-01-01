@@ -1,10 +1,17 @@
 import { useEffect } from "react";
-import { Observable } from "rxjs";
 
 import { useUpdatingRef } from "./useUpdatingRef";
 
+export interface BaseObservable<T> {
+  subscribe(
+    callback: (newValue: T) => void
+  ): {
+    unsubscribe(): void;
+  };
+}
+
 export function useObservableCallback<T>(
-  observable: Observable<T> | undefined,
+  observable: BaseObservable<T> | undefined,
   onChange: (value: T | undefined) => void
 ) {
   const onChangeRef = useUpdatingRef(onChange);

@@ -128,7 +128,7 @@ export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
       const styleCodeEntry = project.codeEntries$
         .getValue()
         .find((e) => e.isStyleEntry)!;
-      const styleAst = parseStyleSheetAST(styleCodeEntry);
+      const styleAst = parseStyleSheetAST(styleCodeEntry.getRemoteCodeEntry());
       (styleAst.content as CSSASTNode[]).push(
         cb.ruleset([
           cb.selector([cb.class([cb.ident(styleClassName)])]),
@@ -146,13 +146,17 @@ export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
       return [
         {
           id: action.codeId,
-          code: prettyPrintCodeEntryAST(project.config, codeEntry, ast),
+          code: prettyPrintCodeEntryAST(
+            project.config,
+            codeEntry.getRemoteCodeEntry(),
+            ast
+          ),
         },
         {
           id: styleCodeEntry.id,
           code: prettyPrintCodeEntryAST(
             project.config,
-            styleCodeEntry,
+            styleCodeEntry.getRemoteCodeEntry(),
             styleAst
           ),
         },

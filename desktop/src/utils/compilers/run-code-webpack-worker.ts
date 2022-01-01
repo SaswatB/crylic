@@ -4,7 +4,7 @@ import ReactDOMServer from "react-dom/server";
 import { ErrorBoundary } from "synergy/src/components/ErrorBoundary";
 import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
 import { getReactRouterProxy } from "synergy/src/lib/react-router-proxy";
-import { takeNext } from "synergy/src/lib/utils";
+import { ltTakeNext, takeNext } from "synergy/src/lib/utils";
 import { RenderEntryDeployerContext } from "synergy/src/types/paint";
 
 import {
@@ -92,8 +92,8 @@ export const webpackRunCodeWithWorker = async ({
     local: string,
     codeEntry: CodeEntry
   ) => {
-    const exportIsDefault = await takeNext(codeEntry.exportIsDefault$);
-    const exportName = await takeNext(codeEntry.exportName$);
+    const exportIsDefault = await ltTakeNext(codeEntry.exportIsDefault$);
+    const exportName = await ltTakeNext(codeEntry.exportName$);
 
     let declaration;
     if (exportIsDefault || !exportName) {
@@ -150,7 +150,7 @@ ReactDOM.render((
         id: codeEntry.id,
         filePath: codeEntry.filePath,
         code:
-          (await takeNext(codeEntry.codeWithLookupData$)) ||
+          (await ltTakeNext(codeEntry.codeWithLookupData$)) ||
           codeEntry.code$.getValue(),
         codeRevisionId: codeEntry.codeRevisionId,
       }))

@@ -1,25 +1,23 @@
-import { namedTypes as t } from "ast-types";
-import clone from "clone";
-import deepFreeze from "deep-freeze-strict";
-import { camelCase, startCase, upperFirst } from "lodash";
+import { startCase } from "lodash";
 import path from "path";
-import { BehaviorSubject } from "rxjs";
-import { map, shareReplay } from "rxjs/operators";
+import { map, mergeMap, shareReplay } from "rxjs/operators";
 
 import { memoize } from "../../vendor/ts-memoize";
 import {
-  getComponentExport,
   hashString,
-  parseCodeEntryAST,
   prettyPrintCodeEntryAST,
   printCodeEntryAST,
 } from "../ast/ast-helpers";
+import { queueAstPoolAction } from "../ast/ast-pool";
+import type { AstWorkerModule } from "../ast/ast-worker";
 import { ASTType } from "../ast/types";
 import {
   IMAGE_EXTENSION_REGEX,
   SCRIPT_EXTENSION_REGEX,
   STYLE_EXTENSION_REGEX,
 } from "../ext-regex";
+import { LTBehaviorSubject } from "../lightObservable/LTBehaviorSubject";
+import { ltMap } from "../lightObservable/LTOperator";
 import { Project } from "./Project";
 
 /**
@@ -27,13 +25,21 @@ import { Project } from "./Project";
  */
 export interface RemoteCodeEntry {
   code: string | undefined;
-  isStyleEntry: CodeEntry["isStyleEntry"];
+  filePath: string;
+  isBootstrap: boolean;
+  isRenderableScriptExtension: boolean;
+  isStyleEntry: boolean;
   styleEntryExtension: CodeEntry["styleEntryExtension"];
+
+  config: {
+    forceUseComponentDefaultExports: boolean;
+    disableComponentExportsGuard: boolean;
+  };
 }
 
 export class CodeEntry {
   public readonly id = hashString(this.filePath);
-  public readonly code$ = new BehaviorSubject(this._code);
+  public readonly code$ = new LTBehaviorSubject(this._code);
 
   public constructor(
     private readonly project: Project,
@@ -172,97 +178,87 @@ export class CodeEntry {
   public getRemoteCodeEntry(): RemoteCodeEntry {
     return {
       code: this.code$.getValue(),
+      filePath: this.filePath,
+      isBootstrap: this.isBootstrap(),
+      isRenderableScriptExtension: this.isRenderableScriptExtension(),
       isStyleEntry: this.isStyleEntry,
       styleEntryExtension: this.styleEntryExtension,
+
+      config: {
+        forceUseComponentDefaultExports:
+          this.project.config.configFile?.analyzer
+            ?.forceUseComponentDefaultExports ?? false,
+        disableComponentExportsGuard:
+          this.project.config.configFile?.analyzer
+            ?.disableComponentExportsGuard ?? false,
+      },
     };
   }
 
   // #region metadata
 
   private metadata$ = this.code$.pipe(
-    map(() => {
-      if (!this.isScriptEntry && !this.isStyleEntry) {
-        return { isRenderable: false };
-      }
-
-      try {
-        // parse ast data
-        let ast = parseCodeEntryAST(this.getRemoteCodeEntry());
-
-        // check if the file is a component
-        let isRenderable = false;
-        let exportName = undefined;
-        let exportIsDefault = undefined;
-        if (this.isRenderableScriptExtension() || this.isBootstrap()) {
-          const componentExport = getComponentExport(ast as t.File);
-          const baseComponentName = upperFirst(
-            camelCase(
-              path.basename(this.filePath).replace(SCRIPT_EXTENSION_REGEX, "")
-            )
-          );
-          if (componentExport) {
-            isRenderable = !this.isBootstrap();
-            exportName = componentExport.name || baseComponentName;
-            exportIsDefault =
-              this.project.config.configFile?.analyzer
-                ?.forceUseComponentDefaultExports || componentExport.isDefault;
-          } else if (
-            this.project.config.configFile?.analyzer
-              ?.disableComponentExportsGuard
-          ) {
-            // since static analysis failed but we still need allow this file as a component guess that it's a default export
-            isRenderable = !this.isBootstrap();
-            exportName = baseComponentName;
-            exportIsDefault = true;
-          }
+    ltMap(
+      async (): Promise<
+        Partial<Awaited<ReturnType<AstWorkerModule["computeMetadata"]>>>
+      > => {
+        if (!this.isScriptEntry && !this.isStyleEntry) {
+          return { isRenderable: false };
         }
 
-        // return the modified ast and code
-        console.log("compute metadata", this.filePath);
-        return {
-          rawAst: ast, // this might get modified if ast$ is run
-          isRenderable,
-          // this code entry has to be a script or style entry by this point so it's editable
-          exportName,
-          exportIsDefault,
-        };
-      } catch (e) {
-        console.trace("compute metadata failed", e);
-        return { isRenderable: false };
+        try {
+          // return the modified ast and code
+          console.log("compute metadata", this.filePath);
+
+          // await new Promise((resolve) => requestAnimationFrame(resolve));
+
+          return await queueAstPoolAction(
+            "computeMetadata",
+            this.getRemoteCodeEntry()
+          );
+        } catch (e) {
+          console.trace("compute metadata failed", e);
+          return { isRenderable: false };
+        }
       }
-    }),
-    shareReplay(1)
+    )
   );
 
   public readonly isRenderable$ = this.metadata$.pipe(
-    map((m) => m.isRenderable)
+    ltMap((metadata) => !!metadata.isRenderable)
   );
-  public readonly exportName$ = this.metadata$.pipe(map((m) => m.exportName));
+  public readonly exportName$ = this.metadata$.pipe(ltMap((m) => m.exportName));
   public readonly exportIsDefault$ = this.metadata$.pipe(
-    map((m) => m.exportIsDefault)
+    ltMap((m) => m.exportIsDefault)
   );
   public readonly ast$ = this.metadata$.pipe(
-    map((m) => {
+    ltMap((m): any => {
       if (!m.rawAst) return undefined;
 
       let ast = m.rawAst;
+      console.time("compute ast " + this.filePath);
 
       // add lookup data from each editor to the ast
       this.project.getEditorsForCodeEntry(this).forEach((editor) => {
         const lookupData = editor.addLookupData({ ast, codeEntry: this });
         ast = lookupData.ast;
+        console.timeLog(
+          "compute ast " + this.filePath,
+          editor.constructor.name
+        );
       });
 
-      console.log("compute ast", this.filePath);
-      return deepFreeze(clone(ast, undefined, undefined, undefined, true));
-    }),
-    shareReplay(1)
+      const res = ast; // deepFreeze(clone(ast, undefined, undefined, undefined, true));
+
+      console.timeEnd("compute ast " + this.filePath);
+
+      return res;
+    })
   );
   public readonly codeWithLookupData$ = this.ast$.pipe(
-    map((ast) =>
+    ltMap((ast) =>
       ast ? printCodeEntryAST(this.getRemoteCodeEntry(), ast) : undefined
-    ),
-    shareReplay(1)
+    )
   );
 
   // #endregion

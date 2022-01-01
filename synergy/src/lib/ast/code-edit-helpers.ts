@@ -4,7 +4,7 @@ import {
   ViewContext,
 } from "../../types/paint";
 import { Project } from "../project/Project";
-import { sleep, takeNext } from "../utils";
+import { ltTakeNext, sleep } from "../utils";
 import {
   EditContext,
   ElementASTEditor,
@@ -56,7 +56,7 @@ export const addElementHelper = async (
   }
 
   let newAst = project.primaryElementEditor.addChildToElement(
-    { ast: await takeNext(codeEntry.ast$), codeEntry, lookupId },
+    { ast: await ltTakeNext(codeEntry.ast$), codeEntry, lookupId },
     component
   );
   const [newChildLookupId] =
@@ -109,7 +109,7 @@ export const updateElementHelper = async <T extends ASTType>(
 
   // update ast
   const newAst = apply(editor, {
-    ast: (await takeNext(codeEntry.ast$)) as T,
+    ast: (await ltTakeNext(codeEntry.ast$)) as T,
     codeEntry,
     lookupId,
   });
@@ -138,7 +138,7 @@ export const updateStyleGroupHelper = async <T extends ASTType>(
 
   // update ast
   const newAst = apply(editor, {
-    ast: (await takeNext(codeEntry.ast$)) as T,
+    ast: (await ltTakeNext(codeEntry.ast$)) as T,
     codeEntry,
     lookupId,
   });

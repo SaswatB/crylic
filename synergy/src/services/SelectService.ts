@@ -13,7 +13,7 @@ import {
   StyleGroup,
 } from "../lib/ast/editors/ASTEditor";
 import { ASTType } from "../lib/ast/types";
-import { takeNext } from "../lib/utils";
+import { ltTakeNext, takeNext } from "../lib/utils";
 import { SelectedElement, Styles } from "../types/paint";
 import { CompilerContextService } from "./CompilerContextService";
 import { ProjectService } from "./ProjectService";
@@ -116,7 +116,7 @@ export class SelectService {
       renderId,
       lookupId,
       sourceMetadata: this.project!.primaryElementEditor.getSourceMetaDataFromLookupId(
-        { ast: (await takeNext(codeEntry.ast$)) as ASTType, codeEntry },
+        { ast: (await ltTakeNext(codeEntry.ast$)) as ASTType, codeEntry },
         lookupId
       ),
       viewContext: this.compilerContextService.getViewContext(renderId),

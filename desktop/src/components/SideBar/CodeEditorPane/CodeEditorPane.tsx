@@ -31,7 +31,7 @@ export const CodeEditorPane: FunctionComponent = () => {
   const editableEntries = useMemoObservable(
     () =>
       project &&
-      combineLatest([project.editEntries$, project.codeEntries$]).pipe(
+      combineLatest([project.editEntries$, project.codeEntries$.toRXJS()]).pipe(
         map(([editEntries, codeEntries]) =>
           editEntries
             .map((e) => codeEntries.find((c) => c.id === e.codeId))

@@ -35,7 +35,7 @@ import { linkComponent } from "../../lib/defs/react-router-dom";
 import { editorOpenLocation } from "../../lib/events";
 import { CodeEntry } from "../../lib/project/CodeEntry";
 import { renderSeparator } from "../../lib/render-utils";
-import { takeNext } from "../../lib/utils";
+import { ltTakeNext, takeNext } from "../../lib/utils";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
 import { StyleKeys } from "../../types/paint";
@@ -167,7 +167,7 @@ export const ElementEditorPane: FunctionComponent = () => {
     const codeEntry = project?.getCodeEntryValue(codeId);
     if (!codeEntry) return;
     const line = editor.getCodeLineFromLookupId(
-      { codeEntry, ast: takeNext(codeEntry.ast$) },
+      { codeEntry, ast: ltTakeNext(codeEntry.ast$) },
       lookupId
     );
     console.log("openInEditor", codeEntry, line);

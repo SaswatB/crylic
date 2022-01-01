@@ -3,6 +3,9 @@ import { uniqueId } from "lodash";
 import { BehaviorSubject, Observable } from "rxjs";
 import { map, mergeAll, mergeMap, scan, take } from "rxjs/operators";
 
+import { LTBehaviorSubject } from "./lightObservable/LTBehaviorSubject";
+import { LTObservable } from "./lightObservable/LTObservable";
+
 // this doesn't work on prod
 let reactInstanceKey: string | undefined;
 export const getReactDebugId = (element: HTMLElement) => {
@@ -39,7 +42,7 @@ export const onEnter = (apply: () => void) => (event: { key: string }) => {
 };
 
 export const produceNext = <T extends object>(
-  subject: BehaviorSubject<T>,
+  subject: BehaviorSubject<T> | LTBehaviorSubject<T>,
   update: (draft: Draft<T>) => void
 ) =>
   subject.next(
@@ -53,14 +56,23 @@ export const takeNext = <T>(source: Observable<T>) => {
   let done = false;
   promise.finally(() => (done = true));
   // warning if this doesn't resolve quickly
-  setTimeout(() => {
-    if (!done) {
-      console.trace("takeNext promise not resolved quickly", {
-        source,
-      });
-    }
-  }, 100);
+  // setTimeout(() => {
+  //   if (!done) {
+  //     console.trace("takeNext promise not resolved quickly", {
+  //       source,
+  //     });
+  //   }
+  // }, 100);
   return promise;
+};
+
+export const ltTakeNext = <T>(source: LTObservable<T>): Promise<T> => {
+  return new Promise((resolve) => {
+    const subscription = source.subscribe((value) => {
+      subscription.unsubscribe();
+      resolve(value);
+    });
+  });
 };
 
 export const arrayMap = <T, R>(

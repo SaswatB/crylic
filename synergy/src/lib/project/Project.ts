@@ -14,6 +14,8 @@ import { ElementASTEditor, StyleASTEditor } from "../ast/editors/ASTEditor";
 import { JSXASTEditor } from "../ast/editors/JSXASTEditor";
 import { StyledASTEditor } from "../ast/editors/StyledASTEditor";
 import { StyleSheetASTEditor } from "../ast/editors/StyleSheetASTEditor";
+import { LTBehaviorSubject } from "../lightObservable/LTBehaviorSubject";
+import { ltMap } from "../lightObservable/LTOperator";
 import { produceNext } from "../utils";
 import { CodeEntry } from "./CodeEntry";
 import { ProjectConfig } from "./ProjectConfig";
@@ -24,7 +26,7 @@ type EditorEntry<T> = {
 };
 
 export abstract class Project {
-  public readonly codeEntries$ = new BehaviorSubject<CodeEntry[]>([]); // lm_9dfd4feb9b entries cannot be removed
+  public readonly codeEntries$ = new LTBehaviorSubject<CodeEntry[]>([]); // lm_9dfd4feb9b entries cannot be removed
   public readonly editEntries$ = new BehaviorSubject<EditEntry[]>([]);
   public readonly renderEntries$ = new BehaviorSubject<RenderEntry[]>([]);
   private readonly elementEditorEntries: EditorEntry<ElementASTEditor<any>>[];
@@ -67,7 +69,7 @@ export abstract class Project {
 
   public getCodeEntry(codeId: string) {
     return this.codeEntries$.pipe(
-      map((entries) => entries.find(({ id }) => id === codeId))
+      ltMap((entries) => entries.find(({ id }) => id === codeId))
     );
   }
 
@@ -100,10 +102,11 @@ export abstract class Project {
   };
   protected initUndoRedo() {
     this.codeEntries$
+      .toRXJS()
       .pipe(
         mergeMap((codeEntries) =>
           codeEntries.map((codeEntry) =>
-            codeEntry.code$.pipe(
+            codeEntry.code$.toRXJS().pipe(
               distinctUntilChanged(),
               bufferCount(2),
               map(([oldCode, newCode]) => ({ codeEntry, oldCode, newCode }))
