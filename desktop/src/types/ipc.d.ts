@@ -44,6 +44,11 @@ export type WebpackWorkerMessagePayload =
   | WebpackWorkerMessagePayload_Initialize
   | WebpackWorkerMessagePayload_Compile;
 
+interface RuntimeInfo {
+  dirname: string;
+  execPath: string;
+}
+
 declare module "electron" {
   interface IpcRenderer {
     on(
@@ -57,6 +62,15 @@ declare module "electron" {
       channel: "webpack-worker-message",
       data: WebpackWorkerMessagePayload
     ): void;
+    invoke(channel: "runtimeInfo"): Promise<RuntimeInfo>;
+    invoke(
+      channel: "showOpenDialog",
+      options: OpenDialogOptions
+    ): Promise<OpenDialogReturnValue>;
+    invoke(
+      channel: "showSaveDialog",
+      options: SaveDialogOptions
+    ): Promise<SaveDialogReturnValue>;
   }
 
   interface IpcMain {
@@ -70,6 +84,24 @@ declare module "electron" {
     send(
       channel: "webpack-renderer-message",
       data: WebpackRendererMessagePayload
+    ): void;
+    handle(
+      channel: "runtimeInfo",
+      listener: (event: IpcMainInvokeEvent) => RuntimeInfo
+    ): void;
+    handle(
+      channel: "showOpenDialog",
+      listener: (
+        event: IpcMainInvokeEvent,
+        options: OpenDialogOptions
+      ) => Promise<OpenDialogReturnValue>
+    ): void;
+    handle(
+      channel: "showSaveDialog",
+      listener: (
+        event: IpcMainInvokeEvent,
+        options: SaveDialogOptions
+      ) => Promise<SaveDialogReturnValue>
     ): void;
   }
 }

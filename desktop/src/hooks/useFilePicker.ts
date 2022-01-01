@@ -1,11 +1,11 @@
 import { useState } from "react";
 
-const { dialog } = (__non_webpack_require__(
+const { ipcRenderer } = __non_webpack_require__(
   "electron"
-) as typeof import("electron")).remote;
+) as typeof import("electron");
 
 export const openFilePicker = async (options?: Electron.OpenDialogOptions) => {
-  const { canceled, filePaths } = await dialog.showOpenDialog({
+  const { canceled, filePaths } = await ipcRenderer.invoke("showOpenDialog", {
     properties: ["openFile"],
     ...options,
   });
@@ -14,7 +14,7 @@ export const openFilePicker = async (options?: Electron.OpenDialogOptions) => {
 };
 
 export const saveFilePicker = async (options?: Electron.SaveDialogOptions) => {
-  const { canceled, filePath } = await dialog.showSaveDialog({
+  const { canceled, filePath } = await ipcRenderer.invoke("showSaveDialog", {
     properties: ["createDirectory"],
     ...options,
   });

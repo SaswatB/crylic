@@ -10,10 +10,7 @@ const { ipcRenderer } = __non_webpack_require__(
 ) as typeof import("electron");
 
 let dirname = "";
-ipcRenderer.once("runtimeInfo", (e, data) => {
-  ({ dirname } = data);
-});
-ipcRenderer.send("runtimeInfo");
+ipcRenderer.invoke("runtimeInfo").then((data) => ({ dirname } = data));
 
 export class InbuiltPackageManager extends PackageManager {
   constructor(path: string, protected yarnMode: boolean) {

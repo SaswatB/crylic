@@ -13,7 +13,9 @@ const sentryPath = path.join(
 __non_webpack_require__(sentryPath);
 
 const windowStateKeeper = __non_webpack_require__("electron-window-state");
-const { app, ipcMain, BrowserWindow } = __non_webpack_require__("electron");
+const { app, ipcMain, BrowserWindow, dialog } = __non_webpack_require__(
+  "electron"
+);
 
 app.allowRendererProcessReuse = false;
 app.commandLine.appendSwitch(
@@ -99,12 +101,18 @@ app.on("activate", function () {
 // code. You can also put them in separate files and require them here.
 
 // call for the renderer to get the main process's dirname/execPath
-ipcMain.on("runtimeInfo", async (e) => {
-  e.sender.send("runtimeInfo", {
-    dirname: __dirname,
-    execPath: process.execPath,
-  });
-});
+ipcMain.handle("runtimeInfo", () => ({
+  dirname: __dirname,
+  execPath: process.execPath,
+}));
+
+ipcMain.handle("showOpenDialog", (e, options) =>
+  dialog.showOpenDialog(options)
+);
+
+ipcMain.handle("showSaveDialog", (e, options) =>
+  dialog.showSaveDialog(options)
+);
 
 // start up the webpack worker
 // eslint-disable-next-line import/first
