@@ -4,11 +4,11 @@ import { Readable } from "stream";
 import yauzl from "yauzl";
 
 import {
-  CodeEntry,
   IMAGE_EXTENSION_REGEX,
   SCRIPT_EXTENSION_REGEX,
   STYLE_EXTENSION_REGEX,
-} from "synergy/src/lib/project/CodeEntry";
+} from "synergy/src/lib/ext-regex";
+import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
 import { Project } from "synergy/src/lib/project/Project";
 
 import { streamToString } from "../../utils/utils";
@@ -21,7 +21,8 @@ const fs = __non_webpack_require__("fs") as typeof import("fs");
 export class FileProject extends Project {
   public static async createNewProjectInDirectory(folderPath: string) {
     console.log(folderPath);
-    if (!fs.existsSync) fs.mkdirSync(folderPath, { recursive: true });
+    if (!fs.existsSync(folderPath))
+      fs.mkdirSync(folderPath, { recursive: true });
 
     let canceled = false;
     await new Promise<void>((resolve, reject) => {

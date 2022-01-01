@@ -15,11 +15,12 @@ import {
   printCodeEntryAST,
 } from "../ast/ast-helpers";
 import { ASTType } from "../ast/types";
+import {
+  IMAGE_EXTENSION_REGEX,
+  SCRIPT_EXTENSION_REGEX,
+  STYLE_EXTENSION_REGEX,
+} from "../ext-regex";
 import { Project } from "./Project";
-
-export const STYLE_EXTENSION_REGEX = /\.(css|s[ac]ss|less)$/i;
-export const SCRIPT_EXTENSION_REGEX = /\.[jt]sx?$/i;
-export const IMAGE_EXTENSION_REGEX = /\.(jpe?g|png|gif|svg)$/i;
 
 /**
  * A partial, resolved CodeEntry for use with remote async code

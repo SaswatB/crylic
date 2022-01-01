@@ -18,11 +18,11 @@ import { useMenuInput } from "../../hooks/useInput";
 import { useMemoObservable } from "../../hooks/useObservable";
 import { useService } from "../../hooks/useService";
 import {
-  CodeEntry,
   IMAGE_EXTENSION_REGEX,
   SCRIPT_EXTENSION_REGEX,
   STYLE_EXTENSION_REGEX,
-} from "../../lib/project/CodeEntry";
+} from "../../lib/ext-regex";
+import { CodeEntry } from "../../lib/project/CodeEntry";
 import { renderSeparator } from "../../lib/render-utils";
 import { arrayMap, takeNext } from "../../lib/utils";
 import { useProject } from "../../services/ProjectService";
