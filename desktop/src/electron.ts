@@ -17,7 +17,6 @@ const { app, ipcMain, BrowserWindow, dialog } = __non_webpack_require__(
   "electron"
 );
 
-app.allowRendererProcessReuse = false;
 app.commandLine.appendSwitch(
   "disable-features",
   "OutOfBlinkCors,IsolateOrigins,site-per-process,CrossSiteDocumentBlockingAlways,CrossSiteDocumentBlockingIfIsolating"
@@ -47,8 +46,8 @@ function createWindow() {
       preload: sentryPath,
       nodeIntegration: true,
       nodeIntegrationInWorker: true,
+      contextIsolation: false,
       // nodeIntegrationInSubFrames: true,
-      enableRemoteModule: true,
       webSecurity: false,
     },
   });

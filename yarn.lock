@@ -2933,25 +2933,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@electron/get@npm:^1.0.1":
-  version: 1.12.2
-  resolution: "@electron/get@npm:1.12.2"
+"@electron/get@npm:^1.13.0":
+  version: 1.13.1
+  resolution: "@electron/get@npm:1.13.1"
   dependencies:
     debug: ^4.1.1
     env-paths: ^2.2.0
     fs-extra: ^8.1.0
-    global-agent: ^2.0.2
+    global-agent: ^3.0.0
     global-tunnel-ng: ^2.7.1
     got: ^9.6.0
     progress: ^2.0.3
-    sanitize-filename: ^1.6.2
+    semver: ^6.2.0
     sumchecker: ^3.0.1
   dependenciesMeta:
     global-agent:
       optional: true
     global-tunnel-ng:
       optional: true
-  checksum: 447a08021d6fabc437dcf02b2a2edac718802f3b5dd1ff86c3a8aa7b35de03b39c7abc0a817ca58ea68c295cf64365935156191fa5b5a3d00263c8b4a8439ef1
+  checksum: ea9863b73e8aedefb19cfe9b849c585b8bda29e11b90189b115680da4e9ab0167405efe63e5d141da2d13cde24eacacfde62f730f2730d047e58819fe69352f8
   languageName: node
   linkType: hard
 
@@ -4892,10 +4892,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^12.0.0, @types/node@npm:^12.0.12, @types/node@npm:^12.12.54":
+"@types/node@npm:*, @types/node@npm:^12.0.0, @types/node@npm:^12.12.54":
   version: 12.12.54
   resolution: "@types/node@npm:12.12.54"
   checksum: 556a272958249314564a634c67f51f40902edd60a6e83396bb9794073be47ee3e6b1cd5b8acfb9b821c9d03a466f5963962eb91ad19cfd5968988a3aedc68365
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^14.6.2":
+  version: 14.18.4
+  resolution: "@types/node@npm:14.18.4"
+  checksum: 12015baff875140579d4c8982a7c239685ceee3a7b0ea58e6d6918d001582a752bfbc13e5c06c745e2bb10261068e632929fdf3e013c98fba006cd0cc4c67bf9
   languageName: node
   linkType: hard
 
@@ -8956,7 +8963,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:^3.0.1, core-js@npm:^3.4.0, core-js@npm:^3.5.0, core-js@npm:^3.6.5":
+"core-js@npm:^3.0.1, core-js@npm:^3.4.0, core-js@npm:^3.5.0":
   version: 3.6.5
   resolution: "core-js@npm:3.6.5"
   checksum: b7fcf92f888bfe40f3f005e3f729e66aa49a3a9a797e8fb4d09d429c6abcd505781b2c03836858f0dc0159249d4b7a035fc763052c9c34adbc93b6f8a6a86305
@@ -9234,7 +9241,7 @@ __metadata:
     css-loader: ^3.5.3
     dotenv: ^8.2.0
     dotenv-expand: ^5.1.0
-    electron: 9.1.1
+    electron: 16.0.5
     electron-builder: ^22.7.0
     electron-devtools-installer: ^3.0.0
     electron-rebuild: ^1.10.1
@@ -10615,16 +10622,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron@npm:9.1.1":
-  version: 9.1.1
-  resolution: "electron@npm:9.1.1"
+"electron@npm:16.0.5":
+  version: 16.0.5
+  resolution: "electron@npm:16.0.5"
   dependencies:
-    "@electron/get": ^1.0.1
-    "@types/node": ^12.0.12
+    "@electron/get": ^1.13.0
+    "@types/node": ^14.6.2
     extract-zip: ^1.0.3
   bin:
     electron: cli.js
-  checksum: 1eb56ab505c0b779a8137f402bbea6b54236e845ba38d92f674034d9dfda198036cb15c52345a5759a34b4e3135cdf2a9d17bc90f6fcf2159e0dceef6f66a855
+  checksum: 5b24d00e165d74d8039ac85646fb5953e3755bd503e0ffb27fe3a72c7f8acf8449fc661f51a1a8b42387e311aa44f161105796e13ed45ace4a3d8e0e586ece38
   languageName: node
   linkType: hard
 
@@ -12748,18 +12755,17 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"global-agent@npm:^2.0.2":
-  version: 2.1.12
-  resolution: "global-agent@npm:2.1.12"
+"global-agent@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "global-agent@npm:3.0.0"
   dependencies:
     boolean: ^3.0.1
-    core-js: ^3.6.5
     es6-error: ^4.1.1
     matcher: ^3.0.0
     roarr: ^2.15.3
     semver: ^7.3.2
     serialize-error: ^7.0.1
-  checksum: 220c30f0ee19bf0a32a286d94b5d23c11b4f1c0a029b68a6ba22c25e0e9409dbe5e9e19e724cb4dd68e7be64f5fc5fd04cb0a897361f8e2fdda571438ecc37ad
+  checksum: 75074d80733b4bd5386c47f5df028e798018025beac0ab310e9908c72bf5639e408203e7bca0130d5ee01b5f4abc6d34385d96a9f950ea5fe1979bb431c808f7
   languageName: node
   linkType: hard
 
@@ -22679,7 +22685,7 @@ resolve@1.15.0:
   languageName: node
   linkType: hard
 
-"sanitize-filename@npm:^1.6.2, sanitize-filename@npm:^1.6.3":
+"sanitize-filename@npm:^1.6.3":
   version: 1.6.3
   resolution: "sanitize-filename@npm:1.6.3"
   dependencies:

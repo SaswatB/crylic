@@ -23,8 +23,12 @@ module.exports = (env, argv) => ({
         use: {
           loader: "swc-loader",
           options: {
+            ...require("../swc.config"),
             // lm_a95a542d63 electron version
-            env: { targets: { electron: "9" } },
+            env: {
+              targets: { electron: "16" },
+              include: ["proposal-nullish-coalescing-operator"],
+            },
           },
         },
       },

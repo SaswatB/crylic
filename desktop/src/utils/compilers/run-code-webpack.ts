@@ -134,7 +134,10 @@ const getWebpackModules = async (
         options: {
           // lm_a95a542d63 electron version
           // todo change on publish or support more options
-          // env: { targets: { electron: "9" } },
+          env: {
+            targets: { chrome: "96" },
+            include: ["proposal-nullish-coalescing-operator"],
+          },
           sourceMaps: "inline",
         },
       },
@@ -153,7 +156,7 @@ const getWebpackModules = async (
               targets: {
                 // lm_a95a542d63 electron version
                 // todo change on publish or support more options
-                // electron: "9",
+                chrome: "96",
               },
             },
           ],
@@ -215,7 +218,7 @@ const getWebpackModules = async (
               targets: {
                 // lm_a95a542d63 electron version
                 // todo change on publish or support more options
-                // electron: "9",
+                chrome: "96",
               },
               useBuiltIns: "entry",
               modules: false,

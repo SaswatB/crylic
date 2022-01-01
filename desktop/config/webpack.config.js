@@ -353,7 +353,14 @@ module.exports = function (webpackEnv) {
               exclude: /node_modules/,
               use: {
                 loader: "swc-loader",
-                options: require("../swc.config"),
+                options: {
+                  ...require("../swc.config"),
+                  // lm_a95a542d63 electron version
+                  env: {
+                    targets: { chrome: "96" },
+                    include: ["proposal-nullish-coalescing-operator"],
+                  },
+                },
               },
             },
             // "postcss" loader applies autoprefixer to our CSS.
