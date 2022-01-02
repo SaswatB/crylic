@@ -1,5 +1,5 @@
 import { Draft } from "immer";
-import { debounce } from "lodash";
+import { debounce, DebounceSettings } from "lodash";
 
 import { produceNext } from "../utils";
 import { LTBehaviorSubject } from "./LTBehaviorSubject";
@@ -47,8 +47,11 @@ export function ltEagerFlatten<T>(): LTOperator<
   };
 }
 
-export function ltDebounce<T>(timeout: number): LTOperator<T, T> {
-  const debouncer = debounce((func: () => void) => func(), timeout);
+export function ltDebounce<T>(
+  timeout: number,
+  options?: DebounceSettings
+): LTOperator<T, T> {
+  const debouncer = debounce((func: () => void) => func(), timeout, options);
   return {
     next: (value, emit) => debouncer(() => emit(value)),
     clearState: () => debouncer.cancel(),

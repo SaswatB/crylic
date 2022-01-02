@@ -1,6 +1,5 @@
 import { startCase } from "lodash";
 import path from "path";
-import { map, mergeMap, shareReplay } from "rxjs/operators";
 
 import { memoize } from "../../vendor/ts-memoize";
 import {

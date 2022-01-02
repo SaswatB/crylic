@@ -158,7 +158,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
           )
         )
         .pipe(ltEagerFlatten())
-        .pipe(ltDebounce(100))!;
+        .pipe(ltDebounce(100, { maxWait: 100 }))!;
 
       // todo add an option to keep showing extensions
       let extensionRegex: RegExp | undefined;

@@ -433,8 +433,6 @@ export const getComponentExport = (
           importPath = node.source.value;
         }
       });
-
-      console.log(varIdentifier);
     } else if (
       callee.type === "MemberExpression" &&
       callee.object.type === "Identifier" &&

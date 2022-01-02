@@ -42,7 +42,7 @@ const workerModule = {
     }
 
     return {
-      // rawAst: ast,
+      rawAst: ast,
       isRenderable,
       exportName,
       exportIsDefault,
@@ -56,8 +56,9 @@ self.addEventListener("message", (event) => {
   const { id, action, args } = event.data;
 
   // @ts-expect-error ignore type error for spread operator
-  workerModule[action as keyof AstWorkerModule](...args).then((result) => {
+  workerModule[action as keyof AstWorkerModule](...args)
     // eslint-disable-next-line no-restricted-globals
-    self.postMessage({ id, result });
-  });
+    .then((result) => self.postMessage({ id, result }))
+    // eslint-disable-next-line no-restricted-globals
+    .catch((error) => self.postMessage({ id, error }));
 });
