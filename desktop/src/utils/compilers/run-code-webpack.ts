@@ -31,6 +31,7 @@ const ENABLE_FAST_REFRESH = true;
 const NODE_ENV = "development";
 const REACT_APP = /^REACT_APP_/i;
 const ENABLE_BABEL_COMPAT = false;
+const ENABLE_EXTERNALS = false;
 
 export function initialize(nodeModulesPath = "") {
   // needed to resolve loaders and babel plugins/presets
@@ -401,31 +402,33 @@ export const webpackRunCode = async (
       },
       // resolveLoader: { plugins: [PnpWebpackPlugin.moduleLoader(module)] },
       // lm_c76a4fbc3b webpack externals
-      externals: {
-        react: {
-          commonjs: "react",
-          commonjs2: "react",
-          amd: "react",
-          root: "React",
-        },
-        "react-dom": {
-          commonjs: "react-dom",
-          commonjs2: "react-dom",
-          amd: "react-dom",
-          root: "ReactDOM",
-        },
-        "react-router-dom": {
-          commonjs: "react-router-dom",
-          commonjs2: "react-router-dom",
-          amd: "react-router-dom",
-          root: "ReactRouterDOM",
-        },
-        "react-refresh/runtime": {
-          commonjs: "react-refresh/runtime",
-          commonjs2: "react-refresh/runtime",
-          amd: "react-refresh/runtime",
-        },
-      },
+      externals: ENABLE_EXTERNALS
+        ? {
+            react: {
+              commonjs: "react",
+              commonjs2: "react",
+              amd: "react",
+              root: "React",
+            },
+            "react-dom": {
+              commonjs: "react-dom",
+              commonjs2: "react-dom",
+              amd: "react-dom",
+              root: "ReactDOM",
+            },
+            "react-router-dom": {
+              commonjs: "react-router-dom",
+              commonjs2: "react-router-dom",
+              amd: "react-router-dom",
+              root: "ReactRouterDOM",
+            },
+            "react-refresh/runtime": {
+              commonjs: "react-refresh/runtime",
+              commonjs2: "react-refresh/runtime",
+              amd: "react-refresh/runtime",
+            },
+          }
+        : {},
       plugins: [
         // Generates an `index.html` file with the <script> injected.
         new HtmlWebpackPlugin({
