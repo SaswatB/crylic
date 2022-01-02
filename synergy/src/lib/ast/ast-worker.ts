@@ -6,7 +6,7 @@ import { SCRIPT_EXTENSION_REGEX } from "../ext-regex";
 import type { RemoteCodeEntry } from "../project/CodeEntry";
 import { getComponentExport, parseCodeEntryAST } from "./ast-helpers";
 
-const workerModule = {
+export const workerModule = {
   async computeMetadata(remoteCodeEntry: RemoteCodeEntry) {
     // parse ast data
     let ast = parseCodeEntryAST(remoteCodeEntry);

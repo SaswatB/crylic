@@ -7,8 +7,7 @@ import {
   prettyPrintCodeEntryAST,
   printCodeEntryAST,
 } from "../ast/ast-helpers";
-import { queueAstPoolAction } from "../ast/ast-pool";
-import type { AstWorkerModule } from "../ast/ast-worker";
+import { AstWorkerModule, workerModule } from "../ast/ast-worker";
 import { ASTType } from "../ast/types";
 import {
   IMAGE_EXTENSION_REGEX,
@@ -209,12 +208,13 @@ export class CodeEntry {
           // return the modified ast and code
           console.log("compute metadata", this.filePath);
 
-          // await new Promise((resolve) => requestAnimationFrame(resolve));
+          // const res = await queueAstPoolAction(
+          //   "computeMetadata",
+          //   this.getRemoteCodeEntry()
+          // );
 
-          return await queueAstPoolAction(
-            "computeMetadata",
-            this.getRemoteCodeEntry()
-          );
+          // return { ...res, rawAst: unstringifyFunctions(res.rawAst) };
+          return await workerModule.computeMetadata(this.getRemoteCodeEntry());
         } catch (e) {
           console.trace("compute metadata failed", e);
           return { isRenderable: false };
