@@ -1,0 +1,29 @@
+version: 2.1
+orbs:
+  # See the orb documentation here: https://circleci.com/developer/orbs/orb/circleci/node
+  node: circleci/node@4.7
+jobs:
+  build-and-release:
+    working_directory: ~/paint/desktop
+    macos:
+      xcode: 12.5.1
+    steps:
+      - checkout:
+          path: ~/paint
+      - run:
+          name: Install desktop/app deps
+          command: cd app && npm ci
+      - node/install-packages:
+          pkg-manager: yarn
+      - run:
+          name: Build desktop
+          command: yarn build
+      - run:
+          name: Package desktop
+          command: yarn package
+      - store_artifacts:
+          path: dist/
+workflows:
+  release:
+    jobs:
+      - build-and-release
