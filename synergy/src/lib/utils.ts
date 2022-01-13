@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable } from "rxjs";
 import { map, mergeAll, mergeMap, scan, take } from "rxjs/operators";
 
 import { LTBehaviorSubject } from "./lightObservable/LTBehaviorSubject";
-import { LTObservable } from "./lightObservable/LTObservable";
+import { LTObservable, LTSubscription } from "./lightObservable/LTObservable";
 
 // this doesn't work on prod
 let reactInstanceKey: string | undefined;
@@ -68,8 +68,13 @@ export const takeNext = <T>(source: Observable<T>) => {
 
 export const ltTakeNext = <T>(source: LTObservable<T>): Promise<T> => {
   return new Promise((resolve) => {
-    const subscription = source.subscribe((value) => {
-      subscription.unsubscribe();
+    let isResolved = false;
+    let subscription: LTSubscription | undefined = undefined;
+    subscription = source.subscribe((value) => {
+      if (isResolved) return;
+      isResolved = true;
+
+      setTimeout(() => subscription!.unsubscribe(), 1);
       resolve(value);
     });
   });
