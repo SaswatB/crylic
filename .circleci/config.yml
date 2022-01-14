@@ -14,15 +14,16 @@ jobs:
           name: Install desktop/app deps
           command: cd app && npm ci
       - node/install-packages:
+          app-dir: ~/paint
           pkg-manager: yarn
       - run:
           name: Build desktop
           command: yarn build
       - run:
           name: Package desktop
-          command: yarn package
+          command: rm -r dist && yarn package
       - store_artifacts:
-          path: dist/
+          path: dist/*.*
 workflows:
   release:
     jobs:
