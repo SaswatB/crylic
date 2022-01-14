@@ -21,7 +21,7 @@ jobs:
           command: yarn build
       - run:
           name: Package desktop
-          command: rm -r dist && yarn package
+          command: yarn package
       - store_artifacts:
           path: dist/*.*
 workflows:
