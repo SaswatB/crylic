@@ -1,7 +1,7 @@
 version: 2.1
 orbs:
   # See the orb documentation here: https://circleci.com/developer/orbs/orb/circleci/node
-  node: circleci/node@4.7
+  node: circleci/node@5
 jobs:
   build-and-release:
     working_directory: ~/paint/desktop
