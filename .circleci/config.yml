@@ -16,6 +16,8 @@ jobs:
       - node/install-packages:
           app-dir: ~/paint
           pkg-manager: yarn
+          # todo figure out safe cache: https://www.benpickles.com/articles/77-caching-yarn-workspaces-on-circleci
+          with-cache: false
       - run:
           name: Build desktop
           command: yarn build
