@@ -10,9 +10,9 @@ jobs:
     steps:
       - checkout:
           path: ~/paint
-      - run:
-          name: Install desktop/app deps
-          command: cd app && npm ci
+      - node/install-packages:
+          app-dir: ~/paint/desktop/app
+          pkg-manager: npm
       - node/install-packages:
           app-dir: ~/paint
           pkg-manager: yarn
