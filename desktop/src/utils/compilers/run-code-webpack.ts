@@ -137,7 +137,10 @@ const getWebpackModules = async (
           // todo change on publish or support more options
           env: {
             targets: { chrome: "96" },
-            include: ["proposal-nullish-coalescing-operator"],
+            include: [
+              "proposal-nullish-coalescing-operator",
+              "proposal-optional-chaining",
+            ],
           },
           sourceMaps: "inline",
         },
