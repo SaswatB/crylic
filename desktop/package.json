@@ -192,7 +192,7 @@
     "appId": "com.hstar.paint",
     "extends": null,
     "asar": false,
-    "electronVersion": "9.1.1",
+    "electronVersion": "16.0.5",
     "win": {
       "target": "portable"
     },
