@@ -13,17 +13,15 @@ jobs:
       - node/install-packages:
           app-dir: ~/paint/desktop/app
           pkg-manager: npm
-      - node/install-packages:
-          app-dir: ~/paint
-          pkg-manager: yarn
-          # todo figure out safe cache: https://www.benpickles.com/articles/77-caching-yarn-workspaces-on-circleci
-          with-cache: false
+      - run:
+          name: Install workspace deps
+          command: yarn
       - run:
           name: Build desktop
           command: yarn build
       - run:
           name: Package desktop
-          command: rm -rf dist && yarn package
+          command: USE_HARD_LINKS=false yarn package
       - store_artifacts:
           path: dist/*.*
 workflows:

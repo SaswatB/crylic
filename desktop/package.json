@@ -158,7 +158,7 @@
     "babel-jest": "^27.4.5",
     "cpy-cli": "^3.1.1",
     "electron": "16.0.5",
-    "electron-builder": "^22.7.0",
+    "electron-builder": "^22.14.5",
     "electron-rebuild": "^1.10.1",
     "eslint": "^6.8.0",
     "eslint-plugin-simple-import-sort": "^5.0.2",
