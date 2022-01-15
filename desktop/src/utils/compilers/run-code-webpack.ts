@@ -12,6 +12,7 @@ type IFs = import("memfs").IFs;
 const path = __non_webpack_require__("path") as typeof import("path");
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 const process = __non_webpack_require__("process") as typeof import("process");
+const nodeModule = __non_webpack_require__("module") as typeof import("module");
 
 let memfs: typeof import("memfs");
 let joinPath: typeof import("memory-fs/lib/join");
@@ -36,6 +37,20 @@ export function initialize(nodeModulesPath = "") {
   // needed to resolve loaders and babel plugins/presets
   if (nodeModulesPath) {
     process.chdir(path.dirname(nodeModulesPath));
+
+    // block deps from being loaded outside the provided nodeModulesPath
+    // @ts-expect-error _nodeModulePaths is private
+    const nodeModulePaths = nodeModule._nodeModulePaths; //backup the original method
+    // @ts-expect-error _nodeModulePaths is private
+    nodeModule._nodeModulePaths = function (...args: unknown[]) {
+      const paths: string[] = nodeModulePaths.call(this, ...args); // call the original method
+
+      // remove any paths that are not within the provided nodeModulesPath
+      let rootPath = nodeModulesPath.replaceAll("\\", "/");
+      if (rootPath.endsWith("/"))
+        rootPath = rootPath.substring(0, rootPath.length - 1);
+      return paths.filter((p) => p.replaceAll("\\", "/").startsWith(rootPath));
+    };
   }
 
   memfs = __non_webpack_require__(`${nodeModulesPath}memfs`);
