@@ -165,11 +165,16 @@ ReactDOM.render((
     },
   ]);
 
-  const paths = {
-    projectFolder: project.path,
-    projectSrcFolder: project.sourceFolderPath,
-    overrideWebpackConfig: project.config.getFullOverrideWebpackPath(),
-    htmlTemplate: project.config.getFullHtmlTemplatePath(),
+  const config = {
+    disableWebpackExternals:
+      project.config.configFile?.webpack?.overrideConfig
+        ?.disableExternalsInjection,
+    paths: {
+      projectFolder: project.path,
+      projectSrcFolder: project.sourceFolderPath,
+      overrideWebpackConfig: project.config.getFullOverrideWebpackPath(),
+      htmlTemplate: project.config.getFullHtmlTemplatePath(),
+    },
   };
 
   let devport: number | null;
@@ -186,7 +191,7 @@ ReactDOM.render((
       codeEntries,
       selectedCodeId: bundleId,
       compileId,
-      paths,
+      config,
     });
 
     // wait for the worker to compile
@@ -195,7 +200,7 @@ ReactDOM.render((
     delete compileCallbacks[compileId];
     delete progressCallbacks[compileId];
   } else {
-    devport = await webpackRunCode(codeEntries, bundleId, paths, onProgress);
+    devport = await webpackRunCode(codeEntries, bundleId, config, onProgress);
   }
 
   const workerCallbackTime = Date.now();

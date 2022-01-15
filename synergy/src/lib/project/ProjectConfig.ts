@@ -11,9 +11,15 @@ import { PackageManager } from "../packageManager/PackageManager";
 export const ProjectConfigFile = it.type({
   bootstrap: it.union([it.string, it.undefined]),
   sourceFolder: it.union([it.string, it.undefined]),
-  overrideWebpack: it.union([
+  webpack: it.union([
     it.type({
-      path: it.string,
+      overrideConfig: it.union([
+        it.type({
+          path: it.union([it.string, it.undefined]),
+          disableExternalsInjection: it.union([it.boolean, it.undefined]),
+        }),
+        it.undefined,
+      ]),
     }),
     it.undefined,
   ]),
@@ -43,7 +49,14 @@ export const ProjectConfigFile = it.type({
   ]),
   packageManager: it.union([
     it.type({
-      type: it.union([it.string, it.undefined]), // inbuilt, inbuild-npm, inbuild-yarn, npm or yarn
+      type: it.union([
+        it.literal("inbuilt"),
+        it.literal("inbuilt-npm"),
+        it.literal("inbuilt-yarn"),
+        it.literal("npm"),
+        it.literal("yarn"),
+        it.undefined,
+      ]),
     }),
     it.undefined,
   ]),
@@ -84,9 +97,8 @@ export abstract class ProjectConfig {
     );
   }
   public getFullOverrideWebpackPath() {
-    return this.configFile?.overrideWebpack?.path
-      ? path.join(this.projectPath, this.configFile.overrideWebpack.path)
-      : undefined;
+    const webpackPath = this.configFile?.webpack?.overrideConfig?.path;
+    return webpackPath ? path.join(this.projectPath, webpackPath) : undefined;
   }
   public getFullHtmlTemplatePath() {
     return path.join(

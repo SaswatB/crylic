@@ -31,7 +31,6 @@ const ENABLE_FAST_REFRESH = true;
 const NODE_ENV = "development";
 const REACT_APP = /^REACT_APP_/i;
 const ENABLE_BABEL_COMPAT = false;
-const ENABLE_EXTERNALS = false;
 
 export function initialize(nodeModulesPath = "") {
   // needed to resolve loaders and babel plugins/presets
@@ -312,11 +311,17 @@ export const webpackRunCode = async (
     codeRevisionId: number;
   }[],
   selectedCodeId: string,
-  paths: {
-    projectFolder: string; // appPath
-    projectSrcFolder: string; // appSrc
-    overrideWebpackConfig?: string;
-    htmlTemplate?: string;
+  {
+    paths,
+    ...config
+  }: {
+    paths: {
+      projectFolder: string; // appPath
+      projectSrcFolder: string; // appSrc
+      overrideWebpackConfig?: string;
+      htmlTemplate?: string;
+    };
+    disableWebpackExternals?: boolean;
   },
   onProgress: (arg: { percentage: number; message: string }) => void
 ) => {
@@ -405,7 +410,7 @@ export const webpackRunCode = async (
       },
       // resolveLoader: { plugins: [PnpWebpackPlugin.moduleLoader(module)] },
       // lm_c76a4fbc3b webpack externals
-      externals: ENABLE_EXTERNALS
+      externals: !config.disableWebpackExternals
         ? {
             react: {
               commonjs: "react",

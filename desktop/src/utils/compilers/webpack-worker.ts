@@ -7,11 +7,11 @@ ipcMain.on("webpack-worker-message", async (e, data) => {
   if (data.action === "initialize") {
     initialize(data.nodeModulesPath);
   } else if (data.action === "compile") {
-    const { codeEntries, selectedCodeId, compileId, paths } = data;
+    const { codeEntries, selectedCodeId, compileId, config } = data;
     const result = await webpackRunCode(
       codeEntries,
       selectedCodeId,
-      paths,
+      config,
       ({ percentage, message }) => {
         e.sender.send("webpack-renderer-message", {
           type: "percent-update",
