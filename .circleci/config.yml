@@ -1,0 +1,35 @@
+version: 2.1
+orbs:
+  # See the orb documentation here: https://circleci.com/developer/orbs/orb/circleci/node
+  node: circleci/node@5
+jobs:
+  build-and-release:
+    working_directory: ~/paint/desktop
+    macos:
+      xcode: 12.5.1
+    steps:
+      - checkout:
+          path: ~/paint
+      - node/install-packages:
+          app-dir: ~/paint/desktop/app
+          pkg-manager: npm
+      - run:
+          name: Install workspace deps
+          command: yarn
+      - run:
+          name: Build desktop
+          command: yarn build
+      - run:
+          name: Package desktop
+          command: USE_HARD_LINKS=false yarn package
+          no_output_timeout: 30m
+      - run:
+          name: Copy artifacts
+          command: mkdir /tmp/dist && mv dist/*.* /tmp/dist
+          no_output_timeout: 30m
+      - store_artifacts:
+          path: /tmp/dist
+workflows:
+  release:
+    jobs:
+      - build-and-release
