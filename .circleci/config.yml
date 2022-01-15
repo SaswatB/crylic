@@ -23,8 +23,12 @@ jobs:
           name: Package desktop
           command: USE_HARD_LINKS=false yarn package
           no_output_timeout: 30m
+      - run:
+          name: Copy artifacts
+          command: mkdir /tmp/dist && mv dist/*.* /tmp/dist
+          no_output_timeout: 30m
       - store_artifacts:
-          path: dist/*.*
+          path: /tmp/dist
 workflows:
   release:
     jobs:
