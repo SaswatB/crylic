@@ -23,7 +23,7 @@
     "@material-ui/core": "^4.9.9",
     "@material-ui/icons": "^4.9.1",
     "@material-ui/lab": "^4.0.0-alpha.56",
-    "@sentry/electron": "^1.3.0",
+    "@sentry/electron": "^2.5.4",
     "@svgr/webpack": "^4.3.3",
     "@typescript-eslint/eslint-plugin": "^3.10.1",
     "@typescript-eslint/parser": "^3.10.1",
@@ -156,6 +156,7 @@
     "archiver": "^4.0.1",
     "babel-eslint": "^10.1.0",
     "babel-jest": "^27.4.5",
+    "copy-webpack-plugin": "6.4.1",
     "cpy-cli": "^3.1.1",
     "electron": "16.0.5",
     "electron-builder": "^22.14.5",
@@ -194,7 +195,8 @@
     "asar": false,
     "electronVersion": "16.0.5",
     "win": {
-      "target": "portable"
+      "target": "portable",
+      "icon": "./src/assets/icon.ico"
     },
     "mac": {
       "target": "dmg"

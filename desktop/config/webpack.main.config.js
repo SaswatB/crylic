@@ -1,5 +1,6 @@
 const path = require("path");
 const SentryWebpackPlugin = require("@sentry/webpack-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = (env, argv) => ({
   entry: {
@@ -47,5 +48,8 @@ module.exports = (env, argv) => ({
         include: "./build-main",
         urlPrefix: "app:///build-main",
       }),
+    new CopyPlugin({
+      patterns: [{ from: "src/assets/icon.ico", to: "." }],
+    }),
   ].filter(Boolean),
 });

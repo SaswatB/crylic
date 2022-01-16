@@ -37,6 +37,7 @@ function createWindow() {
 
   // Create the browser window.
   const mainWindow = new BrowserWindow({
+    icon: path.join(__dirname, "/icon.ico"),
     x: mainWindowState.x,
     y: mainWindowState.y,
     width: mainWindowState.width,
