@@ -43,8 +43,6 @@ function createWindow() {
     width: mainWindowState.width,
     height: mainWindowState.height,
     webPreferences: {
-      // init sentry on the renderer processes
-      preload: sentryPath,
       nodeIntegration: true,
       nodeIntegrationInWorker: true,
       contextIsolation: false,
