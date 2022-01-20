@@ -1,5 +1,6 @@
 import { debounce } from "lodash";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, of } from "rxjs";
+import { mergeMap } from "rxjs/operators";
 import { singleton } from "tsyringe";
 
 import { SelectMode } from "../constants";
@@ -13,8 +14,8 @@ import {
   StyleGroup,
 } from "../lib/ast/editors/ASTEditor";
 import { ASTType } from "../lib/ast/types";
-import { ltTakeNext, takeNext } from "../lib/utils";
-import { SelectedElement, Styles } from "../types/paint";
+import { ltTakeNext } from "../lib/utils";
+import { RenderEntry, SelectedElement, Styles } from "../types/paint";
 import { CompilerContextService } from "./CompilerContextService";
 import { ProjectService } from "./ProjectService";
 
@@ -49,6 +50,22 @@ export class SelectService {
         });
       }
     });
+
+    // clear the selected element if its frame was removed
+    this.projectService.project$
+      .pipe(
+        mergeMap((project) => project?.renderEntries$ || of<RenderEntry[]>([]))
+      )
+      .subscribe((renderEntries) => {
+        const selectedElementRenderId = this.selectedElement$.getValue()
+          ?.renderId;
+        if (
+          selectedElementRenderId !== undefined &&
+          !renderEntries.find((e) => e.id === selectedElementRenderId)
+        ) {
+          this.clearSelectedElement();
+        }
+      });
   }
 
   private get project() {
