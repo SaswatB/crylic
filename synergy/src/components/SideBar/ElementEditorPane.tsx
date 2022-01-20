@@ -35,7 +35,7 @@ import { linkComponent } from "../../lib/defs/react-router-dom";
 import { editorOpenLocation } from "../../lib/events";
 import { CodeEntry } from "../../lib/project/CodeEntry";
 import { renderSeparator } from "../../lib/render-utils";
-import { ltTakeNext, takeNext } from "../../lib/utils";
+import { ltTakeNext, sleep } from "../../lib/utils";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
 import { StyleKeys } from "../../types/paint";
@@ -552,7 +552,7 @@ export const ElementEditorPane: FunctionComponent = () => {
           <div className="text-center">Framer Motion is not installed</div>
           <button
             className="btn mt-2 w-full"
-            onClick={() => installPackages("framer-motion")}
+            onClick={() => installPackages("framer-motion@4.1.17")}
           >
             Install
           </button>
@@ -563,7 +563,16 @@ export const ElementEditorPane: FunctionComponent = () => {
     if (!componentName?.startsWith("motion.")) {
       // todo support more elements for animation conversion
       if (["div", "a", "button", "span"].includes(componentName || "")) {
-        const enableAnimation = () =>
+        const enableAnimation = async () => {
+          const codeId = project.primaryElementEditor.getCodeIdFromLookupId(
+            selectedElement!.lookupId
+          );
+          if (!codeId) return;
+          const codeEntry = project?.getCodeEntryValue(codeId);
+          if (!codeEntry) return;
+
+          const newCodePromise = ltTakeNext(codeEntry.code$);
+
           selectService.updateSelectedElement((editor, editContext) =>
             editor.updateElementComponent(editContext, {
               component: {
@@ -576,6 +585,11 @@ export const ElementEditorPane: FunctionComponent = () => {
               },
             })
           );
+          // todo find a better way to refresh, or avoid errors when doing this operation, than a timed refresh
+          await newCodePromise;
+          await sleep(1000);
+          project.refreshRenderEntries();
+        };
         return (
           <button className="btn w-full" onClick={enableAnimation}>
             Enable Animation

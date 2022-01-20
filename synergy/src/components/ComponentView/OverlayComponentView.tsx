@@ -1,6 +1,7 @@
 import React, {
   FunctionComponent,
   MutableRefObject,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -26,6 +27,7 @@ import {
 import { useDebounce } from "../../hooks/useDebounce";
 import { useMenuInput } from "../../hooks/useInput";
 import { useObservable } from "../../hooks/useObservable";
+import { useObservableCallback } from "../../hooks/useObservableCallback";
 import { useService } from "../../hooks/useService";
 import { addElementHelper } from "../../lib/ast/code-edit-helpers";
 import { routeComponent } from "../../lib/defs/react-router-dom";
@@ -71,6 +73,12 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   const { enqueueSnackbar } = useSnackbar();
   const { renderEntry } = compilerProps;
   const [viewContext, setViewContext] = useState<ViewContext>();
+
+  const reload = useCallback(
+    () => viewContext?.iframe.contentWindow?.location.reload(),
+    [viewContext]
+  );
+  useObservableCallback(project.shouldReloadRenderEntries$, reload);
 
   const [frameSize, setFrameSize] = useState({
     width: DEFAULT_FRAME_WIDTH,
@@ -292,7 +300,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           title="Refresh Frame"
           className="ml-2"
           icon={faSync}
-          onClick={() => viewContext?.iframe.contentWindow?.location.reload()}
+          onClick={reload}
         />
         <IconButton
           title="Resize Frame"

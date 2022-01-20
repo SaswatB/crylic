@@ -1,6 +1,6 @@
 import { uniqueId } from "lodash";
 import fspath from "path";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, Subject } from "rxjs";
 import {
   bufferCount,
   distinctUntilChanged,
@@ -29,6 +29,7 @@ export abstract class Project {
   public readonly codeEntries$ = new LTBehaviorSubject<CodeEntry[]>([]); // lm_9dfd4feb9b entries cannot be removed
   public readonly editEntries$ = new BehaviorSubject<EditEntry[]>([]);
   public readonly renderEntries$ = new BehaviorSubject<RenderEntry[]>([]);
+  public readonly shouldReloadRenderEntries$ = new Subject();
   private readonly elementEditorEntries: EditorEntry<ElementASTEditor<any>>[];
   private readonly styleEditorEntries: EditorEntry<StyleASTEditor<any>>[];
 
@@ -249,6 +250,10 @@ export abstract class Project {
 
       draft.splice(index, 1);
     });
+  }
+
+  public refreshRenderEntries() {
+    this.shouldReloadRenderEntries$.next();
   }
 
   // #endregion
