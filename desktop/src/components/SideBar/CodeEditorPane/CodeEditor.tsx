@@ -137,7 +137,7 @@ export const CodeEditor: FunctionComponent<Props> = ({
       }, 150);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [codeEntry, selectedElementId]);
+  }, [codeEntry, debouncedLocalValue, selectedElementId]);
 
   // try to select the element the editor cursor is at
   useEffect(() => {

@@ -23,6 +23,10 @@ export class ProjectService {
   }
 }
 
+export function useProject(): Project;
+export function useProject<T extends true | false>(options: {
+  allowUndefined?: T;
+}): T extends true ? Project | undefined : Project;
 export function useProject<T extends true | false>(options?: {
   allowUndefined?: T;
 }): T extends true ? Project | undefined : Project {

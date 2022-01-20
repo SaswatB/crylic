@@ -80,7 +80,21 @@ export const CodeEditorPane: FunctionComponent = () => {
             <CodeEditor
               project={project!}
               codeEntry={codeEntry}
-              onCodeChange={(id, code) => codeEntry.updateCode(code)}
+              onCodeChange={(id, code) => {
+                const codeEntry = project.getCodeEntryValue(id);
+                if (!codeEntry) {
+                  console.error(
+                    "bad CodeEditor.onCodeChange, missing code entry",
+                    id
+                  );
+                  return;
+                }
+                codeEntry.updateCode(code);
+                const editEntry = project.editEntries$
+                  .getValue()
+                  .find((e) => e.codeId === id);
+                if (!editEntry) project.toggleEditEntry(codeEntry);
+              }}
               selectedElementId={selectedElementLookupId}
               onSelectElement={(lookupId) => {
                 // todo reenable
