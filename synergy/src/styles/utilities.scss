@@ -60,13 +60,12 @@
   flex-shrink: 0;
   overflow-x: auto;
 
-  >.btn,
-  >.btngrp-v {
+  > .btn,
+  > .btngrp-v {
     flex-grow: 1;
     min-width: min-content;
 
     &:not(:last-child) {
-
       &,
       .btn {
         border-top-right-radius: 0;
@@ -75,7 +74,6 @@
     }
 
     &:not(:first-child) {
-
       &,
       .btn {
         border-top-left-radius: 0;
@@ -91,13 +89,12 @@
   flex-direction: column;
   overflow-y: auto;
 
-  >.btn,
-  >.btngrp-h {
+  > .btn,
+  > .btngrp-h {
     flex-grow: 1;
     min-height: min-content;
 
     &:not(:last-child) {
-
       &,
       .btn {
         border-bottom-left-radius: 0;
@@ -106,7 +103,6 @@
     }
 
     &:not(:first-child) {
-
       &,
       .btn {
         border-top-left-radius: 0;
@@ -212,7 +208,7 @@
 
 .editor-tabs {
   .tabs {
-    min-height: min-content;
+    min-height: 30px;
   }
 
   ::-webkit-scrollbar {
@@ -232,21 +228,21 @@
 }
 
 .blue-hue {
-  background-image: linear-gradient(135deg, #ABDCFF 10%, #0396FF 100%);
+  background-image: linear-gradient(135deg, #abdcff 10%, #0396ff 100%);
 }
 
 .dark-blue-hue {
-  background-image: linear-gradient(135deg, #6B73FF 10%, #000DFF 100%);
+  background-image: linear-gradient(135deg, #6b73ff 10%, #000dff 100%);
 }
 
 .red-hue {
-  background-image: linear-gradient(135deg, #F05F57 10%, #360940 100%);
+  background-image: linear-gradient(135deg, #f05f57 10%, #360940 100%);
 }
 
 .green-hue {
-  background-image: linear-gradient(135deg, #79F1A4 10%, #0E5CAD 100%);
+  background-image: linear-gradient(135deg, #79f1a4 10%, #0e5cad 100%);
 }
 
 .purple-hue {
-  background-image: linear-gradient(135deg, #FF6FD8 10%, #3813C2 100%);
+  background-image: linear-gradient(135deg, #ff6fd8 10%, #3813c2 100%);
 }
