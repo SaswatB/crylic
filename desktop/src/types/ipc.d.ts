@@ -27,12 +27,12 @@ export interface WebpackWorkerMessagePayload_Compile {
   codeEntries: {
     id: string;
     filePath: string;
-    code: string | undefined;
     codeRevisionId: number;
   }[];
   primaryCodeEntry: {
     id: string;
     filePath: string;
+    code: string | undefined;
   };
   compileId: number;
   config: {

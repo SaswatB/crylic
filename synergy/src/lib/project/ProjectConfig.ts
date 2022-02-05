@@ -44,6 +44,7 @@ export const ProjectConfigFile = it.type({
       allowDeclarationComponentFiles: it.union([it.boolean, it.undefined]),
       disableComponentExportsGuard: it.union([it.boolean, it.undefined]),
       forceUseComponentDefaultExports: it.union([it.boolean, it.undefined]),
+      maxFileSizeBytes: it.union([it.number, it.undefined]),
     }),
     it.undefined,
   ]),
@@ -105,5 +106,9 @@ export abstract class ProjectConfig {
       this.projectPath,
       this.configFile?.htmlTemplate?.path || DEFAULT_PROJECT_HTML_TEMPLATE_PATH
     );
+  }
+
+  public getAnalyzerMaxFileSizeBytes() {
+    return this.configFile?.analyzer?.maxFileSizeBytes ?? 50 * 1024;
   }
 }

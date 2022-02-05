@@ -197,10 +197,16 @@ export class CodeEntry {
 
   private metadata$ = this.code$.pipe(
     ltMap(
-      async (): Promise<
+      async (
+        code
+      ): Promise<
         Partial<Awaited<ReturnType<AstWorkerModule["computeMetadata"]>>>
       > => {
-        if (!this.isScriptEntry && !this.isStyleEntry) {
+        if (
+          (!this.isScriptEntry && !this.isStyleEntry) ||
+          !code ||
+          code.length > this.project.config.getAnalyzerMaxFileSizeBytes()
+        ) {
           return { isRenderable: false };
         }
 

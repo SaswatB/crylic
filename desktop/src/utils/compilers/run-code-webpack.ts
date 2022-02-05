@@ -3,7 +3,7 @@ import { cloneDeep } from "lodash";
 import { AddressInfo } from "net";
 
 import { WebpackWorkerMessagePayload_Compile } from "../../types/ipc";
-import { requireUncached } from "../utils";
+import { getAppNodeModules, requireUncached } from "../utils";
 import { getCraModules } from "./cra-modules";
 
 import baseAppEntry from "!!raw-loader!../../assets/base-app-entry.html";
@@ -113,6 +113,10 @@ const getEnvVars = (projectFolder: string) => {
   return appEnv;
 };
 
+function normalizePath(p: string) {
+  return p.replace(/(\\|\/)/g, path.sep);
+}
+
 // supports ts(x), js(x), css, sass, less and everything else as static files
 const getWebpackModules = async (
   sourcePath: string,
@@ -123,7 +127,7 @@ const getWebpackModules = async (
   };
 
   console.log("sourcePath", sourcePath);
-  let sourceInclude = sourcePath.replace(/(\\|\/)/g, path.sep);
+  let sourceInclude = normalizePath(sourcePath);
   if (!sourceInclude.endsWith(path.sep)) {
     sourceInclude += path.sep;
   }
@@ -305,13 +309,44 @@ const getWebpackModules = async (
   return { rules: [{ oneOf: loaders }] };
 };
 
+function saveFileWithDirs(inputFs: IFs, filePath: string, data: string) {
+  inputFs.mkdirpSync(path.dirname(filePath));
+  inputFs.writeFileSync(filePath, data);
+}
+
+interface LazyReadFileContext {
+  codeEntriesMap: Map<
+    string,
+    WebpackWorkerMessagePayload_Compile["codeEntries"][0]
+  >;
+  savedCodeRevisions: Record<string, number>;
+  fetchCodeEntry: (codeEntryId: string) => Promise<string | undefined>;
+}
+
+const lazyReadFileFactory = (
+  inputFs: IFs,
+  context: LazyReadFileContext
+) => async (...args: Parameters<typeof inputFs["readFile"]>) => {
+  const filePath = args[0] as string;
+  const entry = context.codeEntriesMap.get(normalizePath(filePath));
+  if (entry && entry.codeRevisionId !== context.savedCodeRevisions[entry.id]) {
+    const code = await context.fetchCodeEntry(entry.id);
+    if (code) {
+      console.log("updating webpack file", entry.filePath);
+      saveFileWithDirs(inputFs, filePath, code);
+      context.savedCodeRevisions[entry.id] = entry.codeRevisionId;
+    }
+  }
+  inputFs.readFile(...args);
+};
+
 const webpackCache: Record<
   string,
   | {
       compiler: import("webpack").Compiler;
       inputFs: IFs;
       outputFs: IFs;
-      savedCodeRevisions: Record<string, number | undefined>;
+      fsContext: LazyReadFileContext;
       devport: number;
       runId: number;
       lastPromise?: Promise<unknown>;
@@ -323,30 +358,14 @@ export const webpackRunCode = async (
   codeEntries: WebpackWorkerMessagePayload_Compile["codeEntries"],
   primaryCodeEntry: WebpackWorkerMessagePayload_Compile["primaryCodeEntry"],
   { paths, ...config }: WebpackWorkerMessagePayload_Compile["config"],
-  onProgress: (arg: { percentage: number; message: string }) => void
+  onProgress: (arg: { percentage: number; message: string }) => void,
+  fetchCodeEntry: (codeEntryId: string) => Promise<string | undefined>
 ) => {
-  if (!webpack) initialize();
+  if (!webpack) initialize(getAppNodeModules());
 
   const startTime = new Date().getTime();
-
-  const updateFiles = (
-    inputFs: IFs,
-    savedCodeRevisions: Record<string, number | undefined>
-  ) => {
-    // todo handle deleted code entries
-    codeEntries
-      .filter(
-        (entry) =>
-          entry.code !== undefined &&
-          entry.codeRevisionId !== savedCodeRevisions[entry.id]
-      )
-      .forEach((entry) => {
-        inputFs.mkdirpSync(path.dirname(entry.filePath));
-        inputFs.writeFileSync(entry.filePath, entry.code!);
-        savedCodeRevisions[entry.id] = entry.codeRevisionId;
-        console.log("updating webpack file", entry.filePath);
-      });
-  };
+  const codeEntriesMap = new Map<string, typeof codeEntries[0]>();
+  codeEntries.forEach((e) => codeEntriesMap.set(normalizePath(e.filePath), e));
 
   // todo clear cache on project close
   if (!webpackCache[primaryCodeEntry.id]) {
@@ -480,13 +499,29 @@ export const webpackRunCode = async (
       }
     }
 
+    const fsContext: LazyReadFileContext = {
+      fetchCodeEntry,
+      codeEntriesMap,
+      savedCodeRevisions: {},
+    };
+
     const compiler = webpack(options);
     const volume = new memfs.Volume();
     const inputFs = memfs.createFsFromVolume(volume);
     const outputFs = inputFs;
     const ufs1 = new unionfs.Union();
     // @ts-ignore bad types
-    ufs1.use(fs).use(inputFs);
+    ufs1.use(fs).use({
+      ...inputFs,
+      // @ts-ignore bad types
+      readFile: lazyReadFileFactory(inputFs, fsContext),
+    });
+
+    saveFileWithDirs(
+      inputFs,
+      primaryCodeEntry.filePath,
+      primaryCodeEntry.code!
+    );
 
     compiler.inputFileSystem = ufs1;
     // @ts-ignore bad types
@@ -501,9 +536,6 @@ export const webpackRunCode = async (
       join: joinPath,
       ...outputFs,
     };
-
-    const savedCodeRevisions = {};
-    updateFiles(inputFs, savedCodeRevisions);
 
     // stub out compiler.watch so that webpack-dev-server doesn't call it and instead relies on the manual compiler.run calls made below
     // const compilerWatch = compiler.watch;
@@ -558,13 +590,19 @@ export const webpackRunCode = async (
       compiler,
       inputFs,
       outputFs,
-      savedCodeRevisions,
+      fsContext,
       devport,
       runId: 0,
     };
   } else {
-    const { inputFs, savedCodeRevisions } = webpackCache[primaryCodeEntry.id]!;
-    updateFiles(inputFs, savedCodeRevisions);
+    const { inputFs, fsContext } = webpackCache[primaryCodeEntry.id]!;
+    fsContext.fetchCodeEntry = fetchCodeEntry;
+    fsContext.codeEntriesMap = codeEntriesMap;
+    saveFileWithDirs(
+      inputFs,
+      primaryCodeEntry.filePath,
+      primaryCodeEntry.code!
+    );
   }
   const { compiler, devport } = webpackCache[primaryCodeEntry.id]!;
   const runId = ++webpackCache[primaryCodeEntry.id]!.runId;

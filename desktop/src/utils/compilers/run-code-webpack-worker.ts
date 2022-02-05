@@ -5,7 +5,7 @@ import { ErrorBoundary } from "synergy/src/components/ErrorBoundary";
 import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
 import { Project } from "synergy/src/lib/project/Project";
 import { getReactRouterProxy } from "synergy/src/lib/react-router-proxy";
-import { ltTakeNext, sleep } from "synergy/src/lib/utils";
+import { ltTakeNext } from "synergy/src/lib/utils";
 import { RenderEntryDeployerContext } from "synergy/src/types/paint";
 
 import {
@@ -14,6 +14,7 @@ import {
 } from "../../types/ipc";
 import { DEFAULT_HTML_TEMPLATE_SELECTOR } from "../constants";
 import { publishComponent, unpublishComponent } from "../publish-component";
+import { getAppNodeModules } from "../utils";
 import { webpackRunCode } from "./run-code-webpack";
 
 import errorBoundaryComponent from "!!raw-loader!synergy/src/components/ErrorBoundary";
@@ -50,20 +51,9 @@ if (WORKER_ENABLED) {
     }
   });
   // initialize the worker with the local node modules
-  let nodeModulesPath = __non_webpack_require__
-    .resolve("webpack")
-    .replace(/(app[/\\])?node_modules[/\\].*$/, "");
-  if (fs.existsSync(path.join(nodeModulesPath, "desktop"))) {
-    // only for dev
-    nodeModulesPath = path.join(nodeModulesPath, "desktop");
-  }
-  if (fs.existsSync(path.join(nodeModulesPath, "app"))) {
-    nodeModulesPath = path.join(nodeModulesPath, "app");
-  }
-  nodeModulesPath = path.join(nodeModulesPath, "node_modules/");
   ipcRenderer.send("webpack-worker-message", {
     action: "initialize",
-    nodeModulesPath,
+    nodeModulesPath: getAppNodeModules(),
   });
 }
 
@@ -160,15 +150,11 @@ export const webpackRunCodeWithWorker = async ({
   const trimEntry = async (codeEntry: CodeEntry) => ({
     id: codeEntry.id,
     filePath: codeEntry.filePath,
-    code:
-      (await ltTakeNext(codeEntry.codeWithLookupData$)) ||
-      codeEntry.code$.getValue(),
     codeRevisionId: codeEntry.codeRevisionId,
   });
   const codeEntries = await Promise.all(
     project.codeEntries$.getValue().map(trimEntry)
   );
-  codeEntries.push(bundleCodeEntry);
 
   const config = {
     disableWebpackExternals:
@@ -182,6 +168,16 @@ export const webpackRunCodeWithWorker = async ({
     },
   };
 
+  const takeNextCode = async (codeEntryId: string) => {
+    const codeEntry = project.codeEntries$
+      .getValue()
+      .find((e) => e.id === codeEntryId);
+    return codeEntry
+      ? (await ltTakeNext(codeEntry.codeWithLookupData$)) ||
+          codeEntry.code$.getValue()
+      : undefined;
+  };
+
   let devport: number | null;
   if (WORKER_ENABLED) {
     // register a callback for then the worker completes
@@ -189,6 +185,19 @@ export const webpackRunCodeWithWorker = async ({
       compileCallbacks[compileId] = resolve;
     });
     progressCallbacks[compileId] = onProgress;
+
+    const codeFetchHandler = async (
+      _: unknown,
+      d: { type: string; codeEntryId: string }
+    ) => {
+      if (d.type !== "code-request") return;
+
+      ipcRenderer.send("webpack-renderer-message-" + d.codeEntryId, {
+        action: "code-response",
+        code: await takeNextCode(d.codeEntryId),
+      });
+    };
+    ipcRenderer.on("webpack-renderer-message", codeFetchHandler);
 
     // set a message to the worker for compiling code
     ipcRenderer.send("webpack-worker-message", {
@@ -202,6 +211,7 @@ export const webpackRunCodeWithWorker = async ({
     // wait for the worker to compile
     ({ result: devport } = await workerCallback);
 
+    ipcRenderer.off("webpack-renderer-message", codeFetchHandler);
     delete compileCallbacks[compileId];
     delete progressCallbacks[compileId];
   } else {
@@ -209,7 +219,8 @@ export const webpackRunCodeWithWorker = async ({
       codeEntries,
       bundleCodeEntry,
       config,
-      onProgress
+      onProgress,
+      (codeEntryId) => takeNextCode(codeEntryId)
     );
   }
 
