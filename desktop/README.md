@@ -11,6 +11,10 @@ yarn electron:dev
 
 ## Release Process
 
+### Version bump
+
+Run `yarn bump [major|minor|patch]` to bump the version number & create a new git commit, by default it will run `patch`.
+
 ### Sentry
 
 Sentry is used for error reporting, make sure to run `sentry-cli login` before building.

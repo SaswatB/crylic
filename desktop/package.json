@@ -11,6 +11,7 @@
     "build": "rimraf app/build && rimraf app/build-main && webpack --config config/webpack.main.config.js --mode production && node --max-old-space-size=8192 ./scripts/build && cpy --parents build-main app/ && cpy --parents build app/ && rimraf --glob ./app/build*/**/*.map && node ./scripts/postbuild.js",
     "test": "jest",
     "package": "electron-builder",
+    "bump": "node ./scripts/bump",
     "lint": "eslint --ext .ts,.tsx,.js src/.",
     "lint:fix": "eslint --ext .ts,.tsx,.js --fix src/.",
     "pretty": "prettier --write .",
