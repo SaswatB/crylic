@@ -13,6 +13,9 @@ export class CompilerContextService {
   public getViewContext(renderId: string) {
     return this.viewContextMap[renderId];
   }
+  public getAllViewContexts() {
+    return this.viewContextMap;
+  }
   public setViewContext(renderId: string, viewContext: ViewContext) {
     this.viewContextMap[renderId] = viewContext;
   }
