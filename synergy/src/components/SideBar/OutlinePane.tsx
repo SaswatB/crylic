@@ -11,6 +11,7 @@ import { useBusSubscription } from "../../hooks/useBusSubscription";
 import { useMemoObservable, useObservable } from "../../hooks/useObservable";
 import { useService } from "../../hooks/useService";
 import {
+  componentDomChange,
   componentViewCompileEnd,
   componentViewReload,
   componentViewRouteChange,
@@ -71,13 +72,14 @@ export const OutlinePane: FunctionComponent = () => {
     Record<string, OutlineElement[] | undefined>
   >({});
   const calculateOutline = (renderId: string) => {
+    // todo debounce
     const root = compilerContextService
       .getViewContext(renderId)
       ?.getRootElement();
     setOutlineMap(
       produce((currentOutlineMap) => {
         currentOutlineMap[renderId] = root
-          ? buildOutline(project!, renderId, root)
+          ? buildOutline(project, renderId, root)
           : undefined;
       })
     );
@@ -92,12 +94,13 @@ export const OutlinePane: FunctionComponent = () => {
   useBusSubscription(componentViewCompileEnd, calculateOutlineWithEntry);
   useBusSubscription(componentViewReload, calculateOutlineWithEntry);
   useBusSubscription(componentViewRouteChange, calculateOutlineWithEntry);
+  useBusSubscription(componentDomChange, calculateOutlineWithEntry);
   const renderEntries = useObservable(project?.renderEntries$);
 
   const outlines = Object.entries(outlineMap)
     .map(([key, value]) => ({
       outline: value,
-      renderEntry: renderEntries!.find(({ id }) => id === key),
+      renderEntry: renderEntries.find(({ id }) => id === key),
     }))
     .filter(
       (

@@ -1,10 +1,11 @@
 import React, {
   FunctionComponent,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
 } from "react";
-import { flatten, isEqual, uniq } from "lodash";
+import { debounce, flatten, isEqual, uniq } from "lodash";
 import { Observable, ReplaySubject } from "rxjs";
 import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 import { useBus } from "ts-bus/react";
@@ -12,6 +13,7 @@ import { useBus } from "ts-bus/react";
 import { useMemoObservable } from "../../hooks/useObservable";
 import { useRerender } from "../../hooks/useRerender";
 import { useService } from "../../hooks/useService";
+import { useUpdatingRef } from "../../hooks/useUpdatingRef";
 import { componentViewCompileEnd, componentViewReload } from "../../lib/events";
 import { RouteDefinition } from "../../lib/react-router-proxy";
 import { arrayMap, isDefined } from "../../lib/utils";
@@ -39,6 +41,7 @@ export interface CompilerComponentViewProps {
   onCompileError?: (e: Error) => void;
   onNewPublishUrl?: (url: string) => void;
   onReload?: (renderEntry: RenderEntry) => void;
+  onDomChange?: () => void; // debounced listener on any DOM changes within the iframe
 }
 
 export const CompilerComponentView: FunctionComponent<
@@ -51,6 +54,7 @@ export const CompilerComponentView: FunctionComponent<
   onCompileError,
   onNewPublishUrl,
   onReload,
+  onDomChange,
   ...props
 }) => {
   const bus = useBus();
@@ -60,12 +64,32 @@ export const CompilerComponentView: FunctionComponent<
   const frame = useRef<{
     frameElement: HTMLIFrameElement;
   }>(null);
+  const frameMutationObserver = useRef<MutationObserver>(null);
 
   const lastPublishUrl = useRef<string>();
   if (!renderEntry.publish && lastPublishUrl.current) {
     // clear publish url if the render entry isn't published
     lastPublishUrl.current = undefined;
   }
+
+  const onDomChangeRef = useUpdatingRef(onDomChange);
+  /**
+   * Register a listener on any DOM changes within the iframe
+   */
+  const registerMutationObserver = useCallback(() => {
+    const observer =
+      frameMutationObserver.current ||
+      (frameMutationObserver.current,
+      new MutationObserver(debounce(() => onDomChangeRef.current?.(), 100)));
+    const element = frame.current?.frameElement.contentDocument?.body;
+
+    if (element) {
+      observer.observe(element, {
+        childList: true,
+        subtree: true,
+      });
+    }
+  }, [onDomChangeRef]);
 
   // track route info per frame
   const onRoutesDefinedSubjectRef = useRef(
@@ -167,6 +191,7 @@ export const CompilerComponentView: FunctionComponent<
           onReload() {
             onReload?.(renderEntry);
             bus.publish(componentViewReload({ renderEntry }));
+            registerMutationObserver();
           },
           onSwitchActive(id, arg) {
             switchContext[id] = arg;
@@ -200,7 +225,7 @@ export const CompilerComponentView: FunctionComponent<
 
             // construct the view context
             const viewContext: ViewContext = {
-              iframe: frame.current!.frameElement,
+              iframe: frame.current.frameElement,
               onRoutesDefined: onRoutesDefinedSubjectRef.current.pipe(
                 distinctUntilChanged(isEqual)
               ),

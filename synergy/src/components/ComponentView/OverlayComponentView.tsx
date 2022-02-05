@@ -31,7 +31,7 @@ import { useObservableCallback } from "../../hooks/useObservableCallback";
 import { useService } from "../../hooks/useService";
 import { addElementHelper } from "../../lib/ast/code-edit-helpers";
 import { routeComponent } from "../../lib/defs/react-router-dom";
-import { componentViewRouteChange } from "../../lib/events";
+import { componentDomChange, componentViewRouteChange } from "../../lib/events";
 import { isDefined } from "../../lib/utils";
 import { CompilerContextService } from "../../services/CompilerContextService";
 import { useProject } from "../../services/ProjectService";
@@ -351,6 +351,10 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
             skipLoadingDebounce();
             setLoading(false);
             compilerProps?.onCompileError?.(e);
+          }}
+          onDomChange={() => {
+            bus.publish(componentDomChange({ renderEntry }));
+            compilerProps?.onDomChange?.();
           }}
           style={{
             ...compilerProps.style,

@@ -2,6 +2,7 @@
 import { cloneDeep } from "lodash";
 import { AddressInfo } from "net";
 
+import { WebpackWorkerMessagePayload_Compile } from "../../types/ipc";
 import { requireUncached } from "../utils";
 import { getCraModules } from "./cra-modules";
 
@@ -319,34 +320,14 @@ const webpackCache: Record<
 > = {};
 
 export const webpackRunCode = async (
-  codeEntries: {
-    id: string;
-    filePath: string;
-    code?: string;
-    codeRevisionId: number;
-  }[],
-  selectedCodeId: string,
-  {
-    paths,
-    ...config
-  }: {
-    paths: {
-      projectFolder: string; // appPath
-      projectSrcFolder: string; // appSrc
-      overrideWebpackConfig?: string;
-      htmlTemplate?: string;
-    };
-    disableWebpackExternals?: boolean;
-  },
+  codeEntries: WebpackWorkerMessagePayload_Compile["codeEntries"],
+  primaryCodeEntry: WebpackWorkerMessagePayload_Compile["primaryCodeEntry"],
+  { paths, ...config }: WebpackWorkerMessagePayload_Compile["config"],
   onProgress: (arg: { percentage: number; message: string }) => void
 ) => {
   if (!webpack) initialize();
 
   const startTime = new Date().getTime();
-  const primaryCodeEntry = codeEntries.find(
-    (entry) => entry.id === selectedCodeId
-  );
-  if (!primaryCodeEntry) throw new Error("Failed to find primary code entry");
 
   const updateFiles = (
     inputFs: IFs,

@@ -30,13 +30,19 @@ export interface WebpackWorkerMessagePayload_Compile {
     code: string | undefined;
     codeRevisionId: number;
   }[];
-  selectedCodeId: string;
+  primaryCodeEntry: {
+    id: string;
+    filePath: string;
+  };
   compileId: number;
-  paths: {
-    projectFolder: string;
-    projectSrcFolder: string;
-    overrideWebpackConfig: string | undefined;
-    htmlTemplate: string;
+  config: {
+    paths: {
+      projectFolder: string; // appPath
+      projectSrcFolder: string; // appSrc
+      overrideWebpackConfig: string | undefined;
+      htmlTemplate: string;
+    };
+    disableWebpackExternals?: boolean;
   };
 }
 

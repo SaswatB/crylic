@@ -3,8 +3,9 @@ import ReactDOMServer from "react-dom/server";
 
 import { ErrorBoundary } from "synergy/src/components/ErrorBoundary";
 import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
+import { Project } from "synergy/src/lib/project/Project";
 import { getReactRouterProxy } from "synergy/src/lib/react-router-proxy";
-import { ltTakeNext, takeNext } from "synergy/src/lib/utils";
+import { ltTakeNext, sleep } from "synergy/src/lib/utils";
 import { RenderEntryDeployerContext } from "synergy/src/types/paint";
 
 import {
@@ -66,6 +67,67 @@ if (WORKER_ENABLED) {
   });
 }
 
+const getImportFromCodeEntry = async (local: string, codeEntry: CodeEntry) => {
+  const exportIsDefault = await ltTakeNext(codeEntry.exportIsDefault$);
+  const exportName = await ltTakeNext(codeEntry.exportName$);
+
+  let declaration;
+  if (exportIsDefault || !exportName) {
+    declaration = local;
+  } else if (exportName === local) {
+    declaration = `{ ${local} }`;
+  } else {
+    declaration = `{ ${exportName} as ${local} }`;
+  }
+
+  const src = codeEntry.filePath.replace(/\\/g, "\\\\");
+  return `import ${declaration} from "${src}";`;
+};
+
+const generateBundleCode = async (
+  project: Project,
+  componentCodeEntry: CodeEntry
+) => {
+  const componentImport = await getImportFromCodeEntry(
+    "Component",
+    componentCodeEntry
+  );
+
+  const bootstrapCodeEntry = project.codeEntries$
+    .getValue()
+    .find((c) => c.isBootstrap());
+  const bootstrapImport = bootstrapCodeEntry
+    ? await getImportFromCodeEntry("Bootstrap", bootstrapCodeEntry)
+    : "";
+
+  const rootSelector =
+    project.config.configFile?.htmlTemplate?.rootSelector ||
+    DEFAULT_HTML_TEMPLATE_SELECTOR;
+
+  return `
+import React, { ErrorInfo } from "react";
+import ReactDOM from "react-dom";
+${componentImport}
+${bootstrapImport}
+
+${errorBoundaryComponent
+  .replace('import React, { ErrorInfo } from "react";', "")
+  .replace("export", "")}
+
+ReactDOM.render((
+  <ErrorBoundary>
+    ${
+      bootstrapCodeEntry
+        ? "<Bootstrap><Component /></Bootstrap>"
+        : "<Component />"
+    }
+  </ErrorBoundary>),
+  document.getElementById("${rootSelector}")
+);
+
+`.trim();
+};
+
 let compileIdCounter = 0;
 
 /**
@@ -85,85 +147,28 @@ export const webpackRunCodeWithWorker = async ({
 }: RenderEntryDeployerContext) => {
   const startTime = Date.now();
   const compileId = ++compileIdCounter;
-
-  const getImport = (declaration: string, source: string) =>
-    `import ${declaration} from "${source.replace(/\\/g, "\\\\")}";`;
-  const getImportFromCodeEntry = async (
-    local: string,
-    codeEntry: CodeEntry
-  ) => {
-    const exportIsDefault = await ltTakeNext(codeEntry.exportIsDefault$);
-    const exportName = await ltTakeNext(codeEntry.exportName$);
-
-    let declaration;
-    if (exportIsDefault || !exportName) {
-      declaration = local;
-      return getImport(local, codeEntry.filePath);
-    } else if (exportName === local) {
-      declaration = `{ ${local} }`;
-    } else {
-      declaration = `{ ${exportName} as ${local} }`;
-    }
-    return getImport(declaration, codeEntry.filePath);
+  const componentCodeEntry = project.getCodeEntryValue(renderEntry.codeId)!;
+  const bundleCodeEntry = {
+    id: `bundle-${renderEntry.codeId}`,
+    code: await generateBundleCode(project, componentCodeEntry),
+    // todo add random string to filename
+    filePath: path.join(project.sourceFolderPath, "paintbundle.tsx"),
+    codeRevisionId: 0,
   };
-  const componentImport = await getImportFromCodeEntry(
-    "Component",
-    project.getCodeEntryValue(renderEntry.codeId)!
+  console.log("bundleCode", bundleCodeEntry.code);
+
+  const trimEntry = async (codeEntry: CodeEntry) => ({
+    id: codeEntry.id,
+    filePath: codeEntry.filePath,
+    code:
+      (await ltTakeNext(codeEntry.codeWithLookupData$)) ||
+      codeEntry.code$.getValue(),
+    codeRevisionId: codeEntry.codeRevisionId,
+  });
+  const codeEntries = await Promise.all(
+    project.codeEntries$.getValue().map(trimEntry)
   );
-  const bootstrapCodeEntry = project.codeEntries$
-    .getValue()
-    .find((c) => c.isBootstrap());
-  const bootstrapImport = bootstrapCodeEntry
-    ? await getImportFromCodeEntry("Bootstrap", bootstrapCodeEntry)
-    : "";
-
-  const bundleCode = `
-import React, { ErrorInfo } from "react";
-import ReactDOM from "react-dom";
-${componentImport}
-${bootstrapImport}
-
-${errorBoundaryComponent
-  .replace('import React, { ErrorInfo } from "react";', "")
-  .replace("export", "")}
-
-ReactDOM.render((
-  <ErrorBoundary>
-    ${
-      bootstrapCodeEntry
-        ? "<Bootstrap><Component /></Bootstrap>"
-        : "<Component />"
-    }
-  </ErrorBoundary>),
-  document.getElementById("${
-    project.config.configFile?.htmlTemplate?.rootSelector ||
-    DEFAULT_HTML_TEMPLATE_SELECTOR
-  }")
-);
-`;
-  console.log("bundleCode", bundleCode);
-
-  const bundleId = `bundle-${renderEntry.codeId}`;
-  const codeEntries = (
-    await Promise.all(
-      project.codeEntries$.getValue().map(async (codeEntry) => ({
-        id: codeEntry.id,
-        filePath: codeEntry.filePath,
-        code:
-          (await ltTakeNext(codeEntry.codeWithLookupData$)) ||
-          codeEntry.code$.getValue(),
-        codeRevisionId: codeEntry.codeRevisionId,
-      }))
-    )
-  ).concat([
-    {
-      id: bundleId,
-      code: bundleCode,
-      // todo add random string to filename
-      filePath: path.join(project.sourceFolderPath, "paintbundle.tsx"),
-      codeRevisionId: 0,
-    },
-  ]);
+  codeEntries.push(bundleCodeEntry);
 
   const config = {
     disableWebpackExternals:
@@ -189,7 +194,7 @@ ReactDOM.render((
     ipcRenderer.send("webpack-worker-message", {
       action: "compile",
       codeEntries,
-      selectedCodeId: bundleId,
+      primaryCodeEntry: bundleCodeEntry,
       compileId,
       config,
     });
@@ -200,7 +205,12 @@ ReactDOM.render((
     delete compileCallbacks[compileId];
     delete progressCallbacks[compileId];
   } else {
-    devport = await webpackRunCode(codeEntries, bundleId, config, onProgress);
+    devport = await webpackRunCode(
+      codeEntries,
+      bundleCodeEntry,
+      config,
+      onProgress
+    );
   }
 
   const workerCallbackTime = Date.now();
@@ -248,6 +258,7 @@ ReactDOM.render((
     onReload();
   };
   if (
+    // todo fix tiny edge case where 'includes' here has a false positive
     !frame!.contentWindow!.location.href.includes(`${devport}`) ||
     (frame!.contentWindow! as any).paintErrorDisplayed
   ) {
