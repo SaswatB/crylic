@@ -4,6 +4,7 @@ import {
   faEye,
   faFilter,
   faPlus,
+  faSearch,
 } from "@fortawesome/free-solid-svg-icons";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
@@ -272,6 +273,29 @@ export const AssetTreePane: FunctionComponent<Props> = ({
       );
     }, [assetsFilter, project]) || {};
 
+  // #region name filter
+
+  const [nameFilter, setNameFilter] = useState("");
+  const lowerCaseNameFilter = nameFilter.toLowerCase();
+  const [enableNameFilter, setEnableNameFilter] = useState(false);
+  const filterChildrenRecursively = (node: Tree): Tree[] =>
+    node.children
+      .map((child) => ({
+        ...child,
+        children: filterChildrenRecursively(child),
+      }))
+      .filter(
+        (child) =>
+          child.children.length > 0 ||
+          child.name.toLowerCase().includes(lowerCaseNameFilter)
+      );
+  const filteredTreeChildren =
+    !projectTree?.children || !enableNameFilter
+      ? projectTree?.children
+      : filterChildrenRecursively(projectTree);
+
+  // #endregion
+
   /**
    * Handle adding a custom component to a frame
    */
@@ -409,10 +433,16 @@ export const AssetTreePane: FunctionComponent<Props> = ({
             </Tour>
             <IconButton
               data-tour="asset-tree-filter"
-              className="mx-2"
+              className="ml-2"
               title="Filter Assets"
               icon={faFilter}
               onClick={openAssetsFilterMenu}
+            />
+            <IconButton
+              className="ml-2"
+              title="Search"
+              icon={faSearch}
+              onClick={() => setEnableNameFilter((b) => !b)}
             />
             <Tour
               name="asset-tree-add"
@@ -426,6 +456,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
             </Tour>
             <IconButton
               data-tour="asset-tree-add"
+              className="ml-2"
               title="Add Asset"
               icon={faPlus}
               onClick={openAddMenu}
@@ -434,6 +465,16 @@ export const AssetTreePane: FunctionComponent<Props> = ({
         )}
         {renderAssetsFilterMenu()}
         {renderAddMenu()}
+
+        {enableNameFilter && (
+          <input
+            className="mb-2 px-1 text-black"
+            value={nameFilter}
+            onChange={(e) => setNameFilter(e.target.value)}
+            autoFocus
+          />
+        )}
+
         {projectTree && treeNodeIds ? (
           <div className="flex-1 overflow-auto">
             <TreeView
@@ -443,7 +484,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
               onNodeToggle={(event, nodeIds) => setExpandedTreeNodes(nodeIds)}
               selected={null as any}
             >
-              {projectTree.children.map(renderTree)}
+              {filteredTreeChildren?.map(renderTree)}
             </TreeView>
           </div>
         ) : null}
