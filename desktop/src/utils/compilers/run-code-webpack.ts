@@ -439,12 +439,14 @@ export const webpackRunCode = async (
               amd: "react-dom",
               root: "ReactDOM",
             },
-            "react-router-dom": {
-              commonjs: "react-router-dom",
-              commonjs2: "react-router-dom",
-              amd: "react-router-dom",
-              root: "ReactRouterDOM",
-            },
+            // disable router support
+            // todo decide whether to remove to reenable
+            // "react-router-dom": {
+            //   commonjs: "react-router-dom",
+            //   commonjs2: "react-router-dom",
+            //   amd: "react-router-dom",
+            //   root: "ReactRouterDOM",
+            // },
             "react-refresh/runtime": {
               commonjs: "react-refresh/runtime",
               commonjs2: "react-refresh/runtime",
