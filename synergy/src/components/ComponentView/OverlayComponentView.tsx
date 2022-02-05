@@ -270,7 +270,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   return (
     <div className="flex flex-col m-10">
       <div className="flex relative px-3 py-1 bg-blue-900 opacity-50 hover:opacity-100 default-transition">
-        {renderEntry.name}
+        <div className="flex-1 truncate">{renderEntry.name}</div>
         <div className="flex-1" />
         {routeDefinition?.routes ? (
           <>

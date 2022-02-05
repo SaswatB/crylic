@@ -10,6 +10,7 @@ import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import TextField from "@material-ui/core/TextField";
 
+import { MINIMUM_FRAME_HEIGHT, MINIMUM_FRAME_WIDTH } from "../constants";
 import { createModal } from "./PromiseModal";
 
 const PREDEFINED_RESOLUTIONS: {
@@ -49,8 +50,8 @@ export const ResizeModal = createModal<Props, Result>(
 
     const onSubmit = () =>
       resolve({
-        width: Math.max(parseInt(width), 100),
-        height: Math.max(parseInt(height), 10),
+        width: Math.max(parseInt(width), MINIMUM_FRAME_WIDTH),
+        height: Math.max(parseInt(height), MINIMUM_FRAME_HEIGHT),
       });
 
     return (
@@ -91,6 +92,10 @@ export const ResizeModal = createModal<Props, Result>(
               label="Width"
               value={width}
               onChange={(e) => setWidth(e.target.value)}
+              onBlur={() =>
+                parseInt(width) < MINIMUM_FRAME_WIDTH &&
+                setWidth(`${MINIMUM_FRAME_WIDTH}`)
+              }
               // submit on enter
               onKeyDown={(e) => {
                 if (e.keyCode === 13) {
@@ -108,6 +113,10 @@ export const ResizeModal = createModal<Props, Result>(
               label="Height"
               value={height}
               onChange={(e) => setHeight(e.target.value)}
+              onBlur={() =>
+                parseInt(height) < MINIMUM_FRAME_HEIGHT &&
+                setHeight(`${MINIMUM_FRAME_HEIGHT}`)
+              }
               // submit on enter
               onKeyDown={(e) => {
                 if (e.keyCode === 13) {
