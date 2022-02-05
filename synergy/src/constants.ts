@@ -2,8 +2,9 @@ import { ComponentDefinition } from "./types/paint";
 
 export const CONFIG_FILE_NAME = "crylic.config.js";
 
-export const DEFAULT_FRAME_WIDTH = 350;
-export const DEFAULT_FRAME_HEIGHT = 600;
+// lm_644b8c2629 default frame resolution is iPhone SE
+export const DEFAULT_FRAME_WIDTH = 375;
+export const DEFAULT_FRAME_HEIGHT = 667;
 
 export const DEFAULT_PROJECT_SOURCE_FOLDER = "src";
 export const DEFAULT_PROJECT_HTML_TEMPLATE_PATH = "public/index.html";
