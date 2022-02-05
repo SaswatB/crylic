@@ -6,9 +6,9 @@
   "main": "build-main-dev/electron.js",
   "homepage": "./",
   "scripts": {
-    "start": "node ./scripts/start",
+    "web:dev": "node ./scripts/start",
+    "electron:dev": "webpack --config config/webpack.main.config.js --mode development && electron --remote-debugging-port=9222 .",
     "build": "rimraf app/build && rimraf app/build-main && webpack --config config/webpack.main.config.js --mode production && node --max-old-space-size=8192 ./scripts/build && cpy --parents build-main app/ && cpy --parents build app/ && rimraf --glob ./app/build*/**/*.map && node ./scripts/postbuild.js",
-    "electron-dev": "webpack --config config/webpack.main.config.js --mode development && electron --remote-debugging-port=9222 .",
     "test": "jest",
     "package": "electron-builder",
     "lint": "eslint --ext .ts,.tsx,.js src/.",
