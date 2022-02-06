@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { faBars } from "@fortawesome/free-solid-svg-icons";
-import { Backdrop, CircularProgress } from "@material-ui/core";
 import { useSnackbar } from "notistack";
 import { Resizable } from "re-resizable";
 import { distinctUntilChanged, map } from "rxjs/operators";
@@ -28,20 +27,17 @@ import { ComponentViewZoomAction } from "synergy/src/types/paint";
 
 import { CodeEditorPane } from "./components/SideBar/CodeEditorPane/CodeEditorPane";
 import { Intro } from "./components/Workspace/Intro";
-import { openFilePicker, saveFilePicker } from "./hooks/useFilePicker";
-import { FileProject } from "./lib/project/FileProject";
+import { openFilePicker } from "./hooks/useFilePicker";
 import { webpackRunCodeWithWorker } from "./utils/compilers/run-code-webpack-worker";
 import "./App.scss";
 
 const open = __non_webpack_require__("open") as typeof import("open");
-const fs = __non_webpack_require__("fs") as typeof import("fs");
 
 function App() {
   const projectService = useService(ProjectService);
   const project = useObservable(projectService.project$);
   const { enqueueSnackbar } = useSnackbar();
   const bus = useBus();
-  const [loading, setLoading] = useState(0);
   const renderEntries = useObservable(project?.renderEntries$);
   const hasEditEntries = useMemoObservable(
     () =>
@@ -54,46 +50,6 @@ function App() {
 
   useObservableCallback(project?.projectSaved$, () =>
     enqueueSnackbar("Files Saved!")
-  );
-
-  const openProject = (filePath: string) => {
-    if (!fs.existsSync(filePath)) {
-      alert("Project does not exist");
-      return;
-    }
-    setLoading((l) => l + 1);
-    // set timeout allows react to render the loading screen before
-    // the main thread get's pegged from opening the project
-    setTimeout(
-      () =>
-        FileProject.createProjectFromDirectory(filePath)
-          .then((p) => projectService.setProject(p))
-          .finally(() => setLoading((l) => l - 1)),
-      150
-    );
-  };
-
-  const renderIntro = () => (
-    <Intro
-      onNewProject={() =>
-        saveFilePicker({
-          filters: [{ name: "Project", extensions: [""] }],
-        }).then((f) => {
-          if (f)
-            FileProject.createNewProjectInDirectory(f).then((p) =>
-              projectService.setProject(p)
-            );
-        })
-      }
-      onOpenProject={() =>
-        openFilePicker({ properties: ["openDirectory"] }).then((filePath) => {
-          if (!filePath) return;
-          openProject(filePath);
-        })
-      }
-      onSelectRecentProject={(filePath) => openProject(filePath)}
-      recentProjects={projectService.getRecentProjects()}
-    />
   );
 
   const { tourDisabled, setTourDisabled, resetTour } = useContext(TourContext);
@@ -211,9 +167,6 @@ function App() {
       className="flex flex-col items-stretch w-screen h-screen relative overflow-hidden text-white"
       data-tour="start"
     >
-      <Backdrop open={loading > 0}>
-        <CircularProgress disableShrink />
-      </Backdrop>
       {project && <InstallDialog />}
       <Tour
         name="start"
@@ -249,11 +202,7 @@ function App() {
               <Toolbar setZoomAction={setZoomAction} />
             </div>
           )}
-          {!project && (
-            <div className="flex flex-1 w-full absolute items-center justify-center z-10">
-              {renderIntro()}
-            </div>
-          )}
+          {!project && <Intro />}
           <TransformContainer
             zoomAction={zoomAction}
             onZoomChange={(scale) => (scaleRef.current = scale)}
