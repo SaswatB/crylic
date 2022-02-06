@@ -3,6 +3,7 @@ import { cloneDeep } from "lodash";
 import { AddressInfo } from "net";
 
 import { WebpackWorkerMessagePayload_Compile } from "../../types/ipc";
+import { normalizePath } from "../normalizePath";
 import { getAppNodeModules, requireUncached } from "../utils";
 import { getCraModules } from "./cra-modules";
 
@@ -129,10 +130,6 @@ const getEnvVars = (projectFolder: string) => {
   return appEnv;
 };
 
-function normalizePath(p: string) {
-  return p.replace(/(\\|\/)/g, path.sep);
-}
-
 // supports ts(x), js(x), css, sass, less and everything else as static files
 const getWebpackModules = async (
   sourcePath: string,
@@ -143,7 +140,7 @@ const getWebpackModules = async (
   };
 
   console.log("sourcePath", sourcePath);
-  let sourceInclude = normalizePath(sourcePath);
+  let sourceInclude = normalizePath(sourcePath, path.sep);
   if (!sourceInclude.endsWith(path.sep)) {
     sourceInclude += path.sep;
   }
@@ -344,7 +341,7 @@ const lazyReadFileFactory = (
   context: LazyReadFileContext
 ) => async (...args: Parameters<typeof inputFs["readFile"]>) => {
   const filePath = args[0] as string;
-  const entry = context.codeEntriesMap.get(normalizePath(filePath));
+  const entry = context.codeEntriesMap.get(normalizePath(filePath, path.sep));
   if (entry && entry.codeRevisionId !== context.savedCodeRevisions[entry.id]) {
     const code = await context.fetchCodeEntry(entry.id);
     if (code) {
@@ -367,7 +364,9 @@ export const webpackRunCode = async (
 
   const startTime = new Date().getTime();
   const codeEntriesMap = new Map<string, typeof codeEntries[0]>();
-  codeEntries.forEach((e) => codeEntriesMap.set(normalizePath(e.filePath), e));
+  codeEntries.forEach((e) =>
+    codeEntriesMap.set(normalizePath(e.filePath, path.sep), e)
+  );
 
   // todo clear cache on project close
   if (!webpackCache[primaryCodeEntry.id]) {

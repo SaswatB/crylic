@@ -33,6 +33,7 @@ import { webpackRunCodeWithWorker } from "./utils/compilers/run-code-webpack-wor
 import "./App.scss";
 
 const open = __non_webpack_require__("open") as typeof import("open");
+const fs = __non_webpack_require__("fs") as typeof import("fs");
 
 function App() {
   const projectService = useService(ProjectService);
@@ -50,6 +51,23 @@ function App() {
     [project]
   );
 
+  const openProject = (filePath: string) => {
+    if (!fs.existsSync(filePath)) {
+      alert("Project does not exist");
+      return;
+    }
+    setLoading((l) => l + 1);
+    // set timeout allows react to render the loading screen before
+    // the main thread get's pegged from opening the project
+    setTimeout(
+      () =>
+        FileProject.createProjectFromDirectory(filePath)
+          .then((p) => projectService.setProject(p))
+          .finally(() => setLoading((l) => l - 1)),
+      150
+    );
+  };
+
   const renderIntro = () => (
     <Intro
       onNewProject={() =>
@@ -65,18 +83,11 @@ function App() {
       onOpenProject={() =>
         openFilePicker({ properties: ["openDirectory"] }).then((filePath) => {
           if (!filePath) return;
-          setLoading((l) => l + 1);
-          // set timeout allows react to render the loading screen before
-          // the main thread get's pegged from opening the project
-          setTimeout(
-            () =>
-              FileProject.createProjectFromDirectory(filePath)
-                .then((p) => projectService.setProject(p))
-                .finally(() => setLoading((l) => l - 1)),
-            150
-          );
+          openProject(filePath);
         })
       }
+      onSelectRecentProject={(filePath) => openProject(filePath)}
+      recentProjects={projectService.getRecentProjects()}
     />
   );
 
@@ -235,7 +246,7 @@ function App() {
             </div>
           )}
           {!project && (
-            <div className="flex flex-1 w-64 absolute items-center justify-center z-10">
+            <div className="flex flex-1 w-full absolute items-center justify-center z-10">
               {renderIntro()}
             </div>
           )}

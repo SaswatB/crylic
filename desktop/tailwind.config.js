@@ -1,7 +1,11 @@
 module.exports = {
   purge: false,
   theme: {
-    extend: {},
+    extend: {
+      backgroundOpacity: {
+        10: "0.1",
+      },
+    },
   },
   variants: {},
   plugins: [],
