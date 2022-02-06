@@ -425,7 +425,9 @@ export const AssetTreePane: FunctionComponent<Props> = ({
       </Tour>
       <div data-tour="asset-tree" className="flex flex-col h-full">
         {renderSeparator(
+          // lm_ca3045309d hardcoded label width used on drag handle
           "Assets",
+          // lm_5d160a2bcc hardcoded icon group width used on drag handle
           <>
             <Tour name="asset-tree-filter" dependencies={["asset-tree"]}>
               By default the assets view only shows components, use this filter

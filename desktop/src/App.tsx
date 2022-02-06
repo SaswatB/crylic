@@ -142,6 +142,16 @@ function App() {
         defaultSize={{ height: 225, width: "auto" }}
         enable={{ top: true }}
         onResizeStop={() => bus.publish(editorResize())}
+        handleStyles={{
+          top: {
+            top: 16,
+            // lm_ca3045309d hardcoded label width
+            left: 46,
+            // lm_5d160a2bcc hardcoded icon group width
+            right: 70,
+            width: undefined,
+          },
+        }}
       >
         <AssetTreePane
           onImportImageFile={() =>
