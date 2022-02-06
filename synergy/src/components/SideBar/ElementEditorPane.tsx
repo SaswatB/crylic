@@ -13,6 +13,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { startCase, uniq } from "lodash";
+import { useSnackbar } from "notistack";
 import path from "path";
 import { useBus } from "ts-bus/react";
 
@@ -158,6 +159,7 @@ export const ElementEditorPane: FunctionComponent = () => {
   const project = useProject();
   const { installPackages } = usePackageInstallerRecoil();
   const selectService = useService(SelectService);
+  const { enqueueSnackbar } = useSnackbar();
   const selectedElement = useObservable(selectService.selectedElement$);
   const selectedStyleGroup = useObservable(selectService.selectedStyleGroup$);
 
@@ -589,6 +591,8 @@ export const ElementEditorPane: FunctionComponent = () => {
           await newCodePromise;
           await sleep(1000);
           project.refreshRenderEntries();
+
+          enqueueSnackbar("Animation enabled on element!");
         };
         return (
           <button className="btn w-full" onClick={enableAnimation}>
