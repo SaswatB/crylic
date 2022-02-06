@@ -498,7 +498,10 @@ module.exports = function (webpackEnv) {
       // It is absolutely essential that NODE_ENV is set to production
       // during a production build.
       // Otherwise React will be compiled in the very slow development mode.
-      new webpack.DefinePlugin(env.stringified),
+      new webpack.DefinePlugin({
+        ...env.stringified,
+        __BUILD_VERSION__: JSON.stringify(require("../package.json").version),
+      }),
       // This is necessary to emit hot updates (currently CSS only):
       isEnvDevelopment && new webpack.HotModuleReplacementPlugin(),
       // Watcher doesn't work well if you mistype casing in a path so we use

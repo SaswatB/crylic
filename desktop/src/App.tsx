@@ -280,6 +280,11 @@ function App() {
           </Resizable>
         )}
       </div>
+      {!project && (
+        <div className="fixed top-0 right-0 p-3 opacity-50">
+          v{__BUILD_VERSION__}
+        </div>
+      )}
     </div>
   );
 }
