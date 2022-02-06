@@ -30,6 +30,7 @@ export abstract class Project {
   public readonly editEntries$ = new BehaviorSubject<EditEntry[]>([]);
   public readonly renderEntries$ = new BehaviorSubject<RenderEntry[]>([]);
   public readonly shouldReloadRenderEntries$ = new Subject();
+  public readonly projectSaved$ = new Subject();
   private readonly elementEditorEntries: EditorEntry<ElementASTEditor<any>>[];
   private readonly styleEditorEntries: EditorEntry<StyleASTEditor<any>>[];
 
@@ -109,7 +110,7 @@ export abstract class Project {
           codeEntries.map((codeEntry) =>
             codeEntry.code$.toRXJS().pipe(
               distinctUntilChanged(),
-              bufferCount(2),
+              bufferCount(2, 1),
               map(([oldCode, newCode]) => ({ codeEntry, oldCode, newCode }))
             )
           )

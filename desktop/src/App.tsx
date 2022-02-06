@@ -20,6 +20,7 @@ import {
   useMemoObservable,
   useObservable,
 } from "synergy/src/hooks/useObservable";
+import { useObservableCallback } from "synergy/src/hooks/useObservableCallback";
 import { useService } from "synergy/src/hooks/useService";
 import { editorResize } from "synergy/src/lib/events";
 import { ProjectService } from "synergy/src/services/ProjectService";
@@ -49,6 +50,10 @@ function App() {
         distinctUntilChanged()
       ),
     [project]
+  );
+
+  useObservableCallback(project?.projectSaved$, () =>
+    enqueueSnackbar("Files Saved!")
   );
 
   const openProject = (filePath: string) => {
@@ -114,7 +119,6 @@ function App() {
         case "save":
           try {
             project?.saveFiles();
-            enqueueSnackbar("Files Saved!");
           } catch (error) {
             alert(
               `There was an error while saving: ${(error as Error).message}`

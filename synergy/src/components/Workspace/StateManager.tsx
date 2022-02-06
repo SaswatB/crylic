@@ -21,9 +21,19 @@ export const StateManager: FunctionComponent = () => {
   /* Hotkeys */
 
   // handle save/undo/redo hotkeys
-  useHotkeys("ctrl+s", () => project?.saveFiles());
-  useHotkeys("ctrl+z", () => project?.undoCodeChange());
-  useHotkeys("ctrl+shift+z", () => project?.redoCodeChange());
+  useHotkeys(
+    "ctrl+s",
+    () => {
+      try {
+        project?.saveFiles();
+      } catch (error) {
+        alert(`There was an error while saving: ${(error as Error).message}`);
+      }
+    },
+    [project]
+  );
+  useHotkeys("ctrl+z", () => project?.undoCodeChange(), [project]);
+  useHotkeys("ctrl+shift+z", () => project?.redoCodeChange(), [project]);
 
   // clear select mode on escape hotkey
   useHotkeys("escape", () => selectService.setSelectMode(undefined));

@@ -156,6 +156,7 @@ export class FileProject extends Project {
       .forEach(({ filePath, code$ }) =>
         fs.writeFileSync(filePath, code$.getValue())
       );
+    this.projectSaved$.next();
   }
 
   public refreshConfig() {
