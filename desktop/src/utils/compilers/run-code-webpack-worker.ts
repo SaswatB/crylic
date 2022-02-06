@@ -115,6 +115,9 @@ ReactDOM.render((
   document.getElementById("${rootSelector}")
 );
 
+if ((module || {}).hot && (window || {}).__crylicHmrStatusHandler) {
+  module.hot.addStatusHandler(window.__crylicHmrStatusHandler);
+}
 `.trim();
 };
 
@@ -141,9 +144,7 @@ export const webpackRunCodeWithWorker = async ({
   const bundleCodeEntry = {
     id: `bundle-${renderEntry.codeId}`,
     code: await generateBundleCode(project, componentCodeEntry),
-    // todo add random string to filename
     filePath: path.join(project.sourceFolderPath, "paintbundle.tsx"),
-    codeRevisionId: 0,
   };
   console.log("bundleCode", bundleCodeEntry.code);
 
@@ -259,11 +260,25 @@ export const webpackRunCodeWithWorker = async ({
       throw new Error(`Unable to require "${name}"`);
     };
     (frame!.contentWindow! as any).exports = {};
+    let hasHmrApplied = false;
+    // listener for HMR updates
+    (frame!.contentWindow! as any).__crylicHmrStatusHandler = (
+      status: string
+    ) => {
+      if (status === "apply") hasHmrApplied = true;
+      else if (status === "idle" && hasHmrApplied) {
+        // run the callback on an idle after an apply
+        hasHmrApplied = false;
+        // todo try to avoid timeout
+        setTimeout(onReload, 100);
+      }
+    };
     try {
       (frame!.contentWindow! as any).paintBundle();
     } catch (error) {
       errorHandler(error as Error);
     }
+    delete (frame!.contentWindow! as any).__crylicHmrStatusHandler;
     delete (frame!.contentWindow! as any).exports;
     delete (frame!.contentWindow! as any).require;
     onReload();

@@ -34,7 +34,23 @@ const NODE_ENV = "development";
 const REACT_APP = /^REACT_APP_/i;
 const ENABLE_BABEL_COMPAT = false;
 
+let webpackCache: Record<
+  string,
+  | {
+      compiler: import("webpack").Compiler;
+      inputFs: IFs;
+      outputFs: IFs;
+      fsContext: LazyReadFileContext;
+      devport: number;
+      runId: number;
+      lastPromise?: Promise<unknown>;
+    }
+  | undefined
+> = {};
+
 export function initialize(nodeModulesPath = "") {
+  webpackCache = {};
+
   // needed to resolve loaders and babel plugins/presets
   if (nodeModulesPath) {
     process.chdir(path.dirname(nodeModulesPath));
@@ -339,20 +355,6 @@ const lazyReadFileFactory = (
   }
   inputFs.readFile(...args);
 };
-
-const webpackCache: Record<
-  string,
-  | {
-      compiler: import("webpack").Compiler;
-      inputFs: IFs;
-      outputFs: IFs;
-      fsContext: LazyReadFileContext;
-      devport: number;
-      runId: number;
-      lastPromise?: Promise<unknown>;
-    }
-  | undefined
-> = {};
 
 export const webpackRunCode = async (
   codeEntries: WebpackWorkerMessagePayload_Compile["codeEntries"],
