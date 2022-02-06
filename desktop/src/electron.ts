@@ -51,6 +51,17 @@ function createWindow() {
     },
   });
 
+  // register a close confirmation dialog
+  mainWindow.on("close", function (e) {
+    const response = dialog.showMessageBoxSync(mainWindow, {
+      type: "question",
+      buttons: ["Yes", "No"],
+      title: "Confirm",
+      message: "Are you sure you want to quit?",
+    });
+    if (response === 1) e.preventDefault();
+  });
+
   // Let us register listeners on the window, so we can update the state
   // automatically (the listeners will be removed when the window is closed)
   // and restore the maximized or full screen state
