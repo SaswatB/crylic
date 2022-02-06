@@ -66,6 +66,11 @@ export class SelectService {
           this.clearSelectedElement();
         }
       });
+
+    // clear the selected element if the select mode was cleared
+    this.selectMode$.subscribe(
+      (selectMode) => selectMode === undefined && this.clearSelectedElement()
+    );
   }
 
   private get project() {
