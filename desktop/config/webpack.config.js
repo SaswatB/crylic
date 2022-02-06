@@ -357,7 +357,7 @@ module.exports = function (webpackEnv) {
                   ...require("../swc.config"),
                   // lm_a95a542d63 electron version
                   env: {
-                    targets: { chrome: "96" },
+                    targets: { chrome: "98" },
                     include: ["proposal-nullish-coalescing-operator"],
                   },
                 },

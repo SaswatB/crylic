@@ -168,7 +168,7 @@ const getWebpackModules = async (
           // lm_a95a542d63 electron version
           // todo change on publish or support more options
           env: {
-            targets: { chrome: "96" },
+            targets: { chrome: "98" },
             include: [
               "proposal-nullish-coalescing-operator",
               "proposal-optional-chaining",
@@ -192,7 +192,7 @@ const getWebpackModules = async (
               targets: {
                 // lm_a95a542d63 electron version
                 // todo change on publish or support more options
-                chrome: "96",
+                chrome: "98",
               },
             },
           ],
@@ -254,7 +254,7 @@ const getWebpackModules = async (
               targets: {
                 // lm_a95a542d63 electron version
                 // todo change on publish or support more options
-                chrome: "96",
+                chrome: "98",
               },
               useBuiltIns: "entry",
               modules: false,
