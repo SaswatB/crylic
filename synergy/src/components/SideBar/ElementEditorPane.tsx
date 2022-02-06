@@ -161,13 +161,13 @@ export const ElementEditorPane: FunctionComponent = () => {
   const selectedElement = useObservable(selectService.selectedElement$);
   const selectedStyleGroup = useObservable(selectService.selectedStyleGroup$);
 
-  const openInEditor = ({ editor, lookupId }: StyleGroup) => {
+  const openInEditor = async ({ editor, lookupId }: StyleGroup) => {
     const codeId = editor.getCodeIdFromLookupId(lookupId);
     if (!codeId) return;
     const codeEntry = project?.getCodeEntryValue(codeId);
     if (!codeEntry) return;
     const line = editor.getCodeLineFromLookupId(
-      { codeEntry, ast: ltTakeNext(codeEntry.ast$) },
+      { codeEntry, ast: await ltTakeNext(codeEntry.ast$) },
       lookupId
     );
     console.log("openInEditor", codeEntry, line);
