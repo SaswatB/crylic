@@ -18,6 +18,8 @@ import { LTBehaviorSubject } from "../lightObservable/LTBehaviorSubject";
 import { ltMap } from "../lightObservable/LTOperator";
 import { Project } from "./Project";
 
+export const INITIAL_CODE_REVISION_ID = 1;
+
 /**
  * A partial, resolved CodeEntry for use with remote async code
  */
@@ -43,7 +45,7 @@ export class CodeEntry {
     private readonly project: Project,
     public readonly filePath: string,
     private _code: string | undefined,
-    private _codeRevisionId = 1
+    private _codeRevisionId = INITIAL_CODE_REVISION_ID
   ) {}
 
   public get codeRevisionId() {

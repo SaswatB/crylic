@@ -8,7 +8,10 @@ import {
   SCRIPT_EXTENSION_REGEX,
   STYLE_EXTENSION_REGEX,
 } from "synergy/src/lib/ext-regex";
-import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
+import {
+  CodeEntry,
+  INITIAL_CODE_REVISION_ID,
+} from "synergy/src/lib/project/CodeEntry";
 import { Project } from "synergy/src/lib/project/Project";
 
 import { streamToString } from "../../utils/utils";
@@ -149,13 +152,21 @@ export class FileProject extends Project {
     return project;
   }
 
+  private savedCodeRevisions: Record<string /* codeEntry.id */, number> = {};
+
   public saveFiles() {
     this.codeEntries$
       .getValue()
-      .filter((e) => e.code$.getValue() !== undefined && e.codeRevisionId !== 1)
-      .forEach(({ filePath, code$ }) =>
-        fs.writeFileSync(filePath, code$.getValue())
-      );
+      .filter(
+        (e) =>
+          e.code$.getValue() !== undefined &&
+          e.codeRevisionId !== INITIAL_CODE_REVISION_ID &&
+          e.codeRevisionId !== this.savedCodeRevisions[e.id]
+      )
+      .forEach(({ id, filePath, code$, codeRevisionId }) => {
+        fs.writeFileSync(filePath, code$.getValue());
+        this.savedCodeRevisions[id] = codeRevisionId;
+      });
     this.projectSaved$.next();
   }
 
