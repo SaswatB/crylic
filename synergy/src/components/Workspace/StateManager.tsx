@@ -85,7 +85,7 @@ export const StateManager: FunctionComponent = () => {
         "setting selected element post-iframe reload",
         selectedElement.lookupId
       );
-      selectService.selectElement(renderEntry.id, selectedElement.lookupId);
+      selectService.selectElement(renderEntry.id, selectedElement);
     } else {
       console.log(
         "unable to reselect selected element post-iframe reload",

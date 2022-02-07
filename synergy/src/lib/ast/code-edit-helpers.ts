@@ -19,7 +19,10 @@ interface SelectContext {
     renderId: string,
     task: (viewContext: ViewContext) => void
   ) => void;
-  selectElement: (renderId: string, lookupId: string) => void;
+  selectElement: (
+    renderId: string,
+    selector: { lookupId: string; index: number }
+  ) => void;
 }
 
 export const addElementHelper = async (
@@ -79,7 +82,7 @@ export const addElementHelper = async (
           "setting selected element through post-child add",
           newChildLookupId
         );
-        selectElement(renderId, newChildLookupId);
+        selectElement(renderId, { lookupId: newChildLookupId, index: 0 });
       }
     });
   }
@@ -95,10 +98,12 @@ export const updateElementHelper = async <T extends ASTType>(
   selectContext?: SelectContext
 ) => {
   let lookupId: string;
+  let index: number;
   if (typeof targetElement === "string") {
     lookupId = targetElement;
+    index = 0;
   } else {
-    ({ lookupId } = targetElement);
+    ({ lookupId, index } = targetElement);
   }
   const editor = project?.primaryElementEditor;
   if (!editor) return;
@@ -117,7 +122,7 @@ export const updateElementHelper = async <T extends ASTType>(
   if (selectContext) {
     const { renderId, addCompileTask, selectElement } = selectContext;
     addCompileTask(renderId, () => {
-      selectElement(renderId, lookupId);
+      selectElement(renderId, { lookupId, index });
     });
   }
 

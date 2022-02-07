@@ -99,11 +99,10 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
     switch (selectMode?.type) {
       default:
       case SelectModeType.SelectElement:
-        const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
-          componentElement
-        );
-        console.log("setting selected from manual selection", lookupId);
-        if (lookupId) selectService.selectElement(renderId, lookupId);
+        console.log("setting selected from manual selection", componentElement);
+        selectService.selectElement(renderId, {
+          htmlElement: componentElement,
+        });
         break;
       case SelectModeType.AddElement:
         try {

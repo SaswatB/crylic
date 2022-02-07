@@ -78,18 +78,15 @@ export function useOverlay(
   };
 
   const calculateBoundingBox = () => {
-    if (!selectedElement) return {};
+    if (!selectedElement?.element) return {};
 
-    const componentElements = viewContext?.getElementsByLookupId(
-      selectedElement?.lookupId
-    );
     const pbcr = (selectedElement?.computedStyles.position === "static" &&
-      componentElements?.[0]?.parentElement?.getBoundingClientRect()) || {
+      selectedElement.element.parentElement?.getBoundingClientRect()) || {
       top: 0,
       left: 0,
       ...frameSize,
     };
-    const bcr = componentElements?.[0]?.getBoundingClientRect();
+    const bcr = selectedElement.element.getBoundingClientRect();
 
     return {
       bounds: {

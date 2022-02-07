@@ -6,18 +6,6 @@ import { map, mergeAll, mergeMap, scan, take } from "rxjs/operators";
 import { LTBehaviorSubject } from "./lightObservable/LTBehaviorSubject";
 import { LTObservable, LTSubscription } from "./lightObservable/LTObservable";
 
-// this doesn't work on prod
-let reactInstanceKey: string | undefined;
-export const getReactDebugId = (element: HTMLElement) => {
-  if (!reactInstanceKey)
-    reactInstanceKey = Object.keys(element).find((key) =>
-      key.startsWith("__reactInternalInstance")
-    );
-  if (!reactInstanceKey) return undefined;
-
-  return (element as any)[reactInstanceKey]?._debugID;
-};
-
 export const getElementUniqueId = (element: HTMLElement): string => {
   if (!(element as any).paintId) {
     (element as any).paintId = uniqueId();

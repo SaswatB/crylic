@@ -90,7 +90,7 @@ export class SelectService {
     if (selectedElement && !selectedElement.element.parentElement) {
       if (this.badSelectedElementRetryCounter === 0) {
         this.badSelectedElementRetryCounter++;
-        this.selectElement(selectedElement.renderId, selectedElement.lookupId);
+        this.selectElement(selectedElement.renderId, selectedElement);
       }
     } else {
       this.badSelectedElementRetryCounter = 0;
@@ -105,9 +105,45 @@ export class SelectService {
     this.selectedStyleGroup$.next(selectedStyleGroup);
   }
 
-  public async selectElement(renderId: string, lookupId: string) {
+  public async selectElement(
+    renderId: string,
+    selector:
+      | { htmlElement: HTMLElement; lookupId?: undefined; index?: undefined }
+      // index: index of the primary element to select in the view
+      | { htmlElement?: undefined; lookupId: string; index: number }
+  ) {
     const { getElementsByLookupId } =
       this.compilerContextService.getViewContext(renderId) || {};
+
+    // resolve lookupId
+    let lookupId;
+    if (selector.htmlElement) {
+      lookupId = this.project?.primaryElementEditor.getLookupIdFromHTMLElement(
+        selector.htmlElement
+      );
+      if (!lookupId) {
+        console.log("dropping element select, no lookup id");
+        return;
+      }
+    } else {
+      lookupId = selector.lookupId;
+    }
+
+    const componentElements = getElementsByLookupId?.(lookupId);
+    if (!componentElements?.length) {
+      console.log("dropping element select, no elements");
+      return;
+    }
+
+    // resolve index
+    let index;
+    if (selector.htmlElement) {
+      index = Math.max(componentElements.indexOf(selector.htmlElement), 0);
+    } else {
+      index = selector.index;
+    }
+
+    // resolve code entry
     const codeId = this.project?.primaryElementEditor.getCodeIdFromLookupId(
       lookupId
     );
@@ -120,34 +156,31 @@ export class SelectService {
       console.log("dropping element select, no code entry");
       return;
     }
-    const componentElements = getElementsByLookupId?.(lookupId);
-    if (!componentElements?.length) {
-      console.log("dropping element select, no elements");
-      return;
-    }
 
+    if (!componentElements[index]) index = 0;
+    const primaryElement = componentElements[index]!;
+
+    // resolve style groups
     const styleGroups: StyleGroup[] = [];
-
     this.project?.editorEntries.forEach(({ editor }) => {
-      styleGroups.push(
-        ...editor.getStyleGroupsFromHTMLElement(componentElements[0]!)
-      );
+      styleGroups.push(...editor.getStyleGroupsFromHTMLElement(primaryElement));
     });
 
+    // save collected info
     this.selectedElement$.next({
       renderId,
       lookupId,
+      index,
       sourceMetadata: this.project!.primaryElementEditor.getSourceMetaDataFromLookupId(
         { ast: (await ltTakeNext(codeEntry.ast$)) as ASTType, codeEntry },
         lookupId
       ),
       viewContext: this.compilerContextService.getViewContext(renderId),
-      element: componentElements[0]!,
+      element: primaryElement,
       elements: componentElements,
       styleGroups,
-      // todo properly support multiple elements instead of taking the first one
-      computedStyles: window.getComputedStyle(componentElements[0]!),
-      inlineStyles: componentElements[0]!.style,
+      computedStyles: window.getComputedStyle(primaryElement),
+      inlineStyles: primaryElement.style,
     });
     this.setSelectedStyleGroup(styleGroups[0]);
   }

@@ -145,12 +145,10 @@ export const OutlinePane: FunctionComponent = () => {
         label={treeLabel}
         onLabelClick={(e) => {
           e.preventDefault();
-          if (node.element) {
-            const lookupId = project?.primaryElementEditor.getLookupIdFromHTMLElement(
-              node.element
-            );
-            if (lookupId) selectService.selectElement(node.renderId, lookupId);
-          }
+          if (node.element)
+            selectService.selectElement(node.renderId, {
+              htmlElement: node.element,
+            });
         }}
       >
         {node.children.map(renderTree)}

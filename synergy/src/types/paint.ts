@@ -35,6 +35,7 @@ export interface SourceMetadata {
 export interface SelectedElement {
   renderId: string;
   lookupId: string;
+  index: number; // index of element within elements
   element: HTMLElement;
   elements: HTMLElement[];
   styleGroups: StyleGroup[];
