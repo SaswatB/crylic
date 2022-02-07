@@ -54,6 +54,10 @@ export abstract class Project {
   public abstract addAsset(filePath: string): void;
   public abstract refreshConfig(): void;
 
+  public abstract getNewComponentPath(name: string): string;
+  public abstract getNewStyleSheetPath(name: string): string;
+  public abstract getNewAssetPath(fileName: string): string;
+
   public get editorEntries() {
     return [...this.elementEditorEntries, ...this.styleEditorEntries];
   }
@@ -256,22 +260,6 @@ export abstract class Project {
 
   public refreshRenderEntries() {
     this.shouldReloadRenderEntries$.next();
-  }
-
-  // #endregion
-
-  // #region new paths
-
-  public getNewComponentPath(name: string) {
-    return fspath.join(this.path, `src/components/${name}.tsx`);
-  }
-
-  public getNewStyleSheetPath(name: string) {
-    return fspath.join(this.path, `src/styles/${name}.css`);
-  }
-
-  public getNewAssetPath(fileName: string) {
-    return fspath.join(this.path, `src/assets/${fileName}`);
   }
 
   // #endregion

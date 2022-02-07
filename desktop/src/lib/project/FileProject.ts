@@ -1,5 +1,4 @@
 import { MakeDirectoryOptions } from "fs";
-import path from "path";
 import { Readable } from "stream";
 import yauzl from "yauzl";
 
@@ -14,12 +13,14 @@ import {
 } from "synergy/src/lib/project/CodeEntry";
 import { Project } from "synergy/src/lib/project/Project";
 
+import { normalizePath } from "../../utils/normalizePath";
 import { streamToString } from "../../utils/utils";
 import { FileProjectConfig } from "./FileProjectConfig";
 
 import projectTemplate from "!!../../../loaders/binaryLoader!../../assets/project-template.zip";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
+const path = __non_webpack_require__("path") as typeof import("path");
 
 export class FileProject extends Project {
   public static async createNewProjectInDirectory(folderPath: string) {
@@ -196,4 +197,29 @@ export class FileProject extends Project {
     );
     this.addCodeEntries([new CodeEntry(this, assetPath.path, undefined)]);
   }
+
+  // #region new paths
+
+  public getNewComponentPath(name: string) {
+    return path.join(
+      this.path,
+      normalizePath(`src/components/${name}.tsx`, path.sep)
+    );
+  }
+
+  public getNewStyleSheetPath(name: string) {
+    return path.join(
+      this.path,
+      normalizePath(`src/styles/${name}.css`, path.sep)
+    );
+  }
+
+  public getNewAssetPath(fileName: string) {
+    return path.join(
+      this.path,
+      normalizePath(`src/assets/${fileName}`, path.sep)
+    );
+  }
+
+  // #endregion
 }

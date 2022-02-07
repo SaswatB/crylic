@@ -136,6 +136,8 @@ export class CodeEntry {
   // #endregion
 
   public getRelativeImportPath(target: string) {
+    target = target.replace(/\\/g, "/");
+
     if (!target.startsWith("/") && !target.includes(":")) return target;
 
     // make absolute paths relative
