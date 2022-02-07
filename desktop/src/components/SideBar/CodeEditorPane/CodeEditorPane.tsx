@@ -111,7 +111,10 @@ export const CodeEditorPane: FunctionComponent = () => {
                     lookupId,
                     viewContextEntry[0]
                   );
-                  selectService.selectElement(viewContextEntry[0], lookupId);
+                  selectService.selectElement(viewContextEntry[0], {
+                    lookupId,
+                    index: 0,
+                  });
                 }
               }}
               isActiveEditor={activeTab === index}
