@@ -575,7 +575,7 @@ export const ElementEditorPane: FunctionComponent = () => {
 
           const newCodePromise = ltTakeNext(codeEntry.code$);
 
-          selectService.updateSelectedElement((editor, editContext) =>
+          await selectService.updateSelectedElement((editor, editContext) =>
             editor.updateElementComponent(editContext, {
               component: {
                 import: {
@@ -709,6 +709,16 @@ export const ElementEditorPane: FunctionComponent = () => {
             {/* this check also applies to router links as those render as a */}
             {selectedElement?.element.tagName.toLowerCase() === "a" &&
               renderLinkTargetInput({ className: "col-span-2" })}
+            <button
+              className="btn"
+              onClick={() =>
+                selectService
+                  .deleteSelectedElement()
+                  .catch((e) => alert((e as Error).message))
+              }
+            >
+              Delete Element
+            </button>
           </div>
         </Collapsible>
       </div>

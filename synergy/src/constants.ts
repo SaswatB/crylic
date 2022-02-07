@@ -10,7 +10,7 @@ export const MINIMUM_FRAME_HEIGHT = 150;
 
 export const DEFAULT_PROJECT_SOURCE_FOLDER = "src";
 export const DEFAULT_PROJECT_HTML_TEMPLATE_PATH = "public/index.html";
-// export const DEFAULT_HTML_TEMPLATE_SELECTOR = "root";
+export const DEFAULT_HTML_TEMPLATE_SELECTOR = "root";
 
 export enum SelectModeType {
   SelectElement,

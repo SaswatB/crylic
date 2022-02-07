@@ -12,7 +12,6 @@ import {
   WebpackRendererMessagePayload_CompileFinished,
   WebpackRendererMessagePayload_PercentUpdate,
 } from "../../types/ipc";
-import { DEFAULT_HTML_TEMPLATE_SELECTOR } from "../constants";
 import { publishComponent, unpublishComponent } from "../publish-component";
 import { getAppNodeModules } from "../utils";
 import { webpackRunCode } from "./run-code-webpack";
@@ -90,10 +89,6 @@ const generateBundleCode = async (
     ? await getImportFromCodeEntry("Bootstrap", bootstrapCodeEntry)
     : "";
 
-  const rootSelector =
-    project.config.configFile?.htmlTemplate?.rootSelector ||
-    DEFAULT_HTML_TEMPLATE_SELECTOR;
-
   return `
 import React, { ErrorInfo } from "react";
 import ReactDOM from "react-dom";
@@ -112,7 +107,7 @@ ReactDOM.render((
         : "<Component />"
     }
   </ErrorBoundary>),
-  document.getElementById("${rootSelector}")
+  document.getElementById("${project.config.getHtmlTemplateSelector()}")
 );
 
 if ((module || {}).hot && (window || {}).__crylicHmrStatusHandler) {

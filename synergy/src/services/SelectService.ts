@@ -152,13 +152,13 @@ export class SelectService {
     this.setSelectedStyleGroup(styleGroups[0]);
   }
 
-  public updateSelectedElement<T extends ASTType>(
+  public async updateSelectedElement<T extends ASTType>(
     apply: (editor: ElementASTEditor<T>, editContext: EditContext<T>) => T
   ) {
     const selectedElement = this.selectedElement$.getValue();
     if (!selectedElement) return;
 
-    updateElementHelper(this.project!, selectedElement, apply, {
+    await updateElementHelper(this.project!, selectedElement, apply, {
       // refresh the selected element after compile to get the new ast metadata
       renderId: selectedElement.renderId,
       addCompileTask: this.compilerContextService.addCompileTask.bind(
@@ -168,7 +168,7 @@ export class SelectService {
     });
   }
 
-  public updateSelectedStyleGroup(styles: Styles, preview?: boolean) {
+  public async updateSelectedStyleGroup(styles: Styles, preview?: boolean) {
     const selectedElement = this.selectedElement$.getValue();
     if (!selectedElement) return;
 
@@ -184,11 +184,31 @@ export class SelectService {
     const selectedStyleGroup = this.selectedStyleGroup$.getValue();
     if (!selectedStyleGroup) return;
 
-    updateStyleGroupHelper(
+    await updateStyleGroupHelper(
       this.project!,
       selectedStyleGroup,
       (editor, editContext) => editor.applyStyles(editContext, styles)
     );
+  }
+
+  public async deleteSelectedElement() {
+    const selectedElement = this.selectedElement$.getValue();
+    if (!selectedElement) return;
+
+    // prevent an element from being deleted if its parent is the html template root
+    if (
+      selectedElement.element.parentElement?.id ===
+      this.projectService.project$.getValue()?.config.getHtmlTemplateSelector()
+    )
+      throw new Error("Unable to delete selected element, no parent found");
+
+    await updateElementHelper(
+      this.project!,
+      selectedElement,
+      (editor, editContext) => editor.deleteElement(editContext)
+    );
+
+    this.clearSelectedElement();
   }
 
   public clearSelectedElement() {

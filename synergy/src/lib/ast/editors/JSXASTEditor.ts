@@ -250,6 +250,17 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     });
   }
 
+  protected deleteElementInAST({ ast, lookupId }: EditContext<t.File>): void {
+    this.getJSXElementByLookupId(ast, lookupId, (path) => {
+      const parent = ifJSXElement(path.parent?.value);
+      // refuse to delete the element if its parent isn't also a JSX element
+      if (!parent)
+        throw new Error("Structure is too complex to delete element");
+
+      parent.children = parent.children?.filter((c) => c !== path.value);
+    });
+  }
+
   public getRecentlyAddedElements({ ast, codeEntry }: ReadContext<t.File>) {
     let resultIndicies: number[] = [];
     // find all jsx elements with recently added data attributes

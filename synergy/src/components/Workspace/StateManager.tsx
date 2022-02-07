@@ -38,6 +38,14 @@ export const StateManager: FunctionComponent = () => {
   // clear select mode on escape hotkey
   useHotkeys("escape", () => selectService.setSelectMode(undefined));
 
+  useHotkeys(
+    "delete",
+    () =>
+      void selectService
+        .deleteSelectedElement()
+        .catch((e) => alert((e as Error).message))
+  );
+
   /* Project Management */
 
   // onASTRender callback for all project editor entries

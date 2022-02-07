@@ -2,6 +2,7 @@ import * as it from "io-ts";
 import path from "path";
 
 import {
+  DEFAULT_HTML_TEMPLATE_SELECTOR,
   DEFAULT_PROJECT_HTML_TEMPLATE_PATH,
   DEFAULT_PROJECT_SOURCE_FOLDER,
 } from "../../constants";
@@ -105,6 +106,12 @@ export abstract class ProjectConfig {
     return path.join(
       this.projectPath,
       this.configFile?.htmlTemplate?.path || DEFAULT_PROJECT_HTML_TEMPLATE_PATH
+    );
+  }
+  public getHtmlTemplateSelector() {
+    return (
+      this.configFile?.htmlTemplate?.rootSelector ||
+      DEFAULT_HTML_TEMPLATE_SELECTOR
     );
   }
 

@@ -1,6 +1,9 @@
 {
   "extends": "react-app",
   "plugins": ["simple-import-sort", "import"],
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
   "rules": {
     "simple-import-sort/sort": [
       "error",
@@ -27,6 +30,7 @@
       {
         "additionalHooks": "useRecoilCallback|useMemoObservable"
       }
-    ]
+    ],
+    "@typescript-eslint/no-floating-promises": "warn"
   }
 }

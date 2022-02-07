@@ -116,6 +116,11 @@ export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
     newTextContent: string
   ): void;
 
+  public deleteElement = editAST(this.deleteElementInAST.bind(this));
+  protected abstract deleteElementInAST(
+    editContext: EditContext<ASTType>
+  ): void;
+
   public abstract getRecentlyAddedElements(
     readContext: ReadContext<ASTType>
   ): string[];
