@@ -81,9 +81,9 @@ export const AssetTreePane: FunctionComponent<Props> = ({
     const name = upperFirst(camelCase(inputName));
     const filePath = project!.getNewComponentPath(name);
     const code = getBoilerPlateComponent(name);
-    project?.addCodeEntries([new CodeEntry(project, filePath, code)], {
-      render: true,
-    });
+    const codeEntry = new CodeEntry(project, filePath, code);
+    project.addCodeEntries([codeEntry], { render: true });
+    project.saveFile(codeEntry);
     enqueueSnackbar("Started a new component!");
   };
   const onNewStyleSheet = async () => {

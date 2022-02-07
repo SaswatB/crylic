@@ -50,6 +50,7 @@ export abstract class Project {
   }
 
   public abstract saveFiles(): void;
+  public abstract saveFile(codeEntry: CodeEntry): void;
   public abstract addAsset(filePath: string): void;
   public abstract refreshConfig(): void;
 

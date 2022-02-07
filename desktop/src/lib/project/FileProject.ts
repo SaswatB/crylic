@@ -163,11 +163,12 @@ export class FileProject extends Project {
           e.codeRevisionId !== INITIAL_CODE_REVISION_ID &&
           e.codeRevisionId !== this.savedCodeRevisions[e.id]
       )
-      .forEach(({ id, filePath, code$, codeRevisionId }) => {
-        fs.writeFileSync(filePath, code$.getValue());
-        this.savedCodeRevisions[id] = codeRevisionId;
-      });
+      .forEach((e) => this.saveFile(e));
     this.projectSaved$.next();
+  }
+  public saveFile({ id, filePath, code$, codeRevisionId }: CodeEntry) {
+    fs.writeFileSync(filePath, code$.getValue());
+    this.savedCodeRevisions[id] = codeRevisionId;
   }
 
   public refreshConfig() {
