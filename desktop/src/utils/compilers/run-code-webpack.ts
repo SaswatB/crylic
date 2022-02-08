@@ -420,6 +420,20 @@ export const webpackRunCode = async (
         extensions: [".mjs", ".js", ".jsx", ".ts", ".tsx", ".json"],
         alias: {
           "react-native": "react-native-web",
+          // lm_c76a4fbc3b webpack externals
+          ...(!config.disableWebpackExternals
+            ? {
+                react: __non_webpack_require__.resolve("react"),
+                "react-dom": __non_webpack_require__.resolve("react-dom"),
+                // react-router-dom is not overridden here, replace this with the externals entry below to re-enable support
+                "react-router-dom": __non_webpack_require__.resolve(
+                  "react-router-dom"
+                ),
+                "react-refresh/runtime": __non_webpack_require__.resolve(
+                  "react-refresh/runtime"
+                ),
+              }
+            : {}),
           ...(modules.webpackAliases || {}),
         },
         // plugins: [PnpWebpackPlugin]
@@ -428,18 +442,6 @@ export const webpackRunCode = async (
       // lm_c76a4fbc3b webpack externals
       externals: !config.disableWebpackExternals
         ? {
-            react: {
-              commonjs: "react",
-              commonjs2: "react",
-              amd: "react",
-              root: "React",
-            },
-            "react-dom": {
-              commonjs: "react-dom",
-              commonjs2: "react-dom",
-              amd: "react-dom",
-              root: "ReactDOM",
-            },
             // disable router support
             // todo decide whether to remove to reenable
             // "react-router-dom": {
@@ -448,11 +450,6 @@ export const webpackRunCode = async (
             //   amd: "react-router-dom",
             //   root: "ReactRouterDOM",
             // },
-            "react-refresh/runtime": {
-              commonjs: "react-refresh/runtime",
-              commonjs2: "react-refresh/runtime",
-              amd: "react-refresh/runtime",
-            },
           }
         : {},
       plugins: [

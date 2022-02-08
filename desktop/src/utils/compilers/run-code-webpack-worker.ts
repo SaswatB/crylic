@@ -240,8 +240,6 @@ export const webpackRunCodeWithWorker = async ({
     // run the resulting bundle on the provided iframe, with stubs
     (frame!.contentWindow! as any).require = (name: string) => {
       // lm_c76a4fbc3b handle webpack externals
-      if (name === "react") return require("react");
-      if (name === "react-dom") return require("react-dom");
       if (name === "react-router-dom")
         return getReactRouterProxy(
           frame!.contentWindow!,
@@ -250,8 +248,6 @@ export const webpackRunCodeWithWorker = async ({
           onRouteActive,
           onRouteDeactivate
         );
-      if (name === "react-refresh/runtime")
-        return require("react-refresh/runtime");
       throw new Error(`Unable to require "${name}"`);
     };
     (frame!.contentWindow! as any).exports = {};
