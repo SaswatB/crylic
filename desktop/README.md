@@ -45,3 +45,9 @@ npm ci
 cd ..
 npm run package
 ```
+
+### Template project creation
+
+- npx create-react-app paint-starter --template typescript --use-npm
+- add bootstrap file
+- zip contents (without node modules)

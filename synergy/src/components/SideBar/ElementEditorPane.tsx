@@ -32,7 +32,6 @@ import { useObservable } from "../../hooks/useObservable";
 import { useService } from "../../hooks/useService";
 import { updateStyleGroupHelper } from "../../lib/ast/code-edit-helpers";
 import { StyleGroup } from "../../lib/ast/editors/ASTEditor";
-import { linkComponent } from "../../lib/defs/react-router-dom";
 import { editorOpenLocation } from "../../lib/events";
 import { CodeEntry } from "../../lib/project/CodeEntry";
 import { renderSeparator } from "../../lib/render-utils";
@@ -227,49 +226,14 @@ export const ElementEditorPane: FunctionComponent = () => {
     initialValue: selectedElement?.element.id ?? undefined,
   });
 
-  const routeDefinition = useObservable(
-    selectedElement?.viewContext?.onRoutesDefined
-  );
-  const selectedElementIsRouterLink =
-    !!routeDefinition &&
-    selectedElement?.sourceMetadata?.componentName === "Link";
-  const [, renderLinkTargetInput] = useAutocomplete({
-    options: (routeDefinition?.routes || []).map((availableRoute) => ({
-      name: availableRoute,
-      value: availableRoute,
-    })),
-    freeSolo: true,
-    onChange: (newHref) => {
-      const shouldBeRouterLink =
-        !!routeDefinition &&
-        (newHref?.startsWith("/") || newHref?.startsWith("."));
-      selectService.updateSelectedElement((editor, editContext) => {
-        let ast = editContext.ast;
-        // rename the link component if it's better used as a router link
-        // todo add option to disable this
-        if (shouldBeRouterLink !== selectedElementIsRouterLink) {
-          ast = editor.updateElementComponent(
-            { ...editContext, ast },
-            shouldBeRouterLink
-              ? { component: linkComponent }
-              : {
-                  isHTMLElement: true,
-                  tag: "a",
-                }
-          );
-        }
-        return editor.updateElementAttributes(
-          { ...editContext, ast },
-          shouldBeRouterLink ? { to: newHref } : { href: newHref }
-        );
-      });
-    },
+  const [, renderLinkTargetInput] = useBoundTextInput({
+    onChange: (newHref) =>
+      selectService.updateSelectedElement((editor, editContext) =>
+        editor.updateElementAttributes(editContext, { href: newHref })
+      ),
     label: "Link Target",
-    // todo support alias for Link
     initialValue:
-      ((selectedElementIsRouterLink &&
-        `${selectedElement?.sourceMetadata?.directProps.to || ""}`) ||
-        (selectedElement?.element as HTMLLinkElement)?.getAttribute("href")) ??
+      (selectedElement?.element as HTMLLinkElement)?.getAttribute("href") ??
       undefined,
   });
 

@@ -1,12 +1,9 @@
-import { Observable } from "rxjs";
-
 import {
   EditContext,
   ElementASTEditor,
   StyleGroup,
 } from "../lib/ast/editors/ASTEditor";
 import { Project } from "../lib/project/Project";
-import { RouteDefinition } from "../lib/react-router-proxy";
 
 // todo use a better type
 export type PackageJson = any;
@@ -43,7 +40,6 @@ export interface SelectedElement {
   inlineStyles: CSSStyleDeclaration;
 
   sourceMetadata: SourceMetadata | undefined;
-  viewContext: ViewContext | undefined;
 }
 
 export interface RenderEntryDeployerContext {
@@ -53,12 +49,6 @@ export interface RenderEntryDeployerContext {
   onProgress: (arg: { percentage: number; message: string }) => void;
   onPublish: (url: string) => void;
   onReload: () => void;
-
-  // react router support
-  onSwitchActive: (switchId: string, arg: RouteDefinition) => void;
-  onSwitchDeactivate: (switchId: string) => void;
-  onRouteActive: (routeId: string, route: string) => void;
-  onRouteDeactivate: (routeId: string) => void;
 }
 
 export type UpdateSelectedElement = <T extends {}>(
@@ -152,8 +142,6 @@ export enum ComponentViewZoomAction {
 
 export type ViewContext = {
   iframe: HTMLIFrameElement;
-  onRoutesDefined: Observable<RouteDefinition>;
-  onRouteChange: Observable<string>;
 
   getRootElement(): HTMLBodyElement | undefined;
   getElementsAtPoint: (x: number, y: number) => HTMLElement[];

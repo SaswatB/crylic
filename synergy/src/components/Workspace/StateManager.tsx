@@ -3,11 +3,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 
 import { useBusSubscription } from "../../hooks/useBusSubscription";
 import { useService } from "../../hooks/useService";
-import {
-  componentViewCompileEnd,
-  componentViewReload,
-  componentViewRouteChange,
-} from "../../lib/events";
+import { componentViewCompileEnd, componentViewReload } from "../../lib/events";
 import { sleep } from "../../lib/utils";
 import { CompilerContextService } from "../../services/CompilerContextService";
 import { useProject } from "../../services/ProjectService";
@@ -55,18 +51,7 @@ export const StateManager: FunctionComponent = () => {
     );
   });
 
-  // persist route changes in the project
-  useBusSubscription(componentViewRouteChange, ({ renderEntry, route }) => {
-    project?.editRenderEntry(renderEntry.id, { route });
-  });
-
   /* Select Management */
-
-  // clear the selected element if the component view changes its route
-  useBusSubscription(componentViewRouteChange, ({ renderEntry }) => {
-    if (selectService.selectedElement$.getValue()?.renderId === renderEntry.id)
-      selectService.clearSelectedElement();
-  });
 
   // refresh the selected element when the iframe reloads, if possible
   useBusSubscription(componentViewReload, async ({ renderEntry }) => {

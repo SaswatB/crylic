@@ -425,10 +425,6 @@ export const webpackRunCode = async (
             ? {
                 react: __non_webpack_require__.resolve("react"),
                 "react-dom": __non_webpack_require__.resolve("react-dom"),
-                // react-router-dom is not overridden here, replace this with the externals entry below to re-enable support
-                "react-router-dom": __non_webpack_require__.resolve(
-                  "react-router-dom"
-                ),
                 "react-refresh/runtime": __non_webpack_require__.resolve(
                   "react-refresh/runtime"
                 ),
@@ -439,19 +435,6 @@ export const webpackRunCode = async (
         // plugins: [PnpWebpackPlugin]
       },
       // resolveLoader: { plugins: [PnpWebpackPlugin.moduleLoader(module)] },
-      // lm_c76a4fbc3b webpack externals
-      externals: !config.disableWebpackExternals
-        ? {
-            // disable router support
-            // todo decide whether to remove to reenable
-            // "react-router-dom": {
-            //   commonjs: "react-router-dom",
-            //   commonjs2: "react-router-dom",
-            //   amd: "react-router-dom",
-            //   root: "ReactRouterDOM",
-            // },
-          }
-        : {},
       plugins: [
         // Generates an `index.html` file with the <script> injected.
         new HtmlWebpackPlugin({

@@ -18,10 +18,6 @@ export const componentViewCompileEnd = createEventDefinition<{
   renderEntry: RenderEntry;
   viewContext: ViewContext;
 }>()("componentView.compileEnd");
-export const componentViewRouteChange = createEventDefinition<{
-  renderEntry: RenderEntry;
-  route: string;
-}>()("componentView.routeChange");
 export const componentDomChange = createEventDefinition<{
   renderEntry: RenderEntry;
 }>()("componentView.dom");

@@ -14,7 +14,6 @@ import {
   componentDomChange,
   componentViewCompileEnd,
   componentViewReload,
-  componentViewRouteChange,
 } from "../../lib/events";
 import { Project } from "../../lib/project/Project";
 import { renderSeparator } from "../../lib/render-utils";
@@ -93,7 +92,6 @@ export const OutlinePane: FunctionComponent = () => {
   // recalculate the component view outline when the component view compiles, reloads, or changes its route
   useBusSubscription(componentViewCompileEnd, calculateOutlineWithEntry);
   useBusSubscription(componentViewReload, calculateOutlineWithEntry);
-  useBusSubscription(componentViewRouteChange, calculateOutlineWithEntry);
   useBusSubscription(componentDomChange, calculateOutlineWithEntry);
   const renderEntries = useObservable(project?.renderEntries$);
 

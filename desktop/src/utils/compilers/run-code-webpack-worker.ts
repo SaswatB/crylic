@@ -4,7 +4,6 @@ import ReactDOMServer from "react-dom/server";
 import { ErrorBoundary } from "synergy/src/components/ErrorBoundary";
 import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
 import { Project } from "synergy/src/lib/project/Project";
-import { getReactRouterProxy } from "synergy/src/lib/react-router-proxy";
 import { ltTakeNext } from "synergy/src/lib/utils";
 import { RenderEntryDeployerContext } from "synergy/src/types/paint";
 
@@ -128,10 +127,6 @@ export const webpackRunCodeWithWorker = async ({
   onProgress,
   onPublish,
   onReload,
-  onSwitchActive,
-  onSwitchDeactivate,
-  onRouteActive,
-  onRouteDeactivate,
 }: RenderEntryDeployerContext) => {
   const startTime = Date.now();
   const compileId = ++compileIdCounter;
@@ -238,18 +233,6 @@ export const webpackRunCodeWithWorker = async ({
     );
 
     // run the resulting bundle on the provided iframe, with stubs
-    (frame!.contentWindow! as any).require = (name: string) => {
-      // lm_c76a4fbc3b handle webpack externals
-      if (name === "react-router-dom")
-        return getReactRouterProxy(
-          frame!.contentWindow!,
-          onSwitchActive,
-          onSwitchDeactivate,
-          onRouteActive,
-          onRouteDeactivate
-        );
-      throw new Error(`Unable to require "${name}"`);
-    };
     (frame!.contentWindow! as any).exports = {};
     let hasHmrApplied = false;
     // listener for HMR updates
@@ -271,7 +254,6 @@ export const webpackRunCodeWithWorker = async ({
     }
     delete (frame!.contentWindow! as any).__crylicHmrStatusHandler;
     delete (frame!.contentWindow! as any).exports;
-    delete (frame!.contentWindow! as any).require;
     onReload();
   };
   if (

@@ -5,7 +5,7 @@ import React, {
   useLayoutEffect,
   useRef,
 } from "react";
-import { debounce, flatten, isEqual, uniq } from "lodash";
+import { debounce, isEqual } from "lodash";
 import { Observable, ReplaySubject } from "rxjs";
 import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 import { useBus } from "ts-bus/react";
@@ -15,8 +15,7 @@ import { useRerender } from "../../hooks/useRerender";
 import { useService } from "../../hooks/useService";
 import { useUpdatingRef } from "../../hooks/useUpdatingRef";
 import { componentViewCompileEnd, componentViewReload } from "../../lib/events";
-import { RouteDefinition } from "../../lib/react-router-proxy";
-import { arrayMap, isDefined } from "../../lib/utils";
+import { arrayMap } from "../../lib/utils";
 import { CompilerContextService } from "../../services/CompilerContextService";
 import { useProject } from "../../services/ProjectService";
 import {
@@ -91,12 +90,6 @@ export const CompilerComponentView: FunctionComponent<
     }
   }, [onDomChangeRef]);
 
-  // track route info per frame
-  const onRoutesDefinedSubjectRef = useRef(
-    new ReplaySubject<RouteDefinition>(1)
-  );
-  const onRouteChangeSubjectRef = useRef(new ReplaySubject<string>(1));
-
   // helper for getting elements by a lookup id
   const getElementsByLookupId = (lookupId: string) => {
     const iframeDocument = frame.current?.frameElement.contentDocument;
@@ -137,7 +130,7 @@ export const CompilerComponentView: FunctionComponent<
     [project]
   );
   useEffect(() => {
-    (async () => {
+    void (async () => {
       if (!project || !debouncedCodeEntries?.length) return;
       try {
         console.log("compiling", renderEntry.codeId, project);
@@ -150,31 +143,6 @@ export const CompilerComponentView: FunctionComponent<
           onProgress: onProgressSubject.pipe(distinctUntilChanged(isEqual)),
         });
 
-        const switchContext: Record<string, RouteDefinition | undefined> = {};
-        const routeContext: Record<string, string | undefined> = {};
-        const refreshRouteDefined = () => {
-          const switches = Object.values(switchContext).filter(isDefined);
-          if (switches.length > 0) {
-            const arg = {
-              // todo add ability to select switch to target instead of choosing the first one here
-              ...switches[0]!,
-              // combine all the routes defined by all the switches
-              routes: uniq(flatten(switches.map((s) => s.routes))),
-            };
-            onRoutesDefinedSubjectRef.current.next(arg);
-          }
-        };
-        const refreshRouteChange = () => {
-          const routes = Object.values(routeContext).filter(isDefined);
-          if (routes.length) {
-            // get the most specific route
-            let route = routes[0]!;
-            routes.forEach((r) => {
-              if (r.length > route.length) route = r;
-            });
-            onRouteChangeSubjectRef.current.next(route);
-          }
-        };
         await compiler.deploy({
           project,
           renderEntry,
@@ -193,22 +161,6 @@ export const CompilerComponentView: FunctionComponent<
             bus.publish(componentViewReload({ renderEntry }));
             registerMutationObserver();
           },
-          onSwitchActive(id, arg) {
-            switchContext[id] = arg;
-            refreshRouteDefined();
-          },
-          onSwitchDeactivate(id) {
-            delete switchContext[id];
-            refreshRouteDefined();
-          },
-          onRouteActive(id, route) {
-            routeContext[id] = route;
-            refreshRouteChange();
-          },
-          onRouteDeactivate(id) {
-            delete routeContext[id];
-            refreshRouteChange();
-          },
         });
 
         // clear temp styles
@@ -226,12 +178,6 @@ export const CompilerComponentView: FunctionComponent<
             // construct the view context
             const viewContext: ViewContext = {
               iframe: frame.current.frameElement,
-              onRoutesDefined: onRoutesDefinedSubjectRef.current.pipe(
-                distinctUntilChanged(isEqual)
-              ),
-              onRouteChange: onRouteChangeSubjectRef.current.pipe(
-                distinctUntilChanged()
-              ),
 
               getRootElement() {
                 const iframeDocument =

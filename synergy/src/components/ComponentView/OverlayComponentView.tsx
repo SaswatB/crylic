@@ -2,19 +2,15 @@ import React, {
   FunctionComponent,
   MutableRefObject,
   useCallback,
-  useEffect,
   useRef,
   useState,
 } from "react";
 import {
   faExpandAlt,
   faGlobe,
-  faLink,
-  faPlus,
   faSync,
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
-import { snakeCase } from "lodash";
 import { useSnackbar } from "notistack";
 import { Subject } from "rxjs";
 import { useBus } from "ts-bus/react";
@@ -25,20 +21,17 @@ import {
   SelectModeType,
 } from "../../constants";
 import { useDebounce } from "../../hooks/useDebounce";
-import { useMenuInput } from "../../hooks/useInput";
 import { useObservable } from "../../hooks/useObservable";
 import { useObservableCallback } from "../../hooks/useObservableCallback";
 import { useService } from "../../hooks/useService";
 import { addElementHelper } from "../../lib/ast/code-edit-helpers";
-import { routeComponent } from "../../lib/defs/react-router-dom";
-import { componentDomChange, componentViewRouteChange } from "../../lib/events";
+import { componentDomChange } from "../../lib/events";
 import { isDefined } from "../../lib/utils";
 import { CompilerContextService } from "../../services/CompilerContextService";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
 import { Styles, ViewContext } from "../../types/paint";
 import { IconButton } from "../IconButton";
-import { InputModal } from "../InputModal";
 import { ResizeModal } from "../ResizeModal";
 import { BuildProgress } from "./BuildProgress";
 import {
@@ -208,28 +201,6 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
 
   const [compileContext, setCompileContext] = useState<CompileContext>();
 
-  const routeDefinition = useObservable(viewContext?.onRoutesDefined);
-  const currentRoute = useObservable(viewContext?.onRouteChange);
-
-  const onAddRoute = async () => {
-    const inputName = await InputModal({
-      title: "New Route",
-      message: "Please enter a route name",
-    });
-    if (!inputName) return;
-    // todo show preview of name in dialog
-    const name = snakeCase(inputName.replace(/[^a-z0-9]/g, ""));
-    const path = `/${name}`;
-    const switchLookupId = project!.primaryElementEditor.getLookupIdFromProps(
-      routeDefinition!.switchProps
-    )!;
-    await addElementHelper(project!, switchLookupId, {
-      component: routeComponent,
-      attributes: { path },
-    });
-    project!.editRenderEntry(renderEntry.id, { route: path });
-  };
-
   const onTogglePublish = () => {
     console.log("onTogglePublish");
     project?.editRenderEntry(renderEntry.id, {
@@ -240,48 +211,11 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   const onRemoveComponentView = () =>
     project?.removeRenderEntry(renderEntry.id);
 
-  // fire an event whenever the route changes
-  useEffect(() => {
-    if (currentRoute && renderEntry.route !== currentRoute) {
-      bus.publish(
-        componentViewRouteChange({
-          renderEntry,
-          route: currentRoute,
-        })
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentRoute]);
-
-  const [, renderRouteMenu, openRouteMenu, closeRouteMenu] = useMenuInput({
-    options: (routeDefinition?.routes || []).map((availableRoute) => ({
-      name: availableRoute,
-      value: availableRoute,
-    })),
-    disableSelection: true,
-    onChange: (newRoute) => {
-      closeRouteMenu();
-      routeDefinition?.historyRef.current.push(newRoute);
-    },
-    initialValue: currentRoute,
-  });
-
   return (
     <div className="flex flex-col m-10">
       <div className="flex relative px-3 py-1 bg-blue-900 opacity-50 hover:opacity-100 default-transition">
         <div className="flex-1 truncate">{renderEntry.name}</div>
         <div className="flex-1" />
-        {routeDefinition?.routes ? (
-          <>
-            <IconButton title="Add Route" icon={faPlus} onClick={onAddRoute} />
-            <IconButton
-              title="Switch Route"
-              className="ml-2"
-              icon={faLink}
-              onClick={openRouteMenu}
-            />
-          </>
-        ) : null}
         {enablePublish && (
           <IconButton
             title={
@@ -319,18 +253,6 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           icon={faTimes}
           onClick={onRemoveComponentView}
         />
-        {renderRouteMenu()}
-        {currentRoute && (
-          <div className="absolute inset-0 text-center pointer-events-none">
-            <div
-              className="inline-block truncate py-1 font-bold pointer-events-auto"
-              style={{ maxWidth: "100px" }}
-              title={`Route: ${currentRoute}`}
-            >
-              {currentRoute}
-            </div>
-          </div>
-        )}
       </div>
       <div className="flex relative bg-white shadow-2xl">
         <CompilerComponentView

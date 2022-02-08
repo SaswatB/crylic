@@ -175,7 +175,6 @@ export class SelectService {
         { ast: (await codeEntry.getLatestAst()) as ASTType, codeEntry },
         lookupId
       ),
-      viewContext: this.compilerContextService.getViewContext(renderId),
       element: primaryElement,
       elements: componentElements,
       styleGroups,
