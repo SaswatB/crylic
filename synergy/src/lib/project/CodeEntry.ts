@@ -16,6 +16,7 @@ import {
 } from "../ext-regex";
 import { LTBehaviorSubject } from "../lightObservable/LTBehaviorSubject";
 import { ltMap } from "../lightObservable/LTOperator";
+import { ltTakeNext } from "../utils";
 import { Project } from "./Project";
 
 export const INITIAL_CODE_REVISION_ID = 1;
@@ -25,6 +26,7 @@ export const INITIAL_CODE_REVISION_ID = 1;
  */
 export interface RemoteCodeEntry {
   code: string | undefined;
+  codeRevisionId: number;
   filePath: string;
   isBootstrap: boolean;
   isRenderableScriptExtension: boolean;
@@ -180,6 +182,7 @@ export class CodeEntry {
   public getRemoteCodeEntry(): RemoteCodeEntry {
     return {
       code: this.code$.getValue(),
+      codeRevisionId: this.codeRevisionId,
       filePath: this.filePath,
       isBootstrap: this.isBootstrap(),
       isRenderableScriptExtension: this.isRenderableScriptExtension(),
@@ -240,6 +243,9 @@ export class CodeEntry {
   public readonly exportIsDefault$ = this.metadata$.pipe(
     ltMap((m) => m.exportIsDefault)
   );
+  private astCache:
+    | { codeRevisionId: number; ast: ASTType }
+    | undefined = undefined;
   public readonly ast$ = this.metadata$.pipe(
     ltMap((m): any => {
       if (!m.rawAst) return undefined;
@@ -257,6 +263,7 @@ export class CodeEntry {
         );
       });
 
+      this.astCache = { codeRevisionId: m.codeRevisionId!, ast };
       const res = ast; // deepFreeze(clone(ast, undefined, undefined, undefined, true));
 
       console.timeEnd("compute ast " + this.filePath);
@@ -269,6 +276,12 @@ export class CodeEntry {
       ast ? printCodeEntryAST(this.getRemoteCodeEntry(), ast) : undefined
     )
   );
+
+  public async getLatestAst() {
+    if (this.astCache?.codeRevisionId === this.codeRevisionId)
+      return this.astCache.ast;
+    return ltTakeNext(this.ast$);
+  }
 
   // #endregion
 }

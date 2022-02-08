@@ -172,7 +172,7 @@ export class SelectService {
       lookupId,
       index,
       sourceMetadata: this.project!.primaryElementEditor.getSourceMetaDataFromLookupId(
-        { ast: (await ltTakeNext(codeEntry.ast$)) as ASTType, codeEntry },
+        { ast: (await codeEntry.getLatestAst()) as ASTType, codeEntry },
         lookupId
       ),
       viewContext: this.compilerContextService.getViewContext(renderId),

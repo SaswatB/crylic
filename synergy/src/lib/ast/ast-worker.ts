@@ -42,6 +42,7 @@ export const workerModule = {
     }
 
     return {
+      codeRevisionId: remoteCodeEntry.codeRevisionId,
       rawAst: ast,
       isRenderable,
       exportName,

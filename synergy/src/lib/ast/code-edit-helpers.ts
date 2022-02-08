@@ -59,7 +59,7 @@ export const addElementHelper = async (
   }
 
   let newAst = project.primaryElementEditor.addChildToElement(
-    { ast: await ltTakeNext(codeEntry.ast$), codeEntry, lookupId },
+    { ast: await codeEntry.getLatestAst(), codeEntry, lookupId },
     component
   );
   const [newChildLookupId] =
@@ -114,7 +114,7 @@ export const updateElementHelper = async <T extends ASTType>(
 
   // update ast
   const newAst = apply(editor, {
-    ast: (await ltTakeNext(codeEntry.ast$)) as T,
+    ast: (await codeEntry.getLatestAst()) as T,
     codeEntry,
     lookupId,
   });
@@ -143,7 +143,7 @@ export const updateStyleGroupHelper = async <T extends ASTType>(
 
   // update ast
   const newAst = apply(editor, {
-    ast: (await ltTakeNext(codeEntry.ast$)) as T,
+    ast: (await codeEntry.getLatestAst()) as T,
     codeEntry,
     lookupId,
   });

@@ -169,7 +169,7 @@ export const ElementEditorPane: FunctionComponent = () => {
     const codeEntry = project?.getCodeEntryValue(codeId);
     if (!codeEntry) return;
     const line = editor.getCodeLineFromLookupId(
-      { codeEntry, ast: await ltTakeNext(codeEntry.ast$) },
+      { codeEntry, ast: await codeEntry.getLatestAst() },
       lookupId
     );
     console.log("openInEditor", codeEntry, line);
