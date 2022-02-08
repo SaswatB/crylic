@@ -23,7 +23,6 @@ const ForkTsCheckerWebpackPlugin = require("react-dev-utils/ForkTsCheckerWebpack
 const typescriptFormatter = require("react-dev-utils/typescriptFormatter");
 const postcssNormalize = require("postcss-normalize");
 
-const ReactRefreshPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const SentryWebpackPlugin = require("@sentry/webpack-plugin");
 
@@ -579,7 +578,6 @@ module.exports = function (webpackEnv) {
           formatter: isEnvProduction ? typescriptFormatter : undefined,
         }),
 
-      isEnvDevelopment && new ReactRefreshPlugin({}),
       isEnvProduction &&
         new SentryWebpackPlugin({
           include: "./build",
