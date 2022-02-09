@@ -54,7 +54,7 @@ export const CompilerComponentView: FunctionComponent<
         frameMutationObserver.current ||
         (frameMutationObserver.current,
         new MutationObserver(
-          debounce(() => renderEntry.domChange$.next(), 100)
+          debounce(() => renderEntry.domChanged$.next(), 100)
         ));
       const element = frame.current?.frameElement.contentDocument?.body;
 

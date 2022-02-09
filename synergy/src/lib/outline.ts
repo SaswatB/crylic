@@ -2,25 +2,17 @@ import { OutlineElement, OutlineElementType } from "../types/paint";
 import { ReactFiber } from "../types/react-devtools";
 import { ASTType } from "./ast/types";
 import { Project } from "./project/Project";
-import { RenderEntry } from "./project/RenderEntry";
 import { getChildrenFromFiber } from "./react-dev-tools";
 
 export const buildOutline = async (
   project: Project,
-  renderEntry: RenderEntry
+  renderId: string,
+  root: Element,
+  fiberComponentRoot: ReactFiber | undefined
 ) => {
-  const root = renderEntry.viewContext$.getValue()?.getRootElement();
-  if (!root) return undefined;
-
-  const fiberComponentRoot = renderEntry.reactMetadata$.getValue()
-    ?.fiberComponentRoot;
-
   return fiberComponentRoot
-    ? buildReactFiberRecurse(
-        { project, renderId: renderEntry.id },
-        fiberComponentRoot
-      )
-    : buildOutlineRecurse({ project, renderId: renderEntry.id }, root);
+    ? buildReactFiberRecurse({ project, renderId }, fiberComponentRoot)
+    : buildOutlineRecurse({ project, renderId }, root);
 };
 
 const buildOutlineRecurse = (
