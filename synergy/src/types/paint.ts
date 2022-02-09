@@ -1,4 +1,5 @@
 import { Project } from "../lib/project/Project";
+import { ReactFiber, ReactFiberRoot } from "./react-devtools";
 
 // todo use a better type
 export type PackageJson = any;
@@ -11,10 +12,17 @@ export interface EditEntry {
   codeId: string;
 }
 
+export enum OutlineElementType {
+  Frame,
+  Element,
+}
+
 export interface OutlineElement {
   tag: string;
+  type: OutlineElementType;
   renderId: string;
   lookupId: string;
+  codeId: string;
   element: HTMLElement | undefined;
   children: OutlineElement[];
 }
@@ -94,6 +102,11 @@ export enum ComponentViewZoomAction {
   RESET = "reset",
   ZOOM_IN = "zoomin",
   ZOOM_OUT = "zoomout",
+}
+
+export interface ReactMetadata {
+  fiberRoot: ReactFiberRoot;
+  fiberComponentRoot: ReactFiber;
 }
 
 export type ViewContext = {

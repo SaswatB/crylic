@@ -7,52 +7,20 @@ import TreeView from "@material-ui/lab/TreeView";
 import { produce } from "immer";
 import { distinctUntilChanged, map } from "rxjs/operators";
 
-import { useBusSubscription } from "../../hooks/useBusSubscription";
 import { useMemoObservable, useObservable } from "../../hooks/useObservable";
 import { useService } from "../../hooks/useService";
-import {
-  componentDomChange,
-  componentViewCompileEnd,
-  componentViewReload,
-} from "../../lib/events";
-import { Project } from "../../lib/project/Project";
+import { buildOutline, deepFindByCodeId } from "../../lib/outline";
+import { RenderEntry } from "../../lib/project/RenderEntry";
 import { renderSeparator } from "../../lib/render-utils";
 import { getElementUniqueId } from "../../lib/utils";
-import { CompilerContextService } from "../../services/CompilerContextService";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
-import { OutlineElement, RenderEntry } from "../../types/paint";
+import { OutlineElement, OutlineElementType } from "../../types/paint";
 import { IconButton } from "../IconButton";
 import { Tour } from "../Tour/Tour";
 
-const buildOutline = (
-  project: Project,
-  renderId: string,
-  element: Element
-): OutlineElement[] =>
-  Array.from(element.children)
-    .map((child) => {
-      const lookupId = project.primaryElementEditor.getLookupIdFromHTMLElement(
-        child as HTMLElement
-      );
-      if (lookupId) {
-        return [
-          {
-            tag: child.tagName.toLowerCase(),
-            renderId,
-            lookupId,
-            element: child as HTMLElement,
-            children: buildOutline(project, renderId, child),
-          },
-        ];
-      }
-      return buildOutline(project, renderId, child);
-    })
-    .reduce((p, c) => [...p, ...c], []);
-
 export const OutlinePane: FunctionComponent = () => {
   const project = useProject();
-  const compilerContextService = useService(CompilerContextService);
   const selectService = useService(SelectService);
   const selectedElementUniqueId = useMemoObservable(
     () =>
@@ -70,16 +38,12 @@ export const OutlinePane: FunctionComponent = () => {
   const [outlineMap, setOutlineMap] = useState<
     Record<string, OutlineElement[] | undefined>
   >({});
-  const calculateOutline = (renderId: string) => {
+  const calculateOutline = async (renderEntry: RenderEntry) => {
     // todo debounce
-    const root = compilerContextService
-      .getViewContext(renderId)
-      ?.getRootElement();
+    const outline = await buildOutline(project, renderEntry);
     setOutlineMap(
       produce((currentOutlineMap) => {
-        currentOutlineMap[renderId] = root
-          ? buildOutline(project, renderId, root)
-          : undefined;
+        currentOutlineMap[renderEntry.id] = outline;
       })
     );
   };
@@ -87,7 +51,7 @@ export const OutlinePane: FunctionComponent = () => {
     renderEntry,
   }: {
     renderEntry: RenderEntry;
-  }) => calculateOutline(renderEntry.id);
+  }) => calculateOutline(renderEntry);
 
   // recalculate the component view outline when the component view compiles, reloads, or changes its route
   useBusSubscription(componentViewCompileEnd, calculateOutlineWithEntry);
@@ -110,59 +74,80 @@ export const OutlinePane: FunctionComponent = () => {
     );
 
   let treeNodeIds = new Set<string>();
-  const renderTree = (node: OutlineElement) => {
-    const id = `${
-      node.element ? getElementUniqueId(node.element) : node.lookupId
-    }`;
-
+  const renderTree = (
+    node: OutlineElement,
+    renderEntry: RenderEntry,
+    nodeId = node.lookupId
+  ) => {
     // it's very important not to render duplicate node ids https://github.com/mui-org/material-ui/issues/20832
-    if (treeNodeIds.has(id)) {
-      console.error("duplicate node id", id, treeNodeIds, outlines);
+    if (treeNodeIds.has(nodeId)) {
+      console.error("duplicate node id", nodeId, treeNodeIds, outlines);
       return null;
     }
+    treeNodeIds.add(nodeId);
 
-    treeNodeIds.add(id);
     const treeLabel = (
       <div className="flex">
         {node.tag}
         <div className="flex-1" />
-        {/* if element isn't defined, this is probably the frame element */}
-        {!node.element && (
+        {node.type === OutlineElementType.Frame && (
+          // todo: use a better icon as this icon implies the frame will be refreshed
           <IconButton
             title="Refresh Outline"
             icon={faSync}
-            onClick={() => calculateOutline(node.renderId)}
+            onClick={() => calculateOutline(renderEntry)}
           />
         )}
       </div>
     );
+    // const hasElementsForPrimaryCodeEntry = !!node.children.find((c) =>
+    //   deepFindByCodeId(c, renderEntry.codeId)
+    // );
+    const hasElementsForPrimaryCodeEntry = true;
+
     return (
       <TreeItem
-        key={id}
-        nodeId={id}
+        key={nodeId}
+        nodeId={nodeId}
         label={treeLabel}
         onLabelClick={(e) => {
           e.preventDefault();
-          if (node.element)
-            selectService.selectElement(node.renderId, {
+          if (node.element) {
+            void selectService.selectElement(renderEntry, {
               htmlElement: node.element,
             });
+          }
         }}
       >
-        {node.children.map(renderTree)}
+        {hasElementsForPrimaryCodeEntry
+          ? node.children.map((c) =>
+              renderTree(
+                c,
+                renderEntry,
+                `${nodeId}:${node.children
+                  .filter((sc) => c.lookupId === sc.lookupId)
+                  .indexOf(c)}-${c.lookupId}`
+              )
+            )
+          : null}
       </TreeItem>
     );
   };
 
   // render tree ahead of time to populate treeNodeIds
   const renderedTree = outlines.map(({ outline, renderEntry }) =>
-    renderTree({
-      tag: renderEntry.name,
-      renderId: renderEntry.id,
-      lookupId: renderEntry.id,
-      element: undefined,
-      children: outline,
-    })
+    renderTree(
+      {
+        tag: renderEntry.name,
+        type: OutlineElementType.Frame,
+        renderId: renderEntry.id,
+        lookupId: renderEntry.id,
+        codeId: renderEntry.codeId,
+        element: undefined,
+        children: outline,
+      },
+      renderEntry
+    )
   );
 
   // todo maybe store lookupIds here? (nodeIds currently clear on refresh)

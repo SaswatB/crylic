@@ -5,7 +5,9 @@ import { ErrorBoundary } from "synergy/src/components/ErrorBoundary";
 import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
 import { Project } from "synergy/src/lib/project/Project";
 import { RenderEntryDeployerContext } from "synergy/src/lib/project/RenderEntry";
+import { findFiber } from "synergy/src/lib/react-dev-tools";
 import { ltTakeNext } from "synergy/src/lib/utils";
+import { ReactDevToolsHook } from "synergy/src/types/react-devtools";
 
 import {
   WebpackRendererMessagePayload_CompileFinished,
@@ -13,17 +15,19 @@ import {
 } from "../../types/ipc";
 import { publishComponent, unpublishComponent } from "../publish-component";
 import { getAppNodeModules } from "../utils";
+import { reactDevToolsFactory } from "./helpers/react-dev-tools-factory";
 import { webpackRunCode } from "./run-code-webpack";
 
 import errorBoundaryComponent from "!!raw-loader!synergy/src/components/ErrorBoundary";
 
 const path = __non_webpack_require__("path") as typeof import("path");
-const fs = __non_webpack_require__("fs") as typeof import("fs");
 
 const { ipcRenderer } = __non_webpack_require__(
   "electron"
 ) as typeof import("electron");
 
+const HMR_STATUS_HANDLER_PROP = "__crylicHmrStatusHandler";
+const ROOT_COMPONENT_PROP = "__crylicComponentRoot";
 const WORKER_ENABLED = true;
 
 const progressCallbacks: Record<
@@ -98,6 +102,9 @@ ${errorBoundaryComponent
   .replace('import React, { ErrorInfo } from "react";', "")
   .replace("export", "")}
 
+try {
+  Component.${ROOT_COMPONENT_PROP} = true
+} catch (e) {}
 ReactDOM.render((
   <ErrorBoundary>
     ${
@@ -109,8 +116,8 @@ ReactDOM.render((
   document.getElementById("${project.config.getHtmlTemplateSelector()}")
 );
 
-if ((module || {}).hot && (window || {}).__crylicHmrStatusHandler) {
-  module.hot.addStatusHandler(window.__crylicHmrStatusHandler);
+if ((module || {}).hot && (window || {}).${HMR_STATUS_HANDLER_PROP}) {
+  module.hot.addStatusHandler(window.${HMR_STATUS_HANDLER_PROP});
 }
 `.trim();
 };
@@ -219,26 +226,31 @@ export const webpackRunCodeWithWorker = async ({
 
   frame!.onload = () => {
     console.log("frame onload");
+    const frameWindow = frame!.contentWindow! as Window & {
+      paintErrorDisplayed?: boolean;
+      require?: (module: string) => unknown;
+      exports?: unknown;
+      [HMR_STATUS_HANDLER_PROP]?: (status: string) => void;
+      __REACT_DEVTOOLS_GLOBAL_HOOK__?: Partial<ReactDevToolsHook>;
+      paintBundle: () => void;
+    };
+
     const errorHandler = (error: Error) => {
       const body = frame!.contentDocument!.querySelector("body")!;
       body.style.margin = "0px";
       body.innerHTML = ReactDOMServer.renderToStaticMarkup(
         React.createElement(ErrorBoundary, { error })
       );
-      (frame!.contentWindow! as any).paintErrorDisplayed = true;
+      frameWindow.paintErrorDisplayed = true;
       return true;
     };
-    frame!.contentWindow!.addEventListener("error", (e) =>
-      errorHandler(e.error)
-    );
+    frameWindow.addEventListener("error", (e) => errorHandler(e.error));
 
     // run the resulting bundle on the provided iframe, with stubs
-    (frame!.contentWindow! as any).exports = {};
+    frameWindow.exports = {};
     let hasHmrApplied = false;
     // listener for HMR updates
-    (frame!.contentWindow! as any).__crylicHmrStatusHandler = (
-      status: string
-    ) => {
+    frameWindow[HMR_STATUS_HANDLER_PROP] = (status) => {
       if (status === "apply") hasHmrApplied = true;
       else if (status === "idle" && hasHmrApplied) {
         // run the callback on an idle after an apply
@@ -247,13 +259,30 @@ export const webpackRunCodeWithWorker = async ({
         setTimeout(() => renderEntry.viewReloaded$.next(), 100);
       }
     };
+
+    frameWindow.__REACT_DEVTOOLS_GLOBAL_HOOK__ = reactDevToolsFactory(
+      (root) => {
+        const componentRoot = findFiber(
+          root.current,
+          (fiber) =>
+            fiber.type?.[ROOT_COMPONENT_PROP] ||
+            fiber.elementType?.[ROOT_COMPONENT_PROP]
+        );
+        renderEntry.reactMetadata$.next({
+          fiberRoot: root,
+          fiberComponentRoot: componentRoot || root.current,
+        });
+      }
+    );
+
     try {
-      (frame!.contentWindow! as any).paintBundle();
+      frameWindow.paintBundle();
     } catch (error) {
       errorHandler(error as Error);
     }
-    delete (frame!.contentWindow! as any).__crylicHmrStatusHandler;
-    delete (frame!.contentWindow! as any).exports;
+    delete frameWindow[HMR_STATUS_HANDLER_PROP];
+    delete frameWindow.exports;
+    // devtools hook is purposely not deleted
     renderEntry.viewReloaded$.next();
   };
   if (
