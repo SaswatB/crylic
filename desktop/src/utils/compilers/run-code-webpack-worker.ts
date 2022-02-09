@@ -4,8 +4,8 @@ import ReactDOMServer from "react-dom/server";
 import { ErrorBoundary } from "synergy/src/components/ErrorBoundary";
 import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
 import { Project } from "synergy/src/lib/project/Project";
+import { RenderEntryDeployerContext } from "synergy/src/lib/project/RenderEntry";
 import { ltTakeNext } from "synergy/src/lib/utils";
-import { RenderEntryDeployerContext } from "synergy/src/types/paint";
 
 import {
   WebpackRendererMessagePayload_CompileFinished,
@@ -124,13 +124,11 @@ export const webpackRunCodeWithWorker = async ({
   project,
   renderEntry,
   frame,
-  onProgress,
   onPublish,
-  onReload,
 }: RenderEntryDeployerContext) => {
   const startTime = Date.now();
   const compileId = ++compileIdCounter;
-  const componentCodeEntry = project.getCodeEntryValue(renderEntry.codeId)!;
+  const componentCodeEntry = renderEntry.codeEntry;
   const bundleCodeEntry = {
     id: `bundle-${renderEntry.codeId}`,
     code: await generateBundleCode(project, componentCodeEntry),
@@ -168,6 +166,8 @@ export const webpackRunCodeWithWorker = async ({
           codeEntry.code$.getValue()
       : undefined;
   };
+  const onProgress = (payload: { percentage: number; message: string }) =>
+    renderEntry.compileProgress$.next(payload);
 
   let devport: number | null;
   if (WORKER_ENABLED) {
@@ -244,7 +244,7 @@ export const webpackRunCodeWithWorker = async ({
         // run the callback on an idle after an apply
         hasHmrApplied = false;
         // todo try to avoid timeout
-        setTimeout(onReload, 100);
+        setTimeout(() => renderEntry.viewReloaded$.next(), 100);
       }
     };
     try {
@@ -254,7 +254,7 @@ export const webpackRunCodeWithWorker = async ({
     }
     delete (frame!.contentWindow! as any).__crylicHmrStatusHandler;
     delete (frame!.contentWindow! as any).exports;
-    onReload();
+    renderEntry.viewReloaded$.next();
   };
   if (
     // todo fix tiny edge case where 'includes' here has a false positive

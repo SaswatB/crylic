@@ -1,5 +1,4 @@
 import { uniqueId } from "lodash";
-import fspath from "path";
 import { BehaviorSubject, Subject } from "rxjs";
 import {
   bufferCount,
@@ -9,7 +8,7 @@ import {
   mergeMap,
 } from "rxjs/operators";
 
-import { EditEntry, RenderEntry } from "../../types/paint";
+import { EditEntry } from "../../types/paint";
 import { ElementASTEditor, StyleASTEditor } from "../ast/editors/ASTEditor";
 import { JSXASTEditor } from "../ast/editors/JSXASTEditor";
 import { StyledASTEditor } from "../ast/editors/StyledASTEditor";
@@ -19,6 +18,7 @@ import { ltMap } from "../lightObservable/LTOperator";
 import { produceNext } from "../utils";
 import { CodeEntry } from "./CodeEntry";
 import { ProjectConfig } from "./ProjectConfig";
+import { RenderEntry } from "./RenderEntry";
 
 type EditorEntry<T> = {
   shouldApply: (entry: CodeEntry) => boolean;
@@ -220,28 +220,13 @@ export abstract class Project {
         name.current = `${baseName} (${index++})`;
       }
 
-      newRenderEntries.push({
-        id: uniqueId(),
-        name: name.current,
-        codeId: codeEntry.id,
-      });
+      newRenderEntries.push(
+        new RenderEntry(uniqueId(), name.current, codeEntry)
+      );
     });
     produceNext(this.renderEntries$, (draft) =>
-      draft.push(...newRenderEntries)
+      (draft as RenderEntry[]).push(...newRenderEntries)
     );
-  }
-
-  public editRenderEntry(
-    renderId: string,
-    partialRenderEntry: Partial<Omit<RenderEntry, "id" | "codeId">>
-  ) {
-    produceNext(this.renderEntries$, (draft) => {
-      const renderEntry = draft.find((e) => e.id === renderId);
-      Object.entries(partialRenderEntry).forEach(([key, value]) => {
-        // @ts-ignore ignore type error
-        renderEntry[key] = value;
-      });
-    });
   }
 
   public removeRenderEntry(renderId: string) {

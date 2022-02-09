@@ -1,6 +1,6 @@
 import { debounce } from "lodash";
 import { BehaviorSubject, of } from "rxjs";
-import { mergeMap } from "rxjs/operators";
+import { filter, map, mergeMap } from "rxjs/operators";
 import { singleton } from "tsyringe";
 
 import { SelectMode } from "../constants";
@@ -14,9 +14,10 @@ import {
   StyleGroup,
 } from "../lib/ast/editors/ASTEditor";
 import { ASTType } from "../lib/ast/types";
-import { ltTakeNext } from "../lib/utils";
-import { RenderEntry, SelectedElement, Styles } from "../types/paint";
-import { CompilerContextService } from "./CompilerContextService";
+import { RenderEntry } from "../lib/project/RenderEntry";
+import { sleep } from "../lib/utils";
+import { Styles } from "../types/paint";
+import { SelectedElement } from "../types/selected-element";
 import { ProjectService } from "./ProjectService";
 
 @singleton()
@@ -31,14 +32,11 @@ export class SelectService {
     StyleGroup | undefined
   >(undefined);
 
-  constructor(
-    private projectService: ProjectService,
-    private compilerContextService: CompilerContextService
-  ) {
-    this.selectedElement$.subscribe((selectedElement) => {
+  constructor(private projectService: ProjectService) {
+    this.selectedElement$.subscribe(async (selectedElement) => {
       (window as any).selectedElement = selectedElement; // for debugging purposes
 
-      this.validateSelectedElement();
+      await this.validateSelectedElement();
 
       // set the observer to detect changes to the selected element's parent
       const parentElement = selectedElement?.element.parentElement;
@@ -51,6 +49,36 @@ export class SelectService {
       }
     });
 
+    // refresh the selected element when the iframe reloads, if possible
+    this.selectedElement$
+      .pipe(
+        filter(<T>(s: T | undefined): s is T => !!s),
+        mergeMap((s) => s.renderEntry.viewReloaded$.pipe(map(() => s)))
+      )
+      .subscribe(async (selectedElement) => {
+        let newSelectedComponent = undefined;
+        for (let i = 0; i < 5 && !newSelectedComponent; i++) {
+          newSelectedComponent = selectedElement.renderEntry?.viewContext$
+            .getValue()
+            ?.getElementsByLookupId(selectedElement.lookupId)[0];
+          if (!newSelectedComponent) await sleep(100);
+        }
+
+        if (newSelectedComponent) {
+          console.log(
+            "setting selected element post-iframe reload",
+            selectedElement.lookupId
+          );
+          void this.selectElement(selectedElement.renderEntry, selectedElement);
+        } else {
+          console.log(
+            "unable to reselect selected element post-iframe reload",
+            selectedElement.lookupId
+          );
+          this.clearSelectedElement();
+        }
+      });
+
     // clear the selected element if its frame was removed
     this.projectService.project$
       .pipe(
@@ -58,7 +86,7 @@ export class SelectService {
       )
       .subscribe((renderEntries) => {
         const selectedElementRenderId = this.selectedElement$.getValue()
-          ?.renderId;
+          ?.renderEntry.id;
         if (
           selectedElementRenderId !== undefined &&
           !renderEntries.find((e) => e.id === selectedElementRenderId)
@@ -66,6 +94,12 @@ export class SelectService {
           this.clearSelectedElement();
         }
       });
+
+    // clear the selected element if the project was closed
+    this.projectService.project$.subscribe((project) => {
+      if (!project && this.selectedElement$.getValue())
+        this.clearSelectedElement();
+    });
 
     // clear the selected element if the select mode was cleared
     this.selectMode$.subscribe(
@@ -85,12 +119,12 @@ export class SelectService {
    * There are instances where selected element will have its underlying dom element replaced
    * so to try and handle such cases, this attempts to reselect the selected element if the parent element is missing
    */
-  private validateSelectedElement() {
+  private async validateSelectedElement() {
     const selectedElement = this.selectedElement$.getValue();
     if (selectedElement && !selectedElement.element.parentElement) {
       if (this.badSelectedElementRetryCounter === 0) {
         this.badSelectedElementRetryCounter++;
-        this.selectElement(selectedElement.renderId, selectedElement);
+        await this.selectElement(selectedElement.renderEntry, selectedElement);
       }
     } else {
       this.badSelectedElementRetryCounter = 0;
@@ -106,14 +140,13 @@ export class SelectService {
   }
 
   public async selectElement(
-    renderId: string,
+    renderEntry: RenderEntry,
     selector:
       | { htmlElement: HTMLElement; lookupId?: undefined; index?: undefined }
       // index: index of the primary element to select in the view
       | { htmlElement?: undefined; lookupId: string; index: number }
   ) {
-    const { getElementsByLookupId } =
-      this.compilerContextService.getViewContext(renderId) || {};
+    const { getElementsByLookupId } = renderEntry.viewContext$.getValue() || {};
 
     // resolve lookupId
     let lookupId;
@@ -168,7 +201,7 @@ export class SelectService {
 
     // save collected info
     this.selectedElement$.next({
-      renderId,
+      renderEntry,
       lookupId,
       index,
       sourceMetadata: this.project!.primaryElementEditor.getSourceMetaDataFromLookupId(
@@ -192,10 +225,7 @@ export class SelectService {
 
     await updateElementHelper(this.project!, selectedElement, apply, {
       // refresh the selected element after compile to get the new ast metadata
-      renderId: selectedElement.renderId,
-      addCompileTask: this.compilerContextService.addCompileTask.bind(
-        this.compilerContextService
-      ),
+      renderEntry: selectedElement.renderEntry,
       selectElement: this.selectElement.bind(this),
     });
   }
@@ -204,8 +234,8 @@ export class SelectService {
     const selectedElement = this.selectedElement$.getValue();
     if (!selectedElement) return;
 
-    this.compilerContextService
-      .getViewContext(selectedElement.renderId)
+    selectedElement.renderEntry.viewContext$
+      .getValue()
       ?.addTempStyles(selectedElement.lookupId, styles, !preview);
 
     // preview is a flag used to quickly show updates in the dom

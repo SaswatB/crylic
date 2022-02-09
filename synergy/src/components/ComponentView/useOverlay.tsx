@@ -4,11 +4,8 @@ import { Observable, Subject } from "rxjs";
 import { SelectModeType } from "../../constants";
 import { useObservableCallback } from "../../hooks/useObservableCallback";
 import { Project } from "../../lib/project/Project";
-import {
-  onMoveResizeCallback,
-  SelectedElement,
-  ViewContext,
-} from "../../types/paint";
+import { onMoveResizeCallback, ViewContext } from "../../types/paint";
+import { SelectedElement } from "../../types/selected-element";
 import { Draggable } from "../Draggable";
 
 const getComponentElementsFromEvent = (

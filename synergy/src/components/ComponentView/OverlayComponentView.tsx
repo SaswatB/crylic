@@ -2,6 +2,7 @@ import React, {
   FunctionComponent,
   MutableRefObject,
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -13,7 +14,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useSnackbar } from "notistack";
 import { Subject } from "rxjs";
-import { useBus } from "ts-bus/react";
 
 import {
   DEFAULT_FRAME_HEIGHT,
@@ -25,17 +25,15 @@ import { useObservable } from "../../hooks/useObservable";
 import { useObservableCallback } from "../../hooks/useObservableCallback";
 import { useService } from "../../hooks/useService";
 import { addElementHelper } from "../../lib/ast/code-edit-helpers";
-import { componentDomChange } from "../../lib/events";
+import { RenderEntryCompileStatus } from "../../lib/project/RenderEntry";
 import { isDefined } from "../../lib/utils";
-import { CompilerContextService } from "../../services/CompilerContextService";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
-import { Styles, ViewContext } from "../../types/paint";
+import { Styles } from "../../types/paint";
 import { IconButton } from "../IconButton";
 import { ResizeModal } from "../ResizeModal";
 import { BuildProgress } from "./BuildProgress";
 import {
-  CompileContext,
   CompilerComponentView,
   CompilerComponentViewProps,
 } from "./CompilerComponentView";
@@ -55,17 +53,31 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   scaleRef,
   enablePublish,
 }) => {
-  const bus = useBus();
-  const [loading, setLoading] = useState(false);
-  const [debouncedLoading, skipLoadingDebounce] = useDebounce(loading, 700);
   const project = useProject();
   const selectService = useService(SelectService);
   const selectMode = useObservable(selectService.selectMode$);
   const selectedElement = useObservable(selectService.selectedElement$);
-  const compilerContextService = useService(CompilerContextService);
   const { enqueueSnackbar } = useSnackbar();
   const { renderEntry } = compilerProps;
-  const [viewContext, setViewContext] = useState<ViewContext>();
+  const viewContext = useObservable(renderEntry.viewContext$);
+
+  // #region loading
+  const compileStatus = useObservable(renderEntry.compileStatus$);
+  const loading = [
+    RenderEntryCompileStatus.PENDING,
+    RenderEntryCompileStatus.IN_PROGRESS,
+  ].includes(compileStatus);
+  const [debouncedLoading, skipLoadingDebounce] = useDebounce(loading, 700);
+  useEffect(() => {
+    if (
+      [
+        RenderEntryCompileStatus.COMPILED,
+        RenderEntryCompileStatus.ERROR,
+      ].includes(compileStatus)
+    )
+      skipLoadingDebounce();
+  }, [compileStatus, skipLoadingDebounce]);
+  // #endregion
 
   const reload = useCallback(
     () => viewContext?.iframe.contentWindow?.location.reload(),
@@ -82,28 +94,24 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   // event for when temp styles are applied to the selected component
   const addTempStylesObservableRef = useRef(new Subject());
 
-  const onOverlaySelectElement = (
+  const onOverlaySelectElement = async (
     componentElement: Element | null | undefined
   ) => {
     if (!componentElement) return;
     assertHTMLElement(componentElement);
-    const renderId = renderEntry.id;
 
     switch (selectMode?.type) {
       default:
       case SelectModeType.SelectElement:
         console.log("setting selected from manual selection", componentElement);
-        selectService.selectElement(renderId, {
+        await selectService.selectElement(renderEntry, {
           htmlElement: componentElement,
         });
         break;
       case SelectModeType.AddElement:
         try {
-          addElementHelper(project!, componentElement, selectMode, {
-            renderId,
-            addCompileTask: compilerContextService.addCompileTask.bind(
-              compilerContextService
-            ),
+          await addElementHelper(project!, componentElement, selectMode, {
+            renderEntry,
             selectElement: selectService.selectElement.bind(selectService),
           });
         } catch (e) {
@@ -195,17 +203,13 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
         }
         styles["height"] = effectiveHeight;
       }
-      selectService.updateSelectedStyleGroup(styles, preview);
+      void selectService.updateSelectedStyleGroup(styles, preview);
     }
   );
 
-  const [compileContext, setCompileContext] = useState<CompileContext>();
-
   const onTogglePublish = () => {
     console.log("onTogglePublish");
-    project?.editRenderEntry(renderEntry.id, {
-      publish: !renderEntry.publish,
-    });
+    renderEntry.publish = !renderEntry.publish;
   };
 
   const onRemoveComponentView = () =>
@@ -257,26 +261,6 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
       <div className="flex relative bg-white shadow-2xl">
         <CompilerComponentView
           {...compilerProps}
-          onCompileStart={(context) => {
-            setLoading(true);
-            setCompileContext(context);
-            compilerProps?.onCompileStart?.(context);
-          }}
-          onCompileEnd={(renderEntry, context) => {
-            skipLoadingDebounce();
-            setLoading(false);
-            setViewContext(context);
-            compilerProps?.onCompileEnd?.(renderEntry, context);
-          }}
-          onCompileError={(e) => {
-            skipLoadingDebounce();
-            setLoading(false);
-            compilerProps?.onCompileError?.(e);
-          }}
-          onDomChange={() => {
-            bus.publish(componentDomChange({ renderEntry }));
-            compilerProps?.onDomChange?.();
-          }}
           style={{
             ...compilerProps.style,
             width: `${frameSize.width}px`,
@@ -284,7 +268,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           }}
         />
         {(isDefined(selectMode) || selectedElement) && renderOverlay()}
-        {debouncedLoading && <BuildProgress compileContext={compileContext} />}
+        {debouncedLoading && <BuildProgress renderEntry={renderEntry} />}
       </div>
     </div>
   );

@@ -1,8 +1,5 @@
-import {
-  ComponentDefinition,
-  SourceMetadata,
-  Styles,
-} from "../../../types/paint";
+import { ComponentDefinition, Styles } from "../../../types/paint";
+import { SourceMetadata } from "../../../types/selected-element";
 import { CodeEntry } from "../../project/CodeEntry";
 import { editAST } from "../ast-helpers";
 

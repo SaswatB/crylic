@@ -7,7 +7,6 @@ import { useMemoObservable } from "synergy/src/hooks/useObservable";
 import { useService } from "synergy/src/hooks/useService";
 import { editorOpenLocation } from "synergy/src/lib/events";
 import { isDefined } from "synergy/src/lib/utils";
-import { CompilerContextService } from "synergy/src/services/CompilerContextService";
 import { useProject } from "synergy/src/services/ProjectService";
 import { SelectService } from "synergy/src/services/SelectService";
 
@@ -18,7 +17,6 @@ import { ImageViewer } from "./ImageViewer";
 export const CodeEditorPane: FunctionComponent = () => {
   const project = useProject();
   const selectService = useService(SelectService);
-  const compilerContextService = useService(CompilerContextService);
   const selectedElementLookupId = useMemoObservable(
     () =>
       selectService.selectedElement$.pipe(
@@ -99,19 +97,21 @@ export const CodeEditorPane: FunctionComponent = () => {
               }}
               selectedElementId={selectedElementLookupId}
               onSelectElement={(lookupId) => {
-                const viewContextEntry = Object.entries(
-                  compilerContextService.getAllViewContexts()
-                ).find(
-                  ([, c]) =>
-                    (c?.getElementsByLookupId(lookupId).length || 0) > 0
-                );
-                if (viewContextEntry?.[1]) {
+                const renderEntry = project.renderEntries$
+                  .getValue()
+                  .find(
+                    (r) =>
+                      (r.viewContext$
+                        .getValue()
+                        ?.getElementsByLookupId(lookupId).length || 0) > 0
+                  );
+                if (renderEntry) {
                   console.log(
                     "setting selected element through editor cursor update",
                     lookupId,
-                    viewContextEntry[0]
+                    renderEntry.id
                   );
-                  selectService.selectElement(viewContextEntry[0], {
+                  selectService.selectElement(renderEntry, {
                     lookupId,
                     index: 0,
                   });

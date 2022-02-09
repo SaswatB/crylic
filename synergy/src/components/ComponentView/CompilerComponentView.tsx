@@ -5,61 +5,34 @@ import React, {
   useLayoutEffect,
   useRef,
 } from "react";
-import { debounce, isEqual } from "lodash";
-import { Observable, ReplaySubject } from "rxjs";
-import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
-import { useBus } from "ts-bus/react";
+import { debounce } from "lodash";
+import { debounceTime, map } from "rxjs/operators";
 
 import { useMemoObservable } from "../../hooks/useObservable";
+import { useObservableCallback } from "../../hooks/useObservableCallback";
 import { useRerender } from "../../hooks/useRerender";
-import { useService } from "../../hooks/useService";
-import { useUpdatingRef } from "../../hooks/useUpdatingRef";
-import { componentViewCompileEnd, componentViewReload } from "../../lib/events";
-import { arrayMap } from "../../lib/utils";
-import { CompilerContextService } from "../../services/CompilerContextService";
-import { useProject } from "../../services/ProjectService";
 import {
   RenderEntry,
+  RenderEntryCompileStatus,
   RenderEntryDeployerContext,
-  StyleKeys,
-  Styles,
-  ViewContext,
-} from "../../types/paint";
+} from "../../lib/project/RenderEntry";
+import { arrayMap } from "../../lib/utils";
+import { useProject } from "../../services/ProjectService";
+import { StyleKeys, Styles, ViewContext } from "../../types/paint";
 import { ErrorBoundary } from "../ErrorBoundary";
 import { Frame } from "../Frame";
-
-export type CompileContext = {
-  onProgress: Observable<{ percentage: number; message: string }>;
-};
 
 export interface CompilerComponentViewProps {
   renderEntry: RenderEntry;
   compiler: { deploy: (context: RenderEntryDeployerContext) => Promise<void> };
-  onCompileStart?: (compileContext: CompileContext) => void;
-  onCompileEnd?: (renderEntry: RenderEntry, context: ViewContext) => void;
-  onCompileError?: (e: Error) => void;
   onNewPublishUrl?: (url: string) => void;
-  onReload?: (renderEntry: RenderEntry) => void;
-  onDomChange?: () => void; // debounced listener on any DOM changes within the iframe
 }
 
 export const CompilerComponentView: FunctionComponent<
   CompilerComponentViewProps & React.IframeHTMLAttributes<HTMLIFrameElement>
-> = ({
-  renderEntry,
-  compiler,
-  onCompileStart,
-  onCompileEnd,
-  onCompileError,
-  onNewPublishUrl,
-  onReload,
-  onDomChange,
-  ...props
-}) => {
-  const bus = useBus();
+> = ({ renderEntry, compiler, onNewPublishUrl, ...props }) => {
   const rerender = useRerender();
   const project = useProject();
-  const compilerContextService = useService(CompilerContextService);
   const frame = useRef<{
     frameElement: HTMLIFrameElement;
   }>(null);
@@ -71,24 +44,28 @@ export const CompilerComponentView: FunctionComponent<
     lastPublishUrl.current = undefined;
   }
 
-  const onDomChangeRef = useUpdatingRef(onDomChange);
   /**
-   * Register a listener on any DOM changes within the iframe
+   * Register a listener for any DOM changes within the iframe
    */
-  const registerMutationObserver = useCallback(() => {
-    const observer =
-      frameMutationObserver.current ||
-      (frameMutationObserver.current,
-      new MutationObserver(debounce(() => onDomChangeRef.current?.(), 100)));
-    const element = frame.current?.frameElement.contentDocument?.body;
+  useObservableCallback(
+    renderEntry.viewReloaded$,
+    useCallback(() => {
+      const observer =
+        frameMutationObserver.current ||
+        (frameMutationObserver.current,
+        new MutationObserver(
+          debounce(() => renderEntry.domChange$.next(), 100)
+        ));
+      const element = frame.current?.frameElement.contentDocument?.body;
 
-    if (element) {
-      observer.observe(element, {
-        childList: true,
-        subtree: true,
-      });
-    }
-  }, [onDomChangeRef]);
+      if (element) {
+        observer.observe(element, {
+          childList: true,
+          subtree: true,
+        });
+      }
+    }, [renderEntry])
+  );
 
   // helper for getting elements by a lookup id
   const getElementsByLookupId = (lookupId: string) => {
@@ -134,32 +111,16 @@ export const CompilerComponentView: FunctionComponent<
       if (!project || !debouncedCodeEntries?.length) return;
       try {
         console.log("compiling", renderEntry.codeId, project);
-        const onProgressSubject = new ReplaySubject<{
-          percentage: number;
-          message: string;
-        }>(1);
-
-        onCompileStart?.({
-          onProgress: onProgressSubject.pipe(distinctUntilChanged(isEqual)),
-        });
 
         await compiler.deploy({
           project,
           renderEntry,
           frame: frame.current?.frameElement,
-          onProgress(arg) {
-            onProgressSubject.next(arg);
-          },
           onPublish(url) {
             if (url !== lastPublishUrl.current) {
               lastPublishUrl.current = url;
               onNewPublishUrl?.(url);
             }
-          },
-          onReload() {
-            onReload?.(renderEntry);
-            bus.publish(componentViewReload({ renderEntry }));
-            registerMutationObserver();
           },
         });
 
@@ -204,23 +165,16 @@ export const CompilerComponentView: FunctionComponent<
               },
             };
             // save the new context
-            compilerContextService.setViewContext(renderEntry.id, viewContext);
+            renderEntry.setViewContext(viewContext);
 
             // fire all related events
-            onCompileEnd?.(renderEntry, viewContext);
-            compilerContextService.runCompileTasks(renderEntry.id, viewContext);
-            bus.publish(
-              componentViewCompileEnd({
-                renderEntry,
-                viewContext,
-              })
-            );
+            renderEntry.updateCompileStatus(RenderEntryCompileStatus.COMPILED);
           })
         );
       } catch (e) {
         console.log(e);
         errorBoundary.current?.setError(e as Error);
-        onCompileError?.(e as Error);
+        renderEntry.updateCompileStatus(RenderEntryCompileStatus.ERROR);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps

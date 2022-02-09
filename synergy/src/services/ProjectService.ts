@@ -1,9 +1,11 @@
 import { BehaviorSubject } from "rxjs";
+import { filter, map, mergeAll, mergeMap } from "rxjs/operators";
 import { singleton } from "tsyringe";
 
 import { useObservable } from "../hooks/useObservable";
 import { useService } from "../hooks/useService";
 import { Project } from "../lib/project/Project";
+import { RenderEntryCompileStatus } from "../lib/project/RenderEntry";
 
 const RECENT_PROJECTS_KEY = "recentProjects";
 
@@ -34,6 +36,26 @@ export class ProjectService {
         );
       }
     });
+
+    // plumb onASTRender callback for all project editor entries
+    this.project$
+      .pipe(
+        filter(<T>(p: T | undefined): p is T => !!p),
+        mergeMap((p) => p.renderEntries$),
+        mergeAll(),
+        mergeMap((r) =>
+          r.compileStatus$.pipe(
+            filter((c) => c === RenderEntryCompileStatus.COMPILED),
+            map(() => r)
+          )
+        )
+      )
+      .subscribe((renderEntry) => {
+        this.project$.getValue()?.editorEntries.forEach(({ editor }) => {
+          const frame = renderEntry.viewContext$.getValue()?.iframe;
+          if (frame) editor.onASTRender?.(frame);
+        });
+      });
   }
 
   public setProject(project: Project | undefined) {

@@ -1,18 +1,14 @@
-import { FunctionComponent, useEffect } from "react";
+import { FunctionComponent, useEffect, useMemo } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { filter, map, mergeAll, mergeMap } from "rxjs/operators";
 
-import { useBusSubscription } from "../../hooks/useBusSubscription";
 import { useService } from "../../hooks/useService";
-import { componentViewCompileEnd, componentViewReload } from "../../lib/events";
-import { sleep } from "../../lib/utils";
-import { CompilerContextService } from "../../services/CompilerContextService";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
 
 export const StateManager: FunctionComponent = () => {
   const project = useProject({ allowUndefined: true });
   const selectService = useService(SelectService);
-  const compilerContextService = useService(CompilerContextService);
 
   /* Hotkeys */
 
@@ -41,49 +37,6 @@ export const StateManager: FunctionComponent = () => {
         .deleteSelectedElement()
         .catch((e) => alert((e as Error).message))
   );
-
-  /* Project Management */
-
-  // onASTRender callback for all project editor entries
-  useBusSubscription(componentViewCompileEnd, ({ viewContext }) => {
-    project?.editorEntries.forEach(({ editor }) =>
-      editor.onASTRender?.(viewContext.iframe)
-    );
-  });
-
-  /* Select Management */
-
-  // refresh the selected element when the iframe reloads, if possible
-  useBusSubscription(componentViewReload, async ({ renderEntry }) => {
-    const selectedElement = selectService.selectedElement$.getValue();
-    if (selectedElement?.renderId !== renderEntry.id) return;
-    let newSelectedComponent = undefined;
-    for (let i = 0; i < 5 && !newSelectedComponent; i++) {
-      newSelectedComponent = compilerContextService
-        .getViewContext(renderEntry.id)
-        ?.getElementsByLookupId(selectedElement.lookupId)[0];
-      if (!newSelectedComponent) await sleep(100);
-    }
-
-    if (newSelectedComponent) {
-      console.log(
-        "setting selected element post-iframe reload",
-        selectedElement.lookupId
-      );
-      selectService.selectElement(renderEntry.id, selectedElement);
-    } else {
-      console.log(
-        "unable to reselect selected element post-iframe reload",
-        selectedElement.lookupId
-      );
-      selectService.clearSelectedElement();
-    }
-  });
-
-  // clear the selected element if the project was closed
-  useEffect(() => {
-    if (!project) selectService.clearSelectedElement();
-  }, [project, selectService]);
 
   return null;
 };

@@ -10,10 +10,10 @@ import { types } from "recast";
 import {
   ComponentDefinition,
   CustomComponentDefinition,
-  SourceMetadata,
   StyleKeys,
   Styles,
 } from "../../../types/paint";
+import { SourceMetadata } from "../../../types/selected-element";
 import { CodeEntry } from "../../project/CodeEntry";
 import {
   copyJSXName,

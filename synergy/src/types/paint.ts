@@ -1,8 +1,3 @@
-import {
-  EditContext,
-  ElementASTEditor,
-  StyleGroup,
-} from "../lib/ast/editors/ASTEditor";
 import { Project } from "../lib/project/Project";
 
 // todo use a better type
@@ -15,45 +10,6 @@ export type PackageInstaller<
 export interface EditEntry {
   codeId: string;
 }
-
-export interface RenderEntry {
-  id: string;
-  name: string;
-  codeId: string;
-  publish?: boolean;
-  route?: string;
-}
-
-export interface SourceMetadata {
-  componentName: string;
-  directProps: Record<string, unknown>;
-}
-
-export interface SelectedElement {
-  renderId: string;
-  lookupId: string;
-  index: number; // index of element within elements
-  element: HTMLElement;
-  elements: HTMLElement[];
-  styleGroups: StyleGroup[];
-  computedStyles: CSSStyleDeclaration;
-  inlineStyles: CSSStyleDeclaration;
-
-  sourceMetadata: SourceMetadata | undefined;
-}
-
-export interface RenderEntryDeployerContext {
-  project: Project;
-  renderEntry: RenderEntry;
-  frame: HTMLIFrameElement | undefined;
-  onProgress: (arg: { percentage: number; message: string }) => void;
-  onPublish: (url: string) => void;
-  onReload: () => void;
-}
-
-export type UpdateSelectedElement = <T extends {}>(
-  apply: (editor: ElementASTEditor<T>, editContext: EditContext<T>) => T
-) => void;
 
 export interface OutlineElement {
   tag: string;

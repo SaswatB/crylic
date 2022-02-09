@@ -3,13 +3,13 @@ import { CircularProgress } from "@material-ui/core";
 import { startCase } from "lodash";
 
 import { useObservable } from "../../hooks/useObservable";
-import { CompileContext } from "./CompilerComponentView";
+import { RenderEntry } from "../../lib/project/RenderEntry";
 
 interface Props {
-  compileContext?: CompileContext;
+  renderEntry: RenderEntry;
 }
-export const BuildProgress: FunctionComponent<Props> = ({ compileContext }) => {
-  const buildProgress = useObservable(compileContext?.onProgress);
+export const BuildProgress: FunctionComponent<Props> = ({ renderEntry }) => {
+  const buildProgress = useObservable(renderEntry.compileProgress$);
   const progressVariant =
     (buildProgress?.percentage || 0) > 0.1 ? "static" : undefined;
 

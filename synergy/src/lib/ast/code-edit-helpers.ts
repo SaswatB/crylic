@@ -1,10 +1,8 @@
-import {
-  ComponentDefinition,
-  SelectedElement,
-  ViewContext,
-} from "../../types/paint";
+import { ComponentDefinition } from "../../types/paint";
+import { SelectedElement } from "../../types/selected-element";
 import { Project } from "../project/Project";
-import { ltTakeNext, sleep } from "../utils";
+import { RenderEntry } from "../project/RenderEntry";
+import { sleep } from "../utils";
 import {
   EditContext,
   ElementASTEditor,
@@ -14,13 +12,9 @@ import {
 import { ASTType } from "./types";
 
 interface SelectContext {
-  renderId: string;
-  addCompileTask: (
-    renderId: string,
-    task: (viewContext: ViewContext) => void
-  ) => void;
+  renderEntry: RenderEntry;
   selectElement: (
-    renderId: string,
+    renderEntry: RenderEntry,
     selector: { lookupId: string; index: number }
   ) => void;
 }
@@ -70,11 +64,13 @@ export const addElementHelper = async (
 
   if (newChildLookupId !== undefined && selectContext) {
     // try to select the newly added element when the CompilerComponentView next compiles
-    const { renderId, addCompileTask, selectElement } = selectContext;
-    addCompileTask(renderId, async ({ getElementsByLookupId }) => {
+    const { renderEntry, selectElement } = selectContext;
+    renderEntry.addCompileTask(async () => {
       let newChildComponent = undefined;
       for (let i = 0; i < 5 && !newChildComponent; i++) {
-        newChildComponent = getElementsByLookupId(newChildLookupId)[0];
+        newChildComponent = renderEntry.viewContext$
+          .getValue()
+          ?.getElementsByLookupId(newChildLookupId)[0];
         if (!newChildComponent) await sleep(100);
       }
       if (newChildComponent) {
@@ -82,7 +78,7 @@ export const addElementHelper = async (
           "setting selected element through post-child add",
           newChildLookupId
         );
-        selectElement(renderId, { lookupId: newChildLookupId, index: 0 });
+        selectElement(renderEntry, { lookupId: newChildLookupId, index: 0 });
       }
     });
   }
@@ -120,10 +116,10 @@ export const updateElementHelper = async <T extends ASTType>(
   });
 
   if (selectContext) {
-    const { renderId, addCompileTask, selectElement } = selectContext;
-    addCompileTask(renderId, () => {
-      selectElement(renderId, { lookupId, index });
-    });
+    const { renderEntry, selectElement } = selectContext;
+    renderEntry.addCompileTask(() =>
+      selectElement(renderEntry, { lookupId, index })
+    );
   }
 
   codeEntry.updateAst(newAst);
