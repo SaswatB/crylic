@@ -16,7 +16,7 @@ import {
   RenderEntryCompileStatus,
   RenderEntryDeployerContext,
 } from "../../lib/project/RenderEntry";
-import { arrayMap } from "../../lib/utils";
+import { eagerMapArray } from "../../lib/rxjs/eagerMap";
 import { useProject } from "../../services/ProjectService";
 import { StyleKeys, Styles, ViewContext } from "../../types/paint";
 import { ErrorBoundary } from "../ErrorBoundary";
@@ -98,10 +98,9 @@ export const CompilerComponentView: FunctionComponent<
   const debouncedCodeEntries = useMemoObservable(
     () =>
       project?.codeEntries$.toRXJS().pipe(
-        arrayMap(
-          (e) => e.code$.toRXJS().pipe(map((c) => ({ c, e }))),
-          (v) => v.e.id
-        ),
+        eagerMapArray((e) => e.code$.toRXJS().pipe(map((c) => ({ c, e }))), {
+          waitForAll: true,
+        }),
         debounceTime(150)
       ),
     [project]
@@ -110,8 +109,6 @@ export const CompilerComponentView: FunctionComponent<
     void (async () => {
       if (!project || !debouncedCodeEntries?.length) return;
       try {
-        console.log("compiling", renderEntry.codeId, project);
-
         await compiler.deploy({
           project,
           renderEntry,

@@ -141,7 +141,6 @@ export const webpackRunCodeWithWorker = async ({
     code: await generateBundleCode(project, componentCodeEntry),
     filePath: path.join(project.sourceFolderPath, "paintbundle.tsx"),
   };
-  console.log("bundleCode", bundleCodeEntry.code);
 
   const trimEntry = async (codeEntry: CodeEntry) => ({
     id: codeEntry.id,
@@ -151,6 +150,7 @@ export const webpackRunCodeWithWorker = async ({
   const codeEntries = await Promise.all(
     project.codeEntries$.getValue().map(trimEntry)
   );
+  console.log("compiling codeEntries", codeEntries);
 
   const config = {
     disableWebpackExternals:
@@ -165,9 +165,8 @@ export const webpackRunCodeWithWorker = async ({
   };
 
   const takeNextCode = async (codeEntryId: string) => {
-    const codeEntry = project.codeEntries$
-      .getValue()
-      .find((e) => e.id === codeEntryId);
+    const codeEntry = project.getCodeEntryValue(codeEntryId);
+    console.log("takeNextCode", codeEntry);
     return codeEntry
       ? (await ltTakeNext(codeEntry.codeWithLookupData$)) ||
           codeEntry.code$.getValue()

@@ -327,6 +327,19 @@ function saveFileWithDirs(inputFs: IFs, filePath: string, data: string) {
   inputFs.writeFileSync(filePath, data);
 }
 
+async function fetchAndSave(
+  outFs: IFs,
+  context: LazyReadFileContext,
+  entry: WebpackWorkerMessagePayload_Compile["codeEntries"][0]
+) {
+  const code = await context.fetchCodeEntry(entry.id);
+  if (code) {
+    console.log("updating webpack file", entry.filePath);
+    saveFileWithDirs(outFs, entry.filePath, code);
+    context.savedCodeRevisions[entry.id] = entry.codeRevisionId;
+  }
+}
+
 interface LazyReadFileContext {
   codeEntriesMap: Map<
     string,
@@ -343,12 +356,7 @@ const lazyReadFileFactory = (
   const filePath = args[0] as string;
   const entry = context.codeEntriesMap.get(normalizePath(filePath, path.sep));
   if (entry && entry.codeRevisionId !== context.savedCodeRevisions[entry.id]) {
-    const code = await context.fetchCodeEntry(entry.id);
-    if (code) {
-      console.log("updating webpack file", entry.filePath);
-      saveFileWithDirs(inputFs, filePath, code);
-      context.savedCodeRevisions[entry.id] = entry.codeRevisionId;
-    }
+    await fetchAndSave(inputFs, context, entry);
   }
   inputFs.readFile(...args);
 };
@@ -585,6 +593,16 @@ export const webpackRunCode = async (
       inputFs,
       primaryCodeEntry.filePath,
       primaryCodeEntry.code!
+    );
+    await Promise.all(
+      Object.entries(fsContext.savedCodeRevisions).map(
+        async ([codeId, revision]) => {
+          const entry = codeEntries.find((e) => e.id === codeId);
+          if (entry && entry.codeRevisionId !== revision) {
+            await fetchAndSave(inputFs, fsContext, entry);
+          }
+        }
+      )
     );
   }
   const { compiler, devport } = webpackCache[primaryCodeEntry.id]!;

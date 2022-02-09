@@ -105,10 +105,14 @@ const buildReactFiberRecurse = (
     )
   ).then((r) => r.reduce((p, c) => [...p, ...c], []));
 
-export const deepFindByCodeId = (
-  element: OutlineElement,
-  codeId: string
+export const findEntryRecurse = (
+  elements: OutlineElement[],
+  predicate: (element: OutlineElement) => boolean
 ): OutlineElement | undefined => {
-  if (element.codeId === codeId) return element;
-  return element.children.find((c) => deepFindByCodeId(c, codeId));
+  for (const element of elements) {
+    if (predicate(element)) return element;
+    const res = findEntryRecurse(element.children, predicate);
+    if (res) return res;
+  }
+  return undefined;
 };

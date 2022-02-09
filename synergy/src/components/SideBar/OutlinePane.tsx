@@ -1,32 +1,15 @@
 import React, { FunctionComponent } from "react";
-import { distinctUntilChanged, map } from "rxjs/operators";
 
-import { useMemoObservable, useObservable } from "../../hooks/useObservable";
-import { useService } from "../../hooks/useService";
+import { useObservable } from "../../hooks/useObservable";
 import { renderSeparator } from "../../lib/render-utils";
-import { getElementUniqueId } from "../../lib/utils";
 import { useProject } from "../../services/ProjectService";
-import { SelectService } from "../../services/SelectService";
 import { Tour } from "../Tour/Tour";
 import { OutlinePaneEntry } from "./OutlinePaneEntry";
 
 export const OutlinePane: FunctionComponent = () => {
   const project = useProject();
-  const selectService = useService(SelectService);
-  const selectedElementUniqueId = useMemoObservable(
-    () =>
-      selectService.selectedElement$.pipe(
-        map((selectedElement) =>
-          selectedElement
-            ? `${getElementUniqueId(selectedElement.element)}`
-            : undefined
-        ),
-        distinctUntilChanged()
-      ),
-    [selectService]
-  );
-
   const renderEntries = useObservable(project?.renderEntries$);
+
   return (
     <>
       {(renderEntries?.length || 0) > 0 && (
@@ -49,11 +32,7 @@ export const OutlinePane: FunctionComponent = () => {
       >
         {renderSeparator("Outline")}
         {renderEntries.map((renderEntry) => (
-          <OutlinePaneEntry
-            key={renderEntry.id}
-            renderEntry={renderEntry}
-            selectedElementUniqueId={selectedElementUniqueId}
-          />
+          <OutlinePaneEntry key={renderEntry.id} renderEntry={renderEntry} />
         ))}
       </div>
     </>

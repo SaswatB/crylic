@@ -235,6 +235,7 @@ export const Toolbar: FunctionComponent<Props> = ({ setZoomAction }) => {
           data-tour="interactive-mode"
           title="Interactive Mode"
           onClick={() => {
+            selectService.clearSelectedElement();
             selectService.setSelectMode(undefined);
           }}
         >

@@ -1,6 +1,5 @@
-import { FunctionComponent, useEffect, useMemo } from "react";
+import { FunctionComponent } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import { filter, map, mergeAll, mergeMap } from "rxjs/operators";
 
 import { useService } from "../../hooks/useService";
 import { useProject } from "../../services/ProjectService";
@@ -28,7 +27,10 @@ export const StateManager: FunctionComponent = () => {
   useHotkeys("ctrl+shift+z", () => project?.redoCodeChange(), [project]);
 
   // clear select mode on escape hotkey
-  useHotkeys("escape", () => selectService.setSelectMode(undefined));
+  useHotkeys("escape", () => {
+    selectService.clearSelectedElement();
+    selectService.setSelectMode(undefined);
+  });
 
   useHotkeys(
     "delete",

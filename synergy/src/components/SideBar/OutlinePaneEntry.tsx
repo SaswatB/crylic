@@ -8,7 +8,7 @@ import TreeView from "@material-ui/lab/TreeView";
 import { useObservable } from "../../hooks/useObservable";
 import { useObservableCallback } from "../../hooks/useObservableCallback";
 import { useService } from "../../hooks/useService";
-import { buildOutline } from "../../lib/outline";
+import { buildOutline, findEntryRecurse } from "../../lib/outline";
 import {
   RenderEntry,
   RenderEntryCompileStatus,
@@ -18,25 +18,27 @@ import { SelectService } from "../../services/SelectService";
 import { OutlineElement, OutlineElementType } from "../../types/paint";
 import { IconButton } from "../IconButton";
 
-const renderTree = (
-  context: {
-    renderEntry: RenderEntry;
-    treeNodeIds: Set<string>;
-    outline: OutlineElement[];
+interface RenderTreeContext {
+  renderEntry: RenderEntry;
+  treeNodeIdMap: Map<string, OutlineElement>;
+  outline: OutlineElement[];
 
-    onRefresh: () => void;
-    onLabelClick: (node: OutlineElement) => void;
-  },
+  onRefresh: () => void;
+  onLabelClick: (node: OutlineElement) => void;
+}
+
+const renderTree = (
+  context: RenderTreeContext,
   node: OutlineElement,
   nodeId = context.renderEntry.id + "=" + node.lookupId
 ) => {
-  const { treeNodeIds } = context;
+  const { renderEntry, treeNodeIdMap } = context;
   // it's very important not to render duplicate node ids https://github.com/mui-org/material-ui/issues/20832
-  if (treeNodeIds.has(nodeId)) {
-    console.error("duplicate node id", nodeId, treeNodeIds, context.outline);
+  if (treeNodeIdMap.has(nodeId)) {
+    console.error("duplicate node id", nodeId, treeNodeIdMap, context.outline);
     return null;
   }
-  treeNodeIds.add(nodeId);
+  treeNodeIdMap.set(nodeId, node);
 
   const treeLabel = (
     <div className="flex">
@@ -52,8 +54,9 @@ const renderTree = (
       )}
     </div>
   );
-  // const hasElementsForPrimaryCodeEntry = !!node.children.find((c) =>
-  //   deepFindByCodeId(c, renderEntry.codeId)
+  // const hasElementsForPrimaryCodeEntry = !!findEntryRecurse(
+  //   node.children,
+  //   (c) => c.codeId === renderEntry.codeId
   // );
   const hasElementsForPrimaryCodeEntry = true;
 
@@ -84,17 +87,14 @@ const renderTree = (
 
 interface Props {
   renderEntry: RenderEntry;
-  selectedElementUniqueId: string | undefined;
 }
 
-export function OutlinePaneEntry({
-  renderEntry,
-  selectedElementUniqueId,
-}: Props) {
+export function OutlinePaneEntry({ renderEntry }: Props) {
   const project = useProject();
   const selectService = useService(SelectService);
   const [outline, setOutline] = useState<OutlineElement[]>([]);
 
+  const selectedElement = useObservable(selectService.selectedElement$);
   const viewContext = useObservable(renderEntry.viewContext$);
   const reactMetadata = useObservable(renderEntry.reactMetadata$);
 
@@ -127,27 +127,26 @@ export function OutlinePaneEntry({
     (c) => c === RenderEntryCompileStatus.COMPILED && calculateOutline()
   );
 
-  const { treeNodeIds, renderedTree } = useMemo(() => {
-    const treeNodeIds = new Set<string>();
-
-    // render tree ahead of time to populate treeNodeIds
-    const renderedTree = renderTree(
-      {
-        renderEntry,
-        treeNodeIds,
-        outline,
-        onRefresh() {
-          void calculateOutline();
-        },
-        onLabelClick(node) {
-          if (node.element) {
-            void selectService.selectElement(renderEntry, {
-              htmlElement: node.element,
-            });
-          }
-        },
+  const { treeNodeIdMap, renderedTree } = useMemo(() => {
+    const renderTreeContext: RenderTreeContext = {
+      renderEntry,
+      treeNodeIdMap: new Map<string, OutlineElement>(),
+      outline,
+      onRefresh() {
+        void calculateOutline();
       },
-      {
+      onLabelClick(node) {
+        if (node.element) {
+          void selectService.selectElement(renderEntry, {
+            htmlElement: node.element,
+          });
+        }
+      },
+    };
+
+    return {
+      treeNodeIdMap: renderTreeContext.treeNodeIdMap,
+      renderedTree: renderTree(renderTreeContext, {
         tag: renderEntry.name,
         type: OutlineElementType.Frame,
         renderId: renderEntry.id,
@@ -155,25 +154,42 @@ export function OutlinePaneEntry({
         codeId: renderEntry.codeId,
         element: undefined,
         children: outline,
-      }
-    );
-
-    return { treeNodeIds, renderedTree };
+      }),
+    };
   }, [calculateOutline, outline, renderEntry, selectService]);
 
+  const selectedElementNodeId = useMemo(() => {
+    if (selectedElement?.renderEntry !== renderEntry) return undefined;
+
+    const node = findEntryRecurse(
+      outline,
+      (n) => n.element === selectedElement.element
+    );
+    if (!node) return;
+
+    return Array.from(treeNodeIdMap.entries()).find(([, n]) => n === node)?.[0];
+  }, [outline, renderEntry, selectedElement, treeNodeIdMap]);
+
   const [collapsedNodes, setCollapsedNodes] = useState<string[]>([]);
+  const expandedNodes = useMemo(
+    () =>
+      Array.from(treeNodeIdMap.keys()).filter(
+        (i) => !collapsedNodes.includes(i)
+      ),
+    [collapsedNodes, treeNodeIdMap]
+  );
   return (
     <TreeView
       defaultCollapseIcon={<ExpandMoreIcon />}
       defaultExpandIcon={<ChevronRightIcon />}
-      expanded={Array.from(treeNodeIds).filter(
-        (i) => !collapsedNodes.includes(i)
-      )}
-      selected={selectedElementUniqueId || ""}
-      onNodeToggle={(e, expandedNodes) =>
+      expanded={expandedNodes}
+      selected={selectedElementNodeId || ""}
+      onNodeToggle={(e, newExpandedNodes) =>
         // only store nodes that have been collapsed
         setCollapsedNodes(
-          Array.from(treeNodeIds).filter((n) => !expandedNodes.includes(n))
+          Array.from(treeNodeIdMap.keys()).filter(
+            (n) => !newExpandedNodes.includes(n)
+          )
         )
       }
     >

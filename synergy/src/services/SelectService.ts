@@ -1,6 +1,6 @@
 import { debounce } from "lodash";
-import { BehaviorSubject, of } from "rxjs";
-import { filter, map, mergeMap } from "rxjs/operators";
+import { BehaviorSubject, of, Subject } from "rxjs";
+import { map } from "rxjs/operators";
 import { singleton } from "tsyringe";
 
 import { SelectMode } from "../constants";
@@ -15,6 +15,7 @@ import {
 } from "../lib/ast/editors/ASTEditor";
 import { ASTType } from "../lib/ast/types";
 import { RenderEntry } from "../lib/project/RenderEntry";
+import { eagerMap } from "../lib/rxjs/eagerMap";
 import { sleep } from "../lib/utils";
 import { Styles } from "../types/paint";
 import { SelectedElement } from "../types/selected-element";
@@ -52,8 +53,11 @@ export class SelectService {
     // refresh the selected element when the iframe reloads, if possible
     this.selectedElement$
       .pipe(
-        filter(<T>(s: T | undefined): s is T => !!s),
-        mergeMap((s) => s.renderEntry.viewReloaded$.pipe(map(() => s)))
+        eagerMap(
+          (s) =>
+            s?.renderEntry.viewReloaded$.pipe(map(() => s)) ||
+            new Subject<SelectedElement>()
+        )
       )
       .subscribe(async (selectedElement) => {
         let newSelectedComponent = undefined;
@@ -82,7 +86,7 @@ export class SelectService {
     // clear the selected element if its frame was removed
     this.projectService.project$
       .pipe(
-        mergeMap((project) => project?.renderEntries$ || of<RenderEntry[]>([]))
+        eagerMap((project) => project?.renderEntries$ || of<RenderEntry[]>([]))
       )
       .subscribe((renderEntries) => {
         const selectedElementRenderId = this.selectedElement$.getValue()
@@ -100,11 +104,6 @@ export class SelectService {
       if (!project && this.selectedElement$.getValue())
         this.clearSelectedElement();
     });
-
-    // clear the selected element if the select mode was cleared
-    this.selectMode$.subscribe(
-      (selectMode) => selectMode === undefined && this.clearSelectedElement()
-    );
   }
 
   private get project() {

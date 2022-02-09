@@ -1,11 +1,15 @@
-import { BehaviorSubject } from "rxjs";
-import { filter, map, mergeAll, mergeMap } from "rxjs/operators";
+import { BehaviorSubject, of } from "rxjs";
+import { filter, map } from "rxjs/operators";
 import { singleton } from "tsyringe";
 
 import { useObservable } from "../hooks/useObservable";
 import { useService } from "../hooks/useService";
 import { Project } from "../lib/project/Project";
-import { RenderEntryCompileStatus } from "../lib/project/RenderEntry";
+import {
+  RenderEntry,
+  RenderEntryCompileStatus,
+} from "../lib/project/RenderEntry";
+import { eagerMap, eagerMapArrayAny } from "../lib/rxjs/eagerMap";
 
 const RECENT_PROJECTS_KEY = "recentProjects";
 
@@ -40,10 +44,8 @@ export class ProjectService {
     // plumb onASTRender callback for all project editor entries
     this.project$
       .pipe(
-        filter(<T>(p: T | undefined): p is T => !!p),
-        mergeMap((p) => p.renderEntries$),
-        mergeAll(),
-        mergeMap((r) =>
+        eagerMap((p) => p?.renderEntries$ || of<RenderEntry[]>([])),
+        eagerMapArrayAny((r) =>
           r.compileStatus$.pipe(
             filter((c) => c === RenderEntryCompileStatus.COMPILED),
             map(() => r)

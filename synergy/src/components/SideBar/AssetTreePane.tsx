@@ -12,12 +12,7 @@ import TreeItem from "@material-ui/lab/TreeItem";
 import TreeView from "@material-ui/lab/TreeView";
 import { camelCase, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
-import {
-  debounceTime,
-  distinctUntilChanged,
-  map,
-  mergeMap,
-} from "rxjs/operators";
+import { distinctUntilChanged, map } from "rxjs/operators";
 
 import { getBoilerPlateComponent, SelectModeType } from "../../constants";
 import { useMenuInput } from "../../hooks/useInput";
@@ -35,7 +30,7 @@ import {
 } from "../../lib/lightObservable/LTOperator";
 import { CodeEntry } from "../../lib/project/CodeEntry";
 import { renderSeparator } from "../../lib/render-utils";
-import { arrayMap, ltTakeNext, takeNext } from "../../lib/utils";
+import { ltTakeNext } from "../../lib/utils";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
 import { IconButton } from "../IconButton";

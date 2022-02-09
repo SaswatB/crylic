@@ -13,7 +13,9 @@ const getComponentElementsFromEvent = (
   viewContext: ViewContext | undefined,
   scale: number
 ) => {
-  const boundingBox = (event.target as HTMLDivElement).getBoundingClientRect();
+  const boundingBox = viewContext?.iframe.getBoundingClientRect();
+  if (!boundingBox) return [];
+
   const x = (event.clientX - boundingBox.x) / scale;
   const y = (event.clientY - boundingBox.y) / scale;
   return viewContext?.getElementsAtPoint(x, y) || [];

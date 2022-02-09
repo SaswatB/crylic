@@ -1,12 +1,6 @@
 import { uniqueId } from "lodash";
 import { BehaviorSubject, Subject } from "rxjs";
-import {
-  bufferCount,
-  distinctUntilChanged,
-  map,
-  mergeAll,
-  mergeMap,
-} from "rxjs/operators";
+import { bufferCount, distinctUntilChanged, map } from "rxjs/operators";
 
 import { EditEntry } from "../../types/paint";
 import { ElementASTEditor, StyleASTEditor } from "../ast/editors/ASTEditor";
@@ -15,6 +9,7 @@ import { StyledASTEditor } from "../ast/editors/StyledASTEditor";
 import { StyleSheetASTEditor } from "../ast/editors/StyleSheetASTEditor";
 import { LTBehaviorSubject } from "../lightObservable/LTBehaviorSubject";
 import { ltMap } from "../lightObservable/LTOperator";
+import { eagerMapArrayAny } from "../rxjs/eagerMap";
 import { produceNext } from "../utils";
 import { CodeEntry } from "./CodeEntry";
 import { ProjectConfig } from "./ProjectConfig";
@@ -111,16 +106,13 @@ export abstract class Project {
     this.codeEntries$
       .toRXJS()
       .pipe(
-        mergeMap((codeEntries) =>
-          codeEntries.map((codeEntry) =>
-            codeEntry.code$.toRXJS().pipe(
-              distinctUntilChanged(),
-              bufferCount(2, 1),
-              map(([oldCode, newCode]) => ({ codeEntry, oldCode, newCode }))
-            )
+        eagerMapArrayAny((codeEntry) =>
+          codeEntry.code$.toRXJS().pipe(
+            distinctUntilChanged(),
+            bufferCount(2, 1),
+            map(([oldCode, newCode]) => ({ codeEntry, oldCode, newCode }))
           )
-        ),
-        mergeAll()
+        )
       )
       .subscribe((change) => {
         const { codeEntry, oldCode, newCode } = change || {};

@@ -1,17 +1,9 @@
 import produce, { Draft } from "immer";
-import { uniqueId } from "lodash";
 import { BehaviorSubject, Observable } from "rxjs";
-import { map, mergeAll, mergeMap, scan, take } from "rxjs/operators";
+import { take } from "rxjs/operators";
 
 import { LTBehaviorSubject } from "./lightObservable/LTBehaviorSubject";
 import { LTObservable, LTSubscription } from "./lightObservable/LTObservable";
-
-export const getElementUniqueId = (element: HTMLElement): string => {
-  if (!(element as any).paintId) {
-    (element as any).paintId = uniqueId();
-  }
-  return (element as any).paintId;
-};
 
 export function isDefined<T>(v: T | undefined | null): v is T {
   return v !== undefined && v !== null;
@@ -67,19 +59,3 @@ export const ltTakeNext = <T>(source: LTObservable<T>): Promise<T> => {
     });
   });
 };
-
-export const arrayMap = <T, R>(
-  mapper: (value: T) => Observable<R>,
-  getId: (value: R) => string
-) => (source: Observable<Array<T>>): Observable<Array<R>> =>
-  source.pipe(
-    mergeAll(), // flatten observable array into a stream of values
-    mergeMap(mapper), // map T => R
-    scan(
-      // collect R into an object
-      // lm_9dfd4feb9b if an object is deleted from the source array, it's old value will be stuck here
-      (acc, value) => ({ ...acc, [getId(value)]: value }),
-      {} as Record<string, R>
-    ),
-    map((e) => Object.values(e)) // convert the object into an array for the final result
-  );

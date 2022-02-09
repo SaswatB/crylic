@@ -56,8 +56,8 @@ export class CodeEntry {
 
   public updateCode(code: string) {
     // lm_d1c6d7683b this is assumed to be synchronous
-    this.code$.next(code);
     this._codeRevisionId++;
+    this.code$.next(code);
   }
 
   public updateAst(editedAst: ASTType) {
