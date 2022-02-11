@@ -1,3 +1,5 @@
+import { StyleKeys } from "../../types/paint";
+
 export const CSS_POSITION_OPTIONS = [
   { name: "Static", value: "static" },
   { name: "Relative", value: "relative" },
@@ -188,3 +190,18 @@ export const CSS_BACKGROUND_SIZE_OPTIONS = [
   { name: "Cover", value: "cover" },
   { name: "Auto", value: "auto" },
 ];
+
+export const StylePropNameMap: { [index in StyleKeys]?: string } = {
+  backgroundColor: "Fill",
+  backgroundImage: "Image",
+  backgroundSize: "Image Size",
+  flexDirection: "Direction",
+  flexWrap: "Wrap",
+  alignItems: "Align",
+  justifyContent: "Justify",
+  textAlign: "Align",
+  fontSize: "Size",
+  fontWeight: "Weight",
+  fontFamily: "Font",
+  textDecorationLine: "Decoration",
+};
