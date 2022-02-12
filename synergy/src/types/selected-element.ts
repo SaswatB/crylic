@@ -1,9 +1,10 @@
 import { StyleGroup } from "../lib/ast/editors/ASTEditor";
 import { RenderEntry } from "../lib/project/RenderEntry";
-import { StyleKeys } from "./paint";
+import { ComponentDefinition, StyleKeys } from "./paint";
 
 export interface SourceMetadata {
   componentName: string;
+  componentDefinition: ComponentDefinition;
   directProps: Record<string, unknown>;
 }
 
