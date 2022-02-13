@@ -207,7 +207,6 @@ export class SelectService {
         { ast: (await codeEntry.getLatestAst()) as ASTType, codeEntry },
         lookupId
       ),
-      hasDomPassthrough: true,
       element: primaryElement,
       elements: componentElements,
       styleGroups,

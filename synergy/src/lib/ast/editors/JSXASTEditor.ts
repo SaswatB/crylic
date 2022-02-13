@@ -319,27 +319,21 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
           pipe(
             path.value.openingElement.name,
             eitherIf(ifJSXIdentifier),
-            fold(
-              // resolve a simple identifier
-              getName,
-              // resolve a more complex object.property identifier
-              (a) =>
-                pipe(
-                  a,
-                  ifJSXMemberExpression,
-                  (_) => ({
-                    object: pipe(_?.object, ifJSXIdentifier, getName),
-                    property: pipe(_?.property, ifJSXIdentifier, getName),
-                  }),
-                  (_) =>
-                    _.object && _.property
-                      ? `${_.object}.${_.property}`
-                      : undefined
-                )
+            fold(getName, (a) =>
+              pipe(
+                a,
+                ifJSXMemberExpression,
+                (_) => ({
+                  object: pipe(_?.object, ifJSXIdentifier, getName),
+                  property: pipe(_?.property, ifJSXIdentifier, getName),
+                }),
+                (_) =>
+                  _.object && _.property
+                    ? `${_.object}.${_.property}`
+                    : undefined
+              )
             )
           ) || "",
-        // get a more formal definition
-        componentDefinition: {},
         // get the component props by best effort (won't match non literals)
         directProps:
           path.value.openingElement.attributes
