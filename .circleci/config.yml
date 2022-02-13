@@ -4,7 +4,6 @@ orbs:
   node: circleci/node@5
 commands:
   build-and-release:
-    working_directory: ~/paint/desktop
     steps:
       - checkout:
           path: ~/paint
@@ -32,6 +31,7 @@ jobs:
     macos:
       xcode: 12.5.1
     resource_class: macos.x86.medium.gen2
+    working_directory: ~/paint/desktop
     steps:
       - run:
           name: Build & release
@@ -40,6 +40,7 @@ jobs:
     executor:
       name: win/default
       shell: powershell.exe
+    working_directory: ~/paint/desktop
     steps:
       - run:
           name: Build & release
