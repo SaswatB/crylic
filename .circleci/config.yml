@@ -34,18 +34,14 @@ jobs:
     resource_class: macos.x86.medium.gen2
     working_directory: ~/paint/desktop
     steps:
-      - run:
-          name: Build & release
-          command: build-and-release
+      - build-and-release
   build-and-release-windows:
     executor:
       name: win/default
       shell: powershell.exe
     working_directory: ~/paint/desktop
     steps:
-      - run:
-          name: Build & release
-          command: build-and-release
+      - build-and-release
 workflows:
   release:
     jobs:
