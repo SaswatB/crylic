@@ -2,12 +2,9 @@ version: 2.1
 orbs:
   # See the orb documentation here: https://circleci.com/developer/orbs/orb/circleci/node
   node: circleci/node@5
-jobs:
+commands:
   build-and-release:
     working_directory: ~/paint/desktop
-    macos:
-      xcode: 12.5.1
-    resource_class: macos.x86.medium.gen2
     steps:
       - checkout:
           path: ~/paint
@@ -30,7 +27,25 @@ jobs:
           no_output_timeout: 30m
       - store_artifacts:
           path: /tmp/dist
+jobs:
+  build-and-release-macos:
+    macos:
+      xcode: 12.5.1
+    resource_class: macos.x86.medium.gen2
+    steps:
+      - run:
+          name: Build & release
+          command: build-and-release
+  build-and-release-windows:
+    executor:
+      name: win/default
+      shell: powershell.exe
+    steps:
+      - run:
+          name: Build & release
+          command: build-and-release
 workflows:
   release:
     jobs:
-      - build-and-release
+      - build-and-release-macos
+      - build-and-release-windows
