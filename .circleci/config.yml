@@ -2,6 +2,7 @@ version: 2.1
 orbs:
   # See the orb documentation here: https://circleci.com/developer/orbs/orb/circleci/node
   node: circleci/node@5
+  win: circleci/windows@2.2.0
 commands:
   build-and-release:
     steps:
