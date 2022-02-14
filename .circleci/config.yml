@@ -27,7 +27,7 @@ commands:
           steps:
             - run:
                 name: Install app deps
-                command: npm is
+                command: npm i
       - run:
           name: Install workspace deps
           command: yarn
