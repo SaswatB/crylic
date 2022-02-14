@@ -65,9 +65,11 @@ jobs:
       - run:
           name: Install Node LTS
           command: nvm install lts
+          working_directory: ~/
       - run:
           name: Use Node LTS
           command: nvm use lts
+          working_directory: ~/
       - build-and-release:
           windows: true
 workflows:
