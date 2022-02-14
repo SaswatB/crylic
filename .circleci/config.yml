@@ -36,12 +36,16 @@ commands:
           command: yarn build
       - run:
           name: Package desktop
-          command: USE_HARD_LINKS=false yarn package
+          command: yarn package
           no_output_timeout: 30m
+          environment:
+            USE_HARD_LINKS: "false"
+      - run:
+          name: Create artifacts directory
+          command: mkdir /tmp/dist
       - run:
           name: Copy artifacts
-          command: mkdir /tmp/dist && mv dist/*.* /tmp/dist
-          no_output_timeout: 30m
+          command: mv dist/*.* /tmp/dist
       - store_artifacts:
           path: /tmp/dist
 jobs:
@@ -60,7 +64,10 @@ jobs:
     steps:
       - run:
           name: Install Node LTS
-          command: nvm install lts && nvm use lts
+          command: nvm install lts
+      - run:
+          name: Use Node LTS
+          command: nvm use lts
       - build-and-release:
           windows: true
 workflows:
