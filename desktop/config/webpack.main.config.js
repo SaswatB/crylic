@@ -28,7 +28,10 @@ module.exports = (env, argv) => ({
             // lm_a95a542d63 electron version
             env: {
               targets: { electron: "17" },
-              include: ["proposal-nullish-coalescing-operator"],
+              include: [
+                "proposal-nullish-coalescing-operator",
+                "proposal-optional-chaining",
+              ],
             },
           },
         },
