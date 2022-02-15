@@ -64,12 +64,13 @@ jobs:
     working_directory: ~/paint/desktop
     steps:
       - run:
+          # specifying --lts doesn't work on windows https://github.com/ampproject/amphtml/issues/17538
           name: Install Node LTS
-          command: nvm install 16.14.0
+          command: nvm install 16.13.2
           working_directory: ~/
       - run:
           name: Use Node LTS
-          command: nvm use 16.14.0
+          command: nvm use 16.13.2
           working_directory: ~/
       - build-and-release:
           windows: true
