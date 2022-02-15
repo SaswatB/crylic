@@ -357,7 +357,10 @@ module.exports = function (webpackEnv) {
                   // lm_a95a542d63 electron version
                   env: {
                     targets: { chrome: "98" },
-                    include: ["proposal-nullish-coalescing-operator"],
+                    include: [
+                      "proposal-nullish-coalescing-operator",
+                      "proposal-optional-chaining",
+                    ],
                   },
                 },
               },

@@ -5,12 +5,30 @@ orbs:
   win: circleci/windows@2.2.0
 commands:
   build-and-release:
+    parameters:
+      windows:
+        default: false
+        type: boolean
     steps:
       - checkout:
           path: ~/paint
-      - node/install-packages:
-          app-dir: ~/paint/desktop/app
-          pkg-manager: npm
+      # use the node ord when running on not-windows
+      - when:
+          condition:
+            equal: [false, <<parameters.windows>>]
+          steps:
+            - node/install-packages:
+                app-dir: ~/paint/desktop/app
+                pkg-manager: npm
+      # use the windows orb when running on windows
+      - when:
+          condition:
+            equal: [true, <<parameters.windows>>]
+          steps:
+            - run:
+                name: Install app deps
+                command: npm i
+                working_directory: ~/paint/desktop/app
       - run:
           name: Install workspace deps
           command: yarn
@@ -19,12 +37,16 @@ commands:
           command: yarn build
       - run:
           name: Package desktop
-          command: USE_HARD_LINKS=false yarn package
+          command: yarn package
           no_output_timeout: 30m
+          environment:
+            USE_HARD_LINKS: "false"
+      - run:
+          name: Create artifacts directory
+          command: mkdir /tmp/dist
       - run:
           name: Copy artifacts
-          command: mkdir /tmp/dist && mv dist/*.* /tmp/dist
-          no_output_timeout: 30m
+          command: mv dist/*.* /tmp/dist
       - store_artifacts:
           path: /tmp/dist
 jobs:
@@ -41,9 +63,23 @@ jobs:
       shell: powershell.exe
     working_directory: ~/paint/desktop
     steps:
-      - build-and-release
+      - run:
+          # specifying --lts doesn't work on windows https://github.com/ampproject/amphtml/issues/17538
+          name: Install Node LTS
+          command: nvm install 16.13.2
+          working_directory: ~/
+      - run:
+          name: Use Node LTS
+          command: nvm use 16.13.2
+          working_directory: ~/
+      - run:
+          name: Install yarn
+          command: npm install --global yarn
+          working_directory: ~/
+      - build-and-release:
+          windows: true
 workflows:
   release:
     jobs:
       - build-and-release-macos
-      # - build-and-release-windows
+      - build-and-release-windows

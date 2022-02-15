@@ -22,7 +22,6 @@ let unionfs: typeof import("unionfs");
 let webpack: typeof import("webpack");
 let WebpackDevServer: typeof import("webpack-dev-server");
 let HtmlWebpackPlugin: typeof import("html-webpack-plugin");
-// let nodeSass: typeof import("node-sass");
 // @ts-ignore todo add types
 let tailwindcss: typeof import("tailwindcss");
 let ReactRefreshPlugin: typeof import("@pmmmwh/react-refresh-webpack-plugin");
@@ -81,7 +80,6 @@ export function initialize(nodeModulesPath = "") {
   HtmlWebpackPlugin = __non_webpack_require__(
     `${nodeModulesPath}html-webpack-plugin`
   );
-  // nodeSass = __non_webpack_require__(`${nodeModulesPath}node-sass`);
   tailwindcss = __non_webpack_require__(`${nodeModulesPath}tailwindcss`);
   ReactRefreshPlugin = __non_webpack_require__(
     `${nodeModulesPath}@pmmmwh/react-refresh-webpack-plugin`
