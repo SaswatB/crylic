@@ -28,6 +28,7 @@ commands:
             - run:
                 name: Install app deps
                 command: npm i
+                working_directory: ~/paint/desktop/app
       - run:
           name: Install workspace deps
           command: yarn
