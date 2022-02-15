@@ -65,11 +65,11 @@ jobs:
     steps:
       - run:
           name: Install Node LTS
-          command: nvm install lts
+          command: nvm install 16.14.0
           working_directory: ~/
       - run:
           name: Use Node LTS
-          command: nvm use lts
+          command: nvm use 16.14.0
           working_directory: ~/
       - build-and-release:
           windows: true
