@@ -55,6 +55,7 @@ export type AstWorkerModule = typeof workerModule;
 // eslint-disable-next-line no-restricted-globals
 self.addEventListener("message", (event) => {
   const { id, action, args } = event.data;
+  if (!id || !action || !args) return;
 
   // @ts-expect-error ignore type error for spread operator
   workerModule[action as keyof AstWorkerModule](...args)

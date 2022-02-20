@@ -231,8 +231,13 @@ export const webpackRunCodeWithWorker = async ({
       exports?: unknown;
       [HMR_STATUS_HANDLER_PROP]?: (status: string) => void;
       __REACT_DEVTOOLS_GLOBAL_HOOK__?: Partial<ReactDevToolsHook>;
-      paintBundle: () => void;
+      paintBundle?: () => void;
     };
+
+    if (frameWindow.paintBundle === undefined) {
+      console.error("frame has no bundle");
+      return;
+    }
 
     const errorHandler = (error: Error) => {
       const body = frame!.contentDocument!.querySelector("body")!;
