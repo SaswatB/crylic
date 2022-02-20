@@ -79,7 +79,7 @@ commands:
           condition:
             matches: { pattern: "^v.+$", value: << pipeline.git.tag >> }
           steps:
-            - aws-s3/copy:
+            - s3/copy:
                 from: /tmp/dist
                 to: "s3://crylic-artifacts/builds/<< pipeline.git.tag >>"
 jobs:
