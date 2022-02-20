@@ -234,7 +234,10 @@ function App() {
         )}
       </div>
       {!project && (
-        <div className="fixed top-0 right-0 p-3 opacity-50">
+        <div
+          className="fixed top-0 right-0 p-3 opacity-50"
+          title={__COMMIT_HASH__}
+        >
           v{__BUILD_VERSION__}
         </div>
       )}
