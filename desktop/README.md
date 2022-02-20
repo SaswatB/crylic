@@ -1,5 +1,7 @@
 ## Getting started
 
+Dependencies need to be installed in the workspace with `yarn`, and in the `app/` directory with `npm i`.
+
 To run, use the following commands in separate terminals:
 
 ```
