@@ -84,7 +84,7 @@ commands:
           steps:
             - s3/copy:
                 from: /tmp/dist
-                to: "<< pipeline.parameters.s3bucket >>/<< pipeline.git.tag >>"
+                to: "<< pipeline.parameters.s3bucket >>/<< pipeline.git.tag >>/"
   release-windows:
     steps:
       # Only release to s3 if the build is tagged
@@ -94,7 +94,7 @@ commands:
           steps:
             - run:
                 name: Copy to S3
-                command: aws s3 cp /tmp/dist "<< pipeline.parameters.s3bucket >>/<< pipeline.git.tag >>"
+                command: aws s3 cp /tmp/dist "<< pipeline.parameters.s3bucket >>/<< pipeline.git.tag >>/"
 jobs:
   build-and-release-macos:
     macos:
