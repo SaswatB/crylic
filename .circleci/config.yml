@@ -12,7 +12,7 @@ commands:
     steps:
       - checkout:
           path: ~/paint
-      # use the node ord when running on not-windows
+      # use the node orb when running on not-windows
       - when:
           condition:
             equal: [false, <<parameters.windows>>]
@@ -46,7 +46,7 @@ commands:
           command: mkdir /tmp/dist
       - run:
           name: Copy artifacts
-          command: mv dist/*.* /tmp/dist
+          command: mv dist/*.[!yml]* /tmp/dist
       - store_artifacts:
           path: /tmp/dist
 jobs:
