@@ -65,7 +65,10 @@ commands:
           command: mkdir /tmp/dist
       - run:
           name: Copy artifacts
-          command: mv dist/*.!(yml)* /tmp/dist
+          command: mv dist/*.* /tmp/dist
+      - run:
+          name: Remove extra files
+          command: rm /tmp/dist/*.yml
       - store_artifacts:
           path: /tmp/dist
 jobs:
