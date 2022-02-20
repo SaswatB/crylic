@@ -175,7 +175,11 @@ export class HtmlElementEditor implements ElementEditor {
         fields: [
           createSelectSGFE("cursor", CSS_CURSOR_OPTIONS),
           createBoundTextAttrFE("id"),
-          createBoundTextAttrFE("href"),
+          createConditionalFE(
+            createBoundTextAttrFE("href"),
+            ({ selectedElement }) =>
+              selectedElement?.element.tagName.toLowerCase() === "a"
+          ),
           createElementEditorField(DeleteFE),
         ],
         defaultCollapsed: true,

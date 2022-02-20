@@ -24,8 +24,9 @@ function useAttributeFE({
     label:
       AttributeNameMap[attributeName] || startCase(`${attributeName || ""}`),
     initialValue:
-      (selectedElement.element as HTMLLinkElement).getAttribute("href") ??
-      undefined,
+      (selectedElement.element as HTMLLinkElement).getAttribute(
+        attributeName
+      ) ?? undefined,
     onChange: (value: string) => onChangeAttributes({ [attributeName]: value }),
   };
 }
