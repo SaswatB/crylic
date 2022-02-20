@@ -60,7 +60,9 @@ const buildReactFiberRecurse = (
         const lookupId = context.project.primaryElementEditor.getLookupIdFromProps(
           child.memoizedProps
         );
-        if (lookupId) {
+        if (!lookupId) return buildReactFiberRecurse(context, child);
+
+        try {
           const codeId = context.project.primaryElementEditor.getCodeIdFromLookupId(
             lookupId
           )!;
@@ -99,8 +101,10 @@ const buildReactFiberRecurse = (
               children,
             },
           ];
+        } catch (e) {
+          console.error("Error while building outline", e);
+          return [];
         }
-        return buildReactFiberRecurse(context, child);
       }
     )
   ).then((r) => r.reduce((p, c) => [...p, ...c], []));
