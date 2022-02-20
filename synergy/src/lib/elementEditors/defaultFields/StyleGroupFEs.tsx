@@ -27,6 +27,12 @@ function useStyleGroupFE({
   styleProp,
   onChangeStyleGroup,
 }: StyleGroupFEProps) {
+  if (styleProp === "fontSize")
+    console.log(
+      "fontsize",
+      selectedElement,
+      getSelectedElementStyleValue(selectedElement, styleProp)
+    );
   return {
     label: StylePropNameMap[styleProp] || startCase(`${styleProp || ""}`),
     initialValue: getSelectedElementStyleValue(selectedElement, styleProp),
@@ -40,7 +46,10 @@ function useStyleGroupFE({
 function CSSLengthSGFE(
   props: StyleGroupFEProps & { bindInitialValue?: boolean }
 ) {
-  const [, render] = useCSSLengthInput(useStyleGroupFE(props));
+  const [, render] = useCSSLengthInput({
+    ...useStyleGroupFE(props),
+    bindInitialValue: props.bindInitialValue,
+  });
   return render();
 }
 export const createCSSLengthSGFE = (styleProp: StyleKeys) =>
@@ -56,7 +65,10 @@ export const createBoundCSSLengthSGFE = (styleProp: StyleKeys) =>
 // #region text
 
 function TextSGFE(props: StyleGroupFEProps & { bindInitialValue?: boolean }) {
-  const [, render] = useTextInput(useStyleGroupFE(props));
+  const [, render] = useTextInput({
+    ...useStyleGroupFE(props),
+    bindInitialValue: props.bindInitialValue,
+  });
   return render();
 }
 export const creatTextSGFE = (styleProp: StyleKeys) =>
