@@ -7,6 +7,7 @@ orbs:
   # See the orb documentation here: https://circleci.com/developer/orbs/orb/circleci/node
   node: circleci/node@5
   win: circleci/windows@2.2.0
+  s3: circleci/aws-s3@3.0
 commands:
   setup-windows-node:
     steps:
@@ -71,6 +72,15 @@ commands:
           command: rm /tmp/dist/*.yml
       - store_artifacts:
           path: /tmp/dist
+    release:
+      # Only release to s3 if the build is tagged
+      - when:
+          condition:
+            matches: { pattern: "^v.+$", value: << pipeline.git.tag >> }
+          steps:
+            - aws-s3/copy:
+                from: /tmp/dist
+                to: "s3://crylic-artifacts/builds/<< pipeline.git.tag >>"
 jobs:
   build-and-release-macos:
     macos:
@@ -79,6 +89,7 @@ jobs:
     working_directory: << pipeline.parameters.workingdir >>
     steps:
       - build
+      - release
   build-and-release-windows:
     executor:
       name: win/default
@@ -88,6 +99,7 @@ jobs:
       - setup-windows-node
       - build:
           windows: true
+      - release
 workflows:
   release:
     jobs:
