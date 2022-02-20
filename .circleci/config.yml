@@ -106,3 +106,11 @@ workflows:
     jobs:
       - build-and-release-macos
       - build-and-release-windows
+      - build-and-release-macos:
+          filters:
+            tags:
+              only: /^v.*/
+      - build-and-release-windows:
+          filters:
+            tags:
+              only: /^v.*/
