@@ -1,10 +1,29 @@
 version: 2.1
+parameters:
+  workingdir:
+    type: string
+    default: ~/paint/desktop
 orbs:
   # See the orb documentation here: https://circleci.com/developer/orbs/orb/circleci/node
   node: circleci/node@5
   win: circleci/windows@2.2.0
 commands:
-  build-and-release:
+  setup-windows-node:
+    steps:
+      - run:
+          # specifying --lts doesn't work on windows https://github.com/ampproject/amphtml/issues/17538
+          name: Install Node LTS
+          command: nvm install 16.13.2
+          working_directory: ~/
+      - run:
+          name: Use Node LTS
+          command: nvm use 16.13.2
+          working_directory: ~/
+      - run:
+          name: Install yarn
+          command: npm install --global yarn
+          working_directory: ~/
+  build:
     parameters:
       windows:
         default: false
@@ -18,7 +37,7 @@ commands:
             equal: [false, <<parameters.windows>>]
           steps:
             - node/install-packages:
-                app-dir: ~/paint/desktop/app
+                app-dir: "<< pipeline.parameters.workingdir >>/app"
                 pkg-manager: npm
       # use the windows orb when running on windows
       - when:
@@ -28,7 +47,7 @@ commands:
             - run:
                 name: Install app deps
                 command: npm i
-                working_directory: ~/paint/desktop/app
+                working_directory: "<< pipeline.parameters.workingdir >>/app"
       - run:
           name: Install workspace deps
           command: yarn
@@ -54,29 +73,17 @@ jobs:
     macos:
       xcode: 12.5.1
     resource_class: macos.x86.medium.gen2
-    working_directory: ~/paint/desktop
+    working_directory: << pipeline.parameters.workingdir >>
     steps:
-      - build-and-release
+      - build
   build-and-release-windows:
     executor:
       name: win/default
       shell: powershell.exe
-    working_directory: ~/paint/desktop
+    working_directory: << pipeline.parameters.workingdir >>
     steps:
-      - run:
-          # specifying --lts doesn't work on windows https://github.com/ampproject/amphtml/issues/17538
-          name: Install Node LTS
-          command: nvm install 16.13.2
-          working_directory: ~/
-      - run:
-          name: Use Node LTS
-          command: nvm use 16.13.2
-          working_directory: ~/
-      - run:
-          name: Install yarn
-          command: npm install --global yarn
-          working_directory: ~/
-      - build-and-release:
+      - setup-windows-node
+      - build:
           windows: true
 workflows:
   release:
