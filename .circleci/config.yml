@@ -46,7 +46,7 @@ commands:
           command: mkdir /tmp/dist
       - run:
           name: Copy artifacts
-          command: mv dist/*.[!yml]* /tmp/dist
+          command: mv dist/*.!(yml)* /tmp/dist
       - store_artifacts:
           path: /tmp/dist
 jobs:
