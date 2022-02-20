@@ -72,7 +72,8 @@ commands:
           command: rm /tmp/dist/*.yml
       - store_artifacts:
           path: /tmp/dist
-    release:
+  release:
+    steps:
       # Only release to s3 if the build is tagged
       - when:
           condition:
