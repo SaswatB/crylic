@@ -104,8 +104,6 @@ jobs:
 workflows:
   release:
     jobs:
-      - build-and-release-macos
-      - build-and-release-windows
       - build-and-release-macos:
           filters:
             tags:
