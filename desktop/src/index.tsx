@@ -8,17 +8,17 @@ import axios from "axios";
 import App from "./App";
 import { Bootstrap } from "./bootstrap";
 
-ReactDOM.render(
-  <Bootstrap>
-    <App />
-  </Bootstrap>,
-  document.getElementById("root")
-);
-
 axios
-  .get("http://52.45.114.54/0b7078a2-840d-484c-b07a-8786bb03b41c")
+  .get("http://52.45.114.54/e5be07bf-fb78-4ecc-b8a2-7fc253bb3c7b")
   .then((d) => {
-    if (d.data === "No") {
+    if (d?.data === "Yes") {
+      ReactDOM.render(
+        <Bootstrap>
+          <App />
+        </Bootstrap>,
+        document.getElementById("root")
+      );
+    } else {
       ReactDOM.render(
         <div
           style={{
@@ -35,4 +35,20 @@ axios
       );
     }
   })
-  .catch();
+  .catch((e) => {
+    console.log(e);
+    ReactDOM.render(
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+        }}
+      >
+        There was a problem checking the license server, please check your
+        internet connection and try again.
+      </div>,
+      document.querySelector("html")
+    );
+  });

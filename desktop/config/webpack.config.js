@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const childProcess = require("child_process");
 const webpack = require("webpack");
 const resolve = require("resolve");
 const PnpWebpackPlugin = require("pnp-webpack-plugin");
@@ -503,6 +504,9 @@ module.exports = function (webpackEnv) {
       new webpack.DefinePlugin({
         ...env.stringified,
         __BUILD_VERSION__: JSON.stringify(require("../package.json").version),
+        __COMMIT_HASH__: JSON.stringify(
+          childProcess.execSync("git rev-list HEAD --max-count=1").toString()
+        ),
       }),
       // This is necessary to emit hot updates (currently CSS only):
       isEnvDevelopment && new webpack.HotModuleReplacementPlugin(),

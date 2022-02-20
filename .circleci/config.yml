@@ -1,10 +1,33 @@
 version: 2.1
+parameters:
+  workingdir:
+    type: string
+    default: ~/paint/desktop
+  s3bucket:
+    type: string
+    default: s3://crylic-artifacts/builds
 orbs:
   # See the orb documentation here: https://circleci.com/developer/orbs/orb/circleci/node
   node: circleci/node@5
   win: circleci/windows@2.2.0
+  s3: circleci/aws-s3@3.0
 commands:
-  build-and-release:
+  setup-windows-node:
+    steps:
+      - run:
+          # specifying --lts doesn't work on windows https://github.com/ampproject/amphtml/issues/17538
+          name: Install Node LTS
+          command: nvm install 16.13.2
+          working_directory: ~/
+      - run:
+          name: Use Node LTS
+          command: nvm use 16.13.2
+          working_directory: ~/
+      - run:
+          name: Install yarn
+          command: npm install --global yarn
+          working_directory: ~/
+  build:
     parameters:
       windows:
         default: false
@@ -12,13 +35,13 @@ commands:
     steps:
       - checkout:
           path: ~/paint
-      # use the node ord when running on not-windows
+      # use the node orb when running on not-windows
       - when:
           condition:
             equal: [false, <<parameters.windows>>]
           steps:
             - node/install-packages:
-                app-dir: ~/paint/desktop/app
+                app-dir: "<< pipeline.parameters.workingdir >>/app"
                 pkg-manager: npm
       # use the windows orb when running on windows
       - when:
@@ -28,7 +51,7 @@ commands:
             - run:
                 name: Install app deps
                 command: npm i
-                working_directory: ~/paint/desktop/app
+                working_directory: "<< pipeline.parameters.workingdir >>/app"
       - run:
           name: Install workspace deps
           command: yarn
@@ -47,39 +70,59 @@ commands:
       - run:
           name: Copy artifacts
           command: mv dist/*.* /tmp/dist
+      - run:
+          name: Remove extra files
+          command: rm /tmp/dist/*.yml
       - store_artifacts:
           path: /tmp/dist
+  release:
+    steps:
+      # Only release to s3 if the build is tagged
+      - when:
+          condition:
+            matches: { pattern: "^v.+$", value: << pipeline.git.tag >> }
+          steps:
+            - s3/copy:
+                arguments: "--recursive"
+                from: /tmp/dist/
+                to: "<< pipeline.parameters.s3bucket >>/<< pipeline.git.tag >>/"
+  release-windows:
+    steps:
+      # Only release to s3 if the build is tagged
+      - when:
+          condition:
+            matches: { pattern: "^v.+$", value: << pipeline.git.tag >> }
+          steps:
+            - run:
+                name: Copy to S3
+                command: aws s3 cp --recursive /tmp/dist/ "<< pipeline.parameters.s3bucket >>/<< pipeline.git.tag >>/"
 jobs:
   build-and-release-macos:
     macos:
       xcode: 12.5.1
     resource_class: macos.x86.medium.gen2
-    working_directory: ~/paint/desktop
+    working_directory: << pipeline.parameters.workingdir >>
     steps:
-      - build-and-release
+      - build
+      - release
   build-and-release-windows:
     executor:
       name: win/default
       shell: powershell.exe
-    working_directory: ~/paint/desktop
+    working_directory: << pipeline.parameters.workingdir >>
     steps:
-      - run:
-          # specifying --lts doesn't work on windows https://github.com/ampproject/amphtml/issues/17538
-          name: Install Node LTS
-          command: nvm install 16.13.2
-          working_directory: ~/
-      - run:
-          name: Use Node LTS
-          command: nvm use 16.13.2
-          working_directory: ~/
-      - run:
-          name: Install yarn
-          command: npm install --global yarn
-          working_directory: ~/
-      - build-and-release:
+      - setup-windows-node
+      - build:
           windows: true
+      - release-windows
 workflows:
   release:
     jobs:
-      - build-and-release-macos
-      - build-and-release-windows
+      - build-and-release-macos:
+          filters:
+            tags:
+              only: /^v.*/
+      - build-and-release-windows:
+          filters:
+            tags:
+              only: /^v.*/

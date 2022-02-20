@@ -16,6 +16,7 @@ yarn electron:dev
 ### Version bump
 
 Run `yarn bump [major|minor|patch]` to bump the version number & create a new git commit, by default it will run `patch`.
+Push with `git push --follow-tags` or set the following to push tags by default: `git config --global push.followTags true`.
 
 ### Sentry
 
