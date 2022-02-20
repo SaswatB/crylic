@@ -47,5 +47,6 @@ if (!supportedReleaseStrategies.includes(releaseStrategy)) {
 
   await exec("git add -A");
   await exec(`git commit -m v${newVersion}`);
+  await exec(`git tag v${newVersion}`);
   console.log(`Committed new version v${newVersion}`);
 })();
