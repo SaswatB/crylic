@@ -261,15 +261,17 @@ export const webpackRunCodeWithWorker = async ({
 
     frameWindow.__REACT_DEVTOOLS_GLOBAL_HOOK__ = reactDevToolsFactory(
       (root) => {
-        const componentRoot = findFiber(
-          root.current,
-          (fiber) =>
-            fiber.type?.[ROOT_COMPONENT_PROP] ||
-            fiber.elementType?.[ROOT_COMPONENT_PROP]
-        );
         renderEntry.reactMetadata$.next({
           fiberRoot: root,
-          fiberComponentRoot: componentRoot || root.current,
+          get fiberComponentRoot() {
+            const componentRoot = findFiber(
+              root.current,
+              (fiber) =>
+                fiber.type?.[ROOT_COMPONENT_PROP] ||
+                fiber.elementType?.[ROOT_COMPONENT_PROP]
+            );
+            return componentRoot || root.current;
+          },
         });
       }
     );

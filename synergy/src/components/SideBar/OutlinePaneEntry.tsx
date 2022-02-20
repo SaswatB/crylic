@@ -193,6 +193,7 @@ export function OutlinePaneEntry({ renderEntry }: Props) {
     // todo debounce
     const rootElement = viewContext?.getRootElement();
     if (!rootElement) return;
+    console.log("reloading outline");
 
     setOutline(
       (await buildOutline(
