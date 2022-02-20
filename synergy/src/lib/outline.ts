@@ -111,11 +111,15 @@ const buildReactFiberRecurse = (
 
 export const findEntryRecurse = (
   elements: OutlineElement[],
-  predicate: (element: OutlineElement) => boolean
-): OutlineElement | undefined => {
+  predicate: (element: OutlineElement) => boolean,
+  path: OutlineElement[] = []
+): { element: OutlineElement; path: OutlineElement[] } | undefined => {
   for (const element of elements) {
-    if (predicate(element)) return element;
-    const res = findEntryRecurse(element.children, predicate);
+    if (predicate(element)) return { element: element, path };
+    const res = findEntryRecurse(element.children, predicate, [
+      ...path,
+      element,
+    ]);
     if (res) return res;
   }
   return undefined;

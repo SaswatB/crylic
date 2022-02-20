@@ -154,7 +154,10 @@ export class SelectService {
         selector.htmlElement
       );
       if (!lookupId) {
-        console.log("dropping element select, no lookup id");
+        console.log(
+          "dropping element select, no lookup id",
+          selector.htmlElement
+        );
         return;
       }
     } else {
