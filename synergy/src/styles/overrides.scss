@@ -1,4 +1,8 @@
 // material ui overrides
+.MuiTreeItem-label {
+  min-width: min-content;
+}
+
 .MuiTreeItem-label,
 fieldset {
   @apply default-transition;
