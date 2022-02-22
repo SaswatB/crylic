@@ -14,6 +14,7 @@ import { Toolbar } from "synergy/src/components/Toolbar";
 import { Tour, TourContext } from "synergy/src/components/Tour/Tour";
 import { TransformContainer } from "synergy/src/components/TransformContainer";
 import { InstallDialog } from "synergy/src/components/Workspace/InstallDialog";
+import { usePackageInstallerRecoil } from "synergy/src/hooks/recoil/usePackageInstallerRecoil";
 import { useMenuInput } from "synergy/src/hooks/useInput";
 import {
   useMemoObservable,
@@ -36,6 +37,7 @@ const open = __non_webpack_require__("open") as typeof import("open");
 function App() {
   const projectService = useService(ProjectService);
   const project = useObservable(projectService.project$);
+  const { installPackages } = usePackageInstallerRecoil();
   const { enqueueSnackbar } = useSnackbar();
   const bus = useBus();
   const renderEntries = useObservable(project?.renderEntries$);
@@ -62,6 +64,7 @@ function App() {
     options: [
       { name: "Save Project", value: "save" },
       { name: "Close Project", value: "close" },
+      { name: "Install Project Dependencies", value: "install-deps" },
       {
         name: tourDisabled ? "Enable Tour" : "Disable Tour",
         value: "toggleTour",
@@ -83,6 +86,9 @@ function App() {
           break;
         case "close":
           projectService.setProject(undefined);
+          break;
+        case "install-deps":
+          installPackages(undefined);
           break;
         case "toggleTour":
           setTourDisabled(!tourDisabled);

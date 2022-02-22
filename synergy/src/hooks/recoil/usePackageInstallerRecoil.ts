@@ -16,7 +16,7 @@ const installPackagesOutputState = atom<MutableRefObject<Subject<Buffer>>>({
 });
 
 export function usePackageInstallerRecoil() {
-  const project = useProject();
+  const project = useProject({ allowUndefined: true });
   const [installingPackages, setInstallingPackages] = useRecoilState(
     installingPackagesState
   );
