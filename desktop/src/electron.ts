@@ -57,7 +57,7 @@ function createWindow() {
       type: "question",
       buttons: ["Yes", "No"],
       title: "Confirm",
-      message: "Are you sure you want to quit?",
+      message: "Are you sure you want to quit? Any unsaved data will be lost.",
     });
     if (response === 1) e.preventDefault();
   });
