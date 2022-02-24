@@ -1,5 +1,5 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
-import { faBars } from "@fortawesome/free-solid-svg-icons";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { faCog } from "@fortawesome/free-solid-svg-icons";
 import { useSnackbar } from "notistack";
 import { Resizable } from "re-resizable";
 import { distinctUntilChanged, map } from "rxjs/operators";
@@ -11,19 +11,17 @@ import { AssetTreePane } from "synergy/src/components/SideBar/AssetTreePane";
 import { ElementEditorPane } from "synergy/src/components/SideBar/ElementEditorPane";
 import { OutlinePane } from "synergy/src/components/SideBar/OutlinePane";
 import { Toolbar } from "synergy/src/components/Toolbar";
-import { Tour, TourContext } from "synergy/src/components/Tour/Tour";
+import { Tour } from "synergy/src/components/Tour/Tour";
 import { TransformContainer } from "synergy/src/components/TransformContainer";
+import { ConfigurationDialog } from "synergy/src/components/Workspace/ConfigurationDialog";
 import { InstallDialog } from "synergy/src/components/Workspace/InstallDialog";
-import { usePackageInstallerRecoil } from "synergy/src/hooks/recoil/usePackageInstallerRecoil";
-import { useMenuInput } from "synergy/src/hooks/useInput";
 import {
   useMemoObservable,
   useObservable,
 } from "synergy/src/hooks/useObservable";
 import { useObservableCallback } from "synergy/src/hooks/useObservableCallback";
-import { useService } from "synergy/src/hooks/useService";
 import { editorResize } from "synergy/src/lib/events";
-import { ProjectService } from "synergy/src/services/ProjectService";
+import { useProject } from "synergy/src/services/ProjectService";
 import { ComponentViewZoomAction } from "synergy/src/types/paint";
 
 import { CodeEditorPane } from "./components/SideBar/CodeEditorPane/CodeEditorPane";
@@ -35,9 +33,7 @@ import "./App.scss";
 const open = __non_webpack_require__("open") as typeof import("open");
 
 function App() {
-  const projectService = useService(ProjectService);
-  const project = useObservable(projectService.project$);
-  const { installPackages } = usePackageInstallerRecoil();
+  const project = useProject({ allowUndefined: true });
   const { enqueueSnackbar } = useSnackbar();
   const bus = useBus();
   const renderEntries = useObservable(project?.renderEntries$);
@@ -49,56 +45,12 @@ function App() {
       ),
     [project]
   );
+  const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const closeConfigDialog = useCallback(() => setShowConfigDialog(false), []);
 
   useObservableCallback(project?.projectSaved$, () =>
     enqueueSnackbar("Files Saved!")
   );
-
-  const { tourDisabled, setTourDisabled, resetTour } = useContext(TourContext);
-  const [
-    ,
-    renderSettingsMenu,
-    openSettingsMenu,
-    closeSettingsMenu,
-  ] = useMenuInput({
-    options: [
-      { name: "Save Project", value: "save" },
-      { name: "Close Project", value: "close" },
-      { name: "Install Project Dependencies", value: "install-deps" },
-      {
-        name: tourDisabled ? "Enable Tour" : "Disable Tour",
-        value: "toggleTour",
-      },
-      !tourDisabled && { name: "Restart Tour", value: "restartTour" },
-    ].filter((o): o is { name: string; value: string } => !!o),
-    disableSelection: true,
-    onChange: (value) => {
-      closeSettingsMenu();
-      switch (value) {
-        case "save":
-          try {
-            project?.saveFiles();
-          } catch (error) {
-            alert(
-              `There was an error while saving: ${(error as Error).message}`
-            );
-          }
-          break;
-        case "close":
-          projectService.setProject(undefined);
-          break;
-        case "install-deps":
-          installPackages(undefined);
-          break;
-        case "toggleTour":
-          setTourDisabled(!tourDisabled);
-          break;
-        case "restartTour":
-          resetTour();
-          break;
-      }
-    },
-  });
 
   const renderLeftPane = (projectName: string) => (
     <>
@@ -108,10 +60,13 @@ function App() {
         <IconButton
           className="ml-2"
           title="Settings"
-          icon={faBars}
-          onClick={openSettingsMenu}
+          icon={faCog}
+          onClick={() => setShowConfigDialog(true)}
         />
-        {renderSettingsMenu()}
+        <ConfigurationDialog
+          open={showConfigDialog}
+          onClose={closeConfigDialog}
+        />
       </div>
       <OutlinePane />
       <Resizable
