@@ -129,7 +129,9 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
     frameSize,
     addTempStylesObservableRef.current,
     scaleRef,
-    selectedElement,
+    selectedElement?.renderEntry.id === renderEntry.id
+      ? selectedElement
+      : undefined,
     selectMode?.type,
     onOverlaySelectElement,
     (deltaX, totalDeltaX, deltaY, totalDeltaY, width, height, preview) => {
