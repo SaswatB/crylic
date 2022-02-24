@@ -9642,8 +9642,6 @@ __metadata:
     rxjs: ^6.5.5
     sass: ^1.49.8
     sass-loader: ^8.0.2
-    sass.js: ^0.11.1
-    sassjs-loader: ^2.0.0
     semver: ^6.3.0
     style-loader: ^1.2.1
     swc-loader: ^0.1.15
@@ -17488,7 +17486,7 @@ immer@6.0.3:
   languageName: node
   linkType: hard
 
-"lodash@npm:>=3.5 <5, lodash@npm:^4.16.6, lodash@npm:^4.17.10, lodash@npm:^4.17.11, lodash@npm:^4.17.13, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.19, lodash@npm:^4.17.20, lodash@npm:^4.17.5, lodash@npm:~4.17.10":
+"lodash@npm:>=3.5 <5, lodash@npm:^4.17.10, lodash@npm:^4.17.11, lodash@npm:^4.17.13, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.19, lodash@npm:^4.17.20, lodash@npm:^4.17.5, lodash@npm:~4.17.10":
   version: 4.17.20
   resolution: "lodash@npm:4.17.20"
   checksum: b31afa09739b7292a88ec49ffdb2fcaeb41f690def010f7a067eeedffece32da6b6847bfe4d38a77e6f41778b9b2bca75eeab91209936518173271f0b69376ea
@@ -21381,7 +21379,7 @@ immer@6.0.3:
   languageName: node
   linkType: hard
 
-"q@npm:^1.1.2, q@npm:^1.4.1":
+"q@npm:^1.1.2":
   version: 1.5.1
   resolution: "q@npm:1.5.1"
   checksum: 147baa93c805bc1200ed698bdf9c72e9e42c05f96d007e33a558b5fdfd63e5ea130e99313f28efc1783e90e6bdb4e48b67a36fcc026b7b09202437ae88a1fb12
@@ -23073,13 +23071,6 @@ resolve@1.15.0:
   languageName: node
   linkType: hard
 
-"sass.js@npm:^0.11.1":
-  version: 0.11.1
-  resolution: "sass.js@npm:0.11.1"
-  checksum: 2ecebd919832d681d581500d38d999e13b80876552945cbf1c64840a9f5a00c01e79b7f822e280ed14605c5fbb84428db2908ec40993cfd392f380ce46b997bf
-  languageName: node
-  linkType: hard
-
 "sass@npm:^1.49.8":
   version: 1.49.8
   resolution: "sass@npm:1.49.8"
@@ -23090,26 +23081,6 @@ resolve@1.15.0:
   bin:
     sass: sass.js
   checksum: ff4051c11223cb6e56ae62fa71448ed65b402949facfbd831f9781244eece9f1d22be45e61af8e0d0fbe186857de2613b07d9247b036ac2326c24e6ebd19bbbe
-  languageName: node
-  linkType: hard
-
-sassjs-loader@2.0.0:
-  version: 2.0.0
-  resolution: "sassjs-loader@npm:2.0.0"
-  dependencies:
-    lodash: ^4.16.6
-    q: ^1.4.1
-  checksum: 4e59bfb1e4b696ef3a97ec0cfa3c0b74097bb84893a1360393ecc576a49e0db337b1a7692724c731c53ba2e131be93e0e4c3ae71aba18b89a9119fca4f25b4b6
-  languageName: node
-  linkType: hard
-
-"sassjs-loader@patch:sassjs-loader@2.0.0#./patches/sassjs-loader+2.0.0.patch::locator=root-workspace-0b6124%40workspace%3A.":
-  version: 2.0.0
-  resolution: "sassjs-loader@patch:sassjs-loader@npm%3A2.0.0#./patches/sassjs-loader+2.0.0.patch::version=2.0.0&hash=886a83&locator=root-workspace-0b6124%40workspace%3A."
-  dependencies:
-    lodash: ^4.16.6
-    q: ^1.4.1
-  checksum: 6f1eb15bc268620c1ec737f3e9c804adfa9f3753f08c019fde2e8af60a2f812862c8627ad2049d9b2a79df11cda6de621b151562e66b7af21e6b615070a4cbde
   languageName: node
   linkType: hard
 

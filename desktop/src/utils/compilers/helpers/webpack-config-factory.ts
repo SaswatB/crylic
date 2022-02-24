@@ -243,14 +243,7 @@ const getWebpackModules = async (
             plugins: [tailwindcss],
           },
         },
-        "sassjs-loader",
-        // todo look into dartsass
-        // {
-        //   loader: "sass-loader",
-        //   options: {
-        //     implementation: nodeSass,
-        //   },
-        // },
+        "sass-loader",
       ],
     },
     {
