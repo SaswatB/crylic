@@ -17,7 +17,7 @@ import {
 import { publishComponent, unpublishComponent } from "../publish-component";
 import { getAppNodeModules } from "../utils";
 import { reactDevToolsFactory } from "./helpers/react-dev-tools-factory";
-import { webpackRunCode } from "./run-code-webpack";
+import { dumpWebpackConfig, webpackRunCode } from "./run-code-webpack";
 
 import errorBoundaryComponent from "!!raw-loader!synergy/src/components/ErrorBoundary";
 
@@ -123,6 +123,24 @@ if ((module || {}).hot && (window || {}).${HMR_STATUS_HANDLER_PROP}) {
 `.trim();
 };
 
+const generateJobConfig = (
+  project: Project
+): WebpackWorkerMessagePayload_Compile["config"] => ({
+  disableWebpackExternals:
+    project.config.configFile?.webpack?.overrideConfig
+      ?.disableExternalsInjection,
+  disableFastRefresh:
+    project.config.configFile?.webpack?.overrideConfig?.disableFastRefresh,
+  disableSWC:
+    project.config.configFile?.webpack?.overrideConfig?.disableFastRefresh,
+  paths: {
+    projectFolder: project.path,
+    projectSrcFolder: project.sourceFolderPath,
+    overrideWebpackConfig: project.config.getFullOverrideWebpackPath(),
+    htmlTemplate: project.config.getFullHtmlTemplatePath(),
+  },
+});
+
 let compileIdCounter = 0;
 
 /**
@@ -153,21 +171,7 @@ export const webpackRunCodeWithWorker = async ({
   );
   console.log("compiling codeEntries", codeEntries);
 
-  const config: WebpackWorkerMessagePayload_Compile["config"] = {
-    disableWebpackExternals:
-      project.config.configFile?.webpack?.overrideConfig
-        ?.disableExternalsInjection,
-    disableFastRefresh:
-      project.config.configFile?.webpack?.overrideConfig?.disableFastRefresh,
-    disableSWC:
-      project.config.configFile?.webpack?.overrideConfig?.disableFastRefresh,
-    paths: {
-      projectFolder: project.path,
-      projectSrcFolder: project.sourceFolderPath,
-      overrideWebpackConfig: project.config.getFullOverrideWebpackPath(),
-      htmlTemplate: project.config.getFullHtmlTemplatePath(),
-    },
-  };
+  const config = generateJobConfig(project);
 
   const takeNextCode = async (codeEntryId: string) => {
     const codeEntry = project.getCodeEntryValue(codeEntryId);
@@ -322,4 +326,14 @@ export const webpackRunCodeWithWorker = async ({
     endCallbackTime - workerCallbackTime,
     workerCallbackTime - startTime
   );
+};
+
+export const dumpWebpackConfigWithWorker = async (project: Project) => {
+  const config = generateJobConfig(project);
+
+  if (WORKER_ENABLED) {
+    return ipcRenderer.invoke("webpack-worker-message-dump-config", config);
+  } else {
+    return dumpWebpackConfig(config);
+  }
 };

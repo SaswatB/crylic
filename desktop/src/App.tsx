@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { faCog } from "@fortawesome/free-solid-svg-icons";
 import { useSnackbar } from "notistack";
 import { Resizable } from "re-resizable";
@@ -26,6 +26,7 @@ import { ComponentViewZoomAction } from "synergy/src/types/paint";
 
 import { CodeEditorPane } from "./components/SideBar/CodeEditorPane/CodeEditorPane";
 import { Intro } from "./components/Workspace/Intro";
+import { WebpackConfigDialog } from "./components/Workspace/WebpackConfigDialog";
 import { openFilePicker } from "./hooks/useFilePicker";
 import { webpackRunCodeWithWorker } from "./utils/compilers/run-code-webpack-worker";
 import "./App.scss";
@@ -46,7 +47,7 @@ function App() {
     [project]
   );
   const [showConfigDialog, setShowConfigDialog] = useState(false);
-  const closeConfigDialog = useCallback(() => setShowConfigDialog(false), []);
+  const [showWebpackConfigDialog, setShowWebpackConfigDialog] = useState(false);
 
   useObservableCallback(project?.projectSaved$, () =>
     enqueueSnackbar("Files Saved!")
@@ -65,7 +66,12 @@ function App() {
         />
         <ConfigurationDialog
           open={showConfigDialog}
-          onClose={closeConfigDialog}
+          onClose={() => setShowConfigDialog(false)}
+          onEditWebpackConfig={() => setShowWebpackConfigDialog(true)}
+        />
+        <WebpackConfigDialog
+          open={showWebpackConfigDialog}
+          onClose={() => setShowWebpackConfigDialog(false)}
         />
       </div>
       <OutlinePane />

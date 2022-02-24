@@ -1,3 +1,4 @@
+import { forOwn, get, isArray } from "lodash";
 import { AddressInfo } from "net";
 
 import { WebpackWorkerMessagePayload_Compile } from "../../types/ipc";
@@ -305,4 +306,36 @@ export const webpackRunCode = async (
   });
   webpackCache[primaryCodeEntry.id]!.lastPromise = runPromise;
   return runPromise;
+};
+
+function cleanUpConfig(val: unknown): unknown {
+  if (typeof val !== "object" || val === null) return val;
+  if (isArray(val)) return val.map((v) => cleanUpConfig(v));
+
+  const clazz = get(val, "constructor.name");
+  if (clazz === "RegExp") return val.toString();
+  if (clazz && !["Object"].includes(clazz)) return `[${clazz}]`;
+
+  forOwn(val, (v, k) => {
+    (val as any)[k] = cleanUpConfig(v);
+  });
+  return val;
+}
+
+export const dumpWebpackConfig = async (
+  config: WebpackWorkerMessagePayload_Compile["config"]
+) => {
+  const options = await webpackConfigFactory(
+    { deps: nativeDeps, config },
+    {
+      id: "dumpWebpackConfig",
+      filePath: "target.tsx",
+      code: undefined,
+    },
+    () => undefined,
+    true
+    // todo more properly forward this error
+  ).catch((e) => e.toString() + "\n" + e.stack);
+
+  return JSON.parse(JSON.stringify(cleanUpConfig(options)));
 };

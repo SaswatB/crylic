@@ -9623,6 +9623,7 @@ __metadata:
     re-resizable: ^6.3.2
     react: ^16.13.1
     react-app-polyfill: ^1.0.6
+    react-async-hook: ^4.0.0
     react-dev-utils: ^10.2.1
     react-dom: ^16.13.1
     react-draggable: ^4.3.1
@@ -21697,6 +21698,15 @@ immer@6.0.3:
   bin:
     react-app-rewired: ./bin/index.js
   checksum: 9d911b85ab0d107a2a3ab46e16e02f2742b7a590b98ec1fbc1a27f7bd998939906d2932611a616aab50b4f0a6c242484931c6e9e915b9840b2de958bd3640f9d
+  languageName: node
+  linkType: hard
+
+"react-async-hook@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "react-async-hook@npm:4.0.0"
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 059042027bff2751c89d1226ce7b463e73b54ad4018c627bd27d57c029469280d8e37e282bb943b35f91050fbd7d330965f65f0d8b1b7c0b9492fc848c6d82a3
   languageName: node
   linkType: hard
 

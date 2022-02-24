@@ -16,6 +16,7 @@ export const ProjectConfigFile = it.type({
     it.type({
       overrideConfig: it.union([
         it.type({
+          // lm_86a5543abc used in an in-app example
           path: it.union([it.string, it.undefined]),
           disableExternalsInjection: it.union([it.boolean, it.undefined]),
           disableFastRefresh: it.union([it.boolean, it.undefined]),

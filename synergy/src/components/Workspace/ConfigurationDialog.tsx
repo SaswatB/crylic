@@ -9,7 +9,8 @@ import { TourContext } from "../Tour/Tour";
 export const ConfigurationDialog: VoidFunctionComponent<{
   open: boolean;
   onClose: () => void;
-}> = ({ open, onClose }) => {
+  onEditWebpackConfig: () => void;
+}> = ({ open, onClose, onEditWebpackConfig }) => {
   const projectService = useService(ProjectService);
   const project = useProject();
   const { installPackages } = usePackageInstallerRecoil();
@@ -20,7 +21,7 @@ export const ConfigurationDialog: VoidFunctionComponent<{
       <DialogTitle>Project Configuration</DialogTitle>
       <DialogContent>
         <div className="flex flex-col">
-          <div>
+          <div className="flex">
             <Button
               onClick={() => {
                 project.saveFiles();
@@ -39,14 +40,24 @@ export const ConfigurationDialog: VoidFunctionComponent<{
               Close Project
             </Button>
           </div>
-          <Button
-            onClick={() => {
-              installPackages(undefined);
-              onClose();
-            }}
-          >
-            Install Project Dependencies
-          </Button>
+          <div className="flex">
+            <Button
+              onClick={() => {
+                installPackages(undefined);
+                onClose();
+              }}
+            >
+              Install Project Dependencies
+            </Button>
+            <Button
+              onClick={() => {
+                onEditWebpackConfig();
+                onClose();
+              }}
+            >
+              Edit Webpack Config
+            </Button>
+          </div>
           <div className="flex">
             <Button onClick={() => setTourDisabled(!tourDisabled)}>
               {tourDisabled ? "Enable Tour" : "Disable Tour"}

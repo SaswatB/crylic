@@ -272,7 +272,8 @@ const getWebpackModules = async (
 export const webpackConfigFactory = async (
   context: WebpackConfigFactoryContext,
   primaryCodeEntry: WebpackWorkerMessagePayload_Compile["primaryCodeEntry"],
-  onProgress: (arg: { percentage: number; message: string }) => void
+  onProgress: (arg: { percentage: number; message: string }) => void,
+  forwardOverrideError?: boolean
 ): Promise<import("webpack").Configuration> => {
   const {
     path,
@@ -381,13 +382,18 @@ export const webpackConfigFactory = async (
     // todo verify this require returns a function, also maybe run it in a vm are pass an instance of webpack
     const overrideConfig = requireUncached(paths.overrideWebpackConfig);
 
-    const result = await overrideConfig(
-      options,
-      webpack,
-      primaryCodeEntry.filePath
-    );
-    if (result) {
-      options = result;
+    if (typeof overrideConfig === "function") {
+      try {
+        const result = await overrideConfig(options, webpack);
+        if (result) {
+          options = result;
+        }
+      } catch (e) {
+        if (forwardOverrideError) throw e;
+        console.error("webpack override failed", e);
+      }
+    } else {
+      console.error("webpack override is missing");
     }
   }
 

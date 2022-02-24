@@ -1,4 +1,9 @@
-import { initialize, webpackRunCode } from "./run-code-webpack";
+import { WebpackWorkerMessagePayload_Compile } from "../../types/ipc";
+import {
+  dumpWebpackConfig,
+  initialize,
+  webpackRunCode,
+} from "./run-code-webpack";
 
 const { ipcMain } = __non_webpack_require__("electron");
 
@@ -39,3 +44,9 @@ ipcMain.on("webpack-worker-message", async (e, data) => {
     });
   }
 });
+
+ipcMain.handle(
+  "webpack-worker-message-dump-config",
+  (e, data: WebpackWorkerMessagePayload_Compile["config"]) =>
+    dumpWebpackConfig(data)
+);
