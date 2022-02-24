@@ -12,6 +12,7 @@ import { ReactDevToolsHook } from "synergy/src/types/react-devtools";
 import {
   WebpackRendererMessagePayload_CompileFinished,
   WebpackRendererMessagePayload_PercentUpdate,
+  WebpackWorkerMessagePayload_Compile,
 } from "../../types/ipc";
 import { publishComponent, unpublishComponent } from "../publish-component";
 import { getAppNodeModules } from "../utils";
@@ -152,10 +153,14 @@ export const webpackRunCodeWithWorker = async ({
   );
   console.log("compiling codeEntries", codeEntries);
 
-  const config = {
+  const config: WebpackWorkerMessagePayload_Compile["config"] = {
     disableWebpackExternals:
       project.config.configFile?.webpack?.overrideConfig
         ?.disableExternalsInjection,
+    disableFastRefresh:
+      project.config.configFile?.webpack?.overrideConfig?.disableFastRefresh,
+    disableSWC:
+      project.config.configFile?.webpack?.overrideConfig?.disableFastRefresh,
     paths: {
       projectFolder: project.path,
       projectSrcFolder: project.sourceFolderPath,

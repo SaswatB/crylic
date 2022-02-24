@@ -43,6 +43,8 @@ export interface WebpackWorkerMessagePayload_Compile {
       htmlTemplate: string;
     };
     disableWebpackExternals?: boolean;
+    disableFastRefresh?: boolean;
+    disableSWC?: boolean;
   };
 }
 

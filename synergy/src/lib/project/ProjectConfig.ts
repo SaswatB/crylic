@@ -18,6 +18,8 @@ export const ProjectConfigFile = it.type({
         it.type({
           path: it.union([it.string, it.undefined]),
           disableExternalsInjection: it.union([it.boolean, it.undefined]),
+          disableFastRefresh: it.union([it.boolean, it.undefined]),
+          disableSWC: it.union([it.boolean, it.undefined]),
         }),
         it.undefined,
       ]),
