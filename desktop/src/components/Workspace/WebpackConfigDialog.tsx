@@ -91,6 +91,7 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
   };
 
   return (
+    // todo this onClose should undo changes
     <Dialog open={open} onClose={onClose} maxWidth="xl">
       <DialogTitle>Webpack Configuration</DialogTitle>
       <DialogContent
