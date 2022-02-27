@@ -74,7 +74,7 @@ export const ElementEditorPane: FunctionComponent = () => {
       }
 
       return (
-        <Collapsible key={index} title="Layout">
+        <Collapsible key={index} title={section.name}>
           <div className={section.grid === false ? "" : "grid2x"}>
             {renderedFields}
           </div>
