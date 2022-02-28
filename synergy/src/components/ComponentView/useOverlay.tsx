@@ -21,6 +21,52 @@ const getComponentElementsFromEvent = (
   return viewContext?.getElementsAtPoint(x, y) || [];
 };
 
+const getBestElementFromEvent = (
+  project: Project | undefined,
+  event: React.MouseEvent<HTMLDivElement, MouseEvent>,
+  viewContext: ViewContext | undefined,
+  scale: number
+) => {
+  const componentElements = getComponentElementsFromEvent(
+    event,
+    viewContext,
+    scale
+  );
+
+  function getLookupId(element: HTMLElement) {
+    return project?.primaryElementEditor.getLookupIdFromHTMLElement(element);
+  }
+
+  // get the first element with a lookup id
+  let componentElement = componentElements.find(getLookupId);
+
+  // if no element with a lookup id wa found, try to find any child of the found nodes that has a lookup id
+  if (!componentElement && componentElements.length > 0) {
+    componentElements.forEach((ce) => {
+      if (componentElement) return;
+
+      // breath first search
+      let children = Array.from(ce.children);
+      let nextLevel: Element[] = [];
+      let depth = 0;
+      while (children.length > 0 && depth++ < 5) {
+        for (let child of children) {
+          if (getLookupId(child as HTMLElement)) {
+            componentElement = child as HTMLElement;
+            break;
+          }
+          nextLevel.push(...Array.from(child.children));
+        }
+
+        children = nextLevel;
+        nextLevel = [];
+      }
+    });
+  }
+
+  return componentElement;
+};
+
 let lastDragResizeHandled = 0;
 export function useOverlay(
   project: Project | undefined,
@@ -37,15 +83,11 @@ export function useOverlay(
   const onOverlayMove = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
-    const componentElements = getComponentElementsFromEvent(
+    const componentElement = getBestElementFromEvent(
+      project,
       event,
       viewContext,
       scaleRef.current
-    );
-
-    // get the first element with a lookup id
-    const componentElement = componentElements.find((ce) =>
-      project?.primaryElementEditor.getLookupIdFromHTMLElement(ce)
     );
 
     setHighlightBox(componentElement?.getBoundingClientRect());
@@ -62,15 +104,11 @@ export function useOverlay(
       return;
     }
     lastDragResizeHandled = 0;
-    const componentElements = getComponentElementsFromEvent(
+    const componentElement = getBestElementFromEvent(
+      project,
       event,
       viewContext,
       scaleRef.current
-    );
-
-    // get the first element with a lookup id
-    const componentElement = componentElements.find((ce) =>
-      project?.primaryElementEditor.getLookupIdFromHTMLElement(ce)
     );
 
     onSelect?.(componentElement);
