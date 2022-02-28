@@ -1,6 +1,7 @@
 import React, { FunctionComponent, useEffect, useRef } from "react";
 import MonacoEditor from "react-monaco-editor";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+import { useSnackbar } from "notistack";
 
 import { useBoundState } from "synergy/src/hooks/useBoundState";
 import { useBusSubscription } from "synergy/src/hooks/useBusSubscription";
@@ -119,6 +120,7 @@ export const CodeEditor: FunctionComponent<Props> = ({
   onSelectElement,
   isActiveEditor,
 }) => {
+  const { enqueueSnackbar } = useSnackbar();
   const editorRef = useRef<MonacoEditor>(null);
   const code = useObservable(codeEntry.code$);
   const ast = useObservable(codeEntry.ast$);
@@ -245,8 +247,9 @@ export const CodeEditor: FunctionComponent<Props> = ({
             try {
               fs.writeFileSync(codeEntry.filePath, localValueRef.current);
             } catch (error) {
-              alert(
-                `There was an error while saving: ${(error as Error).message}`
+              enqueueSnackbar(
+                `There was an error while saving: ${(error as Error).message}`,
+                { variant: "error" }
               );
             }
           }

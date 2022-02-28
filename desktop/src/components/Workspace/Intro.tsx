@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Backdrop, CircularProgress } from "@material-ui/core";
+import { useSnackbar } from "notistack";
 import path from "path";
 
 import { Tour } from "synergy/src/components/Tour/Tour";
@@ -14,12 +15,13 @@ const fs = __non_webpack_require__("fs") as typeof import("fs");
 
 export function Intro() {
   const projectService = useService(ProjectService);
+  const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(0);
   const recentProjects = projectService.getRecentProjects();
 
   const openProject = (filePath: string) => {
     if (!fs.existsSync(filePath)) {
-      alert("Project does not exist");
+      enqueueSnackbar("Project does not exist", { variant: "error" });
       return;
     }
     setLoading((l) => l + 1);
@@ -48,7 +50,7 @@ export function Intro() {
               filters: [{ name: "Project", extensions: [""] }],
             }).then((f) => {
               if (f)
-                FileProject.createNewProjectInDirectory(f).then((p) =>
+                void FileProject.createNewProjectInDirectory(f).then((p) =>
                   projectService.setProject(p)
                 );
             })

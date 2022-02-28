@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogTitle,
 } from "@material-ui/core";
+import { useSnackbar } from "notistack";
 
 import { useDebouncedFunction } from "synergy/src/hooks/useDebouncedFunction";
 import { useProject } from "synergy/src/services/ProjectService";
@@ -46,6 +47,7 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
   onClose: () => void;
 }> = ({ open, onClose }) => {
   const project = useProject();
+  const { enqueueSnackbar } = useSnackbar();
   const webpackConfig = useAsyncCallback(dumpWebpackConfigWithWorker);
   const webpackOverridePath = project.config.getFullOverrideWebpackPath();
   const [webpackOverride, setWebpackOverride] = useState(exampleWebpackConfig);
@@ -73,11 +75,12 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
   useEffect(() => {
     if (!open && madeChanges) {
       setWebpackOverrideOriginal(undefined);
-      alert(
-        "To use the updated webpack configuration, please reopen the project"
+      enqueueSnackbar(
+        "To use the updated webpack configuration, please reopen the project",
+        { variant: "warning" }
       );
     }
-  }, [madeChanges, open]);
+  }, [enqueueSnackbar, madeChanges, open]);
 
   const refreshWebpackConfig = useDebouncedFunction((newOverride) => {
     if (!webpackOverridePath) return;

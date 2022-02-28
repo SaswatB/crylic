@@ -1,5 +1,6 @@
 import { FunctionComponent } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { useSnackbar } from "notistack";
 
 import { useService } from "../../hooks/useService";
 import { useProject } from "../../services/ProjectService";
@@ -8,6 +9,7 @@ import { SelectService } from "../../services/SelectService";
 export const StateManager: FunctionComponent = () => {
   const project = useProject({ allowUndefined: true });
   const selectService = useService(SelectService);
+  const { enqueueSnackbar } = useSnackbar();
 
   /* Hotkeys */
 
@@ -18,7 +20,10 @@ export const StateManager: FunctionComponent = () => {
       try {
         project?.saveFiles();
       } catch (error) {
-        alert(`There was an error while saving: ${(error as Error).message}`);
+        enqueueSnackbar(
+          `There was an error while saving: ${(error as Error).message}`,
+          { variant: "error" }
+        );
       }
     },
     [project]
@@ -37,7 +42,9 @@ export const StateManager: FunctionComponent = () => {
     () =>
       void selectService
         .deleteSelectedElement()
-        .catch((e) => alert((e as Error).message))
+        .catch((e) =>
+          enqueueSnackbar((e as Error).message, { variant: "error" })
+        )
   );
 
   return null;

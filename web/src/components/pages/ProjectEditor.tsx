@@ -90,7 +90,10 @@ export const ProjectEditor: FunctionComponent = () => {
             project?.saveFiles();
             enqueueSnackbar("Files Saved!");
           } catch (error) {
-            alert(`There was an error while saving: ${error.message}`);
+            enqueueSnackbar(
+              `There was an error while saving: ${(error as Error)?.message}`,
+              { variant: "error" }
+            );
           }
           break;
         case "toggleTour":
