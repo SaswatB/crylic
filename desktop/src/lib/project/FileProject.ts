@@ -168,6 +168,7 @@ export class FileProject extends Project {
     this.projectSaved$.next();
   }
   public saveFile({ id, filePath, code$, codeRevisionId }: CodeEntry) {
+    fs.mkdirSync(path.basename(filePath), { recursive: true });
     fs.writeFileSync(filePath, code$.getValue());
     this.savedCodeRevisions[id] = codeRevisionId;
   }
@@ -200,25 +201,16 @@ export class FileProject extends Project {
 
   // #region new paths
 
-  public getNewComponentPath(name: string) {
-    return path.join(
-      this.path,
-      normalizePath(`src/components/${name}.tsx`, path.sep)
-    );
+  public getNormalizedSourcePath(srcPath: string) {
+    return path.join(this.sourceFolderPath, normalizePath(srcPath, path.sep));
   }
 
   public getNewStyleSheetPath(name: string) {
-    return path.join(
-      this.path,
-      normalizePath(`src/styles/${name}.css`, path.sep)
-    );
+    return this.getNormalizedSourcePath(`styles/${name}.css`);
   }
 
   public getNewAssetPath(fileName: string) {
-    return path.join(
-      this.path,
-      normalizePath(`src/assets/${fileName}`, path.sep)
-    );
+    return this.getNormalizedSourcePath(`assets/${fileName}`);
   }
 
   // #endregion

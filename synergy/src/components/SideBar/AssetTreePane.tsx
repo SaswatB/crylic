@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from "react";
+import React, { FunctionComponent, useEffect, useState } from "react";
 import {
   faEdit,
   faEye,
@@ -10,11 +10,11 @@ import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import TreeItem from "@material-ui/lab/TreeItem";
 import TreeView from "@material-ui/lab/TreeView";
-import { camelCase, upperFirst } from "lodash";
+import { camelCase } from "lodash";
 import { useSnackbar } from "notistack";
 import { distinctUntilChanged, map } from "rxjs/operators";
 
-import { getBoilerPlateComponent, SelectModeType } from "../../constants";
+import { SelectModeType } from "../../constants";
 import { useMenuInput } from "../../hooks/useInput";
 import { useMemoObservable } from "../../hooks/useObservable";
 import { useService } from "../../hooks/useService";
@@ -35,6 +35,7 @@ import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
 import { IconButton } from "../IconButton";
 import { InputModal } from "../InputModal";
+import { NewComponentModal } from "../NewComponentModal";
 import { Tour } from "../Tour/Tour";
 
 interface Tree {
@@ -66,21 +67,6 @@ export const AssetTreePane: FunctionComponent<Props> = ({
     [project]
   );
 
-  const onNewComponent = async () => {
-    const inputName = await InputModal({
-      title: "New Component",
-      message: "Please enter a component name",
-    });
-    if (!inputName) return;
-    // todo add validation/duplicate checking to name
-    const name = upperFirst(camelCase(inputName));
-    const filePath = project!.getNewComponentPath(name);
-    const code = getBoilerPlateComponent(name);
-    const codeEntry = new CodeEntry(project, filePath, code);
-    project.addCodeEntries([codeEntry], { render: true });
-    project.saveFile(codeEntry);
-    enqueueSnackbar("Started a new component!");
-  };
   const onNewStyleSheet = async () => {
     const inputName = await InputModal({
       title: "New StyleSheet",
@@ -129,7 +115,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
       closeAddMenu();
       switch (value) {
         case "component":
-          onNewComponent();
+          void NewComponentModal({});
           break;
         case "stylesheet":
           onNewStyleSheet();

@@ -30,8 +30,9 @@ export const parseAST = (code: string): t.File =>
   });
 const printAST = (ast: t.File) =>
   print(clone(ast, undefined, undefined, undefined, true)).code;
-const prettyPrintAST = (ast: t.File) =>
-  format(printAST(ast), { parser: "babel-ts", plugins: [prettierParserBabel] });
+export const prettyPrintTS = (code: string) =>
+  format(code, { parser: "babel-ts", plugins: [prettierParserBabel] });
+const prettyPrintAST = (ast: t.File) => prettyPrintTS(printAST(ast));
 
 export const parseStyleSheetAST = (codeEntry: RemoteCodeEntry) => {
   const syntax = codeEntry.styleEntryExtension;

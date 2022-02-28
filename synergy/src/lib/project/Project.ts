@@ -49,9 +49,14 @@ export abstract class Project {
   public abstract addAsset(filePath: string): void;
   public abstract refreshConfig(): void;
 
-  public abstract getNewComponentPath(name: string): string;
+  public abstract getNormalizedSourcePath(srcPath: string): string;
   public abstract getNewStyleSheetPath(name: string): string;
   public abstract getNewAssetPath(fileName: string): string;
+
+  public getDefaultNewComponentFolder() {
+    // todo get from config & inference
+    return "components";
+  }
 
   public get editorEntries() {
     return [...this.elementEditorEntries, ...this.styleEditorEntries];
