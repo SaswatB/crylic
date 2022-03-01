@@ -23,6 +23,7 @@ interface Props {
   calculateBoundingBox: () => {
     dimensions?: { top: number; left: number; width: number; height: number };
     bounds?: { top: number; left: number; width: number; height: number };
+    enableResizeBounds?: boolean;
   };
   recalculateBoundsObservable: Observable<number>;
   onDragStart?: () => void;
@@ -241,8 +242,12 @@ export const Draggable: FunctionComponent<Props> = ({
         }}
         snap={resizeSnaps}
         snapGap={SNAP_GAP}
-        maxWidth={bounds.width - dimensions.left}
-        maxHeight={bounds.height - dimensions.top}
+        maxWidth={
+          box.enableResizeBounds ? bounds.width - dimensions.left : undefined
+        }
+        maxHeight={
+          box.enableResizeBounds ? bounds.height - dimensions.top : undefined
+        }
         enable={{
           // todo handle
           // top: dimensions.height > 0,
