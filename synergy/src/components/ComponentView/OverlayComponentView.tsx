@@ -16,6 +16,7 @@ import { useSnackbar } from "notistack";
 import { Subject } from "rxjs";
 
 import {
+  DEFAULT_FRAME_BACKGROUND_COLOR,
   DEFAULT_FRAME_HEIGHT,
   DEFAULT_FRAME_WIDTH,
   SelectModeType,
@@ -29,7 +30,7 @@ import { RenderEntryCompileStatus } from "../../lib/project/RenderEntry";
 import { isDefined } from "../../lib/utils";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
-import { Styles } from "../../types/paint";
+import { FrameSettings, Styles } from "../../types/paint";
 import { IconButton } from "../IconButton";
 import { ResizeModal } from "../ResizeModal";
 import { BuildProgress } from "./BuildProgress";
@@ -85,9 +86,11 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   );
   useObservableCallback(project.shouldReloadRenderEntries$, reload);
 
-  const [frameSize, setFrameSize] = useState({
+  const [frameSettings, setFrameSize] = useState<FrameSettings>({
     width: DEFAULT_FRAME_WIDTH,
     height: DEFAULT_FRAME_HEIGHT,
+    // todo allow setting a project wide default
+    backgroundColor: DEFAULT_FRAME_BACKGROUND_COLOR,
   });
 
   // todo hook this back up
@@ -126,7 +129,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   const [renderOverlay] = useOverlay(
     project,
     viewContext,
-    frameSize,
+    frameSettings,
     addTempStylesObservableRef.current,
     scaleRef,
     selectedElement?.renderEntry.id === renderEntry.id
@@ -246,11 +249,9 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           className="ml-2"
           icon={faExpandAlt}
           onClick={() =>
-            ResizeModal({
-              title: "Resize Frame",
-              defaultWidth: frameSize.width,
-              defaultHeight: frameSize.height,
-            }).then((newSize) => newSize && setFrameSize(newSize))
+            ResizeModal(frameSettings).then(
+              (newSize) => newSize && setFrameSize(newSize)
+            )
           }
         />
         <IconButton
@@ -260,13 +261,16 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           onClick={onRemoveComponentView}
         />
       </div>
-      <div className="flex relative bg-white shadow-2xl">
+      <div
+        className="flex relative shadow-2xl"
+        style={{ backgroundColor: frameSettings.backgroundColor }}
+      >
         <CompilerComponentView
           {...compilerProps}
           style={{
             ...compilerProps.style,
-            width: `${frameSize.width}px`,
-            height: `${frameSize.height}px`,
+            width: `${frameSettings.width}px`,
+            height: `${frameSettings.height}px`,
           }}
         />
         {(isDefined(selectMode) || selectedElement) && renderOverlay()}

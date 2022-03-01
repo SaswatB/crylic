@@ -6,11 +6,12 @@ import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
-import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import TextField from "@material-ui/core/TextField";
 
 import { MINIMUM_FRAME_HEIGHT, MINIMUM_FRAME_WIDTH } from "../constants";
+import { useColorPicker } from "../hooks/useInput";
+import { FrameSettings } from "../types/paint";
 import { createModal } from "./PromiseModal";
 
 const PREDEFINED_RESOLUTIONS: {
@@ -35,31 +36,27 @@ const PREDEFINED_RESOLUTIONS: {
   { name: "1080p", width: 1920, height: 1080 },
 ];
 
-type Props = {
-  title: string;
-  message?: string;
-  defaultWidth: number;
-  defaultHeight: number;
-};
-type Result = { width: number; height: number } | null;
-
-export const ResizeModal = createModal<Props, Result>(
-  ({ title, message, defaultWidth, defaultHeight, resolve }) => {
-    const [width, setWidth] = useState(`${defaultWidth}`);
-    const [height, setHeight] = useState(`${defaultHeight}`);
+export const ResizeModal = createModal<FrameSettings, FrameSettings | null>(
+  ({ resolve, ...currentSettings }) => {
+    const [width, setWidth] = useState(`${currentSettings.width}`);
+    const [height, setHeight] = useState(`${currentSettings.height}`);
+    const [backgroundColor, renderBgColorPicker] = useColorPicker({
+      label: "Background Color",
+      initialValue: currentSettings.backgroundColor,
+    });
 
     const onSubmit = () =>
       resolve({
         width: Math.max(parseInt(width), MINIMUM_FRAME_WIDTH),
         height: Math.max(parseInt(height), MINIMUM_FRAME_HEIGHT),
+        backgroundColor,
       });
 
     return (
       <Dialog open={true} onClose={() => resolve(null)}>
-        <DialogTitle>{title}</DialogTitle>
+        <DialogTitle>Frame Settings</DialogTitle>
         <DialogContent>
-          {message && <DialogContentText>{message}</DialogContentText>}
-          <div>
+          <div className="mb-4">
             <FormControl fullWidth>
               <InputLabel id="resolution-select-label">Resolution</InputLabel>
               <Select
@@ -127,11 +124,10 @@ export const ResizeModal = createModal<Props, Result>(
               }}
             />
           </div>
+          {renderBgColorPicker()}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => resolve(null)} color="primary">
-            Cancel
-          </Button>
+          <Button onClick={() => resolve(null)}>Cancel</Button>
           <Button onClick={() => onSubmit()} color="primary">
             Confirm
           </Button>

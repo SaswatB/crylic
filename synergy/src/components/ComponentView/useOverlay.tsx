@@ -7,7 +7,11 @@ import { Observable, Subject } from "rxjs";
 import { SelectModeType } from "../../constants";
 import { useObservableCallback } from "../../hooks/useObservableCallback";
 import { Project } from "../../lib/project/Project";
-import { onMoveResizeCallback, ViewContext } from "../../types/paint";
+import {
+  FrameSettings,
+  onMoveResizeCallback,
+  ViewContext,
+} from "../../types/paint";
 import { SelectedElement } from "../../types/selected-element";
 import { Draggable } from "../Draggable";
 
@@ -74,7 +78,7 @@ let lastDragResizeHandled = 0;
 export function useOverlay(
   project: Project | undefined,
   viewContext: ViewContext | undefined,
-  frameSize: { width: number; height: number },
+  frameSettings: FrameSettings,
   addTempStylesObservable: Observable<unknown>,
   scaleRef: MutableRefObject<number>,
   selectedElement?: SelectedElement,
@@ -125,7 +129,7 @@ export function useOverlay(
       selectedElement.element.parentElement?.getBoundingClientRect()) || {
       top: 0,
       left: 0,
-      ...frameSize,
+      ...frameSettings,
     };
     const bcr = selectedElement.element.getBoundingClientRect();
 

@@ -122,3 +122,9 @@ export type ViewContext = {
     persistRender: boolean
   ) => void;
 };
+
+export interface FrameSettings {
+  width: number;
+  height: number;
+  backgroundColor: string;
+}
