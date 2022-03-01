@@ -1,4 +1,7 @@
 import React, { MutableRefObject, useEffect, useRef, useState } from "react";
+import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useSnackbar } from "notistack";
 import { Observable, Subject } from "rxjs";
 
 import { SelectModeType } from "../../constants";
@@ -79,6 +82,7 @@ export function useOverlay(
   onSelect?: (componentElement: Element | null | undefined) => void,
   onMoveResizeSelection?: onMoveResizeCallback
 ) {
+  const { enqueueSnackbar } = useSnackbar();
   const [highlightBox, setHighlightBox] = useState<DOMRect>();
   const onOverlayMove = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
@@ -256,6 +260,30 @@ export function useOverlay(
           }}
         />
       )}
+      {(selectedElement?.overlayWarnings.length || 0) > 0 ? (
+        <div
+          className="absolute top-0 cursor-pointer"
+          style={{ right: -20 }}
+          onClick={() =>
+            enqueueSnackbar(
+              selectedElement!.overlayWarnings.map((s) => (
+                <>
+                  {s}
+                  <br />
+                </>
+              )),
+              {
+                variant: "warning",
+              }
+            )
+          }
+        >
+          <FontAwesomeIcon
+            icon={faExclamationTriangle}
+            className="text-gray-500"
+          />
+        </div>
+      ) : null}
     </div>
   );
   return [renderOverlay] as const;

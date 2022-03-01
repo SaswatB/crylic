@@ -32,6 +32,7 @@ export class SelectService {
   public readonly selectedStyleGroup$ = new BehaviorSubject<
     StyleGroup | undefined
   >(undefined);
+  private readonly overlayWarningsCache = new WeakMap<Element, string[]>();
 
   constructor(private projectService: ProjectService) {
     this.selectedElement$.subscribe(async (selectedElement) => {
@@ -201,6 +202,35 @@ export class SelectService {
       styleGroups.push(...editor.getStyleGroupsFromHTMLElement(primaryElement));
     });
 
+    // resolve styles
+    const computedStyles = window.getComputedStyle(primaryElement);
+    let overlayWarnings = this.overlayWarningsCache.get(primaryElement) || []; // todo this is a bit scary :/
+    // add a temp size for 0 width/height elements
+    // todo make this configurable
+    if (computedStyles.width === "0px" || computedStyles.height === "0px") {
+      console.log("selected element has zero size, adding temp style");
+      if (computedStyles.width === "0px")
+        overlayWarnings.push(
+          "Element has no width by default and has been expanded"
+        );
+      if (computedStyles.height === "0px")
+        overlayWarnings.push(
+          "Element has no height by default and has been expanded"
+        );
+      setTimeout(
+        () =>
+          this.updateSelectedStyleGroup(
+            {
+              width: computedStyles.width === "0px" ? "100px" : undefined,
+              height: computedStyles.height === "0px" ? "100px" : undefined,
+            },
+            true
+          ),
+        100
+      );
+      this.overlayWarningsCache.set(primaryElement, overlayWarnings);
+    }
+
     // save collected info
     this.selectedElement$.next({
       renderEntry,
@@ -214,8 +244,9 @@ export class SelectService {
       element: primaryElement,
       elements: componentElements,
       styleGroups,
-      computedStyles: window.getComputedStyle(primaryElement),
+      computedStyles,
       inlineStyles: primaryElement.style,
+      overlayWarnings,
     });
     this.setSelectedStyleGroup(styleGroups[0]);
   }

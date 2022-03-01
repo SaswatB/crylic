@@ -20,6 +20,7 @@ export interface SelectedElement {
   styleGroups: StyleGroup[];
   computedStyles: CSSStyleDeclaration;
   inlineStyles: CSSStyleDeclaration;
+  overlayWarnings: string[]; // warnings to show in the overlay view
 
   sourceMetadata: SourceMetadata | undefined;
 }
