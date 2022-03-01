@@ -1,4 +1,4 @@
-import { debounce } from "lodash";
+import { debounce, uniq } from "lodash";
 import { BehaviorSubject, of, Subject } from "rxjs";
 import { map } from "rxjs/operators";
 import { singleton } from "tsyringe";
@@ -228,6 +228,7 @@ export class SelectService {
           ),
         100
       );
+      overlayWarnings = uniq(overlayWarnings);
       this.overlayWarningsCache.set(primaryElement, overlayWarnings);
     }
 
