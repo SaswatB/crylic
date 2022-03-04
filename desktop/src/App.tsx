@@ -10,6 +10,7 @@ import { IconButton } from "synergy/src/components/IconButton";
 import { AssetTreePane } from "synergy/src/components/SideBar/AssetTreePane";
 import { ElementEditorPane } from "synergy/src/components/SideBar/ElementEditorPane";
 import { OutlinePane } from "synergy/src/components/SideBar/OutlinePane";
+import { SupportCTA } from "synergy/src/components/Support/SupportCTA";
 import { Toolbar } from "synergy/src/components/Toolbar";
 import { Tour } from "synergy/src/components/Tour/Tour";
 import { TransformContainer } from "synergy/src/components/TransformContainer";
@@ -176,6 +177,7 @@ function App() {
           >
             {renderComponentViews()}
           </TransformContainer>
+          <SupportCTA openUrl={open} />
         </div>
         {project && (
           <Resizable

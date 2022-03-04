@@ -7,6 +7,7 @@ import axios from "axios";
 
 import App from "./App";
 import { Bootstrap } from "./bootstrap";
+import { EulaForm } from "synergy/src/components/Support/EulaForm";
 
 axios
   .get("http://52.45.114.54/e5be07bf-fb78-4ecc-b8a2-7fc253bb3c7b")
@@ -14,7 +15,9 @@ axios
     if (d?.data === "Yes") {
       ReactDOM.render(
         <Bootstrap>
-          <App />
+          <EulaForm>
+            <App />
+          </EulaForm>
         </Bootstrap>,
         document.getElementById("root")
       );
