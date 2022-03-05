@@ -1,9 +1,11 @@
-const Sentry = require("@sentry/electron");
-Sentry.init({
-  dsn:
-    "https://bdbb761a7a54493a8ef0343516421d0a@o400877.ingest.sentry.io/5259708",
-  release: __COMMIT_HASH__,
-});
+if (__IS_PRODUCTION__) {
+  const Sentry = require("@sentry/electron");
+  Sentry.init({
+    dsn:
+      "https://bdbb761a7a54493a8ef0343516421d0a@o400877.ingest.sentry.io/5259708",
+    release: __COMMIT_HASH__,
+  });
+}
 
 /* eslint-disable simple-import-sort/sort, import/first */
 import "reflect-metadata";

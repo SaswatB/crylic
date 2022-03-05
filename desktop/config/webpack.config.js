@@ -507,6 +507,9 @@ module.exports = function (webpackEnv) {
         __COMMIT_HASH__: JSON.stringify(
           childProcess.execSync("git rev-list HEAD --max-count=1").toString()
         ),
+        __IS_PRODUCTION__: JSON.stringify(
+          process.env.NODE_ENV_ACTUAL === "production"
+        ),
       }),
       // This is necessary to emit hot updates (currently CSS only):
       isEnvDevelopment && new webpack.HotModuleReplacementPlugin(),
