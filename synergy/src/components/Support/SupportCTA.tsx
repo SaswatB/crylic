@@ -1,11 +1,14 @@
 import React from "react";
+import { useSnackbar } from "notistack";
 
 import { useMenuInput } from "../../hooks/useInput";
 
 export function SupportCTA({ openUrl }: { openUrl: (url: string) => void }) {
+  const { enqueueSnackbar } = useSnackbar();
   const [, renderMenu, openMenu, closeMenu] = useMenuInput({
     options: [
       { name: "Documentation", value: "documentation" },
+      { name: "Feedback", value: "feedback" },
       { divider: true },
       { name: "Privacy Policy", value: "privacyPolicy" },
       { name: "Terms & Conditions", value: "termsAndConditions" },
@@ -17,6 +20,13 @@ export function SupportCTA({ openUrl }: { openUrl: (url: string) => void }) {
       switch (value) {
         case "documentation":
           openUrl("https://docs.crylic.io");
+          break;
+        case "feedback":
+          if (appzi) appzi.openWidget("e0662074-0ac7-4f34-887e-9ee031379f0c");
+          else
+            enqueueSnackbar("Feedback widget is not available", {
+              variant: "error",
+            });
           break;
 
         case "privacyPolicy":
