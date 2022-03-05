@@ -423,9 +423,9 @@ export const useMenuInput: useInputFunction<
       open={!!anchorEl}
       onClose={() => setAnchorEl(null)}
     >
-      {options.map((option) =>
+      {options.map((option, index) =>
         option.divider ? (
-          <Divider />
+          <Divider key={index} />
         ) : (
           <MenuItem
             key={option.value}
