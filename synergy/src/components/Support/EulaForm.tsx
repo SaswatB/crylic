@@ -362,7 +362,7 @@ export function EulaForm({ children }: { children: React.ReactNode }) {
     "acceptedEula"
   );
 
-  if (acceptedEula) return children;
+  if (acceptedEula) return <>{children}</>;
 
   return (
     <div className="fixed w-screen h-screen bg-gray-700 p-8 flex flex-col items-end">
