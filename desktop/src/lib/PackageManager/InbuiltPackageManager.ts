@@ -18,6 +18,7 @@ export class InbuiltPackageManager extends PackageManager {
   }
 
   public installPackage(packageName?: string, devDep = false) {
+    // todo support multiple npm versions
     console.log("starting child process - installPackage", packageName, devDep);
     return fork(
       path.join(dirname, "electron-child.js"),
