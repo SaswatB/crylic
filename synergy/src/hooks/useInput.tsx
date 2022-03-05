@@ -1,5 +1,6 @@
 import React, { FunctionComponent, useEffect, useRef, useState } from "react";
 import {
+  Divider,
   FormControl,
   FormControlProps,
   InputAdornment,
@@ -391,7 +392,10 @@ export const useAutocomplete: useInputFunction<{
 
 export const useMenuInput: useInputFunction<
   {
-    options: { name: string; value: string }[];
+    options: (
+      | { name: string; value: string; divider?: false }
+      | { divider: true }
+    )[];
     disableSelection?: boolean;
   },
   never,
@@ -419,18 +423,22 @@ export const useMenuInput: useInputFunction<
       open={!!anchorEl}
       onClose={() => setAnchorEl(null)}
     >
-      {options.map((option) => (
-        <MenuItem
-          key={option.value}
-          selected={!disableSelection && option.value === value}
-          onClick={() => {
-            setValue(option.value);
-            onChange?.(option.value);
-          }}
-        >
-          {option.name}
-        </MenuItem>
-      ))}
+      {options.map((option) =>
+        option.divider ? (
+          <Divider />
+        ) : (
+          <MenuItem
+            key={option.value}
+            selected={!disableSelection && option.value === value}
+            onClick={() => {
+              setValue(option.value);
+              onChange?.(option.value);
+            }}
+          >
+            {option.name}
+          </MenuItem>
+        )
+      )}
     </Menu>
   );
   return [value, render, openMenu, closeMenu];

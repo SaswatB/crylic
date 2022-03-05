@@ -5,6 +5,8 @@ import { useMenuInput } from "../../hooks/useInput";
 export function SupportCTA({ openUrl }: { openUrl: (url: string) => void }) {
   const [, renderMenu, openMenu, closeMenu] = useMenuInput({
     options: [
+      { name: "Documentation", value: "documentation" },
+      { divider: true },
       { name: "Privacy Policy", value: "privacyPolicy" },
       { name: "Terms & Conditions", value: "termsAndConditions" },
       { name: "End User License Agreement", value: "eula" },
@@ -13,6 +15,10 @@ export function SupportCTA({ openUrl }: { openUrl: (url: string) => void }) {
     onChange: (value) => {
       closeMenu();
       switch (value) {
+        case "documentation":
+          openUrl("https://docs.crylic.io");
+          break;
+
         case "privacyPolicy":
           openUrl(
             "https://www.termsfeed.com/live/3eba34be-416c-4fcd-b514-cb69b642f17d"
@@ -38,10 +44,10 @@ export function SupportCTA({ openUrl }: { openUrl: (url: string) => void }) {
       <div
         className="absolute bottom-0 right-0 m-4 flex items-center justify-center bg-gray-700 text-white cursor-pointer hover:bg-gray-500 default-transition"
         style={{
-          height: "50px",
-          width: "50px",
+          height: "30px",
+          width: "30px",
           borderRadius: "100%",
-          fontSize: "32px",
+          fontSize: "22px",
         }}
         onClick={openMenu}
       >
