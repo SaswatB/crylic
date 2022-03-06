@@ -31,8 +31,8 @@ import { isDefined } from "../../lib/utils";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
 import { FrameSettings, Styles } from "../../types/paint";
+import { FrameSettingsModal } from "../FrameSettingsModal";
 import { IconButton } from "../IconButton";
-import { ResizeModal } from "../ResizeModal";
 import { BuildProgress } from "./BuildProgress";
 import {
   CompilerComponentView,
@@ -249,7 +249,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
           className="ml-2"
           icon={faExpandAlt}
           onClick={() =>
-            ResizeModal(frameSettings).then(
+            FrameSettingsModal(frameSettings).then(
               (newSize) => newSize && setFrameSize(newSize)
             )
           }
