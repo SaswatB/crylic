@@ -23,8 +23,8 @@ import { createConditionalFE } from "./defaultFields/ConditionalFE";
 import { DeleteFE } from "./defaultFields/DeleteFE";
 import { ImageSelectorFE } from "./defaultFields/ImageSelectorFE";
 import {
-  creatColorPickerSGFE,
   createAutocompleteSGFE,
+  createBoundColorPickerSGFE,
   createBoundCSSLengthSGFE,
   createBoundTextSGFE,
   createBreakdownSGFE,
@@ -108,7 +108,7 @@ export class HtmlElementEditor implements ElementEditor {
         name: "Colors",
         fields: [
           createBoundTextSGFE("opacity"),
-          creatColorPickerSGFE("backgroundColor"),
+          createBoundColorPickerSGFE("backgroundColor"),
           createElementEditorField(ImageSelectorFE, {
             imageProp: "backgroundImage" as const,
           }),
@@ -133,7 +133,7 @@ export class HtmlElementEditor implements ElementEditor {
             createElementEditorField(TextContentFE),
             ({ selectedElement }) => allowTextEdit(selectedElement)
           ),
-          creatColorPickerSGFE("color"),
+          createBoundColorPickerSGFE("color"),
           createBoundCSSLengthSGFE("fontSize"),
           createSelectSGFE("fontWeight", CSS_FONT_WEIGHT_OPTIONS),
           createAutocompleteSGFE("fontFamily", CSS_FONT_FAMILY_OPTIONS),

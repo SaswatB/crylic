@@ -68,7 +68,7 @@ export const useTextInput: useInputFunction<
   const [focused, setFocused] = useState(false);
   const [value, setValue] = useBoundState(
     initialValue || "",
-    bindInitialValue && !focused
+    !!bindInitialValue && !focused
   );
   const isValid = validate?.(value) ?? true;
   const [allowError, setAllowError] = useState(false);
@@ -249,24 +249,18 @@ export const useSelectInput: useInputFunction<{
   return [value, render];
 };
 
-export const useColorPicker: useInputFunction = ({
-  onChange,
-  label,
-  initialValue,
-}) => {
+export const useColorPicker: useInputFunction<{
+  bindInitialValue?: boolean;
+}> = ({ bindInitialValue, onChange, label, initialValue }) => {
   const anchor = useRef<HTMLButtonElement>(null);
-  const [value, setValue] = useState(initialValue || "");
   const [focused, setFocused] = useState(false);
-  useEffect(() => {
-    console.log("useColorPicker", initialValue);
-    if (!focused) {
-      let newValue = initialValue || "";
-      try {
-        if (newValue.match(/rgba?/)) newValue = `#${rgbHex(newValue)}`;
-      } catch (e) {}
-      setValue(newValue);
-    }
-  }, [initialValue, focused]);
+  const [value, setValue] = useBoundState(() => {
+    let newValue = initialValue || "";
+    try {
+      if (newValue.match(/rgba?/)) newValue = `#${rgbHex(newValue)}`;
+    } catch (e) {}
+    return newValue;
+  }, !!bindInitialValue && !focused);
 
   const render = () => (
     <>
@@ -303,10 +297,10 @@ export const useColorPicker: useInputFunction = ({
   const throttledValue = useThrottle(value, 300);
   return [throttledValue, render];
 };
-export const ColorPicker: FunctionComponent<
+export const BoundColorPicker: FunctionComponent<
   Parameters<typeof useColorPicker>[0]
 > = (props) => {
-  const [, render] = useColorPicker(props);
+  const [, render] = useColorPicker({ bindInitialValue: true, ...props });
   return render();
 };
 

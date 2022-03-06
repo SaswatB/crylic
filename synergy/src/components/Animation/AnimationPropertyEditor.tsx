@@ -3,7 +3,7 @@ import { faArrowRight, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import {
-  ColorPicker,
+  BoundColorPicker,
   CSSLengthInput,
   TextInput,
   useAutocomplete,
@@ -32,7 +32,7 @@ const renderAnimationPropertyInput = (
       );
     case AnimationPropertyInputType.COLOR:
       return (
-        <ColorPicker
+        <BoundColorPicker
           initialValue={value}
           onChange={(value, preview) => !preview && onChange(value)}
         />

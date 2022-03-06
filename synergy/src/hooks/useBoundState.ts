@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export function useBoundState<T>(boundValue: T, bindActive = true) {
+export function useBoundState<T>(boundValue: T | (() => T), bindActive = true) {
   const [value, setValue] = useState(boundValue);
   useEffect(() => {
     bindActive && setValue(boundValue);

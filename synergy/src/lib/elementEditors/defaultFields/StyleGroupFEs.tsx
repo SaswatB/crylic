@@ -87,8 +87,11 @@ function ColorPickerSGFE(props: StyleGroupFEProps) {
   const [, render] = useColorPicker(useStyleGroupFE(props));
   return render();
 }
-export const creatColorPickerSGFE = (styleProp: StyleKeys) =>
-  createElementEditorField(ColorPickerSGFE, { styleProp });
+export const createBoundColorPickerSGFE = (styleProp: StyleKeys) =>
+  createElementEditorField(ColorPickerSGFE, {
+    styleProp,
+    bindInitialValue: true,
+  });
 
 // #endregion
 
