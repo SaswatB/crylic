@@ -18,6 +18,7 @@ export enum OutlineElementType {
 }
 
 export interface OutlineElement {
+  id: string;
   tag: string;
   type: OutlineElementType;
   renderId: string;

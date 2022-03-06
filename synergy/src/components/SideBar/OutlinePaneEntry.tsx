@@ -27,28 +27,12 @@ import { SelectedElement } from "../../types/selected-element";
 import { IconButton } from "../IconButton";
 
 interface RenderTreeContext {
-  renderEntry: RenderEntry;
-  treeNodeIdMap: Map<string, OutlineElement>;
-  outline: OutlineElement[];
-
   onRefresh: () => void;
   onLabelClick: (node: OutlineElement) => void;
   onExpandAllNodes: () => void;
 }
 
-const renderTree = (
-  context: RenderTreeContext,
-  node: OutlineElement,
-  nodeId = context.renderEntry.id + "=" + node.lookupId
-) => {
-  const { treeNodeIdMap } = context;
-  // it's very important not to render duplicate node ids https://github.com/mui-org/material-ui/issues/20832
-  if (treeNodeIdMap.has(nodeId)) {
-    console.error("duplicate node id", nodeId, treeNodeIdMap, context.outline);
-    return null;
-  }
-  treeNodeIdMap.set(nodeId, node);
-
+const renderTree = (context: RenderTreeContext, node: OutlineElement) => {
   const treeLabel = (
     <div className="flex">
       {node.tag}
@@ -74,23 +58,15 @@ const renderTree = (
 
   return (
     <TreeItem
-      key={nodeId}
-      nodeId={nodeId}
+      key={node.id}
+      nodeId={node.id}
       label={treeLabel}
       onLabelClick={(e) => {
         e.preventDefault();
         context.onLabelClick(node);
       }}
     >
-      {node.children.map((c) =>
-        renderTree(
-          context,
-          c,
-          `${nodeId}:${node.children
-            .filter((sc) => c.lookupId === sc.lookupId)
-            .indexOf(c)}-${c.lookupId}`
-        )
-      )}
+      {node.children.map((c) => renderTree(context, c))}
     </TreeItem>
   );
 };
@@ -104,7 +80,7 @@ function useExpandedNodes({
   setCollapsedNodes,
 }: {
   renderEntry: RenderEntry;
-  outline: OutlineElement[];
+  outline: OutlineElement | undefined;
   treeNodeIdMap: Map<string, OutlineElement>;
   selectedElement: SelectedElement | undefined;
   collapsedNodes: string[];
@@ -112,11 +88,14 @@ function useExpandedNodes({
 }) {
   // resolve the selected element to a node in the outline
   const selectedElementNodeId = useMemo(() => {
-    if (selectedElement?.renderEntry !== renderEntry) return undefined;
+    if (!outline || selectedElement?.renderEntry !== renderEntry)
+      return undefined;
 
     const { element: node, path } =
-      findEntryRecurse(outline, (n) => n.element === selectedElement.element) ||
-      {};
+      findEntryRecurse(
+        outline.children,
+        (n) => n.element === selectedElement.element
+      ) || {};
     if (!node) return;
 
     const selectedNodeEntry = Array.from(treeNodeIdMap.entries()).find(
@@ -182,7 +161,7 @@ interface Props {
 export function OutlinePaneEntry({ renderEntry }: Props) {
   const project = useProject();
   const selectService = useService(SelectService);
-  const [outline, setOutline] = useState<OutlineElement[]>([]);
+  const [outline, setOutline] = useState<OutlineElement>();
   const [collapsedNodes, setCollapsedNodes] = useState<string[]>([]);
 
   const selectedElement = useObservable(selectService.selectedElement$);
@@ -198,12 +177,12 @@ export function OutlinePaneEntry({ renderEntry }: Props) {
     setOutline(
       (await buildOutline(
         project,
-        renderEntry.id,
+        renderEntry,
         rootElement,
         reactMetadata?.fiberComponentRoot
       )) || []
     );
-  }, [project, reactMetadata, renderEntry.id, viewContext]);
+  }, [project, reactMetadata, renderEntry, viewContext]);
 
   useEffect(() => void calculateOutline(), [
     renderEntry,
@@ -219,38 +198,43 @@ export function OutlinePaneEntry({ renderEntry }: Props) {
     (c) => c === RenderEntryCompileStatus.COMPILED && calculateOutline()
   );
 
-  const { treeNodeIdMap, renderedTree } = useMemo(() => {
-    const renderTreeContext: RenderTreeContext = {
-      renderEntry,
-      treeNodeIdMap: new Map<string, OutlineElement>(),
-      outline,
-      onRefresh() {
-        void calculateOutline();
-      },
-      onLabelClick(node) {
-        if (node.element) {
-          void selectService.selectElement(renderEntry, {
-            htmlElement: node.element,
-          });
-        }
-      },
-      onExpandAllNodes() {
-        setCollapsedNodes([]);
-      },
-    };
+  const treeNodeIdMap = useMemo(() => {
+    const map = new Map<string, OutlineElement>();
+    function recurse(node: OutlineElement) {
+      // it's very important not to render duplicate node ids https://github.com/mui-org/material-ui/issues/20832
+      while (map.has(node.id)) {
+        console.error("duplicate node id", node.id, map, outline);
+        node.id = node.id + "+";
+      }
+      map.set(node.id, node);
 
-    return {
-      treeNodeIdMap: renderTreeContext.treeNodeIdMap,
-      renderedTree: renderTree(renderTreeContext, {
-        tag: renderEntry.name,
-        type: OutlineElementType.Frame,
-        renderId: renderEntry.id,
-        lookupId: renderEntry.id,
-        codeId: renderEntry.codeId,
-        element: undefined,
-        children: outline,
-      }),
-    };
+      node.children.forEach((c) => recurse(c));
+    }
+    if (outline) recurse(outline);
+
+    return map;
+  }, [outline]);
+
+  const renderedTree = useMemo(() => {
+    if (!outline) return null;
+    return renderTree(
+      {
+        onRefresh() {
+          void calculateOutline();
+        },
+        onLabelClick(node) {
+          if (node.element) {
+            void selectService.selectElement(renderEntry, {
+              htmlElement: node.element,
+            });
+          }
+        },
+        onExpandAllNodes() {
+          setCollapsedNodes([]);
+        },
+      },
+      outline
+    );
   }, [calculateOutline, outline, renderEntry, selectService]);
 
   const { expandedNodes, selectedElementNodeId } = useExpandedNodes({

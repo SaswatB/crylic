@@ -2,18 +2,45 @@ import { OutlineElement, OutlineElementType } from "../types/paint";
 import { ReactFiber } from "../types/react-devtools";
 import { ASTType } from "./ast/types";
 import { Project } from "./project/Project";
+import { RenderEntry } from "./project/RenderEntry";
 import { getChildrenFromFiber } from "./react-dev-tools";
 
 export const buildOutline = async (
   project: Project,
-  renderId: string,
+  renderEntry: RenderEntry,
   root: Element,
   fiberComponentRoot: ReactFiber | undefined
 ) => {
-  return fiberComponentRoot
-    ? buildReactFiberRecurse({ project, renderId }, fiberComponentRoot)
-    : buildOutlineRecurse({ project, renderId }, root);
+  const outline: OutlineElement = {
+    id: "", // ids are filled in later
+    tag: renderEntry.name,
+    type: OutlineElementType.Frame,
+    renderId: renderEntry.id,
+    lookupId: renderEntry.id,
+    codeId: renderEntry.codeId,
+    element: undefined,
+    children: await (fiberComponentRoot
+      ? buildReactFiberRecurse(
+          { project, renderId: renderEntry.id },
+          fiberComponentRoot
+        )
+      : buildOutlineRecurse({ project, renderId: renderEntry.id }, root)),
+  };
+  generateIds(outline, renderEntry.id + "=");
+  return outline;
 };
+
+function generateIds(node: OutlineElement, nodeId: string) {
+  node.id = nodeId;
+  node.children.forEach((c) =>
+    generateIds(
+      c,
+      `${nodeId}:${node.children
+        .filter((sc) => c.lookupId === sc.lookupId)
+        .indexOf(c)}-${c.lookupId}`
+    )
+  );
+}
 
 const buildOutlineRecurse = (
   context: {
@@ -33,6 +60,7 @@ const buildOutlineRecurse = (
         )!;
         return [
           {
+            id: "", // ids are filled in later
             tag: child.tagName.toLowerCase(),
             type: OutlineElementType.Element,
             renderId: context.renderId,
@@ -92,6 +120,7 @@ const buildReactFiberRecurse = (
 
           return [
             {
+              id: "", // ids are filled in later
               tag: typeof tag === "string" ? tag : "unknown",
               type: OutlineElementType.Element,
               renderId: context.renderId,
