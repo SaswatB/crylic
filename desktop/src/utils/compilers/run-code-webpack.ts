@@ -48,7 +48,11 @@ export function initialize(nodeModulesPath = "") {
 
   // needed to resolve loaders and babel plugins/presets
   if (nodeModulesPath) {
-    process.chdir(nativeDeps.path.dirname(nodeModulesPath));
+    try {
+      process.chdir(nativeDeps.path.dirname(nodeModulesPath));
+    } catch (e) {
+      console.error(e);
+    }
 
     // block deps from being loaded outside the provided nodeModulesPath
     // _nodeModulePaths is private

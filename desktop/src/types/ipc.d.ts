@@ -7,6 +7,12 @@ export interface WebpackRendererMessagePayload_PercentUpdate {
   message: string;
 }
 
+export interface WebpackRendererMessagePayload_CodeEntryRequest {
+  type: "code-request";
+  compileId: number;
+  codeEntryId: string;
+}
+
 export interface WebpackRendererMessagePayload_CompileFinished {
   type: "compile-finished";
   compileId: number;
@@ -15,6 +21,7 @@ export interface WebpackRendererMessagePayload_CompileFinished {
 
 export type WebpackRendererMessagePayload =
   | WebpackRendererMessagePayload_PercentUpdate
+  | WebpackRendererMessagePayload_CodeEntryRequest
   | WebpackRendererMessagePayload_CompileFinished;
 
 export interface WebpackWorkerMessagePayload_Initialize {

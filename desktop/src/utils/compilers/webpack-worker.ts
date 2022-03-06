@@ -28,6 +28,7 @@ ipcMain.on("webpack-worker-message", async (e, data) => {
       (codeEntryId) => {
         e.sender.send("webpack-renderer-message", {
           type: "code-request",
+          compileId,
           codeEntryId,
         });
         return new Promise((resolve, reject) =>
