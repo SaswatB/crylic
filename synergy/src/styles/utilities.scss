@@ -272,7 +272,7 @@
     margin: revert;
   }
 
-  ::-webkit-scrollbar-thumb {
+  &::-webkit-scrollbar-thumb {
     background: black;
   }
 }
