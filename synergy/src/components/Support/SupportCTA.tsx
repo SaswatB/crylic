@@ -2,6 +2,7 @@ import React from "react";
 import { useSnackbar } from "notistack";
 
 import { useMenuInput } from "../../hooks/useInput";
+import { Tour } from "../Tour/Tour";
 
 export function SupportCTA({ openUrl }: { openUrl: (url: string) => void }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -59,8 +60,13 @@ export function SupportCTA({ openUrl }: { openUrl: (url: string) => void }) {
           borderRadius: "100%",
           fontSize: "22px",
         }}
+        data-tour="support"
         onClick={openMenu}
       >
+        <Tour name="support" beaconStyle={{ left: 10 }}>
+          We're here to help! Use this widget to submit feedback or access
+          helpful resources such as our documentation site.
+        </Tour>
         <span className="select-none">?</span>
       </div>
       {renderMenu()}
