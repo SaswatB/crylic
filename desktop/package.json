@@ -91,7 +91,7 @@
     "raw-loader": "^4.0.0",
     "rc-color-picker": "^1.2.6",
     "re-resizable": "^6.3.2",
-    "react": "^16.13.1",
+    "react": "^17.0.2",
     "react-app-polyfill": "^1.0.6",
     "react-async-hook": "^4.0.0",
     "react-dev-utils": "^10.2.1",
