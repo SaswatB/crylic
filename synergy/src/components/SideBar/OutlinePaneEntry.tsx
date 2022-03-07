@@ -11,6 +11,7 @@ import { useObservable } from "../../hooks/useObservable";
 import { useObservableCallback } from "../../hooks/useObservableCallback";
 import { useService } from "../../hooks/useService";
 import { useUpdatingRef } from "../../hooks/useUpdatingRef";
+import { updateElementHelper } from "../../lib/ast/code-edit-helpers";
 import { buildOutline, findEntryRecurse } from "../../lib/outline";
 import {
   RenderEntry,
@@ -167,6 +168,7 @@ interface Props {
 
 export function OutlinePaneEntry({ renderEntry }: Props) {
   const { enqueueSnackbar } = useSnackbar();
+  const project = useProject();
   const selectService = useService(SelectService);
   const selectedElement = useObservable(selectService.selectedElement$);
   const selectMode = useObservable(selectService.selectMode$);
@@ -219,9 +221,38 @@ export function OutlinePaneEntry({ renderEntry }: Props) {
             hints
           );
         } catch (e) {
-          enqueueSnackbar((e as Error)?.message || `${e}`);
+          enqueueSnackbar((e as Error)?.message || `${e}`, {
+            variant: "error",
+          });
         }
         safeClearOutlineHover(node);
+      }}
+      onNodeMoved={async (node, newParent, hints) => {
+        if (node.id === newParent.id) return;
+        if (findEntryRecurse(node.children, (n) => n.id === newParent.id)) {
+          enqueueSnackbar("Unable to move this component to its own child", {
+            variant: "error",
+          });
+          return;
+        }
+
+        try {
+          await updateElementHelper(
+            project,
+            node.lookupId,
+            (editor, editContext) =>
+              editor.moveElement(
+                editContext,
+                newParent.lookupId,
+                hints?.beforeChildLookupId
+              )
+          );
+          selectService.clearSelectedElement();
+        } catch (e) {
+          enqueueSnackbar((e as Error)?.message || `${e}`, {
+            variant: "error",
+          });
+        }
       }}
       onNodeHover={(node) => selectService.outlineHover$.next(node)}
       onNodeHoverOut={safeClearOutlineHover}

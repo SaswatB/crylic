@@ -114,6 +114,13 @@ export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
     newTextContent: string
   ): void;
 
+  public moveElement = editAST(this.moveElementInAST.bind(this));
+  protected abstract moveElementInAST(
+    editContext: EditContext<ASTType>,
+    parentLookupId: string,
+    beforeChildLookupId?: string
+  ): void;
+
   public deleteElement = editAST(this.deleteElementInAST.bind(this));
   protected abstract deleteElementInAST(
     editContext: EditContext<ASTType>

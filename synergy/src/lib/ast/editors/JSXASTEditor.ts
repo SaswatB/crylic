@@ -252,6 +252,30 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     });
   }
 
+  protected moveElementInAST(
+    context: EditContext<t.File>,
+    parentLookupId: string,
+    beforeChildLookupId?: string
+  ): void {
+    const { ast, lookupId } = context;
+    try {
+      let element: t.JSXElement;
+      this.getJSXElementByLookupId(
+        ast,
+        lookupId,
+        (path) => (element = path.value)
+      );
+      this.deleteElementInAST(context);
+
+      this.getJSXElementByLookupId(ast, parentLookupId, (path) => {
+        this.pushChildByLookupId(path.value, element, beforeChildLookupId);
+      });
+    } catch (e) {
+      console.error("Move Element error", e);
+      throw new Error("Structure is too complex to move element");
+    }
+  }
+
   protected deleteElementInAST({ ast, lookupId }: EditContext<t.File>): void {
     this.getJSXElementByLookupId(ast, lookupId, (path) => {
       const parent = ifJSXElement(path.parent?.value);
@@ -441,6 +465,29 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     );
   }
 
+  protected pushChildByLookupId(
+    parentElement: t.JSXElement,
+    child: t.JSXElement,
+    beforeLookupId?: string
+  ) {
+    parentElement.children = parentElement.children || [];
+
+    let index = -1;
+    if (beforeLookupId) {
+      index = parentElement.children.findIndex(
+        (e) =>
+          ifJSXElement(e) &&
+          this.matchesJSXElementLookupId(e as t.JSXElement, beforeLookupId)
+      );
+    }
+
+    if (index !== -1) {
+      parentElement.children.splice(index, 0, child);
+    } else {
+      parentElement.children.push(child);
+    }
+  }
+
   protected getJSXASTByLookupIndex(ast: t.File, lookupIndex: number) {
     let result: NodePath<types.namedTypes.JSXElement, t.JSXElement> | undefined;
     traverseJSXElements(ast, (path, index) => {
@@ -548,23 +595,11 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       ];
       parentElement.children.splice(insertIndex + 1, 0, child);
     } else {
-      let index = -1;
-      if (childOptions?.beforeChildLookupId) {
-        index = parentElement.children.findIndex(
-          (e) =>
-            ifJSXElement(e) &&
-            this.matchesJSXElementLookupId(
-              e as t.JSXElement,
-              childOptions.beforeChildLookupId!
-            )
-        );
-      }
-
-      if (index !== -1) {
-        parentElement.children.splice(index, 0, child);
-      } else {
-        parentElement.children.push(child);
-      }
+      this.pushChildByLookupId(
+        parentElement,
+        child,
+        childOptions?.beforeChildLookupId
+      );
     }
 
     // if the parent was self closing, open it up

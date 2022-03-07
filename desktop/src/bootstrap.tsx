@@ -1,4 +1,6 @@
 import React, { FunctionComponent } from "react";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import { createMuiTheme, ThemeProvider } from "@material-ui/core";
 import blue from "@material-ui/core/colors/blue";
 import purple from "@material-ui/core/colors/purple";
@@ -28,9 +30,11 @@ export const Bootstrap: FunctionComponent = ({ children }) => (
       <SnackbarProvider maxSnack={3}>
         <ThemeProvider theme={darkTheme}>
           <TourProvider>
-            <ModalContainer />
-            <StateManager />
-            {children}
+            <DndProvider backend={HTML5Backend}>
+              <ModalContainer />
+              <StateManager />
+              {children}
+            </DndProvider>
           </TourProvider>
         </ThemeProvider>
       </SnackbarProvider>

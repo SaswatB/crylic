@@ -1,4 +1,5 @@
 import React from "react";
+import { useDrag, useDrop } from "react-dnd";
 import {
   faChevronDown,
   faChevronRight,
@@ -23,8 +24,64 @@ interface TreeContext {
   onExpandAllNodes: () => void;
   onNodeToggle: (newExpandedNodes: string[]) => void;
   onNodeSelected: (node: OutlineElement, hints?: SelectModeHints) => void;
+  onNodeMoved: (
+    node: OutlineElement,
+    newParent: OutlineElement,
+    hints?: SelectModeHints
+  ) => void;
   onNodeHover: (node: OutlineElement) => void;
   onNodeHoverOut: (node: OutlineElement) => void;
+}
+
+function isSelectModeNotSelectElement(context: TreeContext) {
+  return (
+    (context.selectMode?.type || SelectModeType.SelectElement) !==
+    SelectModeType.SelectElement
+  );
+}
+
+interface OutlineTreeItemInsertProp extends TreeContext {
+  dragType: string;
+  node: OutlineElement;
+  cursor: string;
+  hints?: SelectModeHints;
+}
+
+function OutlineTreeItemInsert({
+  dragType,
+  node,
+  cursor,
+  hints,
+  ...context
+}: OutlineTreeItemInsertProp) {
+  const [{ isOver }, drop] = useDrop<
+    OutlineElement,
+    unknown,
+    { isOver: boolean }
+  >(
+    () => ({
+      accept: dragType,
+      drop: (droppedNode) => context.onNodeMoved(droppedNode, node, hints),
+      collect: (monitor) => ({
+        isOver: !!monitor.isOver(),
+      }),
+    }),
+    []
+  );
+
+  return (
+    <div
+      ref={drop}
+      style={{ height: 2, cursor }}
+      className={`default-transition ${
+        isSelectModeNotSelectElement(context) ? "hover:bg-white" : ""
+      } ${isOver ? "bg-white" : ""}`}
+      onClick={() =>
+        isSelectModeNotSelectElement(context) &&
+        context.onNodeSelected(node, hints)
+      }
+    />
+  );
 }
 
 interface OutlineTreeItemProps extends TreeContext {
@@ -32,12 +89,33 @@ interface OutlineTreeItemProps extends TreeContext {
 }
 
 function OutlineTreeItem({ node, ...context }: OutlineTreeItemProps) {
+  const dragType = `OutlineTreeItem-${node.renderId}`;
+  const [, drag] = useDrag<OutlineElement>(
+    () => ({
+      type: dragType,
+      item: node,
+    }),
+    [node]
+  );
+  const [{ isOver }, drop] = useDrop<
+    OutlineElement,
+    unknown,
+    { isOver: boolean }
+  >(
+    () => ({
+      accept: dragType,
+      drop: (droppedNode) => context.onNodeMoved(droppedNode, node),
+      collect: (monitor) => ({
+        isOver: !!monitor.isOver(),
+      }),
+    }),
+    [node]
+  );
+
   const isExpanded = context.expanded.includes(node.id);
   const isSelected = node.id === context.selected;
-  const isSelectModeNotSelectElement =
-    (context.selectMode?.type || SelectModeType.SelectElement) !==
-    SelectModeType.SelectElement;
-  const cursor = isSelectModeNotSelectElement
+
+  const cursor = isSelectModeNotSelectElement(context)
     ? SelectModeCursor[context.selectMode!.type]
     : "pointer";
 
@@ -60,6 +138,7 @@ function OutlineTreeItem({ node, ...context }: OutlineTreeItemProps) {
 
   const renderLabel = () => (
     <div
+      ref={drag}
       className={`flex flex-1 ml-1 pl-1 bg-gray-500 bg-opacity-0 hover:bg-opacity-50 ${
         isSelected && "bg-opacity-25"
       }`}
@@ -90,14 +169,12 @@ function OutlineTreeItem({ node, ...context }: OutlineTreeItemProps) {
   );
 
   const renderChildInserts = (hints?: SelectModeHints) => (
-    <div
-      style={{ height: 2, cursor }}
-      className={`default-transition ${
-        isSelectModeNotSelectElement ? "hover:bg-white" : ""
-      }`}
-      onClick={() =>
-        isSelectModeNotSelectElement && context.onNodeSelected(node, hints)
-      }
+    <OutlineTreeItemInsert
+      dragType={dragType}
+      node={node}
+      cursor={cursor}
+      hints={hints}
+      {...context}
     />
   );
 
@@ -118,7 +195,12 @@ function OutlineTreeItem({ node, ...context }: OutlineTreeItemProps) {
 
   return (
     <div>
-      <div className="flex">
+      <div
+        ref={drop}
+        className={`flex border ${
+          isOver ? "border-white" : "border-transparent"
+        }`}
+      >
         {node.children.length > 0 ? renderChildrenToggle() : null}
         {renderLabel()}
       </div>

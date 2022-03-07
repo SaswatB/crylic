@@ -2790,6 +2790,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.9.2":
+  version: 7.17.2
+  resolution: "@babel/runtime@npm:7.17.2"
+  dependencies:
+    regenerator-runtime: ^0.13.4
+  checksum: a48702d271ecc59c09c397856407afa29ff980ab537b3da58eeee1aeaa0f545402d340a1680c9af58aec94dfdcbccfb6abb211991b74686a86d03d3f6956cacd
+  languageName: node
+  linkType: hard
+
 "@babel/template@npm:^7.10.4, @babel/template@npm:^7.4.0, @babel/template@npm:^7.8.6":
   version: 7.10.4
   resolution: "@babel/template@npm:7.10.4"
@@ -4013,6 +4022,27 @@ __metadata:
     webpack-plugin-serve:
       optional: true
   checksum: 61fe0029a34a8ced5823d4c5f21ac259ea96b9359523822754005afc6fca42ea8e79bce2c277af24b055bd9d0f401fb56cfd2df263f0524443c224839db5f60a
+  languageName: node
+  linkType: hard
+
+"@react-dnd/asap@npm:4.0.0":
+  version: 4.0.0
+  resolution: "@react-dnd/asap@npm:4.0.0"
+  checksum: 4c37ef5c4efd5bb37ba938276074e6896f102b459ed462e2e7560bdb5e75500f2beeafd7e089e1ffea4a9fb337f15be7992952a78a9b56d80f372aadadc31eca
+  languageName: node
+  linkType: hard
+
+"@react-dnd/invariant@npm:3.0.0":
+  version: 3.0.0
+  resolution: "@react-dnd/invariant@npm:3.0.0"
+  checksum: 1e8f08ef1e50b75db2e494060d2ae7444554f22036789212ce995296f1f187ee9c2ace5eaa95881b3029ba907eccf2deeacc0334d2870067d444ed683d0a9684
+  languageName: node
+  linkType: hard
+
+"@react-dnd/shallowequal@npm:3.0.0":
+  version: 3.0.0
+  resolution: "@react-dnd/shallowequal@npm:3.0.0"
+  checksum: 18bcfc74102d33c69fba88308ae2b82bd707d809b0528a34e590fa308b95df24411896392f1976ef203bbafd946eed91ed1073116728a73d9c9cdb231b16703c
   languageName: node
   linkType: hard
 
@@ -10583,6 +10613,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dnd-core@npm:15.1.1":
+  version: 15.1.1
+  resolution: "dnd-core@npm:15.1.1"
+  dependencies:
+    "@react-dnd/asap": 4.0.0
+    "@react-dnd/invariant": 3.0.0
+    redux: ^4.1.1
+  checksum: 11cc8dcbab62211ca54c0e42a625b52dcc1970294bd4fc65a8409bf588b0cf13a82bb592e87866b6aae93a310564322c03ea18659d144a75705eaae1023d2d0e
+  languageName: node
+  linkType: hard
+
 "dns-equal@npm:^1.0.0":
   version: 1.0.0
   resolution: "dns-equal@npm:1.0.0"
@@ -12107,7 +12148,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-deep-equal@npm:^3.1.1":
+"fast-deep-equal@npm:^3.1.1, fast-deep-equal@npm:^3.1.3":
   version: 3.1.3
   resolution: "fast-deep-equal@npm:3.1.3"
   checksum: e21a9d8d84f53493b6aa15efc9cfd53dd5b714a1f23f67fb5dc8f574af80df889b3bce25dc081887c6d25457cce704e636395333abad896ccdec03abaf1f3f9d
@@ -21722,6 +21763,40 @@ immer@6.0.3:
   languageName: node
   linkType: hard
 
+"react-dnd-html5-backend@npm:^15.1.2":
+  version: 15.1.2
+  resolution: "react-dnd-html5-backend@npm:15.1.2"
+  dependencies:
+    dnd-core: 15.1.1
+  checksum: e6b0a8faad47ec4a7e0ef1da2a45a5f764b629fd216233e3791ef74b25bec27031e6dd4b6fabe9717925182c7b6ad242d6bf79eed5f39d72bb71dec076442017
+  languageName: node
+  linkType: hard
+
+"react-dnd@npm:^15.1.1":
+  version: 15.1.1
+  resolution: "react-dnd@npm:15.1.1"
+  dependencies:
+    "@react-dnd/invariant": 3.0.0
+    "@react-dnd/shallowequal": 3.0.0
+    dnd-core: 15.1.1
+    fast-deep-equal: ^3.1.3
+    hoist-non-react-statics: ^3.3.2
+  peerDependencies:
+    "@types/hoist-non-react-statics": ">= 3.3.1"
+    "@types/node": ">= 12"
+    "@types/react": ">= 16"
+    react: ">= 16.14"
+  peerDependenciesMeta:
+    "@types/hoist-non-react-statics":
+      optional: true
+    "@types/node":
+      optional: true
+    "@types/react":
+      optional: true
+  checksum: 4b3f94bdbd61b5c002fee2175df1aae56890e908271f5b03bc85d984203836f9918579ec7de1f022780b6a691ec85e20a462ede687a962241ef4ad7ae247ac99
+  languageName: node
+  linkType: hard
+
 "react-dom@npm:^16.13.1":
   version: 16.13.1
   resolution: "react-dom@npm:16.13.1"
@@ -22279,6 +22354,15 @@ react-refresh@0.8.3:
     css-unit-converter: ^1.1.1
     postcss-value-parser: ^3.3.0
   checksum: e2fc57ee2bba771dade04d97e6a3834b6e7216e6910bb10d58a55c1c41656345cf205dcb70d8c07a6ca00528c9dbdbc90b05a4331f39a1161ae308805f2f3bce
+  languageName: node
+  linkType: hard
+
+"redux@npm:^4.1.1":
+  version: 4.1.2
+  resolution: "redux@npm:4.1.2"
+  dependencies:
+    "@babel/runtime": ^7.9.2
+  checksum: 6a839cee5bd580c5298d968e9e2302150e961318253819bcd97f9d945a5a409559eacddf6026f4118bb68b681c593d90e8a2c5bbf278f014aff9bf0d2d8fa084
   languageName: node
   linkType: hard
 
@@ -24551,6 +24635,8 @@ resolve@1.15.0:
     rc-util: ^5.2.1
     re-resizable: ^6.5.5
     react: ^17.0.2
+    react-dnd: ^15.1.1
+    react-dnd-html5-backend: ^15.1.2
     react-dom: ^16.13.1
     react-draggable: ^4.4.3
     react-hotkeys-hook: ^2.3.1

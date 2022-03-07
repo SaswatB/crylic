@@ -103,7 +103,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
         componentElement as HTMLElement
       );
     } catch (e) {
-      enqueueSnackbar((e as Error)?.message || `${e}`);
+      enqueueSnackbar((e as Error)?.message || `${e}`, { variant: "error" });
     }
   };
 
