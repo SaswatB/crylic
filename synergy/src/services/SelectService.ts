@@ -3,8 +3,9 @@ import { BehaviorSubject, of, Subject } from "rxjs";
 import { map } from "rxjs/operators";
 import { singleton } from "tsyringe";
 
-import { SelectMode } from "../constants";
+import { SelectMode, SelectModeType } from "../constants";
 import {
+  addElementHelper,
   updateElementHelper,
   updateStyleGroupHelper,
 } from "../lib/ast/code-edit-helpers";
@@ -137,6 +138,35 @@ export class SelectService {
 
   public setSelectMode(selectMode: SelectMode | undefined) {
     this.selectMode$.next(selectMode);
+  }
+
+  public async invokeSelectModeAction(
+    renderEntry: RenderEntry,
+    element: HTMLElement
+  ) {
+    const selectMode = this.selectMode$.getValue();
+    switch (selectMode?.type) {
+      default:
+      case SelectModeType.SelectElement:
+        console.log("setting selected from manual selection", element);
+        await this.selectElement(renderEntry, {
+          htmlElement: element,
+        });
+        break;
+      case SelectModeType.AddElement:
+        await addElementHelper(
+          this.projectService.project$.getValue()!,
+          element,
+          selectMode,
+          {
+            renderEntry,
+            selectElement: this.selectElement.bind(this),
+          }
+        );
+        break;
+    }
+
+    if (selectMode) this.setSelectMode(undefined);
   }
 
   public setSelectedStyleGroup(selectedStyleGroup: StyleGroup | undefined) {

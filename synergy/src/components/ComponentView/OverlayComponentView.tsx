@@ -19,15 +19,12 @@ import {
   DEFAULT_FRAME_BACKGROUND_COLOR,
   DEFAULT_FRAME_HEIGHT,
   DEFAULT_FRAME_WIDTH,
-  SelectModeType,
 } from "../../constants";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useObservable } from "../../hooks/useObservable";
 import { useObservableCallback } from "../../hooks/useObservableCallback";
 import { useService } from "../../hooks/useService";
-import { addElementHelper } from "../../lib/ast/code-edit-helpers";
 import { RenderEntryCompileStatus } from "../../lib/project/RenderEntry";
-import { isDefined } from "../../lib/utils";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
 import { FrameSettings, Styles } from "../../types/paint";
@@ -39,8 +36,6 @@ import {
   CompilerComponentViewProps,
 } from "./CompilerComponentView";
 import { useOverlay } from "./useOverlay";
-
-function assertHTMLElement(e: Element): asserts e is HTMLElement {}
 
 interface Props {
   compilerProps: CompilerComponentViewProps &
@@ -102,29 +97,14 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
     componentElement: Element | null | undefined
   ) => {
     if (!componentElement) return;
-    assertHTMLElement(componentElement);
-
-    switch (selectMode?.type) {
-      default:
-      case SelectModeType.SelectElement:
-        console.log("setting selected from manual selection", componentElement);
-        await selectService.selectElement(renderEntry, {
-          htmlElement: componentElement,
-        });
-        break;
-      case SelectModeType.AddElement:
-        try {
-          await addElementHelper(project!, componentElement, selectMode, {
-            renderEntry,
-            selectElement: selectService.selectElement.bind(selectService),
-          });
-        } catch (e) {
-          enqueueSnackbar((e as Error)?.message || `${e}`);
-        }
-        break;
+    try {
+      await selectService.invokeSelectModeAction(
+        renderEntry,
+        componentElement as HTMLElement
+      );
+    } catch (e) {
+      enqueueSnackbar((e as Error)?.message || `${e}`);
     }
-
-    selectService.setSelectMode(undefined);
   };
 
   const [renderOverlay] = useOverlay(

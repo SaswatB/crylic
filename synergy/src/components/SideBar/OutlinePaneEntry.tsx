@@ -5,6 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { useSnackbar } from "notistack";
 
 import { useObservable } from "../../hooks/useObservable";
 import { useObservableCallback } from "../../hooks/useObservableCallback";
@@ -165,8 +166,10 @@ interface Props {
 }
 
 export function OutlinePaneEntry({ renderEntry }: Props) {
+  const { enqueueSnackbar } = useSnackbar();
   const selectService = useService(SelectService);
   const selectedElement = useObservable(selectService.selectedElement$);
+  const selectMode = useObservable(selectService.selectMode$);
 
   const { outline, treeNodeIdMap, refreshOutline } = useOutline(renderEntry);
   const [collapsedNodes, setCollapsedNodes] = useState<string[]>([]);
@@ -180,9 +183,14 @@ export function OutlinePaneEntry({ renderEntry }: Props) {
     setCollapsedNodes,
   });
 
+  const safeClearOutlineHover = (node: OutlineElement) =>
+    selectService.outlineHover$.getValue()?.id === node.id &&
+    selectService.outlineHover$.next(undefined);
+
   return (
     <OutlineTree
       outline={outline}
+      selectMode={selectMode}
       expanded={expandedNodes}
       selected={selectedElementNodeId || ""}
       onNodeToggle={(newExpandedNodes) =>
@@ -195,18 +203,24 @@ export function OutlinePaneEntry({ renderEntry }: Props) {
       }
       onExpandAllNodes={() => setCollapsedNodes([])}
       onRefresh={refreshOutline}
-      onNodeSelected={(node) => {
-        if (node.element) {
-          void selectService.selectElement(renderEntry, {
-            htmlElement: node.element,
-          });
+      onNodeSelected={async (node) => {
+        if (!node.element) {
+          enqueueSnackbar(
+            "Selecting this type of component is not currently supported",
+            { variant: "warning" }
+          );
+          return;
         }
+
+        try {
+          await selectService.invokeSelectModeAction(renderEntry, node.element);
+        } catch (e) {
+          enqueueSnackbar((e as Error)?.message || `${e}`);
+        }
+        safeClearOutlineHover(node);
       }}
       onNodeHover={(node) => selectService.outlineHover$.next(node)}
-      onNodeHoverOut={(node) =>
-        selectService.outlineHover$.getValue()?.id === node.id &&
-        selectService.outlineHover$.next(undefined)
-      }
+      onNodeHoverOut={safeClearOutlineHover}
     />
   );
 }

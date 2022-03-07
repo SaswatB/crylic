@@ -10,7 +10,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useSnackbar } from "notistack";
 import { Observable, Subject } from "rxjs";
 
-import { SelectModeType } from "../../constants";
+import { SelectModeCursor, SelectModeType } from "../../constants";
 import { useObservableCallback } from "../../hooks/useObservableCallback";
 import { Project } from "../../lib/project/Project";
 import { isDefined } from "../../lib/utils";
@@ -219,12 +219,9 @@ export function useOverlay(
     <div
       className="absolute inset-0"
       style={{
-        cursor:
-          selectModeType === SelectModeType.AddElement
-            ? "copy"
-            : selectModeType === SelectModeType.SelectElement
-            ? "crosshair"
-            : undefined,
+        cursor: isDefined(selectModeType)
+          ? SelectModeCursor[selectModeType]
+          : undefined,
         display:
           !isDefined(selectModeType) &&
           !selectedElement?.element &&

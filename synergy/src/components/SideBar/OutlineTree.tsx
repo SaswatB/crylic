@@ -6,10 +6,12 @@ import {
   faSync,
 } from "@fortawesome/free-solid-svg-icons";
 
+import { SelectMode, SelectModeCursor, SelectModeType } from "../../constants";
 import { OutlineElement, OutlineElementType } from "../../types/paint";
 import { IconButton } from "../IconButton";
 
 interface TreeContext {
+  selectMode?: SelectMode;
   expanded: string[];
   selected: string;
   onRefresh: () => void;
@@ -50,9 +52,16 @@ function OutlineTreeItem({ node, ...context }: OutlineTreeItemProps) {
       <div className="flex">
         {node.children.length > 0 && renderChildrenToggle()}
         <div
-          className={`flex flex-1 ml-1 pl-1 bg-gray-500 bg-opacity-0 hover:bg-opacity-50 cursor-pointer ${
+          className={`flex flex-1 ml-1 pl-1 bg-gray-500 bg-opacity-0 hover:bg-opacity-50 ${
             isSelected && "bg-opacity-25"
           }`}
+          style={{
+            cursor:
+              context.selectMode &&
+              context.selectMode.type !== SelectModeType.SelectElement
+                ? SelectModeCursor[context.selectMode.type]
+                : "pointer",
+          }}
           onClick={() => context.onNodeSelected(node)}
           onMouseOver={() => context.onNodeHover(node)}
           onMouseOut={() => context.onNodeHoverOut(node)}

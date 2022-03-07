@@ -27,6 +27,14 @@ export type SelectMode =
       type: SelectModeType.AddElement;
     } & ComponentDefinition);
 
+export const SelectModeCursor: Record<
+  SelectModeType,
+  CSSStyleDeclaration["cursor"]
+> = {
+  [SelectModeType.AddElement]: "copy",
+  [SelectModeType.SelectElement]: "crosshair",
+};
+
 export const CSS_LENGTH_UNITS = [
   { name: "px", value: "px" },
   { name: "%", value: "%" },
