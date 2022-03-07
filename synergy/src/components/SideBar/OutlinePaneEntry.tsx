@@ -203,7 +203,7 @@ export function OutlinePaneEntry({ renderEntry }: Props) {
       }
       onExpandAllNodes={() => setCollapsedNodes([])}
       onRefresh={refreshOutline}
-      onNodeSelected={async (node) => {
+      onNodeSelected={async (node, hints) => {
         if (!node.element) {
           enqueueSnackbar(
             "Selecting this type of component is not currently supported",
@@ -213,7 +213,11 @@ export function OutlinePaneEntry({ renderEntry }: Props) {
         }
 
         try {
-          await selectService.invokeSelectModeAction(renderEntry, node.element);
+          await selectService.invokeSelectModeAction(
+            renderEntry,
+            node.element,
+            hints
+          );
         } catch (e) {
           enqueueSnackbar((e as Error)?.message || `${e}`);
         }

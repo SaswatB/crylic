@@ -3,7 +3,7 @@ import { BehaviorSubject, of, Subject } from "rxjs";
 import { map } from "rxjs/operators";
 import { singleton } from "tsyringe";
 
-import { SelectMode, SelectModeType } from "../constants";
+import { SelectMode, SelectModeHints, SelectModeType } from "../constants";
 import {
   addElementHelper,
   updateElementHelper,
@@ -142,7 +142,8 @@ export class SelectService {
 
   public async invokeSelectModeAction(
     renderEntry: RenderEntry,
-    element: HTMLElement
+    element: HTMLElement,
+    hints?: SelectModeHints
   ) {
     const selectMode = this.selectMode$.getValue();
     switch (selectMode?.type) {
@@ -158,6 +159,7 @@ export class SelectService {
           this.projectService.project$.getValue()!,
           element,
           selectMode,
+          hints,
           {
             renderEntry,
             selectElement: this.selectElement.bind(this),

@@ -35,6 +35,10 @@ export const SelectModeCursor: Record<
   [SelectModeType.SelectElement]: "crosshair",
 };
 
+export interface SelectModeHints {
+  beforeChildLookupId?: string; // attempt to perform the action before this child
+}
+
 export const CSS_LENGTH_UNITS = [
   { name: "px", value: "px" },
   { name: "%", value: "%" },

@@ -135,7 +135,8 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
 
   protected addChildToElementInAST(
     { ast, codeEntry, lookupId }: EditContext<t.File>,
-    child: ComponentDefinition
+    child: ComponentDefinition,
+    beforeChildLookupId: string
   ) {
     const childTag = this.getOrImportComponent(ast, codeEntry, child);
 
@@ -149,6 +150,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
         },
         {
           isNewRoute: ifJSXIdentifier(childTag)?.name === "Route",
+          beforeChildLookupId,
         }
       );
     });
@@ -430,6 +432,15 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
 
   // helpers
 
+  protected matchesJSXElementLookupId(node: t.JSXElement, lookupId: string) {
+    return !!node.openingElement.attributes?.find(
+      (attr) =>
+        ifJSXAttribute(attr)?.name.name === `data-${JSX_LOOKUP_DATA_ATTR}` &&
+        pipe(attr, ifJSXAttribute, getValue, ifStringLiteral, getValue) ===
+          lookupId
+    );
+  }
+
   protected getJSXASTByLookupIndex(ast: t.File, lookupIndex: number) {
     let result: NodePath<types.namedTypes.JSXElement, t.JSXElement> | undefined;
     traverseJSXElements(ast, (path, index) => {
@@ -445,13 +456,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
   ) {
     let found = false;
     traverseJSXElements(ast, (path) => {
-      const lookupMatches = path.value.openingElement.attributes?.find(
-        (attr) =>
-          ifJSXAttribute(attr)?.name.name === `data-${JSX_LOOKUP_DATA_ATTR}` &&
-          pipe(attr, ifJSXAttribute, getValue, ifStringLiteral, getValue) ===
-            lookupId
-      );
-      if (lookupMatches) {
+      if (this.matchesJSXElementLookupId(path.value, lookupId)) {
         apply(path);
         found = true;
       }
@@ -470,6 +475,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       shouldBeSelfClosing?: boolean;
       // `Route` specific flag
       isNewRoute?: boolean;
+      beforeChildLookupId?: string;
     }
   ) {
     // add a text attribute as a child
@@ -542,7 +548,23 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       ];
       parentElement.children.splice(insertIndex + 1, 0, child);
     } else {
-      parentElement.children.push(child);
+      let index = -1;
+      if (childOptions?.beforeChildLookupId) {
+        index = parentElement.children.findIndex(
+          (e) =>
+            ifJSXElement(e) &&
+            this.matchesJSXElementLookupId(
+              e as t.JSXElement,
+              childOptions.beforeChildLookupId!
+            )
+        );
+      }
+
+      if (index !== -1) {
+        parentElement.children.splice(index, 0, child);
+      } else {
+        parentElement.children.push(child);
+      }
     }
 
     // if the parent was self closing, open it up

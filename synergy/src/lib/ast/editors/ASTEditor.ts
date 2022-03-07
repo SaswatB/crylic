@@ -88,7 +88,8 @@ export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
   public addChildToElement = editAST(this.addChildToElementInAST.bind(this));
   protected abstract addChildToElementInAST(
     editContext: EditContext<ASTType>,
-    child: ComponentDefinition
+    child: ComponentDefinition,
+    beforeChildLookupId?: string
   ): void;
 
   public updateElementAttributes = editAST(

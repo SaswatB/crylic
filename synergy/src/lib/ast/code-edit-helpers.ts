@@ -1,3 +1,4 @@
+import { SelectModeHints } from "../../constants";
 import { ComponentDefinition } from "../../types/paint";
 import { SelectedElement } from "../../types/selected-element";
 import { Project } from "../project/Project";
@@ -23,6 +24,7 @@ export const addElementHelper = async (
   project: Project,
   targetElement: HTMLElement | string, // element or lookupId
   component: ComponentDefinition,
+  hints?: SelectModeHints,
   // set this to select the newly added element when it appears
   selectContext?: SelectContext
 ) => {
@@ -54,7 +56,8 @@ export const addElementHelper = async (
 
   let newAst = project.primaryElementEditor.addChildToElement(
     { ast: await codeEntry.getLatestAst(), codeEntry, lookupId },
-    component
+    component,
+    hints?.beforeChildLookupId
   );
   const [newChildLookupId] =
     project.primaryElementEditor.getRecentlyAddedElements({

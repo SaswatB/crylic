@@ -6,7 +6,12 @@ import {
   faSync,
 } from "@fortawesome/free-solid-svg-icons";
 
-import { SelectMode, SelectModeCursor, SelectModeType } from "../../constants";
+import {
+  SelectMode,
+  SelectModeCursor,
+  SelectModeHints,
+  SelectModeType,
+} from "../../constants";
 import { OutlineElement, OutlineElementType } from "../../types/paint";
 import { IconButton } from "../IconButton";
 
@@ -17,7 +22,7 @@ interface TreeContext {
   onRefresh: () => void;
   onExpandAllNodes: () => void;
   onNodeToggle: (newExpandedNodes: string[]) => void;
-  onNodeSelected: (node: OutlineElement) => void;
+  onNodeSelected: (node: OutlineElement, hints?: SelectModeHints) => void;
   onNodeHover: (node: OutlineElement) => void;
   onNodeHoverOut: (node: OutlineElement) => void;
 }
@@ -29,6 +34,12 @@ interface OutlineTreeItemProps extends TreeContext {
 function OutlineTreeItem({ node, ...context }: OutlineTreeItemProps) {
   const isExpanded = context.expanded.includes(node.id);
   const isSelected = node.id === context.selected;
+  const isSelectModeNotSelectElement =
+    (context.selectMode?.type || SelectModeType.SelectElement) !==
+    SelectModeType.SelectElement;
+  const cursor = isSelectModeNotSelectElement
+    ? SelectModeCursor[context.selectMode!.type]
+    : "pointer";
 
   const renderChildrenToggle = () =>
     isExpanded ? (
@@ -47,55 +58,71 @@ function OutlineTreeItem({ node, ...context }: OutlineTreeItemProps) {
       />
     );
 
+  const renderLabel = () => (
+    <div
+      className={`flex flex-1 ml-1 pl-1 bg-gray-500 bg-opacity-0 hover:bg-opacity-50 ${
+        isSelected && "bg-opacity-25"
+      }`}
+      style={{ cursor }}
+      onClick={() => context.onNodeSelected(node)}
+      onMouseOver={() => context.onNodeHover(node)}
+      onMouseOut={() => context.onNodeHoverOut(node)}
+    >
+      {node.tag}
+      <div className="flex-1" />
+      {node.type === OutlineElementType.Frame && (
+        <>
+          <IconButton
+            title="Expand Outline"
+            className="mr-2"
+            icon={faExpandAlt}
+            onClick={context.onExpandAllNodes}
+          />
+          {/* todo: use a better icon as this icon implies the frame will be refreshed */}
+          <IconButton
+            title="Refresh Outline"
+            icon={faSync}
+            onClick={context.onRefresh}
+          />
+        </>
+      )}
+    </div>
+  );
+
+  const renderChildInserts = (hints?: SelectModeHints) => (
+    <div
+      style={{ height: 2, cursor }}
+      className={`default-transition ${
+        isSelectModeNotSelectElement ? "hover:bg-white" : ""
+      }`}
+      onClick={() =>
+        isSelectModeNotSelectElement && context.onNodeSelected(node, hints)
+      }
+    />
+  );
+
+  const renderChildren = () => (
+    <div
+      className="border-l border-gray-700"
+      style={{ marginLeft: 5, paddingLeft: 10 }}
+    >
+      {node.children.map((child, index) => (
+        <React.Fragment key={child.id}>
+          {renderChildInserts({ beforeChildLookupId: child.lookupId })}
+          <OutlineTreeItem node={child} {...context} />
+          {index === node.children.length - 1 ? renderChildInserts() : null}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+
   return (
     <div>
       <div className="flex">
-        {node.children.length > 0 && renderChildrenToggle()}
-        <div
-          className={`flex flex-1 ml-1 pl-1 bg-gray-500 bg-opacity-0 hover:bg-opacity-50 ${
-            isSelected && "bg-opacity-25"
-          }`}
-          style={{
-            cursor:
-              context.selectMode &&
-              context.selectMode.type !== SelectModeType.SelectElement
-                ? SelectModeCursor[context.selectMode.type]
-                : "pointer",
-          }}
-          onClick={() => context.onNodeSelected(node)}
-          onMouseOver={() => context.onNodeHover(node)}
-          onMouseOut={() => context.onNodeHoverOut(node)}
-        >
-          {node.tag}
-          <div className="flex-1" />
-          {node.type === OutlineElementType.Frame && (
-            <>
-              <IconButton
-                title="Expand Outline"
-                className="mr-2"
-                icon={faExpandAlt}
-                onClick={context.onExpandAllNodes}
-              />
-              {/* todo: use a better icon as this icon implies the frame will be refreshed */}
-              <IconButton
-                title="Refresh Outline"
-                icon={faSync}
-                onClick={context.onRefresh}
-              />
-            </>
-          )}
-        </div>
+        {node.children.length > 0 ? renderChildrenToggle() : null}
+        {renderLabel()}
       </div>
-      {isExpanded ? (
-        <div
-          className="border-l border-gray-700"
-          style={{ marginLeft: 5, paddingLeft: 10 }}
-        >
-          {node.children.map((child) => (
-            <OutlineTreeItem key={child.id} node={child} {...context} />
-          ))}
-        </div>
-      ) : null}
+      {isExpanded ? renderChildren() : null}
     </div>
   );
 }
