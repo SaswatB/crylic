@@ -155,13 +155,19 @@ function OutlineTreeItem({ node, ...context }: OutlineTreeItemProps) {
             title="Expand Outline"
             className="mr-2"
             icon={faExpandAlt}
-            onClick={context.onExpandAllNodes}
+            onClick={(e) => {
+              e.stopPropagation();
+              context.onExpandAllNodes();
+            }}
           />
           {/* todo: use a better icon as this icon implies the frame will be refreshed */}
           <IconButton
             title="Refresh Outline"
             icon={faSync}
-            onClick={context.onRefresh}
+            onClick={(e) => {
+              e.stopPropagation();
+              context.onRefresh();
+            }}
           />
         </>
       )}
