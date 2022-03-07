@@ -75,6 +75,10 @@ const buildOutlineRecurse = (
     })
     .reduce((p, c) => [...p, ...c], []);
 
+function isHTMLElement(o: unknown): o is HTMLElement {
+  return typeof o === "object" && o !== null && (o as any).nodeType === 1;
+}
+
 const buildReactFiberRecurse = (
   context: {
     project: Project;
@@ -105,7 +109,9 @@ const buildReactFiberRecurse = (
             child.type?.displayName ||
             child.type?.name ||
             child.type;
-          const element = child.stateNode as HTMLElement | undefined;
+          const element = isHTMLElement(child.stateNode)
+            ? child.stateNode
+            : undefined;
           const children = await buildReactFiberRecurse(context, child);
 
           // hide components that don't affect the dom

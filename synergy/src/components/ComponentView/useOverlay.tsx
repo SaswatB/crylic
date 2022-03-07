@@ -1,4 +1,10 @@
-import React, { MutableRefObject, useEffect, useRef, useState } from "react";
+import React, {
+  MutableRefObject,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useSnackbar } from "notistack";
@@ -10,6 +16,7 @@ import { Project } from "../../lib/project/Project";
 import {
   FrameSettings,
   onMoveResizeCallback,
+  OutlineElement,
   ViewContext,
 } from "../../types/paint";
 import { SelectedElement } from "../../types/selected-element";
@@ -82,12 +89,18 @@ export function useOverlay(
   addTempStylesObservable: Observable<unknown>,
   scaleRef: MutableRefObject<number>,
   selectedElement?: SelectedElement,
+  outlineHover?: OutlineElement,
   selectModeType?: SelectModeType,
   onSelect?: (componentElement: Element | null | undefined) => void,
   onMoveResizeSelection?: onMoveResizeCallback
 ) {
   const { enqueueSnackbar } = useSnackbar();
-  const [highlightBox, setHighlightBox] = useState<DOMRect>();
+  const [elementHover, setElementHover] = useState<Element>();
+  const highlightBox = useMemo(
+    () => (elementHover || outlineHover?.element)?.getBoundingClientRect(),
+    [elementHover, outlineHover]
+  );
+
   const onOverlayMove = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
@@ -98,12 +111,13 @@ export function useOverlay(
       scaleRef.current
     );
 
-    setHighlightBox(componentElement?.getBoundingClientRect());
+    setElementHover(componentElement);
   };
   const onOverlayClick = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
     console.log("onOverlayClick", Date.now() - lastDragResizeHandled);
+    setElementHover(undefined);
     // todo find a better way to prevent this misfire then this hack
     if (
       selectModeType === undefined &&
@@ -189,10 +203,10 @@ export function useOverlay(
             : undefined,
       }}
       onMouseMove={selectEnabled ? onOverlayMove : undefined}
-      onMouseLeave={() => setHighlightBox(undefined)}
+      onMouseLeave={() => setElementHover(undefined)}
       onClick={onOverlayClick}
     >
-      {selectEnabled && highlightBox ? (
+      {highlightBox ? (
         <div
           className="absolute border-blue-300 border-solid pointer-events-none"
           style={{
@@ -200,7 +214,7 @@ export function useOverlay(
             left: highlightBox.left,
             width: highlightBox.width,
             height: highlightBox.height,
-            borderWidth: selectEnabled && highlightBox ? "4px" : "2px",
+            borderWidth: "4px",
           }}
         />
       ) : (

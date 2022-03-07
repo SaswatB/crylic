@@ -16,6 +16,8 @@ interface TreeContext {
   onExpandAllNodes: () => void;
   onNodeToggle: (newExpandedNodes: string[]) => void;
   onNodeSelected: (node: OutlineElement) => void;
+  onNodeHover: (node: OutlineElement) => void;
+  onNodeHoverOut: (node: OutlineElement) => void;
 }
 
 interface OutlineTreeItemProps extends TreeContext {
@@ -52,6 +54,8 @@ function OutlineTreeItem({ node, ...context }: OutlineTreeItemProps) {
             isSelected && "bg-opacity-25"
           }`}
           onClick={() => context.onNodeSelected(node)}
+          onMouseOver={() => context.onNodeHover(node)}
+          onMouseOut={() => context.onNodeHoverOut(node)}
         >
           {node.tag}
           <div className="flex-1" />

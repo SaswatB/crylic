@@ -17,7 +17,7 @@ import { ASTType } from "../lib/ast/types";
 import { RenderEntry } from "../lib/project/RenderEntry";
 import { eagerMap } from "../lib/rxjs/eagerMap";
 import { sleep } from "../lib/utils";
-import { Styles } from "../types/paint";
+import { OutlineElement, Styles } from "../types/paint";
 import { SelectedElement } from "../types/selected-element";
 import { ProjectService } from "./ProjectService";
 
@@ -32,6 +32,10 @@ export class SelectService {
   public readonly selectedStyleGroup$ = new BehaviorSubject<
     StyleGroup | undefined
   >(undefined);
+  public readonly outlineHover$ = new BehaviorSubject<
+    OutlineElement | undefined
+  >(undefined);
+
   private readonly overlayWarningsCache = new WeakMap<Element, string[]>();
 
   constructor(private projectService: ProjectService) {

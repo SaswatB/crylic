@@ -202,6 +202,11 @@ export function OutlinePaneEntry({ renderEntry }: Props) {
           });
         }
       }}
+      onNodeHover={(node) => selectService.outlineHover$.next(node)}
+      onNodeHoverOut={(node) =>
+        selectService.outlineHover$.getValue()?.id === node.id &&
+        selectService.outlineHover$.next(undefined)
+      }
     />
   );
 }

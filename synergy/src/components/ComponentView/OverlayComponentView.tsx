@@ -58,6 +58,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   const selectService = useService(SelectService);
   const selectMode = useObservable(selectService.selectMode$);
   const selectedElement = useObservable(selectService.selectedElement$);
+  const outlineHover = useObservable(selectService.outlineHover$);
   const { enqueueSnackbar } = useSnackbar();
   const { renderEntry } = compilerProps;
   const viewContext = useObservable(renderEntry.viewContext$);
@@ -135,6 +136,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
     selectedElement?.renderEntry.id === renderEntry.id
       ? selectedElement
       : undefined,
+    outlineHover?.renderId === renderEntry.id ? outlineHover : undefined,
     selectMode?.type,
     onOverlaySelectElement,
     (deltaX, totalDeltaX, deltaY, totalDeltaY, width, height, preview) => {
@@ -273,7 +275,7 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
             height: `${frameSettings.height}px`,
           }}
         />
-        {(isDefined(selectMode) || selectedElement) && renderOverlay()}
+        {renderOverlay()}
         {debouncedLoading && <BuildProgress renderEntry={renderEntry} />}
       </div>
     </div>
