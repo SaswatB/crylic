@@ -19,6 +19,7 @@ export const buildOutline = async (
     lookupId: renderEntry.id,
     codeId: renderEntry.codeId,
     element: undefined,
+    closestElements: [],
     children: await (fiberComponentRoot
       ? buildReactFiberRecurse(
           { project, renderId: renderEntry.id },
@@ -67,6 +68,7 @@ const buildOutlineRecurse = (
             lookupId,
             codeId,
             element: child as HTMLElement,
+            closestElements: [child as HTMLElement],
             children: buildOutlineRecurse(context, child),
           },
         ];
@@ -124,6 +126,17 @@ const buildReactFiberRecurse = (
             return children;
           }
 
+          const closestElements: HTMLElement[] = [];
+          if (element) {
+            closestElements.push(element);
+          } else {
+            closestElements.push(
+              ...children
+                .map((c) => c.closestElements)
+                .reduce((p, c) => [...p, ...c], [])
+            );
+          }
+
           return [
             {
               id: "", // ids are filled in later
@@ -133,6 +146,7 @@ const buildReactFiberRecurse = (
               lookupId,
               codeId,
               element,
+              closestElements,
               children,
             },
           ];

@@ -13,6 +13,7 @@ import { Observable, Subject } from "rxjs";
 import { SelectModeType } from "../../constants";
 import { useObservableCallback } from "../../hooks/useObservableCallback";
 import { Project } from "../../lib/project/Project";
+import { isDefined } from "../../lib/utils";
 import {
   FrameSettings,
   onMoveResizeCallback,
@@ -96,10 +97,33 @@ export function useOverlay(
 ) {
   const { enqueueSnackbar } = useSnackbar();
   const [elementHover, setElementHover] = useState<Element>();
-  const highlightBox = useMemo(
-    () => (elementHover || outlineHover?.element)?.getBoundingClientRect(),
-    [elementHover, outlineHover]
-  );
+  const highlightBox = useMemo(() => {
+    const elements = elementHover
+      ? [elementHover]
+      : outlineHover?.closestElements || [];
+    if (elements.length === 0) return null;
+
+    const firstRect = elements[0]!.getBoundingClientRect();
+    const rect = {
+      top: firstRect.top,
+      left: firstRect.left,
+      width: firstRect.width,
+      height: firstRect.height,
+    };
+
+    // aggregate the highlight box if there are multiple elements
+    for (let i = 1; i < elements.length; i++) {
+      const rect2 = elements[i]!.getBoundingClientRect();
+      rect.width =
+        Math.max(rect.left + rect.width, rect2.left + rect2.width) - rect.left;
+      rect.height =
+        Math.max(rect.top + rect.height, rect2.top + rect2.height) - rect.top;
+      rect.left = Math.min(rect.left, rect2.left);
+      rect.top = Math.min(rect.top, rect2.top);
+    }
+
+    return rect;
+  }, [elementHover, outlineHover]);
 
   const onOverlayMove = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
@@ -200,6 +224,12 @@ export function useOverlay(
             ? "copy"
             : selectModeType === SelectModeType.SelectElement
             ? "crosshair"
+            : undefined,
+        display:
+          !isDefined(selectModeType) &&
+          !selectedElement?.element &&
+          !highlightBox
+            ? "none"
             : undefined,
       }}
       onMouseMove={selectEnabled ? onOverlayMove : undefined}

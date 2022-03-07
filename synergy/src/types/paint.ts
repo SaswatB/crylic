@@ -25,6 +25,7 @@ export interface OutlineElement {
   lookupId: string;
   codeId: string;
   element: HTMLElement | undefined;
+  closestElements: HTMLElement[];
   children: OutlineElement[];
 }
 
