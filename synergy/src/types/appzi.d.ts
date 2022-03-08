@@ -3,5 +3,6 @@ declare global {
     appzi?: {
       openWidget: (surveyId: string) => void;
     };
+    appziSettings?: unknown;
   }
 }
