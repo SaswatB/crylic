@@ -51,8 +51,8 @@ const sassModuleRegex = /\.module\.(scss|sass)$/;
 // This is the production and development configuration.
 // It is focused on developer experience, fast rebuilds, and a minimal bundle.
 module.exports = function (webpackEnv) {
-  const isEnvDevelopment = webpackEnv === "development";
-  const isEnvProduction = webpackEnv === "production";
+  const isEnvDevelopment = process.env.NODE_ENV_ACTUAL === "development";
+  const isEnvProduction = !isEnvDevelopment;
 
   // Variable used for enabling profiling in Production
   // passed into alias object. Uses a flag if passed into the build command
@@ -507,9 +507,8 @@ module.exports = function (webpackEnv) {
         __COMMIT_HASH__: JSON.stringify(
           childProcess.execSync("git rev-list HEAD --max-count=1").toString()
         ),
-        __IS_PRODUCTION__: JSON.stringify(
-          process.env.NODE_ENV_ACTUAL === "production"
-        ),
+        __IS_PRODUCTION__: JSON.stringify(isEnvProduction),
+        __IS_RENDERER_BUNDLE__: JSON.stringify(true),
       }),
       // This is necessary to emit hot updates (currently CSS only):
       isEnvDevelopment && new webpack.HotModuleReplacementPlugin(),

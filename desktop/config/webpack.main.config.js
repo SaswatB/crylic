@@ -1,4 +1,5 @@
 const path = require("path");
+const webpack = require("webpack");
 const SentryWebpackPlugin = require("@sentry/webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 
@@ -53,6 +54,9 @@ module.exports = (env, argv) => ({
       }),
     new CopyPlugin({
       patterns: [{ from: "src/assets/icon.ico", to: "." }],
+    }),
+    new webpack.DefinePlugin({
+      __IS_RENDERER_BUNDLE__: JSON.stringify(false),
     }),
   ].filter(Boolean),
 });

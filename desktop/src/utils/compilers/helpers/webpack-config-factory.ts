@@ -40,31 +40,34 @@ const getEnvVars = (context: WebpackConfigFactoryContext) => {
     dotenvPath,
   ];
 
-  // preserve this app's env vars
-  // todo clear app specific vars
-  const originalEnv = process.env;
-  process.env = cloneDeep(originalEnv);
-
-  dotenvFiles.forEach((dotenvFile) => {
-    if (fs.existsSync(dotenvFile))
-      dotenvExpand(dotenv.config({ path: dotenvFile }));
-  });
-
   const appEnv: Record<string, string | undefined> = {
     NODE_ENV: `"${NODE_ENV}"`,
     // todo fill in
     PUBLIC_URL: `""`,
     CRYLIC_ENABLED: "true",
   };
-  // copy REACT_APP env vars
-  Object.keys(process.env)
-    .filter((key) => REACT_APP.test(key))
-    .forEach((key) => {
-      appEnv[key] = JSON.stringify(process.env[key]);
+
+  if (!__IS_RENDERER_BUNDLE__) {
+    // preserve this app's env vars
+    // todo clear app specific vars
+    const originalEnv = process.env;
+    process.env = cloneDeep(originalEnv);
+
+    dotenvFiles.forEach((dotenvFile) => {
+      if (fs.existsSync(dotenvFile))
+        dotenvExpand(dotenv.config({ path: dotenvFile }));
     });
 
-  // restore the original env vars
-  process.env = originalEnv;
+    // copy REACT_APP env vars
+    Object.keys(process.env)
+      .filter((key) => REACT_APP.test(key))
+      .forEach((key) => {
+        appEnv[key] = JSON.stringify(process.env[key]);
+      });
+
+    // restore the original env vars
+    process.env = originalEnv;
+  }
 
   return appEnv;
 };
