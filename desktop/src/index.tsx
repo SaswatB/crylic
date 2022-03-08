@@ -6,6 +6,15 @@ if (__IS_PRODUCTION__) {
 
   // @sentry/electron breaks webpack compilation, so just use @sentry/browser instead
   const Sentry = require("@sentry/browser") as typeof import("@sentry/browser");
+  const {
+    RewriteFrames,
+  } = require("@sentry/integrations") as typeof import("@sentry/integrations");
+
+  const appPath = window.process.argv
+    .find((s) => s.startsWith("--appPath="))
+    ?.replace("--appPath=", "file:///")
+    .replace(/\\/g, "/");
+
   Sentry.init({
     dsn:
       "https://bdbb761a7a54493a8ef0343516421d0a@o400877.ingest.sentry.io/5259708",
@@ -14,6 +23,20 @@ if (__IS_PRODUCTION__) {
       if (store.get("tracking_disabled") === true) return null;
       return e;
     },
+    integrations: [
+      // since @sentry/browser is used instead of @sentry/electron, the stack frames have to be manually fixed to match sourcemaps
+      new RewriteFrames({
+        iteratee: (frame) => {
+          if (!frame.filename) {
+            return frame;
+          }
+          if (appPath && frame.filename.includes(appPath)) {
+            frame.filename = frame.filename.replace(appPath, "app://");
+          }
+          return frame;
+        },
+      }),
+    ],
   });
 }
 
