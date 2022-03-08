@@ -10,7 +10,8 @@ const sentryPath = path.join(
 );
 
 // init sentry on the child process
-__non_webpack_require__(sentryPath);
+if (process.env.DISABLE_TRACKING !== "true")
+  __non_webpack_require__(sentryPath);
 
 // mock terminal
 [process.stdout, process.stderr].forEach((io) => {

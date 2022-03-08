@@ -1,3 +1,6 @@
+// initialize store for renderer
+__non_webpack_require__("electron-store").initRenderer();
+
 const path = __non_webpack_require__("path") as typeof import("path");
 const dirPath = __non_webpack_require__
   .resolve("webpack")

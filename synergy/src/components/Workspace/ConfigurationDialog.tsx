@@ -8,9 +8,10 @@ import { TourContext } from "../Tour/Tour";
 
 export const ConfigurationDialog: VoidFunctionComponent<{
   open: boolean;
+  trackingConfigNode: React.ReactNode;
   onClose: () => void;
   onEditWebpackConfig: () => void;
-}> = ({ open, onClose, onEditWebpackConfig }) => {
+}> = ({ open, trackingConfigNode, onClose, onEditWebpackConfig }) => {
   const projectService = useService(ProjectService);
   const project = useProject();
   const { installPackages } = usePackageInstallerRecoil();
@@ -66,6 +67,7 @@ export const ConfigurationDialog: VoidFunctionComponent<{
               <Button onClick={() => resetTour()}>Restart Tour</Button>
             )}
           </div>
+          {trackingConfigNode}
         </div>
       </DialogContent>
     </Dialog>

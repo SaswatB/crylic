@@ -9,6 +9,11 @@ const { ipcRenderer } = __non_webpack_require__(
   "electron"
 ) as typeof import("electron");
 
+const Store = __non_webpack_require__(
+  "electron-store"
+) as typeof import("electron-store");
+const store = new Store();
+
 let dirname = "";
 ipcRenderer.invoke("runtimeInfo").then((data) => ({ dirname } = data));
 
@@ -23,7 +28,13 @@ export class InbuiltPackageManager extends PackageManager {
     return fork(
       path.join(dirname, "electron-child.js"),
       ["npm-install", this.path, packageName || "", `${devDep}`],
-      { stdio: ["pipe", "pipe", "pipe", "ipc"] }
+      {
+        stdio: ["pipe", "pipe", "pipe", "ipc"],
+        env: {
+          ...process.env,
+          DISABLE_TRACKING: `${!!store.get("tracking_disabled")}`,
+        },
+      }
     );
   }
 }

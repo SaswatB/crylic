@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { faCog } from "@fortawesome/free-solid-svg-icons";
+import { Checkbox } from "@material-ui/core";
 import { useSnackbar } from "notistack";
 import { Resizable } from "re-resizable";
 import { distinctUntilChanged, map } from "rxjs/operators";
@@ -34,6 +35,11 @@ import "./App.scss";
 
 const open = __non_webpack_require__("open") as typeof import("open");
 
+const Store = __non_webpack_require__(
+  "electron-store"
+) as typeof import("electron-store");
+const store = new Store();
+
 function App() {
   const project = useProject({ allowUndefined: true });
   const { enqueueSnackbar } = useSnackbar();
@@ -54,6 +60,23 @@ function App() {
     enqueueSnackbar("Files Saved!")
   );
 
+  const [allowTracking, setAllowTracking] = useState(
+    !store.get("tracking_disabled")
+  );
+  useEffect(() => store.set("tracking_disabled", !allowTracking), [
+    allowTracking,
+  ]);
+
+  const renderTrackingConfig = () => (
+    <div className="flex items-center justify-center">
+      <Checkbox
+        checked={allowTracking}
+        onChange={(e) => setAllowTracking(e.target.checked)}
+      />
+      Allow collecting error reports and anonymized usage analytics.
+    </div>
+  );
+
   const renderLeftPane = (projectName: string) => (
     <>
       <div className="flex">
@@ -67,6 +90,7 @@ function App() {
         />
         <ConfigurationDialog
           open={showConfigDialog}
+          trackingConfigNode={renderTrackingConfig()}
           onClose={() => setShowConfigDialog(false)}
           onEditWebpackConfig={() => setShowWebpackConfigDialog(true)}
         />
@@ -149,8 +173,7 @@ function App() {
         Look around for beacons to get further instructions.
         <br />
         <br />
-        Please note, this application may send reports to the developer if any
-        errors occur.
+        {renderTrackingConfig()}
       </Tour>
       <div className="flex flex-1 flex-row">
         {project && (

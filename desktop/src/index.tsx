@@ -1,10 +1,19 @@
 if (__IS_PRODUCTION__) {
+  const Store = __non_webpack_require__(
+    "electron-store"
+  ) as typeof import("electron-store");
+  const store = new Store();
+
   // @sentry/electron breaks webpack compilation, so just use @sentry/browser instead
-  const Sentry = require("@sentry/browser");
+  const Sentry = require("@sentry/browser") as typeof import("@sentry/browser");
   Sentry.init({
     dsn:
       "https://bdbb761a7a54493a8ef0343516421d0a@o400877.ingest.sentry.io/5259708",
     release: __COMMIT_HASH__,
+    beforeSend: (e) => {
+      if (store.get("tracking_disabled") === true) return null;
+      return e;
+    },
   });
 }
 
