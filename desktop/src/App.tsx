@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { faCog } from "@fortawesome/free-solid-svg-icons";
 import { Checkbox } from "@material-ui/core";
+import * as Fathom from "fathom-client";
 import { useSnackbar } from "notistack";
 import { Resizable } from "re-resizable";
 import { distinctUntilChanged, map } from "rxjs/operators";
@@ -39,6 +40,7 @@ const Store = __non_webpack_require__(
   "electron-store"
 ) as typeof import("electron-store");
 const store = new Store();
+let isFathomLoaded = false;
 
 function App() {
   const project = useProject({ allowUndefined: true });
@@ -63,9 +65,19 @@ function App() {
   const [allowTracking, setAllowTracking] = useState(
     !store.get("tracking_disabled")
   );
-  useEffect(() => store.set("tracking_disabled", !allowTracking), [
-    allowTracking,
-  ]);
+  useEffect(() => {
+    store.set("tracking_disabled", !allowTracking);
+    if (allowTracking && __IS_PRODUCTION__) {
+      if (!isFathomLoaded) {
+        Fathom.load("FFTBYUIQ");
+        isFathomLoaded = true;
+      } else {
+        Fathom.enableTrackingForMe();
+      }
+    } else if (isFathomLoaded) {
+      Fathom.blockTrackingForMe();
+    }
+  }, [allowTracking]);
 
   const renderTrackingConfig = () => (
     <div className="flex items-center justify-center">
