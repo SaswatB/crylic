@@ -1,4 +1,5 @@
-import React, { FunctionComponent } from "react";
+import React, { FunctionComponent, useEffect } from "react";
+import ReactTooltip from "react-tooltip";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import {
   faBars,
@@ -194,6 +195,7 @@ interface Props {
 }
 export const Toolbar: FunctionComponent<Props> = ({ setZoomAction }) => {
   const project = useProject();
+  useEffect(() => void ReactTooltip.rebuild());
   const { installPackages } = usePackageInstallerRecoil();
   const selectService = useService(SelectService);
   const selectMode = useObservable(selectService.selectMode$);
@@ -233,7 +235,8 @@ export const Toolbar: FunctionComponent<Props> = ({ setZoomAction }) => {
               : ""
           }`}
           data-tour="interactive-mode"
-          title="Interactive Mode"
+          data-tip="Interactive Mode"
+          data-place="bottom"
           onClick={() => {
             selectService.clearSelectedElement();
             selectService.setSelectMode(undefined);
@@ -262,7 +265,8 @@ export const Toolbar: FunctionComponent<Props> = ({ setZoomAction }) => {
               : ""
           }`}
           data-tour="select-mode"
-          title="Select Element"
+          data-tip="Select Element"
+          data-place="bottom"
           onClick={() =>
             selectService.setSelectMode({ type: SelectModeType.SelectElement })
           }
@@ -288,7 +292,8 @@ export const Toolbar: FunctionComponent<Props> = ({ setZoomAction }) => {
             selectMode?.type === SelectModeType.AddElement ? "superactive" : ""
           }`}
           data-tour="add-mode"
-          title="Add Element"
+          data-tip="Add Element"
+          data-place="bottom"
           {...bindTrigger(adderPopupState)}
         >
           <FontAwesomeIcon icon={faPlus} />
@@ -311,21 +316,24 @@ export const Toolbar: FunctionComponent<Props> = ({ setZoomAction }) => {
       <div className="btngrp-h">
         <button
           className="btn"
-          title="Zoom In"
+          data-tip="Zoom In"
+          data-place="bottom"
           onClick={() => setZoomAction(ComponentViewZoomAction.ZOOM_IN)}
         >
           <FontAwesomeIcon icon={faSearchPlus} />
         </button>
         <button
           className="btn"
-          title="Zoom Out"
+          data-tip="Zoom Out"
+          data-place="bottom"
           onClick={() => setZoomAction(ComponentViewZoomAction.ZOOM_OUT)}
         >
           <FontAwesomeIcon icon={faSearchMinus} />
         </button>
         <button
           className="btn"
-          title="Reset Zoom"
+          data-tip="Reset Zoom"
+          data-place="bottom"
           onClick={() => setZoomAction(ComponentViewZoomAction.RESET)}
         >
           <FontAwesomeIcon icon={faCompressArrowsAlt} />

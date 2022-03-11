@@ -1,6 +1,7 @@
 import React, { FunctionComponent } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
+import ReactTooltip from "react-tooltip";
 import { createMuiTheme, ThemeProvider } from "@material-ui/core";
 import blue from "@material-ui/core/colors/blue";
 import purple from "@material-ui/core/colors/purple";
@@ -33,6 +34,7 @@ export const Bootstrap: FunctionComponent = ({ children }) => (
             <DndProvider backend={HTML5Backend}>
               <ModalContainer />
               <StateManager />
+              <ReactTooltip effect="solid" />
               {children}
             </DndProvider>
           </TourProvider>
