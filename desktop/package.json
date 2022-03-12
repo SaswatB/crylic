@@ -104,7 +104,6 @@
     "react-monaco-editor": "^0.35.0",
     "react-placeholder": "^4.0.3",
     "react-refresh": "^0.8.3",
-    "react-zoom-pan-pinch": "^1.6.1",
     "recast": "^0.20.5",
     "recoil": "^0.0.10",
     "reflect-metadata": "^0.1.13",

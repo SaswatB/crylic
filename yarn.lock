@@ -9711,7 +9711,6 @@ __metadata:
     react-monaco-editor: ^0.35.0
     react-placeholder: ^4.0.3
     react-refresh: ^0.8.3
-    react-zoom-pan-pinch: ^1.6.1
     recast: ^0.20.5
     recoil: ^0.0.10
     reflect-metadata: ^0.1.13
@@ -22199,17 +22198,6 @@ react-refresh@0.8.3:
     react: ">=16.6.0"
     react-dom: ">=16.6.0"
   checksum: 0bcd8af483709832e318dcef84c26ebddeb866bf4f58010286367ef0c1e7c5106e00cfc65688b9102414cb3d572c63909c2eb7ea972b4420fc70a78c10b6e8ad
-  languageName: node
-  linkType: hard
-
-"react-zoom-pan-pinch@npm:^1.6.1":
-  version: 1.6.1
-  resolution: "react-zoom-pan-pinch@npm:1.6.1"
-  peerDependencies:
-    prop-types: ^15.5.4
-    react: ^15.0.0 || ^16.0.0
-    react-dom: ^15.0.0 || ^16.0.0
-  checksum: f28588c0fbc75f7e49d355a6c0890eefbe6dd04b42a2dff792963abbadaa9cfe782688fae06100f46b8995f70a74fed7070bf9cd4ee59858c6b2e3bf2770beba
   languageName: node
   linkType: hard
 
