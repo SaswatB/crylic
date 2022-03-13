@@ -1,5 +1,6 @@
 import * as it from "io-ts";
 import path from "path";
+import semver from "semver";
 
 import {
   DEFAULT_HTML_TEMPLATE_SELECTOR,
@@ -79,17 +80,31 @@ export abstract class ProjectConfig {
     return path.basename(this.projectPath.replace(/\\/g, "/"));
   }
 
+  public getPackageVersion(
+    module: string,
+    allowDevDep = true
+  ): string | undefined {
+    if (module in (this.packageJson?.dependencies || {}))
+      return this.packageJson.dependencies[module];
+    if (allowDevDep && module in (this.packageJson?.devDependencies || {}))
+      return this.packageJson.devDependencies[module];
+
+    return undefined;
+  }
+
   public isPackageInstalled(module: string, allowDevDep = true) {
-    return (
-      module in (this.packageJson?.dependencies || {}) ||
-      (allowDevDep && module in (this.packageJson?.devDependencies || {}))
-    );
+    return this.getPackageVersion(module, allowDevDep) !== undefined;
   }
   public isPrettierInstalled = () => this.isPackageInstalled("prettier");
   public isPrettierEnabled() {
     return this.configFile?.prettier?.enabled ?? this.isPrettierInstalled();
   }
   public isReactInstalled = () => this.isPackageInstalled("react");
+  public isReactOverV17 = () => {
+    const v = this.getPackageVersion("react");
+    const mv = v && semver.minVersion(v);
+    return !!mv && semver.gte(mv, "17.0.0");
+  };
   public isVueInstalled = () => this.isPackageInstalled("vue");
 
   public abstract getPackageManager(): PackageManager;

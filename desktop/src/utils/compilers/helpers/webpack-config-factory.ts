@@ -81,6 +81,7 @@ const getWebpackModules = async (
   const {
     disableFastRefresh,
     disableSWC,
+    enableReactRuntimeCompat,
     paths: { projectSrcFolder },
   } = context.config;
 
@@ -125,7 +126,11 @@ const getWebpackModules = async (
           },
           sourceMaps: "inline",
           jsc: {
-            transform: { react: { runtime: "automatic" } },
+            transform: {
+              react: {
+                runtime: enableReactRuntimeCompat ? "automatic" : "classic",
+              },
+            },
           },
         },
       },

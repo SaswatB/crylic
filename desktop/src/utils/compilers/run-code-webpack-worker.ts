@@ -132,8 +132,8 @@ const generateJobConfig = (
   disableReactExternals: project.config.getPackageManager().hasDepsInstalled(),
   disableFastRefresh:
     project.config.configFile?.webpack?.overrideConfig?.disableFastRefresh,
-  disableSWC:
-    project.config.configFile?.webpack?.overrideConfig?.disableFastRefresh,
+  disableSWC: project.config.configFile?.webpack?.overrideConfig?.disableSWC,
+  enableReactRuntimeCompat: project.config.isReactOverV17(),
   paths: {
     projectFolder: project.path,
     projectSrcFolder: project.sourceFolderPath,

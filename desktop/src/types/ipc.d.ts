@@ -53,6 +53,7 @@ export interface WebpackWorkerMessagePayload_Compile {
     disableFastRefresh?: boolean;
     disableSWC?: boolean;
     disableReactExternals?: boolean;
+    enableReactRuntimeCompat?: boolean; // needed to React 17+
   };
 }
 
