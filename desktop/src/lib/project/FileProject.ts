@@ -12,6 +12,7 @@ import {
   INITIAL_CODE_REVISION_ID,
 } from "synergy/src/lib/project/CodeEntry";
 import { Project } from "synergy/src/lib/project/Project";
+import { sleep } from "synergy/src/lib/utils";
 
 import { normalizePath } from "../../utils/normalizePath";
 import { streamToString } from "../../utils/utils";
@@ -106,6 +107,9 @@ export class FileProject extends Project {
         });
       });
     });
+
+    // sleep to flush changes and avoid blank loading bug
+    await sleep(1000);
 
     return FileProject.createProjectFromDirectory(folderPath);
   }
