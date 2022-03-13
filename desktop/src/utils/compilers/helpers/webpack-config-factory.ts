@@ -79,6 +79,8 @@ const getWebpackModules = async (
 ) => {
   const { path, tailwindcss } = context.deps;
   const {
+    disableWebpackExternals,
+    disableReactExternals,
     disableFastRefresh,
     disableSWC,
     enableReactRuntimeCompat,
@@ -129,6 +131,15 @@ const getWebpackModules = async (
             transform: {
               react: {
                 runtime: enableReactRuntimeCompat ? "automatic" : "classic",
+                ...(!disableWebpackExternals &&
+                !disableReactExternals &&
+                enableReactRuntimeCompat
+                  ? {
+                      importSource: path.dirname(
+                        __non_webpack_require__.resolve("react")
+                      ),
+                    }
+                  : {}),
               },
             },
           },

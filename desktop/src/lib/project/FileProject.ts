@@ -18,20 +18,34 @@ import { normalizePath } from "../../utils/normalizePath";
 import { streamToString } from "../../utils/utils";
 import { FileProjectConfig } from "./FileProjectConfig";
 
-import projectTemplate from "!!../../../loaders/binaryLoader!../../assets/project-template.zip";
-
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 const path = __non_webpack_require__("path") as typeof import("path");
 
+export enum FileProjectTemplate {
+  Blank = "blank",
+}
+
+const TemplateBuffers: Record<FileProjectTemplate, () => Promise<Buffer>> = {
+  [FileProjectTemplate.Blank]: () =>
+    import(
+      "!!../../../loaders/binaryLoader!../../assets/project-blank-template.zip"
+    ).then((b) => b.default),
+};
+
 export class FileProject extends Project {
-  public static async createNewProjectInDirectory(folderPath: string) {
+  public static async createNewProjectInDirectory(
+    folderPath: string,
+    template: FileProjectTemplate
+  ) {
     console.log(folderPath);
     if (!fs.existsSync(folderPath))
       fs.mkdirSync(folderPath, { recursive: true });
 
+    const buffer = await TemplateBuffers[template]();
+
     let canceled = false;
     await new Promise<void>((resolve, reject) => {
-      yauzl.fromBuffer(projectTemplate, {}, (err, zipFile) => {
+      yauzl.fromBuffer(buffer, {}, (err, zipFile) => {
         if (err || !zipFile) throw new Error("Failed to read project template");
 
         zipFile.on("error", (err) => {

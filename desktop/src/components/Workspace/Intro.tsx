@@ -8,7 +8,10 @@ import { useService } from "synergy/src/hooks/useService";
 import { ProjectService } from "synergy/src/services/ProjectService";
 
 import { openFilePicker, saveFilePicker } from "../../hooks/useFilePicker";
-import { FileProject } from "../../lib/project/FileProject";
+import {
+  FileProject,
+  FileProjectTemplate,
+} from "../../lib/project/FileProject";
 import { normalizePath } from "../../utils/normalizePath";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
@@ -18,6 +21,13 @@ export function Intro() {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(0);
   const recentProjects = projectService.getRecentProjects();
+
+  const createProject = (filePath: string) => {
+    setLoading((l) => l + 1);
+    FileProject.createNewProjectInDirectory(filePath, FileProjectTemplate.Blank)
+      .then((p) => projectService.setProject(p))
+      .finally(() => setLoading((l) => l - 1));
+  };
 
   const openProject = (filePath: string) => {
     if (!fs.existsSync(filePath)) {
@@ -48,12 +58,7 @@ export function Intro() {
           onClick={() =>
             saveFilePicker({
               filters: [{ name: "Project", extensions: [""] }],
-            }).then((f) => {
-              if (f)
-                void FileProject.createNewProjectInDirectory(f).then((p) =>
-                  projectService.setProject(p)
-                );
-            })
+            }).then((f) => f && createProject(f))
           }
         >
           New Project
