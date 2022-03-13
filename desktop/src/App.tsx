@@ -58,8 +58,10 @@ function App() {
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [showWebpackConfigDialog, setShowWebpackConfigDialog] = useState(false);
 
-  useObservableCallback(project?.projectSaved$, () =>
-    enqueueSnackbar("Files Saved!")
+  useObservableCallback(
+    project?.projectSaved$,
+    () => enqueueSnackbar("Files Saved!"),
+    { disableClearOnObservableChange: true }
   );
 
   const [allowTracking, setAllowTracking] = useState(

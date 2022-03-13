@@ -12,7 +12,10 @@ export interface BaseObservable<T> {
 
 export function useObservableCallback<T>(
   observable: BaseObservable<T> | undefined,
-  onChange: (value: T | undefined) => void
+  onChange: (value: T | undefined) => void,
+  {
+    disableClearOnObservableChange,
+  }: { disableClearOnObservableChange?: boolean } = {}
 ) {
   const onChangeRef = useUpdatingRef(onChange);
   useEffect(() => {
@@ -24,8 +27,7 @@ export function useObservableCallback<T>(
     );
     return () => {
       subscription.unsubscribe();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      onChangeRef.current(undefined);
+      if (!disableClearOnObservableChange) onChangeRef.current(undefined);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [observable]);
