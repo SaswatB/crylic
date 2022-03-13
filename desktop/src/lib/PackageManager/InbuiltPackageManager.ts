@@ -27,7 +27,12 @@ export class InbuiltPackageManager extends PackageManager {
     console.log("starting child process - installPackage", packageName, devDep);
     return fork(
       path.join(dirname, "electron-child.js"),
-      ["npm-install", this.path, packageName || "", `${devDep}`],
+      [
+        this.yarnMode ? "yarn-install" : "npm-install",
+        this.path,
+        packageName || "",
+        `${devDep}`,
+      ],
       {
         stdio: ["pipe", "pipe", "pipe", "ipc"],
         env: {

@@ -25,6 +25,22 @@
     "@pmmmwh/react-refresh-webpack-plugin": "^0.4.1",
     "@sentry/electron": "^3.0.3",
     "@swc/core": "^1.2.128",
+    "@yarnpkg/core": "^3.2.0",
+    "@yarnpkg/plugin-compat": "^3.1.2",
+    "@yarnpkg/plugin-dlx": "^3.1.1",
+    "@yarnpkg/plugin-essentials": "^3.2.0",
+    "@yarnpkg/plugin-file": "^2.3.0",
+    "@yarnpkg/plugin-git": "^2.6.0",
+    "@yarnpkg/plugin-github": "^2.3.0",
+    "@yarnpkg/plugin-http": "^2.2.0",
+    "@yarnpkg/plugin-init": "^3.1.2",
+    "@yarnpkg/plugin-link": "^2.2.0",
+    "@yarnpkg/plugin-nm": "^3.1.1",
+    "@yarnpkg/plugin-npm": "^2.7.0",
+    "@yarnpkg/plugin-npm-cli": "^3.2.0",
+    "@yarnpkg/plugin-pack": "^3.1.1",
+    "@yarnpkg/plugin-patch": "^3.2.0",
+    "@yarnpkg/plugin-pnp": "^3.2.0",
     "babel-loader": "^8.1.0",
     "babel-plugin-macros": "^2.8.0",
     "babel-plugin-named-asset-import": "^0.3.6",
@@ -56,6 +72,7 @@
     "unionfs": "^4.4.0",
     "url-loader": "^4.1.0",
     "webpack": "^4.42.0",
-    "webpack-dev-server": "^3.11.0"
+    "webpack-dev-server": "^3.11.0",
+    "yarn": "^1.22.17"
   }
 }
