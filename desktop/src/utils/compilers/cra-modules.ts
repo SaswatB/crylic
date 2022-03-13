@@ -1,4 +1,5 @@
 import { parse } from "jsonc-parser";
+import { isArray } from "lodash";
 
 const path = __non_webpack_require__("path") as typeof import("path");
 const fs = __non_webpack_require__("fs") as typeof import("fs");
@@ -56,24 +57,36 @@ function getAdditionalModulePaths(
  * Get webpack aliases based on the baseUrl of a compilerOptions object.
  */
 function getWebpackAliases(
-  options: { baseUrl?: string },
+  options: {
+    baseUrl?: string;
+    paths?: Record<string, string[]>;
+  },
   paths: { projectFolder: string; projectSrcFolder: string }
 ): { src: string } | {} {
+  const aliases: Record<string, string> = {};
+
   const baseUrl = options.baseUrl;
-
-  if (!baseUrl) {
-    return {};
+  const baseUrlResolved = baseUrl && path.resolve(paths.projectFolder, baseUrl);
+  if (
+    baseUrlResolved &&
+    path.relative(paths.projectFolder, baseUrlResolved) === ""
+  ) {
+    aliases.src = paths.projectSrcFolder;
   }
 
-  const baseUrlResolved = path.resolve(paths.projectFolder, baseUrl);
-
-  if (path.relative(paths.projectFolder, baseUrlResolved) === "") {
-    return {
-      src: paths.projectSrcFolder,
-    };
+  // this part is not from react-scripts, but helps with next.js support
+  if (options.paths) {
+    Object.entries(options.paths).forEach(([key, value]) => {
+      if (isArray(value) && value.length === 1) {
+        aliases[key] = path.resolve(
+          baseUrlResolved || paths.projectFolder,
+          value[0]!
+        );
+      }
+    });
   }
 
-  return {};
+  return aliases;
 }
 
 export function getCraModules(paths: {

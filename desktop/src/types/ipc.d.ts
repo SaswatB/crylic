@@ -52,6 +52,7 @@ export interface WebpackWorkerMessagePayload_Compile {
     disableWebpackExternals?: boolean;
     disableFastRefresh?: boolean;
     disableSWC?: boolean;
+    disableReactExternals?: boolean;
   };
 }
 

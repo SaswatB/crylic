@@ -124,6 +124,9 @@ const getWebpackModules = async (
             ],
           },
           sourceMaps: "inline",
+          jsc: {
+            transform: { react: { runtime: "automatic" } },
+          },
         },
       },
     },
@@ -278,7 +281,12 @@ export const webpackConfigFactory = async (
     HtmlWebpackPlugin,
     ReactRefreshPlugin,
   } = context.deps;
-  const { paths, disableWebpackExternals, disableFastRefresh } = context.config;
+  const {
+    paths,
+    disableReactExternals,
+    disableWebpackExternals,
+    disableFastRefresh,
+  } = context.config;
   const env = getEnvVars(context);
 
   const templateOptions =
@@ -327,10 +335,14 @@ export const webpackConfigFactory = async (
       alias: {
         "react-native": "react-native-web",
         // lm_c76a4fbc3b webpack externals
-        ...(!disableWebpackExternals
+        ...(!disableWebpackExternals && !disableReactExternals
           ? {
               react: __non_webpack_require__.resolve("react"),
               "react-dom": __non_webpack_require__.resolve("react-dom"),
+            }
+          : {}),
+        ...(!disableWebpackExternals
+          ? {
               "react-refresh/runtime": __non_webpack_require__.resolve(
                 "react-refresh/runtime"
               ),

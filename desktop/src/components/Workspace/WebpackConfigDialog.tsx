@@ -100,7 +100,7 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
       <DialogContent
         className="flex flex-col"
         // todo fix weird layout issues
-        style={{ width: "90vw", height: webpackOverridePath ? "90vh" : "" }}
+        style={{ width: "90vw", height: "90vh" }}
       >
         <div className="flex-1 mb-4">
           <MonacoEditor

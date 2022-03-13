@@ -129,6 +129,7 @@ const generateJobConfig = (
   disableWebpackExternals:
     project.config.configFile?.webpack?.overrideConfig
       ?.disableExternalsInjection,
+  disableReactExternals: project.config.getPackageManager().hasDepsInstalled(),
   disableFastRefresh:
     project.config.configFile?.webpack?.overrideConfig?.disableFastRefresh,
   disableSWC:

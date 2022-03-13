@@ -15,4 +15,6 @@ export abstract class PackageManager {
     packageName: string | undefined,
     devDep?: boolean
   ): PackageInstallJob;
+
+  public abstract hasDepsInstalled(): boolean;
 }

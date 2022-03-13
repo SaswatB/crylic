@@ -5,6 +5,7 @@ import { PackageManager } from "synergy/src/lib/packageManager/PackageManager";
 const { fork } = __non_webpack_require__(
   "child_process"
 ) as typeof import("child_process");
+const fs = __non_webpack_require__("fs") as typeof import("fs");
 const { ipcRenderer } = __non_webpack_require__(
   "electron"
 ) as typeof import("electron");
@@ -41,5 +42,9 @@ export class InbuiltPackageManager extends PackageManager {
         },
       }
     );
+  }
+
+  public hasDepsInstalled() {
+    return fs.existsSync(path.join(this.path, "node_modules"));
   }
 }

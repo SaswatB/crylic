@@ -3,6 +3,7 @@ import { pipe } from "fp-ts/lib/pipeable";
 import path from "path";
 
 import { CONFIG_FILE_NAME } from "synergy/src/constants";
+import { PackageManager } from "synergy/src/lib/packageManager/PackageManager";
 import {
   ProjectConfig,
   ProjectConfigFile,
@@ -50,22 +51,28 @@ export class FileProjectConfig extends ProjectConfig {
     return new FileProjectConfig(projectPath, configFile, packageJson);
   }
 
+  private packageManager: PackageManager | undefined;
   public getPackageManager() {
-    const packageManagerType =
-      this.configFile?.packageManager?.type ?? "inbuilt";
+    if (!this.packageManager) {
+      const packageManagerType =
+        this.configFile?.packageManager?.type ?? "inbuilt";
 
-    if (packageManagerType.startsWith("inbuilt")) {
-      return new InbuiltPackageManager(
-        this.projectPath,
-        packageManagerType === "inbuilt-yarn" ||
-          (packageManagerType !== "inbuilt-npm" &&
-            fs.existsSync(path.join(this.projectPath, "yarn.lock")))
-      );
-    } else if (packageManagerType === "yarn") {
-      // yarn
-      throw new Error("Not implemented");
+      if (packageManagerType.startsWith("inbuilt")) {
+        this.packageManager = new InbuiltPackageManager(
+          this.projectPath,
+          packageManagerType === "inbuilt-yarn" ||
+            (packageManagerType !== "inbuilt-npm" &&
+              fs.existsSync(path.join(this.projectPath, "yarn.lock")))
+        );
+      } else if (packageManagerType === "yarn") {
+        // yarn
+        throw new Error("Not implemented");
+      } else {
+        // npm
+        throw new Error("Not implemented");
+      }
     }
-    // npm
-    throw new Error("Not implemented");
+
+    return this.packageManager;
   }
 }
