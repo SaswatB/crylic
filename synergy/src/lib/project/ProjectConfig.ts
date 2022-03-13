@@ -80,6 +80,25 @@ export abstract class ProjectConfig {
     return path.basename(this.projectPath.replace(/\\/g, "/"));
   }
 
+  public getAllPackages() {
+    return [
+      ...Object.entries(this.packageJson?.dependencies || {}).map(
+        ([key, value]) => ({
+          name: key,
+          version: value,
+          dev: false,
+        })
+      ),
+      ...Object.entries(this.packageJson?.devDependencies || {}).map(
+        ([key, value]) => ({
+          name: key,
+          version: value,
+          dev: true,
+        })
+      ),
+    ];
+  }
+
   public getPackageVersion(
     module: string,
     allowDevDep = true

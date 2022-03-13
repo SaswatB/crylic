@@ -45,6 +45,7 @@ export class InbuiltPackageManager extends PackageManager {
   }
 
   public hasDepsInstalled() {
+    // todo support node_modules in a higher directory
     return fs.existsSync(path.join(this.path, "node_modules"));
   }
 }

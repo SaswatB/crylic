@@ -1,7 +1,10 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useEffect } from "react";
+import React from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { Button } from "@material-ui/core";
 import { useSnackbar } from "notistack";
 
+import { usePackageInstallerRecoil } from "../../hooks/recoil/usePackageInstallerRecoil";
 import { useService } from "../../hooks/useService";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
@@ -9,7 +12,49 @@ import { SelectService } from "../../services/SelectService";
 export const StateManager: FunctionComponent = () => {
   const project = useProject({ allowUndefined: true });
   const selectService = useService(SelectService);
-  const { enqueueSnackbar } = useSnackbar();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  const { installPackages } = usePackageInstallerRecoil();
+
+  // check if deps should be installed
+  useEffect(() => {
+    if (!project || project.config.getPackageManager().hasDepsInstalled())
+      return;
+
+    const hasExtraDeps = project.config
+      .getAllPackages()
+      .find(
+        (p) =>
+          !p.dev &&
+          !p.name.startsWith("@types/") &&
+          !p.name.startsWith("@babel/") &&
+          !p.name.includes("test") &&
+          ![
+            "react",
+            "react-dom",
+            "react-scripts",
+            "typescript",
+            "webpack",
+          ].includes(p.name)
+      );
+    if (hasExtraDeps) {
+      enqueueSnackbar(
+        "This project has dependencies that are not currently installed.",
+        {
+          variant: "warning",
+          action: (key) => (
+            <Button
+              onClick={() => {
+                closeSnackbar(key);
+                installPackages(undefined);
+              }}
+            >
+              Install
+            </Button>
+          ),
+        }
+      );
+    }
+  }, [closeSnackbar, enqueueSnackbar, installPackages, project]);
 
   /* Hotkeys */
 
