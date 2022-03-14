@@ -5,6 +5,7 @@ import { Project } from "../project/Project";
 import { RenderEntry } from "../project/RenderEntry";
 import { sleep } from "../utils";
 import {
+  createNewEditContext,
   EditContext,
   ElementASTEditor,
   StyleASTEditor,
@@ -112,11 +113,7 @@ export const updateElementHelper = async <T extends ASTType>(
   if (!codeEntry) return;
 
   // update ast
-  const newAst = apply(editor, {
-    ast: (await codeEntry.getLatestAst()) as T,
-    codeEntry,
-    lookupId,
-  });
+  const newAst = apply(editor, await createNewEditContext(codeEntry, lookupId));
 
   if (selectContext) {
     const { renderEntry, selectElement } = selectContext;
@@ -141,11 +138,7 @@ export const updateStyleGroupHelper = async <T extends ASTType>(
   if (!codeEntry) return;
 
   // update ast
-  const newAst = apply(editor, {
-    ast: (await codeEntry.getLatestAst()) as T,
-    codeEntry,
-    lookupId,
-  });
+  const newAst = apply(editor, await createNewEditContext(codeEntry, lookupId));
 
   codeEntry.updateAst(newAst);
 };

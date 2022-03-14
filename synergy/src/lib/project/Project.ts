@@ -49,6 +49,7 @@ export abstract class Project {
   public abstract addAsset(filePath: string): void;
   public abstract refreshConfig(): void;
 
+  public abstract getNormalizedPath(srcPath: string): string;
   public abstract getNormalizedSourcePath(srcPath: string): string;
   public abstract getNewStyleSheetPath(name: string): string;
   public abstract getNewAssetPath(fileName: string): string;

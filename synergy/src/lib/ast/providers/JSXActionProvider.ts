@@ -133,6 +133,7 @@ export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
         .getValue()
         .find((e) => e.isStyleEntry)!;
       const styleAst = parseStyleSheetAST(styleCodeEntry.getRemoteCodeEntry());
+      // todo merge this with addStyleGroupToAST
       (styleAst.content as CSSASTNode[]).push(
         cb.ruleset([
           cb.selector([cb.class([cb.ident(styleClassName)])]),

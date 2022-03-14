@@ -5,6 +5,7 @@ import { StyleKeys } from "./paint";
 export interface SourceMetadata {
   componentName: string;
   directProps: Record<string, unknown>;
+  availableImports?: string[]; // files that are imported in the file that this element is defined in
 }
 
 export interface SelectedElement {

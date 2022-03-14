@@ -1,8 +1,9 @@
 import { forOwn, get, isArray } from "lodash";
 import { AddressInfo } from "net";
 
+import { normalizePath } from "synergy/src/lib/normalizePath";
+
 import { WebpackWorkerMessagePayload_Compile } from "../../types/ipc";
-import { normalizePath } from "../normalizePath";
 import { getAppNodeModules } from "../utils";
 import { webpackConfigFactory } from "./helpers/webpack-config-factory";
 

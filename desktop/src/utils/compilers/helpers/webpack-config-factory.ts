@@ -1,7 +1,8 @@
 import { cloneDeep } from "lodash";
 
+import { normalizePath } from "synergy/src/lib/normalizePath";
+
 import { WebpackWorkerMessagePayload_Compile } from "../../../types/ipc";
-import { normalizePath } from "../../normalizePath";
 import { requireUncached } from "../../utils";
 import { getCraModules } from "../cra-modules";
 

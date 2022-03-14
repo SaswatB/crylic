@@ -91,6 +91,11 @@ export const useTextInput: useInputFunction<
       }}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
+      helperText={
+        (value || !focused) && !isValid && allowError
+          ? "Invalid value"
+          : props?.helperText
+      }
     />
   );
 

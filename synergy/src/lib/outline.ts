@@ -1,6 +1,6 @@
 import { OutlineElement, OutlineElementType } from "../types/paint";
 import { ReactFiber } from "../types/react-devtools";
-import { ASTType } from "./ast/types";
+import { createNewReadContext } from "./ast/editors/ASTEditor";
 import { Project } from "./project/Project";
 import { RenderEntry } from "./project/RenderEntry";
 import { getChildrenFromFiber } from "./react-dev-tools";
@@ -102,7 +102,7 @@ const buildReactFiberRecurse = (
           )!;
           const codeEntry = context.project.getCodeEntryValue(codeId)!;
           const sourceMetadata = context.project.primaryElementEditor.getSourceMetaDataFromLookupId(
-            { ast: (await codeEntry.getLatestAst()) as ASTType, codeEntry },
+            await createNewReadContext(codeEntry),
             lookupId
           );
 

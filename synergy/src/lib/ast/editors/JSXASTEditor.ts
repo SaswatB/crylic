@@ -9,7 +9,7 @@ import { types } from "recast";
 
 import {
   ComponentDefinition,
-  CustomComponentDefinition,
+  ImportDefinition,
   StyleKeys,
   Styles,
 } from "../../../types/paint";
@@ -140,7 +140,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     child: ComponentDefinition,
     beforeChildLookupId: string
   ) {
-    const childTag = this.getOrImportComponent(ast, codeEntry, child);
+    const childTag = this.getOrImportComponent(ast, codeEntry, child)!;
 
     this.getJSXElementByLookupId(ast, lookupId, (path) => {
       this.addJSXChildToJSXElement(
@@ -188,7 +188,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       ast,
       codeEntry,
       componentDef
-    );
+    )!;
 
     this.getJSXElementByLookupId(ast, lookupId, (path) => {
       path.value.openingElement.name = componentTag;
@@ -229,10 +229,8 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     ).replace(/\s+/g, "")}`;
     const assetIdentifier = this.getOrAddImport(ast, codeEntry, {
       name: assetDefaultName,
-      import: {
-        path: relativeAssetPath,
-        isDefault: true,
-      },
+      path: relativeAssetPath,
+      isDefault: true,
     });
 
     this.getJSXElementByLookupId(ast, lookupId, (path) => {
@@ -289,6 +287,14 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     });
   }
 
+  protected addStyleGroupToAST() {
+    throw new Error("Unsupported operation: Adding style groups to JSX");
+  }
+
+  protected override addImportToAST ({ ast, codeEntry }: EditContext<t.File>, importDef: ImportDefinition) {
+    this.getOrAddImport(ast, codeEntry, importDef)
+  }
+
   public getRecentlyAddedElements({ ast, codeEntry }: ReadContext<t.File>) {
     let resultIndicies: number[] = [];
     // find all jsx elements with recently added data attributes
@@ -336,7 +342,8 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
 
   public getSourceMetaDataFromLookupId(
     { ast }: ReadContext<t.File>,
-    lookupId: string
+    lookupId: string,
+    options?: { includeImports?: boolean }
   ) {
     let sourceMetadata: SourceMetadata | undefined;
     this.getJSXElementByLookupId(ast, lookupId, (path) => {
@@ -386,6 +393,16 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
               return acc;
             }, {}) || {},
       };
+
+      if (options?.includeImports) {
+        sourceMetadata.availableImports = ast.program.body
+          .filter(
+            (node): node is t.ImportDeclaration =>
+              node.type === "ImportDeclaration" &&
+              node.source.type === "StringLiteral"
+          )
+          .map((o) => (o.source as t.StringLiteral).value);
+      }
     });
     return sourceMetadata;
   }
@@ -694,18 +711,17 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       // todo should this import React?
     } else {
       // ensure the import for components with a path
-      return this.getOrAddImport(ast, codeEntry, componentDef.component);
+      return this.getOrAddImport(ast, codeEntry, componentDef.component.import);
     }
   }
 
   protected getOrAddImport(
     ast: t.File,
     codeEntry: CodeEntry,
-    component: CustomComponentDefinition
+    importDef: ImportDefinition
   ) {
-    const importPath = codeEntry.getRelativeImportPath(component.import.path);
-    const importName =
-      component.import.namespace || component.import.name || component.name;
+    const importPath = codeEntry.getRelativeImportPath(importDef.path);
+    const importName = importDef.namespace || importDef.name;
 
     // try to find an existing import declaration
     let assetImport = ast.program.body.find(
@@ -728,25 +744,28 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       );
       ast.program.body.splice(lastImportIndex, 0, assetImport);
     }
+
+    if (importDef.skipIdentifier) return null;
+
     // try to find a default export on the import declaration
     let assetImportIdentifier = assetImport!.specifiers?.find((node): node is
       | t.ImportDefaultSpecifier
       | t.ImportSpecifier =>
-      component.import.isDefault
+      importDef.isDefault
         ? node.type === "ImportDefaultSpecifier"
         : node.type === "ImportSpecifier" && node.imported.name === importName
     );
     // add a default import if none is found
     if (!assetImportIdentifier) {
-      assetImportIdentifier = component.import.isDefault
+      assetImportIdentifier = importDef.isDefault
         ? b.importDefaultSpecifier(
-            b.identifier(component.import.preferredAlias || importName)
+            b.identifier(importDef.preferredAlias || importName)
           )
         : // todo add local if there's a name conflict
           b.importSpecifier(
             b.identifier(importName),
-            component.import.preferredAlias
-              ? b.identifier(component.import.preferredAlias)
+            importDef.preferredAlias
+              ? b.identifier(importDef.preferredAlias)
               : null
           );
       assetImport.specifiers = assetImport.specifiers || [];
@@ -760,10 +779,10 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     if (importedName === false) {
       throw new Error("Failed to find import name");
     }
-    if (component.import.namespace) {
+    if (importDef.namespace) {
       return b.jsxMemberExpression(
         b.jsxIdentifier(importedName),
-        b.jsxIdentifier(component.import.name || component.name)
+        b.jsxIdentifier(importDef.name)
       );
     }
     return b.jsxIdentifier(importedName);

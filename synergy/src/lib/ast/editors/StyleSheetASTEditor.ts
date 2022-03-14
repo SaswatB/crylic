@@ -7,6 +7,7 @@ import { Styles } from "../../../types/paint";
 import { CodeEntry } from "../../project/CodeEntry";
 import {
   createCSSPropertyDeclaration,
+  CSSASTBuilder as cb,
   eitherContent,
   getContent,
   ifArray,
@@ -140,6 +141,17 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
     assetEntry: CodeEntry
   ) {
     // todo: implement
+  }
+
+  
+  protected addStyleGroupToAST({ ast }: EditContext<CSSASTNode>, name: string) {
+    (ast.content as CSSASTNode[]).push(
+      cb.ruleset([
+        cb.selector([cb.class([cb.ident(name)])]),
+        cb.space(' '),
+        cb.block([cb.space('\n')]),
+      ])
+    );
   }
 
   // helpers

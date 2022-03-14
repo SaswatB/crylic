@@ -123,16 +123,21 @@ export class CodeEntry {
   }
 
   @memoize()
-  public get friendlyName() {
-    const fileName = this.filePath
+  public get baseName() {
+    return this.filePath
       ?.replace(/^.*(\/|\\)/, "")
       ?.replace(SCRIPT_EXTENSION_REGEX, "")
       ?.replace(STYLE_EXTENSION_REGEX, "");
+  }
+
+  @memoize()
+  public get friendlyName() {
+    const baseName = this.baseName;
     if (!this.isScriptEntry && !this.isStyleEntry) {
-      return fileName;
+      return baseName;
     }
     // todo get a more specific name if this simple name conflicts with another code entry
-    return `${startCase(fileName)}${this.isStyleEntry ? " (stylesheet)" : ""}`;
+    return `${startCase(baseName)}${this.isStyleEntry ? " (stylesheet)" : ""}`;
   }
 
   // #endregion
@@ -211,7 +216,7 @@ export class CodeEntry {
       > => {
         if (
           (!this.isScriptEntry && !this.isStyleEntry) ||
-          !code ||
+          code === undefined ||
           code.length > this.project.config.getAnalyzerMaxFileSizeBytes()
         ) {
           return { isRenderable: false };

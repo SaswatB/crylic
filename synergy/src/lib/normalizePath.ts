@@ -1,3 +1,3 @@
 export function normalizePath(p: string, pathSep: string) {
-  return p.replace(/(\\|\/)/g, pathSep);
+  return p.replace(/[/\\]/g, pathSep);
 }

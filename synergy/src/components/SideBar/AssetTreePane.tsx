@@ -79,7 +79,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
     project?.addCodeEntries([new CodeEntry(project, filePath, "")], {
       edit: true,
     });
-    enqueueSnackbar("Started a new component!");
+    enqueueSnackbar("Created a new stylesheet!");
   };
   const onImportImage = async () => {
     const file = await onImportImageFile();

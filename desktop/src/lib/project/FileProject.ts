@@ -7,6 +7,7 @@ import {
   SCRIPT_EXTENSION_REGEX,
   STYLE_EXTENSION_REGEX,
 } from "synergy/src/lib/ext-regex";
+import { normalizePath } from "synergy/src/lib/normalizePath";
 import {
   CodeEntry,
   INITIAL_CODE_REVISION_ID,
@@ -14,7 +15,6 @@ import {
 import { Project } from "synergy/src/lib/project/Project";
 import { sleep } from "synergy/src/lib/utils";
 
-import { normalizePath } from "../../utils/normalizePath";
 import { streamToString } from "../../utils/utils";
 import { FileProjectConfig } from "./FileProjectConfig";
 
@@ -219,8 +219,12 @@ export class FileProject extends Project {
 
   // #region new paths
 
+  public getNormalizedPath(p: string) {
+    return normalizePath(p, path.sep);
+  }
+
   public getNormalizedSourcePath(srcPath: string) {
-    return path.join(this.sourceFolderPath, normalizePath(srcPath, path.sep));
+    return path.join(this.sourceFolderPath, this.getNormalizedPath(srcPath));
   }
 
   public getNewStyleSheetPath(name: string) {

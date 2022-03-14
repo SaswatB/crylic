@@ -133,6 +133,10 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
     // todo: implement
   }
 
+  protected addStyleGroupToAST() {
+    throw new Error("Unsupported operation: Adding style groups to JSX");
+  }
+
   // helpers
 
   protected getStyledTemplateByLookup(

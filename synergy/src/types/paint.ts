@@ -64,14 +64,17 @@ export type Styles = { [P in StyleKeys]?: string | null };
 
 export interface CustomComponentDefinition {
   name: string;
-  import: {
-    path: string; // absolute path or node module, todo support path relative to project root
-    namespace?: string;
-    name?: string; // defaults to name
-    isDefault?: boolean;
-    preferredAlias?: string;
-  };
+  import: ImportDefinition;
   // defaultChildren?: ComponentDefinition[]; // todo implement
+}
+
+export interface ImportDefinition {
+  path: string; // absolute path or node module, todo support path relative to project root
+  namespace?: string;
+  name: string;
+  isDefault?: boolean;
+  preferredAlias?: string;
+  skipIdentifier?: boolean; // for side effect imports, like style sheets
 }
 
 export type ComponentDefinition = (

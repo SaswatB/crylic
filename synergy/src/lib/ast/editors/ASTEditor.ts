@@ -1,4 +1,8 @@
-import { ComponentDefinition, Styles } from "../../../types/paint";
+import {
+  ComponentDefinition,
+  ImportDefinition,
+  Styles,
+} from "../../../types/paint";
 import { SourceMetadata } from "../../../types/selected-element";
 import { CodeEntry } from "../../project/CodeEntry";
 import { editAST } from "../ast-helpers";
@@ -24,6 +28,19 @@ export interface EditContext<T> {
   ast: T;
   codeEntry: CodeEntry;
   lookupId: string;
+}
+
+export async function createNewReadContext<T>(
+  codeEntry: CodeEntry
+): Promise<ReadContext<T>> {
+  return { ast: (await codeEntry.getLatestAst()) as T, codeEntry };
+}
+
+export async function createNewEditContext<T>(
+  codeEntry: CodeEntry,
+  lookupId: string
+): Promise<EditContext<T>> {
+  return { ast: (await codeEntry.getLatestAst()) as T, codeEntry, lookupId };
 }
 
 export abstract class ASTEditor<ASTType> {
@@ -79,6 +96,12 @@ export abstract class StyleASTEditor<ASTType> extends ASTEditor<ASTType> {
     imageProp: "backgroundImage",
     assetEntry: CodeEntry
   ): void;
+
+  public addStyleGroup = editAST(this.addStyleGroupToAST.bind(this)); // lookupId is ignored
+  protected abstract addStyleGroupToAST(
+    editContext: EditContext<ASTType>,
+    name: string
+  ): void;
 }
 
 export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
@@ -95,6 +118,12 @@ export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
     editContext: EditContext<ASTType>,
     child: ComponentDefinition,
     beforeChildLookupId?: string
+  ): void;
+
+  public addImport = editAST(this.addImportToAST.bind(this)); // lookupId is ignored
+  protected abstract addImportToAST(
+    editContext: EditContext<ASTType>,
+    importDef: ImportDefinition
   ): void;
 
   public updateElementAttributes = editAST(
@@ -143,7 +172,8 @@ export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
 
   public abstract getSourceMetaDataFromLookupId(
     readContext: ReadContext<ASTType>,
-    lookupId: string
+    lookupId: string,
+    options?: { includeImports?: boolean }
   ): SourceMetadata | undefined;
 
   public abstract getHTMLElementsByLookupId(

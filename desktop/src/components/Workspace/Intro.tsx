@@ -5,6 +5,7 @@ import path from "path";
 
 import { Tour } from "synergy/src/components/Tour/Tour";
 import { useService } from "synergy/src/hooks/useService";
+import { normalizePath } from "synergy/src/lib/normalizePath";
 import { ProjectService } from "synergy/src/services/ProjectService";
 
 import { openFilePicker, saveFilePicker } from "../../hooks/useFilePicker";
@@ -12,7 +13,6 @@ import {
   FileProject,
   FileProjectTemplate,
 } from "../../lib/project/FileProject";
-import { normalizePath } from "../../utils/normalizePath";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 
