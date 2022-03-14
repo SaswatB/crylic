@@ -13,6 +13,11 @@ import { CodeEntry } from "../lib/project/CodeEntry";
 import { useProject } from "../services/ProjectService";
 import { createModal } from "./PromiseModal";
 
+enum Preset {
+  Basic = "Basic",
+  BasicWSS = "Basic with Style Sheet",
+}
+
 enum BaseComponent {
   Button = "button",
   Div = "div",
@@ -27,17 +32,20 @@ const BaseComponentNames: Record<BaseComponent, string> = {
   [BaseComponent.Span]: "Text",
 };
 
-export const getBoilerPlateComponent = (
+const getBoilerPlateComponent = (
   name: string,
   baseComponent: string,
-  styles: CSSProperties
+  styles: CSSProperties,
+  includeStyleSheet: boolean
 ) =>
   prettyPrintTS(`
 import React from "react";
+${includeStyleSheet ? `import "./${name}.css";` : ""}
 
 export function ${name}() {
   return (
     <${baseComponent}
+      ${includeStyleSheet ? `className="${name}"` : ""}
       ${
         Object.entries(styles).length > 0
           ? `style={${JSON.stringify(styles)}}`
@@ -47,6 +55,10 @@ export function ${name}() {
   );
 }
 `);
+
+const getBoilerPlateStyleSheet = (name: string) =>
+  `.${name} {
+}`.trim();
 
 export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
   const project = useProject();
@@ -59,6 +71,15 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
   const normalizedComponentName = upperFirst(
     camelCase(name.replace(/[^a-zA-Z0-9 ]/g, ""))
   );
+
+  const [preset, renderPresetInput] = useSelectInput({
+    label: "Preset",
+    initialValue: Preset.BasicWSS,
+    options: Object.values(Preset).map((b) => ({
+      name: b,
+      value: b,
+    })),
+  });
 
   const [base, renderBaseInput] = useSelectInput({
     label: "Base",
@@ -84,10 +105,26 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
     const filePath = project.getNormalizedSourcePath(
       `${location}/${normalizedComponentName}.tsx`
     );
-    const code = getBoilerPlateComponent(normalizedComponentName, base, {});
+    const code = getBoilerPlateComponent(
+      normalizedComponentName,
+      base,
+      {},
+      preset === Preset.BasicWSS
+    );
     const codeEntry = new CodeEntry(project, filePath, code);
     project.addCodeEntries([codeEntry], { render: true });
     project.saveFile(codeEntry);
+
+    if (preset === Preset.BasicWSS) {
+      const filePath2 = project.getNormalizedSourcePath(
+        `${location}/${normalizedComponentName}.css`
+      );
+      const code2 = getBoilerPlateStyleSheet(normalizedComponentName);
+      const codeEntry2 = new CodeEntry(project, filePath2, code2);
+      project.addCodeEntries([codeEntry2]);
+      project.saveFile(codeEntry2);
+    }
+
     enqueueSnackbar("Started a new component!");
 
     resolve(null);
@@ -100,6 +137,7 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
         <div className="mb-4 flex flex-col">
           {renderNameInput({ helperText: normalizedComponentName })}
         </div>
+        <div className="mb-4">{renderPresetInput()}</div>
         <div className="mb-4">{renderBaseInput()}</div>
         {renderLocationInput()}
       </DialogContent>
