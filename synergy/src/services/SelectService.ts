@@ -172,6 +172,7 @@ export class SelectService {
   }
 
   public setSelectedStyleGroup(selectedStyleGroup: StyleGroup | undefined) {
+    console.log("changing style group", selectedStyleGroup?.lookupId);
     this.selectedStyleGroup$.next(selectedStyleGroup);
   }
 
