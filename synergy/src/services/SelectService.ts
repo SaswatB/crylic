@@ -17,7 +17,7 @@ import {
 import { ASTType } from "../lib/ast/types";
 import { RenderEntry } from "../lib/project/RenderEntry";
 import { eagerMap } from "../lib/rxjs/eagerMap";
-import { sleep } from "../lib/utils";
+import { getBestStyleGroup, sleep } from "../lib/utils";
 import { OutlineElement, Styles } from "../types/paint";
 import { SelectedElement } from "../types/selected-element";
 import { ProjectService } from "./ProjectService";
@@ -287,15 +287,9 @@ export class SelectService {
     });
 
     // update style group
-    let newSelectedStyleGroup = styleGroups[0];
-    const currentStyleGroup = this.selectedStyleGroup$.getValue();
-    if (currentStyleGroup) {
-      newSelectedStyleGroup =
-        styleGroups.find((s) => currentStyleGroup.lookupId === s.lookupId) ||
-        newSelectedStyleGroup;
-    }
-
-    this.setSelectedStyleGroup(newSelectedStyleGroup);
+    this.setSelectedStyleGroup(
+      getBestStyleGroup(styleGroups, this.selectedStyleGroup$.getValue())
+    );
   }
 
   public async updateSelectedElement<T extends ASTType>(

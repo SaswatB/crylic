@@ -13,10 +13,11 @@ import {
   EditContext,
   ReadContext,
   StyleASTEditor,
+  STYLED_COMPONENTS_STYLE_GROUP_TYPE,
   StyleGroup,
 } from "./ASTEditor";
 
-export const STYLED_LOOKUP_CSS_VAR_PREFIX = "--paint-styledlookup-";
+const STYLED_LOOKUP_CSS_VAR_PREFIX = "--paint-styledlookup-";
 
 const STYLED_LOOKUP_MATCHER = new RegExp(
   `${STYLED_LOOKUP_CSS_VAR_PREFIX}(.+): 1;`
@@ -99,6 +100,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
       );
       if (varValue) {
         styleGroups.push({
+          type: STYLED_COMPONENTS_STYLE_GROUP_TYPE,
           category: "Styled Component",
           // todo unique backup names if there's multiple components
           name: this.lookupIdNameMap[lookupId] || "Styled Component Style",

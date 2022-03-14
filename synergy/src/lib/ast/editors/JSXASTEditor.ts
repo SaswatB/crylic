@@ -36,6 +36,7 @@ import {
 import {
   EditContext,
   ElementASTEditor,
+  INLINE_STYLE_GROUP_TYPE,
   ReadContext,
   StyleGroup,
 } from "./ASTEditor";
@@ -125,6 +126,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     if (!lookupId) return [];
     return [
       {
+        type: INLINE_STYLE_GROUP_TYPE,
         category: "Inline",
         name: "Element Style",
         lookupId,

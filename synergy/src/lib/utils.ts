@@ -2,6 +2,12 @@ import produce, { Draft } from "immer";
 import { BehaviorSubject, Observable } from "rxjs";
 import { take } from "rxjs/operators";
 
+import {
+  CSS_STYLE_GROUP_TYPE,
+  INLINE_STYLE_GROUP_TYPE,
+  STYLED_COMPONENTS_STYLE_GROUP_TYPE,
+  StyleGroup,
+} from "./ast/editors/ASTEditor";
 import { LTBehaviorSubject } from "./lightObservable/LTBehaviorSubject";
 import { LTObservable, LTSubscription } from "./lightObservable/LTObservable";
 
@@ -59,3 +65,40 @@ export const ltTakeNext = <T>(source: LTObservable<T>): Promise<T> => {
     });
   });
 };
+
+export function getBestStyleGroup(
+  styleGroups: StyleGroup[],
+  previousStyleGroup: StyleGroup | undefined
+) {
+  // if the previous style group is available, use it
+  if (previousStyleGroup) {
+    const sg = styleGroups.find(
+      (s) => previousStyleGroup.lookupId === s.lookupId
+    );
+    if (sg) return sg;
+  }
+
+  // todo make this configurable
+  if (styleGroups.length > 1) {
+    // prefer styled components
+    const scSg = styleGroups.find(
+      (s) => s.type === STYLED_COMPONENTS_STYLE_GROUP_TYPE
+    );
+    if (scSg) return scSg;
+    // prefer css classes that seem to be specific to the element
+    // css regex: https://stackoverflow.com/questions/448981/which-characters-are-valid-in-css-class-names-selectors
+    const cssSg = styleGroups.find(
+      (s) =>
+        s.type === CSS_STYLE_GROUP_TYPE &&
+        s.name.match(/^\.-?[_a-zA-Z]+[_a-zA-Z0-9-]*$/)
+    );
+    if (cssSg) return cssSg;
+    // fallback to inline
+    const inlineSg = styleGroups.find(
+      (s) => s.type === INLINE_STYLE_GROUP_TYPE
+    );
+    if (inlineSg) return inlineSg;
+  }
+
+  return styleGroups[0];
+}

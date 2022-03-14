@@ -15,6 +15,7 @@ import {
   traverseStyleSheetRuleSets,
 } from "../ast-helpers";
 import {
+  CSS_STYLE_GROUP_TYPE,
   EditContext,
   ReadContext,
   StyleASTEditor,
@@ -110,8 +111,9 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
       );
       if (varValue)
         styleGroups.push({
+          type: CSS_STYLE_GROUP_TYPE,
           category: "Style Sheet Rule",
-          name: varValue,
+          name: varValue.trim(),
           lookupId,
           editor: this,
         });

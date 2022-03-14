@@ -4,11 +4,16 @@ import { CodeEntry } from "../../project/CodeEntry";
 import { editAST } from "../ast-helpers";
 
 export interface StyleGroup {
+  type: string;
   category: string;
   name: string;
   lookupId: string;
   editor: StyleASTEditor<any>;
 }
+
+export const INLINE_STYLE_GROUP_TYPE = "inline";
+export const CSS_STYLE_GROUP_TYPE = "css";
+export const STYLED_COMPONENTS_STYLE_GROUP_TYPE = "styled-components";
 
 export interface ReadContext<T> {
   ast: Readonly<T>;
