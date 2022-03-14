@@ -27,12 +27,6 @@ function useStyleGroupFE({
   styleProp,
   onChangeStyleGroup,
 }: StyleGroupFEProps) {
-  if (styleProp === "fontSize")
-    console.log(
-      "fontsize",
-      selectedElement,
-      getSelectedElementStyleValue(selectedElement, styleProp)
-    );
   return {
     label: StylePropNameMap[styleProp] || startCase(`${styleProp || ""}`),
     initialValue: getSelectedElementStyleValue(selectedElement, styleProp),

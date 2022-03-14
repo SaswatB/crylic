@@ -285,7 +285,17 @@ export class SelectService {
       inlineStyles: primaryElement.style,
       overlayWarnings,
     });
-    this.setSelectedStyleGroup(styleGroups[0]);
+
+    // update style group
+    let newSelectedStyleGroup = styleGroups[0];
+    const currentStyleGroup = this.selectedStyleGroup$.getValue();
+    if (currentStyleGroup) {
+      newSelectedStyleGroup =
+        styleGroups.find((s) => currentStyleGroup.lookupId === s.lookupId) ||
+        newSelectedStyleGroup;
+    }
+
+    this.setSelectedStyleGroup(newSelectedStyleGroup);
   }
 
   public async updateSelectedElement<T extends ASTType>(
