@@ -22,6 +22,8 @@ import { ActionProvider, EditorAction } from "./ActionProvider";
 
 const { builders: b } = types;
 
+const DISABLE_MOVE_STYLE_TO_STYLE_SHEET = true; // todo allow users to select style sheet
+
 type JSXASTEditorAction = {
   type: "MoveStyleToStyleSheet";
   elementIndex: number;
@@ -29,6 +31,8 @@ type JSXASTEditorAction = {
 
 export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
   public getEditorActions(codeEntry: CodeEntry) {
+    if (DISABLE_MOVE_STYLE_TO_STYLE_SHEET) return [];
+
     const ast = parseAST(codeEntry.code$.getValue() || "");
     const actions: EditorAction<JSXASTEditorAction>[] = [];
     traverseJSXElements(ast, (path, index) => {
