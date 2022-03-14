@@ -7,6 +7,7 @@ function materialUIComponentDef(name: string): CustomComponentDefinition {
   return {
     name,
     import: {
+      name,
       path: `@material-ui/core/${name}`,
       isDefault: true,
     },

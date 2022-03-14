@@ -287,7 +287,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
         name,
         import: {
           // todo throw an error if exportName isn't set
-          name: await ltTakeNext(codeEntry.exportName$),
+          name: (await ltTakeNext(codeEntry.exportName$))!,
           path: codeEntry.filePath,
           isDefault: await ltTakeNext(codeEntry.exportIsDefault$),
         },
