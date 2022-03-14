@@ -28,8 +28,8 @@ const darkTheme = createMuiTheme({
 export const Bootstrap: FunctionComponent = ({ children }) => (
   <RecoilRoot>
     <BusProvider value={bus}>
-      <SnackbarProvider maxSnack={3}>
-        <ThemeProvider theme={darkTheme}>
+      <ThemeProvider theme={darkTheme}>
+        <SnackbarProvider maxSnack={3}>
           <TourProvider>
             <DndProvider backend={HTML5Backend}>
               <ModalContainer />
@@ -38,8 +38,8 @@ export const Bootstrap: FunctionComponent = ({ children }) => (
               {children}
             </DndProvider>
           </TourProvider>
-        </ThemeProvider>
-      </SnackbarProvider>
+        </SnackbarProvider>
+      </ThemeProvider>
     </BusProvider>
   </RecoilRoot>
 );

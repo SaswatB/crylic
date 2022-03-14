@@ -9425,7 +9425,6 @@ __metadata:
     monaco-textmate: ^3.0.1
     node-gyp: ^6.1.0
     normalize.css: ^8.0.1
-    notistack: ^0.9.9
     onigasm: ^2.2.4
     open: ^7.0.4
     optimize-css-assets-webpack-plugin: ^5.0.3
