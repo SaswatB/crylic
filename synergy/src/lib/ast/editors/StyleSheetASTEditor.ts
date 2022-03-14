@@ -58,17 +58,23 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
       const ruleBlock = this.getRuleBlock(path);
       const { lookupId, index } =
         (ruleBlock && this.getRuleBlockLookupId(ruleBlock)) || {};
-      if (ruleBlock && lookupId !== undefined) {
+      if (ruleBlock && lookupId !== undefined && index !== undefined) {
         const ruleBlockContent = ruleBlock.content as CSSASTNode[];
-        if (
-          ruleBlockContent[index! + 1]?.type === "declarationDelimiter" ||
-          ruleBlockContent[index! + 1]?.type === "space"
-        ) {
-          ruleBlock.removeChild(index! + 1);
+        // clean up spacing and semi-colons after the rule
+        if (ruleBlockContent[index + 1]?.type === "declarationDelimiter") {
+          const nextNext = ruleBlockContent[index + 2]
+          if (nextNext?.type === "space" && typeof nextNext.content === 'string' && !nextNext.content.includes(' ')) {
+            ruleBlock.removeChild(index + 2);
+          }
+          ruleBlock.removeChild(index + 1);
+        } else if (ruleBlockContent[index + 1]?.type === "space") {
+          ruleBlock.removeChild(index + 1);
         }
-        ruleBlock.removeChild(index!);
-        if (ruleBlockContent[index! - 1]?.type === "space") {
-          ruleBlock.removeChild(index! - 1);
+        // remove the lookup rule
+        ruleBlock.removeChild(index);
+        // clean up spacing before the rule
+        if (ruleBlockContent[index - 1]?.type === "space") {
+          ruleBlock.removeChild(index - 1);
         }
       }
     });
