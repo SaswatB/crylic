@@ -13,7 +13,9 @@ export const openFilePicker = async (options?: Electron.OpenDialogOptions) => {
   return canceled ? null : filePaths[0];
 };
 
-export const saveFilePicker = async (options?: Electron.SaveDialogOptions) => {
+export const saveFilePicker = async (
+  options?: Electron.SaveDialogOptions
+): Promise<string | null> => {
   const { canceled, filePath } = await ipcRenderer.invoke("showSaveDialog", {
     properties: ["createDirectory"],
     ...options,
@@ -21,6 +23,9 @@ export const saveFilePicker = async (options?: Electron.SaveDialogOptions) => {
 
   return canceled ? null : filePath;
 };
+
+export const getUserFolder = async (type: string): Promise<string | null> =>
+  ipcRenderer.invoke("getAppPath", type);
 
 export function useFilePicker() {
   const [filePath, setFilePath] = useState<string>();

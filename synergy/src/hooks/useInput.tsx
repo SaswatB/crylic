@@ -55,7 +55,8 @@ export const useTextInput: useInputFunction<
     string,
     (props?: TextFieldProps) => JSX.Element,
     boolean,
-    (v?: boolean) => void
+    (v?: boolean) => void,
+    (v: string) => void
   ]
 > = ({
   bindInitialValue,
@@ -99,7 +100,7 @@ export const useTextInput: useInputFunction<
     />
   );
 
-  return [value, render, isValid, (v) => setAllowError(v ?? true)];
+  return [value, render, isValid, (v) => setAllowError(v ?? true), setValue];
 };
 export const useTextInputStructured = (
   props: Parameters<typeof useTextInput>[0]

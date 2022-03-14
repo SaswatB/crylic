@@ -1,20 +1,25 @@
 import React, { useState } from "react";
 import { Backdrop, CircularProgress } from "@material-ui/core";
 import { useSnackbar } from "notistack";
-import path from "path";
 
+import { NewProjectModal } from "synergy/src/components/NewProjectModal";
 import { Tour } from "synergy/src/components/Tour/Tour";
 import { useService } from "synergy/src/hooks/useService";
 import { normalizePath } from "synergy/src/lib/normalizePath";
 import { ProjectService } from "synergy/src/services/ProjectService";
 
-import { openFilePicker, saveFilePicker } from "../../hooks/useFilePicker";
+import { getUserFolder, openFilePicker } from "../../hooks/useFilePicker";
 import {
   FileProject,
   FileProjectTemplate,
 } from "../../lib/project/FileProject";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
+const path = __non_webpack_require__("path") as typeof import("path");
+
+const FileProjectTemplateNames: Record<FileProjectTemplate, string> = {
+  [FileProjectTemplate.Blank]: "Blank Project",
+};
 
 export function Intro() {
   const projectService = useService(ProjectService);
@@ -22,9 +27,27 @@ export function Intro() {
   const [loading, setLoading] = useState(0);
   const recentProjects = projectService.getRecentProjects();
 
-  const createProject = (filePath: string) => {
+  const createProject = async () => {
+    const initialLocation =
+      (await getUserFolder("documents")) || (await getUserFolder("home"));
+    if (!initialLocation) return;
+
+    const res = await NewProjectModal({
+      templates: Object.values(FileProjectTemplate).map((t) => ({
+        name: FileProjectTemplateNames[t],
+        value: t,
+      })),
+      initialName: "my-crylic-project",
+      initialLocation,
+      onBrowse: () => openFilePicker({ properties: ["openDirectory"] }),
+    });
+    if (!res) return;
+
     setLoading((l) => l + 1);
-    FileProject.createNewProjectInDirectory(filePath, FileProjectTemplate.Blank)
+    FileProject.createNewProjectInDirectory(
+      path.join(res.location, res.name),
+      res.template as FileProjectTemplate
+    )
       .then((p) => projectService.setProject(p))
       .finally(() => setLoading((l) => l - 1));
   };
@@ -55,11 +78,7 @@ export function Intro() {
         <button
           className="btn w-full"
           data-tour="new-project"
-          onClick={() =>
-            saveFilePicker({
-              filters: [{ name: "Project", extensions: [""] }],
-            }).then((f) => f && createProject(f))
-          }
+          onClick={createProject}
         >
           New Project
         </button>

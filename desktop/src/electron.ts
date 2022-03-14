@@ -131,6 +131,8 @@ ipcMain.handle("showSaveDialog", (e, options) =>
   dialog.showSaveDialog(options)
 );
 
+ipcMain.handle("getAppPath", (e, type) => app.getPath(type));
+
 // start up the webpack worker
 // eslint-disable-next-line import/first
 import "./utils/compilers/webpack-worker";
