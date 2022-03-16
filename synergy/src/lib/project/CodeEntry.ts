@@ -60,20 +60,25 @@ export class CodeEntry {
     this.code$.next(code);
   }
 
-  public updateAst(editedAst: ASTType) {
+  public async updateAst(editedAst: ASTType) {
     // remove lookup data from the ast and get the transformed code
     this.project.getEditorsForCodeEntry(this).forEach((editor) => {
       editedAst = editor.removeLookupData({ ast: editedAst, codeEntry: this });
     });
+    const newCode = prettyPrintCodeEntryAST(
+      this.project.config,
+      this.getRemoteCodeEntry(),
+      editedAst
+    );
+
+    // recompute the metadata to make sure an error wasn't introduced
+    await workerModule.computeMetadata({
+      ...this.getRemoteCodeEntry(),
+      code: newCode,
+    });
 
     // save the edited code
-    this.updateCode(
-      prettyPrintCodeEntryAST(
-        this.project.config,
-        this.getRemoteCodeEntry(),
-        editedAst
-      )
-    );
+    this.updateCode(newCode);
   }
 
   // #region filePath getters

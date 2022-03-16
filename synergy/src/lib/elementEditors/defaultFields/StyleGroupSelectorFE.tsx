@@ -240,7 +240,7 @@ export function StyleGroupSelectorFE({
 
         // update files
         // todo join these in the save undo entry
-        styleEntry.updateAst(
+        await styleEntry.updateAst(
           styleEditor.addStyleGroup(
             await createNewEditContext(styleEntry, ""),
             res.name

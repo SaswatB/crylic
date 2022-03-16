@@ -87,7 +87,7 @@ export const addElementHelper = async (
     });
   }
 
-  codeEntry.updateAst(newAst);
+  await codeEntry.updateAst(newAst);
 };
 
 export const updateElementHelper = async <T extends ASTType>(
@@ -122,7 +122,7 @@ export const updateElementHelper = async <T extends ASTType>(
     );
   }
 
-  codeEntry.updateAst(newAst);
+  await codeEntry.updateAst(newAst);
 };
 
 export const updateStyleGroupHelper = async <T extends ASTType>(
@@ -140,5 +140,5 @@ export const updateStyleGroupHelper = async <T extends ASTType>(
   // update ast
   const newAst = apply(editor, await createNewEditContext(codeEntry, lookupId));
 
-  codeEntry.updateAst(newAst);
+  await codeEntry.updateAst(newAst);
 };
