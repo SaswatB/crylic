@@ -5,6 +5,7 @@ import React, {
   useLayoutEffect,
   useRef,
 } from "react";
+import { clamp } from "lodash";
 
 import { ComponentViewZoomAction } from "../types/paint";
 
@@ -48,8 +49,11 @@ export const TransformContainer: FunctionComponent<Props> = ({
     if (!transformContainerRef.current) return;
     const { scale, x, y } = transformRef.current;
     if (e.ctrlKey) {
-      const newScale =
-        e.deltaY > 0 ? scale + e.deltaY / 1000 : scale / (1 - e.deltaY / 1000);
+      const newScale = clamp(
+        e.deltaY < 0 ? scale - e.deltaY / 600 : scale / (1 + e.deltaY / 600),
+        0.1,
+        3
+      );
       const {
         top: containerTop,
         left: containerLeft,
@@ -59,8 +63,8 @@ export const TransformContainer: FunctionComponent<Props> = ({
       const oy = e.nativeEvent.pageY - containerTop;
       changeZoom(newScale, { x: ox, y: oy });
     } else {
-      const newX = x + e.deltaX / (scale * 2);
-      const newY = y + e.deltaY / (scale * 2);
+      const newX = x - e.deltaX / (scale * 2);
+      const newY = y - e.deltaY / (scale * 2);
       transformRef.current = { ...transformRef.current, x: newX, y: newY };
     }
     refreshTransform();
