@@ -23,8 +23,10 @@ import {
   useObservable,
 } from "synergy/src/hooks/useObservable";
 import { useObservableCallback } from "synergy/src/hooks/useObservableCallback";
+import { useService } from "synergy/src/hooks/useService";
 import { editorResize } from "synergy/src/lib/events";
 import { useProject } from "synergy/src/services/ProjectService";
+import { SelectService } from "synergy/src/services/SelectService";
 import { ComponentViewZoomAction } from "synergy/src/types/paint";
 
 import { CodeEditorPane } from "./components/SideBar/CodeEditorPane/CodeEditorPane";
@@ -43,9 +45,18 @@ const store = new Store();
 let isFathomLoaded = false;
 
 function App() {
-  const project = useProject({ allowUndefined: true });
-  const { enqueueSnackbar } = useSnackbar();
   const bus = useBus();
+  const { enqueueSnackbar } = useSnackbar();
+  const selectService = useService(SelectService);
+  const hasSelectedElement = useMemoObservable(
+    () =>
+      selectService.selectedElement$.pipe(
+        map((s) => s !== undefined),
+        distinctUntilChanged()
+      ),
+    [selectService]
+  );
+  const project = useProject({ allowUndefined: true });
   const renderEntries = useObservable(project?.renderEntries$);
   const hasEditEntries = useMemoObservable(
     () =>
@@ -216,7 +227,7 @@ function App() {
           </TransformContainer>
           <SupportCTA openUrl={open} />
         </div>
-        {project && (
+        {project && !!hasSelectedElement && (
           <Resizable
             className="flex flex-col h-screen bg-gray-800 z-10"
             minWidth={200}
