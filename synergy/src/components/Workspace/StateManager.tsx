@@ -32,6 +32,7 @@ export const StateManager: FunctionComponent = () => {
             "react",
             "react-dom",
             "react-scripts",
+            "prettier",
             "typescript",
             "webpack",
           ].includes(p.name)
