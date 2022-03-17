@@ -138,7 +138,7 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
           {renderNameInput({ helperText: normalizedComponentName })}
         </div>
         <div className="mb-4">{renderPresetInput()}</div>
-        <div className="mb-4">{renderBaseInput()}</div>
+        {/* <div className="mb-4">{renderBaseInput()}</div> */}
         {renderLocationInput()}
       </DialogContent>
       <DialogActions>
