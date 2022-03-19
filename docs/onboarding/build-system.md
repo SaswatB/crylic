@@ -35,7 +35,7 @@ After creating the Webpack override file, the Webpack config editor will allow e
 
 In addition to the ability to arbitrarily change the Webpack config, there are several configuration options available in the [config ](../reference/configuration-file.md)file.
 
-{% content-ref url="broken-reference" %}
-[Broken link](broken-reference)
+{% content-ref url="../reference/configuration-file.md#webpack" %}
+[Reference](../reference/configuration-file.md#webpack)
 {% endcontent-ref %}
 
