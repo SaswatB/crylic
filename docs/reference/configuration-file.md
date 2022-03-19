@@ -153,7 +153,7 @@ Defines the root element selector used to reference the element within the HTML 
 
 ### Analyzer
 
-Additional guidance for the analyzer can be found under [Analyzer Overrides](../onboarding/analyzer-overrides.md).
+Additional information about the analyzer can be found under [Analyzer Overrides](../onboarding/analyzer-overrides.md).
 
 <details>
 
