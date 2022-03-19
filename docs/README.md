@@ -17,7 +17,7 @@ Currently Crylic supports React projects, but we're working on adding more frame
 Crylic can be used by **both designers and developers.**
 
 {% hint style="info" %}
-Some aspects of Crylic require technical skills, such as [onboarding existing projects](broken-reference), but overall it's designed to be used without any technical knowledge.
+Some aspects of Crylic require technical skills, such as [onboarding existing projects](./onboarding), but overall it's designed to be used without any technical knowledge.
 
 Due to Crylic's position as a tool that straddles the designer and developer worlds, documentation may sometimes be developer focused.
 {% endhint %}
@@ -26,24 +26,24 @@ To get started, choose an entry point that best fits your requirements.
 
 #### Designer Friendly
 
-{% content-ref url="broken-reference" %}
-[Broken link](broken-reference)
+{% content-ref url="./quickstart" %}
+[Quickstart](./quickstart)
 {% endcontent-ref %}
 
-{% content-ref url="broken-reference" %}
-[Broken link](broken-reference)
+{% content-ref url="./overview" %}
+[Overview](./overview)
 {% endcontent-ref %}
 
-{% content-ref url="broken-reference" %}
-[Broken link](broken-reference)
+{% content-ref url="./workflows" %}
+[Workflows](./workflows)
 {% endcontent-ref %}
 
 #### Developer Focused
 
-{% content-ref url="broken-reference" %}
-[Broken link](broken-reference)
+{% content-ref url="./onboarding" %}
+[Onboarding](./onboarding)
 {% endcontent-ref %}
 
-{% content-ref url="broken-reference" %}
-[Broken link](broken-reference)
+{% content-ref url="./reference" %}
+[Reference](./reference)
 {% endcontent-ref %}
