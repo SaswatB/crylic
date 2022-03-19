@@ -22,13 +22,13 @@ Crylic's in-built Webpack based build system can be fully customized.
 
 An live config editor can be viewed by going to `Settings ⚙️ -> Edit Webpack Config`
 
-![Webpack Configuration editor without an override file](<../.gitbook/assets/image (1) (1).png>)
+![Webpack Configuration editor without an override file](<../.gitbook/assets/image (1) (1) (1).png>)
 
 By default this editor requires creating a new [config ](../reference/configuration-file.md)with a reference to a new JavaScript file that will be used to store any overrides.
 
 After creating the Webpack override file, the Webpack config editor will allow editing the Webpack config through a function that modifies the configuration object.
 
-![Example Webpack override](<../.gitbook/assets/image (1).png>)
+![Example Webpack override](<../.gitbook/assets/image (1) (1).png>)
 
 ### Build System Overrides
 
