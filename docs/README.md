@@ -17,7 +17,7 @@ Crylic is a new software platform, and right now is focused on [creating basic c
 Crylic can be used by **both designers and developers.**
 
 {% hint style="info" %}
-Some aspects of Crylic require technical skills, such as [onboarding existing projects](onboarding/), but overall it's designed to be used without any technical knowledge.
+Some aspects of Crylic require technical skills, such as [onboarding existing projects](onboarding/onboarding-overview.md), but overall it's designed to be used without any technical knowledge.
 
 Due to Crylic's position as a tool that straddles the designer and developer worlds, documentation may sometimes be developer focused.
 {% endhint %}
