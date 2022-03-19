@@ -2,6 +2,7 @@
 
 Crylic comes bundled with the following technologies:
 
+<!-- lm_a95a542d63 electron (node) version -->
 * Node v16
 * NPM v6.14
 * Yarn v1
