@@ -1,7 +1,7 @@
 # Intro to Crylic
 
 {% hint style="warning" %}
-Crylic is currently in an Open Alpha. Features, configurations, and documentation are subject to frequent changes during this phase. Feel free to send us an email at info@crylic.io for any questions or feedback, we'd love to hear from you!
+Crylic is currently in an Open Alpha. Features, configurations, and documentation are subject to frequent changes during this phase. Feel free to send us an email at [info@crylic.io](mailto:info@crylic.io) for any questions or feedback, we'd love to hear from you!
 {% endhint %}
 
 Crylic is a design tool that edits code.
