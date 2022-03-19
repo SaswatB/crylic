@@ -26,12 +26,12 @@ To get started, choose an entry point that best fits your requirements.
 
 #### Designer Friendly
 
-{% content-ref url="./quickstart/" %}
+{% content-ref url="./quickstart/creating-a-new-project.md" %}
 [Quickstart](./quickstart/creating-a-new-project.md)
 {% endcontent-ref %}
 
 {% content-ref url="./overview/walkthrough.md" %}
-[Overview](./overview/)
+[Overview](./overview/walkthrough.md)
 {% endcontent-ref %}
 
 {% content-ref url="./workflows/workflows-overview.md" %}
@@ -40,10 +40,10 @@ To get started, choose an entry point that best fits your requirements.
 
 #### Developer Focused
 
-{% content-ref url="./onboarding/" %}
-[Onboarding](./onboarding/)
+{% content-ref url="./onboarding/onboarding-overview.md" %}
+[Onboarding](./onboarding/onboarding-overview.md)
 {% endcontent-ref %}
 
-{% content-ref url="./reference/" %}
-[Reference](./reference/)
+{% content-ref url="./reference/configuration-file.md" %}
+[Reference](./reference/configuration-file.md)
 {% endcontent-ref %}
