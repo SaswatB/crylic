@@ -2,8 +2,8 @@
 
 Many modern software projects use software to store files and track changes. Git is one of the most popular solutions used by developers. Normally utilizing Git requires technical knowledge, but fortunately programs have been developed that make this process easy. This guide goes over an example workflow utilizing GitHub Desktop to easily work with changes from Crylic on your team's project hosted on GitHub.
 
-{% hint style="info" %}
-Utilizing Git directly from Crylic is in the roadmap, and will make this process more easy and straightforward!
+{% hint style="success" %}
+Utilizing Git directly from Crylic is in the roadmap
 {% endhint %}
 
 ### Getting started
