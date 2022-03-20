@@ -28,3 +28,4 @@
 ## Reference
 
 * [Configuration File](reference/configuration-file.md)
+* [Technical Featureset](reference/technical-featureset.md)
