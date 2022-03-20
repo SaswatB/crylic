@@ -55,7 +55,7 @@ module.exports = {
 
 _Default: undefined_
 
-Defines a path to the [bootstrap file](../onboarding/bootstrap-file.md) for the project, relative to the project root. A bootstrap file defines a React component that encapsulates the component rendered by a frame, allowing providers, and similar constructs, to be setup within each frame.
+Defines a path to the [bootstrap file](../onboarding/bootstrap-file.md) for the project, relative to the project root. A bootstrap file defines a React component that encapsulates the component rendered by a frame, allowing providers, and similar constructs, to be set up within each frame.
 
 </details>
 
@@ -65,7 +65,7 @@ Defines a path to the [bootstrap file](../onboarding/bootstrap-file.md) for the 
 
 _Default: "src/"_
 
-Defines the root folder for all source files, relative to the project root. Currently only one source folder is supported.
+Defines the root folder for all source files relative to the project root. Currently, only one source folder is supported.
 
 </details>
 
@@ -89,7 +89,7 @@ Defines a path to the [Webpack override file](../onboarding/build-system.md#cust
 
 _Default: false_
 
-By default Crylic will inject packaged versions of some NPM packages, such as React & React Refresh, which allows new projects to be worked on without installing dependencies.
+By default, Crylic will inject packaged versions of some NPM packages, such as React & React Refresh, allowing new projects to be worked on without installing dependencies.
 
 If this is causing issues, this feature can be disabled, but be sure to either add React Refresh to the project dependencies or set `webpack.overrideConfig.disableFastRefresh` to `true`.
 
@@ -101,7 +101,7 @@ If this is causing issues, this feature can be disabled, but be sure to either a
 
 _Default: false_
 
-Disables React Fast Refresh, which may improve stability of making changes but will slow down the speed at which changes will be reflected in a frame.
+Disables React Fast Refresh, which may improve the stability of making changes but will slow down the speed at which changes will be reflected in a frame.
 
 </details>
 
@@ -111,7 +111,7 @@ Disables React Fast Refresh, which may improve stability of making changes but w
 
 _Default: false_
 
-Replaces SWC loader in the Webpack config with an equivalent Babel config. SWC is much faster than Babel at transpilation so this option is not recommended.
+Replaces SWC loader in the Webpack config with an equivalent Babel config. SWC is much faster than Babel at transpilation, so this option is not recommended.
 
 </details>
 
@@ -137,7 +137,7 @@ Enables Prettier formatting of edited code.
 
 _Default: "public/index.html"_
 
-Defines a path to the HTML template file for the project, relative to the project root.
+Defines a path to the HTML template file for the project relative to the project root.
 
 </details>
 
@@ -161,7 +161,7 @@ Additional information about the analyzer can be found under [Analyzer Overrides
 
 _Default: false_
 
-Allows files that start with a lower case letter to be considered as component files.
+Allows files that start with a lower case letter to be considered component files.
 
 </details>
 
@@ -171,7 +171,7 @@ Allows files that start with a lower case letter to be considered as component f
 
 _Default: false_
 
-Allows test files (files with `.test.` in the name) to be considered as component files.
+Allows test files (files with `.test.` in the name) to be considered component files.
 
 </details>
 
@@ -181,7 +181,7 @@ Allows test files (files with `.test.` in the name) to be considered as componen
 
 _Default: false_
 
-Allows declaration files (files that end with `.d.ts`) to be considered as component files.
+Allows declaration files (files that end with `.d.ts`) to be considered component files.
 
 </details>
 
@@ -201,7 +201,7 @@ Forces a fallback default export to be used if the static analysis engine fails 
 
 _Default: false_
 
-Forces components to always use default exports instead of relying on the static analysis engine to pick to most likely component export.
+Forces components to always use default exports instead of relying on the static analysis engine to pick the most likely component export.
 
 </details>
 
@@ -211,7 +211,7 @@ Forces components to always use default exports instead of relying on the static
 
 _Default: 50kb_
 
-Specifies the largest file size that will be processed by the static analysis engine.
+Specifies the largest file size that the static analysis engine will process.
 
 </details>
 
@@ -225,7 +225,7 @@ _Default: "inbuilt"_
 
 Configures which package manager is used to install deps.
 
-* `inbuilt` - auto selects `inbuilt-yarn` if a `yarn.lock` file is present in the project root, otherwise defaults to `inbuilt-npm`
+* `inbuilt` - auto selects `inbuilt-yarn` if a `yarn.lock` file is present in the project root; otherwise defaults to `inbuilt-npm`
 * `inbuilt-npm` - runs a packaged version of npm
 * `inbuilt-yarn` - runs a packaged version of yarn
 

@@ -1,6 +1,6 @@
 # Working with Git
 
-Many modern software projects use software to store files and track changes. Git is one of the most popular solutions used by developers. Normally utilizing Git requires technical knowledge, but fortunately programs have been developed that make this process easy. This guide goes over an example workflow utilizing GitHub Desktop to easily work with changes from Crylic on your team's project hosted on GitHub.
+Many modern software projects use software to store files and track changes. Git is one of the most popular solutions used by developers. Typically utilizing Git requires technical knowledge, but fortunately programs have been developed that simplify this process. This guide goes over an example workflow utilizing GitHub Desktop to quickly work with changes from Crylic on your team's project hosted on GitHub.
 
 {% hint style="success" %}
 Utilizing Git directly from Crylic is in the roadmap
@@ -12,13 +12,13 @@ To get started, download and install [GitHub Desktop](https://desktop.github.com
 
 ![GitHub Desktop's welcome screen](<../.gitbook/assets/image (10).png>)
 
-In Git, code is stored in a 'repository'. Your development team should be able to provide a link that can be used to 'clone' (download a copy of) your project's repository. You may need a GitHub account that has permissions to access your team's code.
+In Git, code is stored in a 'repository'. Your development team should be able to provide a link that can be used to 'clone' (download a copy of) your project's repository. You may need a GitHub account with permissions to access your team's code.
 
 ![Example of cloning a repository](../.gitbook/assets/image.png)
 
 ### Working with Git and Crylic
 
-After cloning a repository, GitHub Desktop provides an interface to manage your copy. This includes the ability to download new code changes made by your development team, and track your changes made through Crylic.
+After cloning a repository, GitHub Desktop provides an interface to manage your copy. This includes the ability to download new code changes made by your development team and track your changes made through Crylic.
 
 ![Viewing a freshly cloned repository](<../.gitbook/assets/image (3).png>)
 
@@ -46,7 +46,7 @@ Next create a 'commit' (a bundle of changes that get tracked together) using the
 
 ![Good commit messages help developers understand changes when reviewing](<../.gitbook/assets/image (2).png>)
 
-Only a couple steps left! Next the branch needs to be published so that others in your team can view it.
+Only a couple of steps left! Next the branch needs to be published so that others in your team can view it.
 
 ![GitHub Desktop automatically provides an option to publish a new branch with commits](<../.gitbook/assets/image (12).png>)
 
@@ -61,13 +61,13 @@ After that, a pull request can be created!
 At this point a developer can review the request!
 
 {% hint style="info" %}
-After making changes, make sure to switch back to your project's default branch (or the branch your developers recommend to use), and be sure to fetch the latest changes to keep up with the work being done by others.
+After making changes, make sure to switch back to your project's default branch (or the branch your developers recommend to use) and fetch the latest changes to keep up with the work being done by others.
 {% endhint %}
 
 ### Additional Tips
 
-Branches can be thought of as similar to variants in design tools such as Figma. By default there's a default branch, which is like a default variant. A new branch is like copying the default variant to have space for new changes. Adding a commit is similar to making changes specifically on the new variant. And finally, creating a pull request is essentially making a request to copy changes from the new variant back to the default variant.
+Branches can be considered similar to variants in design tools such as Figma. Repositories have a default branch by default, which is like a default variant. A new branch is like copying the default variant to have space for new changes. Adding a commit is similar to making changes specifically on the new variant. And finally, creating a pull request is essentially making a request to copy changes from the new variant back to the default variant.
 
 {% hint style="warning" %}
-By default branches don't get automatically updated when there's changes in the original.
+By default branches don't get automatically updated when changes are added to the original.
 {% endhint %}
