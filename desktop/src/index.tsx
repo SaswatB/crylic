@@ -12,7 +12,7 @@ if (__IS_PRODUCTION__) {
 
   const appPath = window.process.argv
     .find((s) => s.startsWith("--appPath="))
-    ?.replace("--appPath=", "file:///")
+    ?.replace(/--appPath=\/?/, "file:///")
     .replace(/\\/g, "/");
 
   Sentry.init({
