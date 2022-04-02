@@ -186,7 +186,7 @@ export class FileProject extends Project {
     this.projectSaved$.next();
   }
   public saveFile({ id, filePath, code$, codeRevisionId }: CodeEntry) {
-    fs.mkdirSync(path.basename(filePath), { recursive: true });
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, code$.getValue());
     this.savedCodeRevisions[id] = codeRevisionId;
   }
