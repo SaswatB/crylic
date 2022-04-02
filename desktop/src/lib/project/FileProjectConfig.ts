@@ -3,14 +3,14 @@ import { pipe } from "fp-ts/lib/pipeable";
 import path from "path";
 
 import { CONFIG_FILE_NAME } from "synergy/src/constants";
-import { PackageManager } from "synergy/src/lib/packageManager/PackageManager";
+import { PackageManager } from "synergy/src/lib/pkgManager/PackageManager";
 import {
   ProjectConfig,
   ProjectConfigFile,
 } from "synergy/src/lib/project/ProjectConfig";
 
 import { requireUncached } from "../../utils/utils";
-import { InbuiltPackageManager } from "../packageManager/InbuiltPackageManager";
+import { InbuiltPackageManager } from "../pkgManager/InbuiltPackageManager";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 

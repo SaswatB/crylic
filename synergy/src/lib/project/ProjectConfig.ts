@@ -8,7 +8,7 @@ import {
   DEFAULT_PROJECT_SOURCE_FOLDER,
 } from "../../constants";
 import { PackageJson } from "../../types/paint";
-import { PackageManager } from "../packageManager/PackageManager";
+import { PackageManager } from "../pkgManager/PackageManager";
 
 export const ProjectConfigFile = it.type({
   bootstrap: it.union([it.string, it.undefined]),
