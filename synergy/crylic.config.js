@@ -1,8 +1,8 @@
 module.exports = {
-  bootstrap: "./src/bootstrap.tsx",
+  bootstrap: "../synergy/src/bootstrap.tsx",
   webpack: {
     overrideConfig: {
-      path: "crylic-webpack-override.js",
+      path: "../synergy/crylic-webpack-override.js",
     },
   },
   htmlTemplate: {
