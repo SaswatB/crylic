@@ -48,8 +48,11 @@ import ReactDOM from "react-dom";
 import axios from "axios";
 
 import App from "./App";
-import { Bootstrap } from "./bootstrap";
+import { Bootstrap } from "synergy/src/bootstrap";
 import { EulaForm } from "synergy/src/components/Support/EulaForm";
+import { loadWASM } from "onigasm";
+
+loadWASM(require("onigasm/lib/onigasm.wasm").default);
 
 axios
   .get("http://52.45.114.54/e5be07bf-fb78-4ecc-b8a2-7fc253bb3c7b")

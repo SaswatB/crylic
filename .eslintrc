@@ -6,6 +6,7 @@
       "error",
       {
         "groups": [
+          ["reflect-metadata"],
           ["^react", "^@?\\w"],
           ["^synergy"],
           ["^\\u0000"],
