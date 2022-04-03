@@ -137,7 +137,12 @@ export abstract class ProjectConfig {
   }
   public getFullOverrideWebpackPath() {
     const webpackPath = this.configFile?.webpack?.overrideConfig?.path;
-    return webpackPath ? path.join(this.projectPath, webpackPath) : undefined;
+    return webpackPath
+      ? path.join(
+          this.projectPath.replace(/\\/g, "/"),
+          webpackPath.replace(/\\/g, "/")
+        )
+      : undefined;
   }
   public getFullHtmlTemplatePath() {
     return path.join(
