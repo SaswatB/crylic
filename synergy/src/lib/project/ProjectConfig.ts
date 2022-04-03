@@ -141,8 +141,9 @@ export abstract class ProjectConfig {
   }
   public getFullHtmlTemplatePath() {
     return path.join(
-      this.projectPath,
-      this.configFile?.htmlTemplate?.path || DEFAULT_PROJECT_HTML_TEMPLATE_PATH
+      this.projectPath.replace(/\\/g, "/"),
+      this.configFile?.htmlTemplate?.path?.replace(/\\/g, "/") ||
+        DEFAULT_PROJECT_HTML_TEMPLATE_PATH
     );
   }
   public getHtmlTemplateSelector() {

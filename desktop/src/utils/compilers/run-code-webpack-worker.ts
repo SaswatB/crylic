@@ -173,6 +173,7 @@ export const webpackRunCodeWithWorker = async ({
   console.log("compiling codeEntries", codeEntries);
 
   const config = generateJobConfig(project);
+  console.log("webpack job config", config);
 
   const takeNextCode = async (codeEntryId: string) => {
     const codeEntry = project.getCodeEntryValue(codeEntryId);
