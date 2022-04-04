@@ -509,6 +509,7 @@ module.exports = function (webpackEnv) {
         ),
         __IS_PRODUCTION__: JSON.stringify(isEnvProduction),
         __IS_RENDERER_BUNDLE__: JSON.stringify(true),
+        __IS_CRYLIC__: JSON.stringify(false),
       }),
       // This is necessary to emit hot updates (currently CSS only):
       isEnvDevelopment && new webpack.HotModuleReplacementPlugin(),

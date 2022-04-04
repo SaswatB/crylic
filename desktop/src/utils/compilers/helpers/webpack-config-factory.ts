@@ -378,7 +378,10 @@ export const webpackConfigFactory = async (
       }),
       // InterpolateHtmlPlugin
       // ModuleNotFoundPlugin
-      new webpack.DefinePlugin({ "process.env": env }),
+      new webpack.DefinePlugin({
+        "process.env": env,
+        __IS_CRYLIC__: JSON.stringify(true),
+      }),
       !disableFastRefresh && new webpack.HotModuleReplacementPlugin(),
       // WatchMissingNodeModulesPlugin
       // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack

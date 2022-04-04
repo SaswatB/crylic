@@ -165,13 +165,9 @@ export class CodeEntry {
   }
 
   public isBootstrap() {
-    const projectBootstrap = this.project.config?.configFile?.bootstrap;
     return (
-      !!projectBootstrap &&
-      path.join(
-        this.project.path.replace(/\\/g, "/"),
-        projectBootstrap.replace(/\\/g, "/")
-      ) === this.filePath.replace(/\\/g, "/")
+      this.project.config.getBootstrapPath() ===
+      this.filePath.replace(/\\/g, "/")
     );
   }
 

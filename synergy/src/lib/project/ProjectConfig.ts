@@ -128,6 +128,14 @@ export abstract class ProjectConfig {
 
   public abstract getPackageManager(): PackageManager;
 
+  public getBootstrapPath() {
+    const projectBootstrap = this.configFile?.bootstrap;
+    if (!projectBootstrap) return undefined;
+    return path.join(
+      this.projectPath.replace(/\\/g, "/"),
+      projectBootstrap.replace(/\\/g, "/")
+    );
+  }
   public getFullSourceFolderPath() {
     return path.join(
       this.projectPath.replace(/\\/g, "/"),

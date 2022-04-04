@@ -24,6 +24,18 @@ const darkTheme = createMuiTheme({
   },
 });
 
+// stub __non_webpack_require__ when editing within Crylic
+if (__IS_CRYLIC__) {
+  (window as any).require = (n: string) =>
+    n === "electron-store"
+      ? class MockStore {}
+      : n === "electron"
+      ? {
+          ipcRenderer: { invoke: () => Promise.resolve({}) },
+        }
+      : {};
+}
+
 export const Bootstrap: FunctionComponent = ({ children }) => (
   <RecoilRoot>
     <BusProvider value={bus}>

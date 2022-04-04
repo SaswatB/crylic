@@ -21,6 +21,7 @@ import { dumpWebpackConfig, webpackRunCode } from "./run-code-webpack";
 
 import errorBoundaryComponent from "!!raw-loader!synergy/src/components/ErrorBoundary";
 
+const fs = __non_webpack_require__("fs") as typeof import("fs");
 const path = __non_webpack_require__("path") as typeof import("path");
 
 const { ipcRenderer } = __non_webpack_require__(
@@ -86,18 +87,33 @@ const generateBundleCode = async (
     componentCodeEntry
   );
 
-  const bootstrapCodeEntry = project.codeEntries$
-    .getValue()
-    .find((c) => c.isBootstrap());
-  const bootstrapImport = bootstrapCodeEntry
-    ? await getImportFromCodeEntry("Bootstrap", bootstrapCodeEntry)
-    : "";
+  // get the bootstrap file
+  let bootstrapImport = "";
+  const bootstrapFilePath = project.config.getBootstrapPath();
+  if (bootstrapFilePath) {
+    let bootstrapCodeEntry = project.codeEntries$
+      .getValue()
+      .find((c) => c.isBootstrap());
+    if (!bootstrapCodeEntry) {
+      // todo is there a better way?
+      bootstrapCodeEntry = new CodeEntry(
+        project,
+        bootstrapFilePath,
+        fs.readFileSync(bootstrapFilePath, { encoding: "utf-8" })
+      );
+      project.addCodeEntries([bootstrapCodeEntry]);
+    }
+    bootstrapImport = await getImportFromCodeEntry(
+      "Bootstrap",
+      bootstrapCodeEntry
+    );
+  }
 
   return `
 import React, { ErrorInfo } from "react";
 import ReactDOM from "react-dom";
-${componentImport}
 ${bootstrapImport}
+${componentImport}
 
 ${errorBoundaryComponent
   .replace('import React, { ErrorInfo } from "react";', "")
@@ -109,9 +125,7 @@ try {
 ReactDOM.render((
   <ErrorBoundary>
     ${
-      bootstrapCodeEntry
-        ? "<Bootstrap><Component /></Bootstrap>"
-        : "<Component />"
+      bootstrapImport ? "<Bootstrap><Component /></Bootstrap>" : "<Component />"
     }
   </ErrorBoundary>),
   document.getElementById("${project.config.getHtmlTemplateSelector()}")
