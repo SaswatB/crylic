@@ -1,13 +1,22 @@
 import React, { useState } from "react";
+import styled from "@emotion/styled";
+import { faFolder } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Backdrop, CircularProgress } from "@material-ui/core";
 import { useSnackbar } from "notistack";
 
+import { Button, ButtonGroupV } from "synergy/src/components/base/Button";
+import {
+  DEFAULT_BORDER_RADIUS,
+  TRUNCATE,
+} from "synergy/src/components/base/design-constants";
 import { NewProjectModal } from "synergy/src/components/NewProjectModal";
 import { Tour } from "synergy/src/components/Tour/Tour";
 import { useService } from "synergy/src/hooks/useService";
 import { normalizePath } from "synergy/src/lib/normalizePath";
 import { ProjectService } from "synergy/src/services/ProjectService";
 
+import icon from "../../assets/icon.png";
 import { getUserFolder, openFilePicker } from "../../hooks/useFilePicker";
 import {
   FileProject,
@@ -25,7 +34,21 @@ export function Intro() {
   const projectService = useService(ProjectService);
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(0);
-  const recentProjects = projectService.getRecentProjects();
+  let recentProjects = projectService.getRecentProjects();
+
+  if (__IS_CRYLIC__) {
+    recentProjects = [
+      { filePath: "C:\\Users\\Me\\Documents\\project1" },
+      { filePath: "C:\\Users\\Me\\Documents\\project2" },
+      { filePath: "C:\\Users\\Me\\Documents\\project-three" },
+      {
+        filePath:
+          "C:\\Users\\Me\\Documents\\longer directory with spaces\\project5",
+      },
+      { filePath: "C:\\Users\\Me\\Documents\\project5" },
+      { filePath: "C:\\Users\\Me\\Documents\\project6" },
+    ];
+  }
 
   const createProject = async () => {
     const initialLocation =
@@ -52,11 +75,12 @@ export function Intro() {
       .finally(() => setLoading((l) => l - 1));
   };
 
-  const openProject = (filePath: string) => {
+  const openProjectWithPath = (filePath: string) => {
     if (!fs.existsSync(filePath)) {
       enqueueSnackbar("Project does not exist", { variant: "error" });
       return;
     }
+
     setLoading((l) => l + 1);
     // set timeout allows react to render the loading screen before
     // the main thread get's pegged from opening the project
@@ -69,19 +93,21 @@ export function Intro() {
     );
   };
 
+  const openProject = async () => {
+    const filePath = await openFilePicker({ properties: ["openDirectory"] });
+    if (filePath) openProjectWithPath(filePath);
+  };
+
   return (
-    <div className="flex flex-col flex-1 absolute items-center justify-center z-10">
+    <Container>
       <Backdrop open={loading > 0}>
         <CircularProgress disableShrink />
       </Backdrop>
-      <div className="btngrp-v w-64">
-        <button
-          className="btn w-full"
-          data-tour="new-project"
-          onClick={createProject}
-        >
+      <Logo src={icon} alt="Crylic" />
+      <ActionGroup>
+        <Button block data-tour="new-project" onClick={createProject}>
           New Project
-        </button>
+        </Button>
         <Tour
           name="new-project"
           beaconStyle={{
@@ -97,37 +123,91 @@ export function Intro() {
           Existing React projects can also be opened, ones created with
           create-react-app work the best.
         </Tour>
-        <button
-          className="btn w-full"
-          onClick={() =>
-            openFilePicker({ properties: ["openDirectory"] }).then(
-              (filePath) => {
-                if (!filePath) return;
-                openProject(filePath);
-              }
-            )
-          }
-        >
+        <Button block onClick={openProject}>
           Open Project
-        </button>
-      </div>
+        </Button>
+      </ActionGroup>
       {recentProjects.length > 0 && (
-        <div className="intro-recent-projects flex flex-col mt-10 px-4 py-2 bg-white bg-opacity-10 rounded">
+        <RecentProjects>
           Recent Projects
-          <div className="btngrp-v mt-2">
+          <ButtonGroupV>
+            {/* todo show more than 5 projects using a scrollbar */}
             {recentProjects.slice(0, 5).map(({ filePath }) => (
-              <button
+              <Button
                 key={filePath}
-                className="btn text-left truncate"
-                onClick={() => openProject(filePath)}
                 title={filePath}
+                onClick={() => openProjectWithPath(filePath)}
               >
-                {path.basename(normalizePath(filePath, path.sep))} - {filePath}
-              </button>
+                <FontAwesomeIcon icon={faFolder} />
+                <span>{path.basename(normalizePath(filePath, path.sep))}</span>
+                <ButtonPath>- {filePath}</ButtonPath>
+              </Button>
             ))}
-          </div>
-        </div>
+          </ButtonGroupV>
+        </RecentProjects>
       )}
-    </div>
+    </Container>
   );
 }
+
+// #region styles
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  position: absolute;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+`;
+
+const Logo = styled.img`
+  width: 60px;
+  margin-bottom: 25px;
+`;
+
+const ActionGroup = styled(ButtonGroupV)`
+  width: 330px;
+  ${Button} {
+    padding: 15px;
+  }
+`;
+
+const RecentProjects = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-top: 52px;
+  padding: 22px 30px;
+  border-radius: ${DEFAULT_BORDER_RADIUS};
+  background-color: rgba(255, 255, 255, 0.1);
+  max-width: 500px;
+  color: #ffffff;
+
+  ${ButtonGroupV} {
+    margin-top: 15px;
+  }
+  ${Button} {
+    display: flex;
+    justify-content: normal;
+    align-items: center;
+    padding: 10px 20px;
+    text-align: left;
+
+    svg {
+      margin-right: 15px;
+      font-size: 20px;
+    }
+    span {
+      white-space: nowrap;
+    }
+  }
+`;
+
+const ButtonPath = styled.span`
+  margin-left: 5px;
+  opacity: 0.5;
+  ${TRUNCATE}
+`;
+
+// #endregion
