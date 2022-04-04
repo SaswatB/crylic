@@ -244,8 +244,11 @@ export class CodeEntry {
     )
   );
 
-  public readonly isRenderable$ = this.metadata$.pipe(
-    ltMap((metadata) => !!metadata.isRenderable)
+  public readonly isComponent$ = this.metadata$.pipe(
+    ltMap((metadata) => ({
+      isRenderable: !!metadata.isRenderable,
+      isComponent: !!metadata.isComponent,
+    }))
   );
   public readonly exportName$ = this.metadata$.pipe(ltMap((m) => m.exportName));
   public readonly exportIsDefault$ = this.metadata$.pipe(

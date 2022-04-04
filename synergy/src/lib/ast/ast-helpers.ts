@@ -372,8 +372,8 @@ const getBlockIdentifiers = (nodes: t.ASTNode[], parents: t.ASTNode[] = []) => {
 export const getComponentExport = (
   ast: t.File
 ):
-  | { isDefault: true; name?: undefined }
-  | { isDefault: false; name: string }
+  | { isDefault: true; name?: undefined; isStyledComponent?: boolean }
+  | { isDefault: false; name: string; isStyledComponent?: boolean }
   | undefined => {
   // get all export nodes at the top level of the program
   const exportNodes = ast.program.body.filter((node) => {
@@ -467,7 +467,7 @@ export const getComponentExport = (
    */
   const isComponentNode = (
     node: t.ASTNode
-  ): { isComponent: boolean; name?: string } => {
+  ): { isComponent: boolean; name?: string; isStyledComponent?: boolean } => {
     switch (node.type) {
       case "ClassDeclaration":
       case "FunctionDeclaration":
@@ -505,13 +505,24 @@ export const getComponentExport = (
           varName;
         if (varName !== undefined) {
           const varParent = last(getIdentifierDeclaration(varName)?.parents);
-          return {
-            isComponent: !!varParent && isComponentNode(varParent).isComponent,
-            name: exportedName,
-          };
+          if (varParent) {
+            return { ...isComponentNode(varParent), name: exportedName };
+          }
         }
         break;
       }
+      // todo use more inference when determining if a component is a styled-component
+      case "TaggedTemplateExpression":
+        const id =
+          node.tag.type === "MemberExpression"
+            ? node.tag.object
+            : node.tag.type === "CallExpression"
+            ? node.tag.callee
+            : undefined;
+        return {
+          isComponent: id?.type === "Identifier" && id.name === "styled",
+          isStyledComponent: true,
+        };
     }
 
     return { isComponent: false };
@@ -525,26 +536,29 @@ export const getComponentExport = (
     )
     .map(
       (node): ReturnType<typeof getComponentExport> => {
-        // check whether the the export's declaration is a component
+        // check whether the export's declaration is a component
         if (node.declaration) {
-          const { isComponent, name } = isComponentNode(node.declaration);
+          const { isComponent, name, ...props } = isComponentNode(
+            node.declaration
+          );
           if (isComponent) {
             // name doesn't matter (and may not exist) for default export
             if (node.type === "ExportDefaultDeclaration")
-              return { isDefault: true };
+              return { ...props, isDefault: true };
             // name is required for a non-default export
-            return name ? { name, isDefault: false } : undefined;
+            return name ? { ...props, name, isDefault: false } : undefined;
           }
         }
 
+        // todo does this work if there's multiple components in one export specifier?
         // check whether any named export specifiers are components
         if (node.type === "ExportNamedDeclaration") {
-          const { name } =
+          const { name, ...props } =
             node.specifiers
               ?.map((specifier) => isComponentNode(specifier))
               .filter((r) => r.isComponent)[0] || {};
           // name is required for a non-default export
-          return name ? { name, isDefault: false } : undefined;
+          return name ? { ...props, name, isDefault: false } : undefined;
         }
 
         return undefined;
@@ -557,10 +571,13 @@ export const getComponentExport = (
     return undefined;
   }
 
-  // prefer default exports, then capitalized exports, and lastly the last export
+  // prefer default exports, then capitalized exports, then styled-component exports, and lastly the last export
   return (
-    exportedFunctions.find((f) => f.isDefault) ||
-    exportedFunctions.find((f) => f.name?.match(/^[A-Z]/)) ||
+    exportedFunctions.find((f) => f.isDefault && !f.isStyledComponent) ||
+    exportedFunctions.find(
+      (f) => f.name?.match(/^[A-Z]/) && !f.isStyledComponent
+    ) ||
+    exportedFunctions.find((f) => f.isStyledComponent) ||
     exportedFunctions[exportedFunctions.length - 1]!
   );
 };

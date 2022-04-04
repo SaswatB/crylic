@@ -44,6 +44,7 @@ interface Tree {
   children: Tree[];
   codeEntry?: CodeEntry;
   isCodeEntryRenderable?: boolean;
+  isCodeEntryAddable?: boolean;
 }
 
 interface Props {
@@ -129,12 +130,12 @@ export const AssetTreePane: FunctionComponent<Props> = ({
 
   const { projectTree, treeNodeIds } =
     useMemoObservable(() => {
-      let codeEntriesWithRenderable$ = project?.codeEntries$
+      let codeEntriesWithComponent$ = project?.codeEntries$
         .pipe(
           ltMap((codeEntries) =>
             codeEntries.map((codeEntry) =>
-              codeEntry.isRenderable$.pipe(
-                ltMap((isRenderable) => ({ codeEntry, isRenderable }))
+              codeEntry.isComponent$.pipe(
+                ltMap((component) => ({ codeEntry, component }))
               )
             )
           )
@@ -149,8 +150,8 @@ export const AssetTreePane: FunctionComponent<Props> = ({
         | undefined = undefined;
       switch (assetsFilter) {
         case "components":
-          codeEntriesWithRenderable$ = codeEntriesWithRenderable$.pipe(
-            ltMap((entries) => entries.filter((v) => v?.isRenderable))
+          codeEntriesWithComponent$ = codeEntriesWithComponent$.pipe(
+            ltMap((entries) => entries.filter((v) => v?.component.isComponent))
           );
           extensionRegex = SCRIPT_EXTENSION_REGEX;
           projectTreePostProcess = (newProjectTree) => {
@@ -165,6 +166,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
               ) {
                 node.codeEntry = node.children[0]!.codeEntry;
                 node.isCodeEntryRenderable = node.children[0]!.isCodeEntryRenderable;
+                node.isCodeEntryAddable = node.children[0]!.isCodeEntryAddable;
                 node.children = [];
                 return;
               }
@@ -174,13 +176,13 @@ export const AssetTreePane: FunctionComponent<Props> = ({
           };
           break;
         case "styles":
-          codeEntriesWithRenderable$ = codeEntriesWithRenderable$.pipe(
+          codeEntriesWithComponent$ = codeEntriesWithComponent$.pipe(
             ltMap((entries) => entries.filter((v) => v?.codeEntry.isStyleEntry))
           );
           extensionRegex = STYLE_EXTENSION_REGEX;
           break;
         case "images":
-          codeEntriesWithRenderable$ = codeEntriesWithRenderable$.pipe(
+          codeEntriesWithComponent$ = codeEntriesWithComponent$.pipe(
             ltMap((entries) => entries.filter((v) => v?.codeEntry.isImageEntry))
           );
           // todo show extensions if there are duplicate names for different extensions
@@ -192,7 +194,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
           break;
       }
 
-      return codeEntriesWithRenderable$.pipe(
+      return codeEntriesWithComponent$.pipe(
         ltMap((codeEntriesWithRenderable) => {
           const newTreeNodeIds = new Set<string>("root");
           const newProjectTree: Tree = { id: "root", name: "", children: [] };
@@ -200,7 +202,10 @@ export const AssetTreePane: FunctionComponent<Props> = ({
           codeEntriesWithRenderable.forEach((v) => {
             if (!v) return;
 
-            const { codeEntry, isRenderable } = v;
+            const {
+              codeEntry,
+              component: { isRenderable, isComponent },
+            } = v;
 
             const path = codeEntry.filePath
               .replace(/\\/g, "/")
@@ -246,6 +251,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
             });
             node.codeEntry = codeEntry;
             node.isCodeEntryRenderable = isRenderable;
+            node.isCodeEntryAddable = isComponent;
           });
           projectTreePostProcess?.(newProjectTree);
 
@@ -300,6 +306,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
     name,
     codeEntry,
     isCodeEntryRenderable,
+    isCodeEntryAddable,
   }: Tree) => {
     if (!codeEntry) return name;
 
@@ -348,7 +355,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
             />
           </>
         )}
-        {isCodeEntryRenderable && hasRenderEntries && (
+        {isCodeEntryAddable && hasRenderEntries && (
           <IconButton
             className="mr-3"
             title="Add to Component"
@@ -427,13 +434,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
               icon={faSearch}
               onClick={() => setEnableNameFilter((b) => !b)}
             />
-            <Tour
-              name="asset-tree-add"
-              dependencies={["asset-tree"]}
-              beaconStyle={{
-                marginLeft: -10,
-              }}
-            >
+            <Tour name="asset-tree-add" dependencies={["asset-tree"]}>
               Use this menu to add new components, stylesheets and images to
               your project!
             </Tour>

@@ -13,6 +13,7 @@ export const workerModule = {
 
     // check if the file is a component
     let isRenderable = false;
+    let isComponent = false;
     let exportName = undefined;
     let exportIsDefault = undefined;
     if (
@@ -28,14 +29,16 @@ export const workerModule = {
         )
       );
       if (componentExport) {
-        isRenderable = !remoteCodeEntry.isBootstrap;
+        isComponent = !remoteCodeEntry.isBootstrap;
+        isRenderable = isComponent && !componentExport.isStyledComponent;
         exportName = componentExport.name || baseComponentName;
         exportIsDefault =
           remoteCodeEntry.config.forceUseComponentDefaultExports ||
           componentExport.isDefault;
       } else if (remoteCodeEntry.config.disableComponentExportsGuard) {
         // since static analysis failed but we still need allow this file as a component guess that it's a default export
-        isRenderable = !remoteCodeEntry.isBootstrap;
+        isComponent = !remoteCodeEntry.isBootstrap;
+        isRenderable = isComponent;
         exportName = baseComponentName;
         exportIsDefault = true;
       }
@@ -45,6 +48,7 @@ export const workerModule = {
       codeRevisionId: remoteCodeEntry.codeRevisionId,
       rawAst: ast,
       isRenderable,
+      isComponent,
       exportName,
       exportIsDefault,
     };

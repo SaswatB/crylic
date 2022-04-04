@@ -16,6 +16,12 @@ import exportNamedFunctionFixture from "./fixtures/component-name/export-named-f
 import exportNamedLambdaFixture from "./fixtures/component-name/export-named-lambda.fixture";
 // @ts-expect-error fixture
 import exportNamedMemoFixture from "./fixtures/component-name/export-named-memo.fixture";
+// @ts-expect-error fixture
+import exportNamedStyledHoCFixture from "./fixtures/component-name/export-named-styled-hoc.fixture";
+// @ts-expect-error fixture
+import exportNamedStyledWithFunctionFixture from "./fixtures/component-name/export-named-styled-with-function.fixture";
+// @ts-expect-error fixture
+import exportNamedStyledFixture from "./fixtures/component-name/export-named-styled.fixture";
 import exportSeparateDefaultFunctionFixture from "./fixtures/component-name/export-separate-default-function.fixture";
 import exportSeparateDefaultLambdaFixture from "./fixtures/component-name/export-separate-default-lambda.fixture";
 import exportSeparateDefaultMemoFixture from "./fixtures/component-name/export-separate-default-memo.fixture";
@@ -42,7 +48,10 @@ const exportNamedFunctionExpression = (exportNamedFunctionExpressionFixture as u
 const exportNamedFunction = (exportNamedFunctionFixture as unknown) as string;
 const exportNamedLambda = (exportNamedLambdaFixture as unknown) as string;
 const exportNamedMemo = (exportNamedMemoFixture as unknown) as string;
+const exportNamedStyled = (exportNamedStyledFixture as unknown) as string;
+const exportNamedStyledHoC = (exportNamedStyledHoCFixture as unknown) as string;
 const exportSeparateDefaultFunction = (exportSeparateDefaultFunctionFixture as unknown) as string;
+const exportNamedStyledWithFunction = (exportNamedStyledWithFunctionFixture as unknown) as string;
 const exportSeparateDefaultLambda = (exportSeparateDefaultLambdaFixture as unknown) as string;
 const exportSeparateDefaultMemo = (exportSeparateDefaultMemoFixture as unknown) as string;
 const exportSeparateNamedFunction = (exportSeparateNamedFunctionFixture as unknown) as string;
@@ -78,6 +87,21 @@ describe("getComponentExport", () => {
     const comp = getComponentExport(parseAST(exportNamedMemo));
     expect(comp?.isDefault).toEqual(false);
     expect(comp?.name).toEqual("ANamedMemo");
+  });
+  test("gets name from an exported styled component", () => {
+    const comp = getComponentExport(parseAST(exportNamedStyled));
+    expect(comp?.isDefault).toEqual(false);
+    expect(comp?.name).toEqual("StyledDiv");
+  });
+  test("gets name from an exported styled component", () => {
+    const comp = getComponentExport(parseAST(exportNamedStyledHoC));
+    expect(comp?.isDefault).toEqual(false);
+    expect(comp?.name).toEqual("StyledDiv");
+  });
+  test("prefers function component over styled component", () => {
+    const comp = getComponentExport(parseAST(exportNamedStyledWithFunction));
+    expect(comp?.isDefault).toEqual(false);
+    expect(comp?.name).toEqual("MyComponent");
   });
 
   test("gets export from simple default exported function component", () => {
