@@ -15,6 +15,7 @@ import { ModalContainer } from "./components/PromiseModal";
 import { TourProvider } from "./components/Tour/Tour";
 import { StateManager } from "./components/Workspace/StateManager";
 import { bus } from "./lib/events";
+import "./shared.scss";
 
 const darkTheme = createMuiTheme({
   palette: {
@@ -26,14 +27,18 @@ const darkTheme = createMuiTheme({
 
 // stub __non_webpack_require__ when editing within Crylic
 if (__IS_CRYLIC__) {
-  (window as any).require = (n: string) =>
-    n === "electron-store"
-      ? class MockStore {}
-      : n === "electron"
-      ? {
-          ipcRenderer: { invoke: () => Promise.resolve({}) },
-        }
-      : {};
+  (window as any).require = (n: string) => {
+    switch (n) {
+      case "electron-store":
+        return class MockStore {};
+      case "electron":
+        return { ipcRenderer: { invoke: () => Promise.resolve({}) } };
+      case "path":
+        return require("path");
+      default:
+        return {};
+    }
+  };
 }
 
 export const Bootstrap: FunctionComponent = ({ children }) => (
