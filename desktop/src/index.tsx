@@ -47,7 +47,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import axios from "axios";
 
-import App from "./App";
+import { App } from "./App";
 import { Bootstrap } from "synergy/src/bootstrap";
 import { EulaForm } from "synergy/src/components/Support/EulaForm";
 import { loadWASM } from "onigasm";

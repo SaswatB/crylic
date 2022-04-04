@@ -5,3 +5,5 @@ overflow: hidden;
 text-overflow: ellipsis;
 white-space: nowrap;
 `;
+export const DARK_COLOR = "#27303E";
+export const LIGHT_COLOR = "#65758A";

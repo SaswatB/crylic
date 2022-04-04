@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
+import { css } from "@emotion/css";
+import styled from "@emotion/styled";
 import { faCog } from "@fortawesome/free-solid-svg-icons";
 import { Checkbox } from "@material-ui/core";
 import * as Fathom from "fathom-client";
@@ -7,6 +9,12 @@ import { Resizable } from "re-resizable";
 import { distinctUntilChanged, map } from "rxjs/operators";
 import { useBus } from "ts-bus/react";
 
+import { Button } from "synergy/src/components/base/Button";
+import {
+  DARK_COLOR,
+  LIGHT_COLOR,
+} from "synergy/src/components/base/design-constants";
+import { Flex, Spacer } from "synergy/src/components/base/Flex";
 import { OverlayComponentView } from "synergy/src/components/ComponentView/OverlayComponentView";
 import { IconButton } from "synergy/src/components/IconButton";
 import { AssetTreePane } from "synergy/src/components/SideBar/AssetTreePane";
@@ -44,7 +52,7 @@ const Store = __non_webpack_require__(
 const store = new Store();
 let isFathomLoaded = false;
 
-function App() {
+export function App() {
   const bus = useBus();
   const { enqueueSnackbar } = useSnackbar();
   const selectService = useService(SelectService);
@@ -93,22 +101,21 @@ function App() {
   }, [allowTracking]);
 
   const renderTrackingConfig = () => (
-    <div className="flex items-center justify-center">
+    <TrackingControlGroup>
       <Checkbox
         checked={allowTracking}
         onChange={(e) => setAllowTracking(e.target.checked)}
       />
       Allow collecting error reports and anonymized usage analytics.
-    </div>
+    </TrackingControlGroup>
   );
 
   const renderLeftPane = (projectName: string) => (
     <>
-      <div className="flex">
+      <Flex>
         {projectName}
-        <div className="flex-1" />
+        <Spacer />
         <IconButton
-          className="ml-2"
           title="Settings"
           icon={faCog}
           onClick={() => setShowConfigDialog(true)}
@@ -123,7 +130,7 @@ function App() {
           open={showWebpackConfigDialog}
           onClose={() => setShowWebpackConfigDialog(false)}
         />
-      </div>
+      </Flex>
       <OutlinePane />
       <Resizable
         minHeight={100}
@@ -180,10 +187,7 @@ function App() {
     ));
 
   return (
-    <div
-      className="flex flex-col items-stretch w-screen h-screen relative overflow-hidden text-white"
-      data-tour="start"
-    >
+    <Container data-tour="start">
       {project && <InstallDialog />}
       <Tour
         name="start"
@@ -200,10 +204,10 @@ function App() {
         <br />
         {renderTrackingConfig()}
       </Tour>
-      <div className="flex flex-1 flex-row">
+      <PaneContainer>
         {project && (
           <Resizable
-            className="flex flex-col p-4 pb-0 h-screen bg-gray-800 z-10"
+            className={LeftPaneContainer}
             minWidth={200}
             maxWidth={800}
             defaultSize={{ height: "100vh", width: 300 }}
@@ -212,11 +216,11 @@ function App() {
             {renderLeftPane(project.config.name)}
           </Resizable>
         )}
-        <div className="flex flex-col flex-1 relative bg-gray-600 items-center justify-center overflow-hidden">
+        <WorkspaceContainer>
           {project && (renderEntries?.length ?? 0) > 0 && (
-            <div className="toolbar flex absolute top-0 right-0 left-0 bg-gray-800 z-10">
+            <ToolbarContainer>
               <Toolbar setZoomAction={setZoomAction} />
-            </div>
+            </ToolbarContainer>
           )}
           {!project && <Intro />}
           <TransformContainer
@@ -226,10 +230,10 @@ function App() {
             {renderComponentViews()}
           </TransformContainer>
           <SupportCTA openUrl={open} />
-        </div>
+        </WorkspaceContainer>
         {project && !!hasSelectedElement && (
           <Resizable
-            className="flex flex-col h-screen bg-gray-800 z-10"
+            className={RightPaneContainer}
             minWidth={200}
             maxWidth={500}
             defaultSize={{ height: "100vh", width: 300 }}
@@ -249,17 +253,91 @@ function App() {
             <CodeEditorPane />
           </Resizable>
         )}
-      </div>
+      </PaneContainer>
       {!project && (
-        <div
-          className="fixed top-0 right-0 p-3 opacity-50"
-          title={__COMMIT_HASH__}
-        >
-          v{__BUILD_VERSION__}
-        </div>
+        <Version title={__COMMIT_HASH__}>v{__BUILD_VERSION__}</Version>
       )}
-    </div>
+    </Container>
   );
 }
 
-export default App;
+// #region styles
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  color: white;
+`;
+
+const PaneContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+`;
+
+const LeftPaneContainer = css`
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  padding-bottom: 0;
+  height: 100vh;
+  background-color: ${DARK_COLOR};
+  z-index: 10;
+`;
+
+const RightPaneContainer = css`
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: ${DARK_COLOR};
+  z-index: 10;
+`;
+
+const WorkspaceContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background-color: ${LIGHT_COLOR};
+`;
+
+// todo remove .btn when Toolbar is converted
+const ToolbarContainer = styled.div`
+  display: flex;
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  background-color: ${DARK_COLOR};
+  z-index: 10;
+
+  .btn,
+  ${Button} {
+    padding: 6px 12px;
+    border-radius: 0;
+  }
+`;
+
+const Version = styled.div`
+  position: fixed;
+  top: 0;
+  right: 0;
+  padding: 0.625rem;
+  opacity: 0.5;
+`;
+
+const TrackingControlGroup = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+// #endregion
