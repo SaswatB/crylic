@@ -62,10 +62,9 @@ export type StyleKeys<
     : never;
 export type Styles = { [P in StyleKeys]?: string | null };
 
-export interface CustomComponentDefinition {
+export interface ImportedComponentDefinition {
   name: string;
   import: ImportDefinition;
-  // defaultChildren?: ComponentDefinition[]; // todo implement
 }
 
 export interface ImportDefinition {
@@ -77,24 +76,50 @@ export interface ImportDefinition {
   skipIdentifier?: boolean; // for side effect imports, like style sheets
 }
 
+export interface StyledComponentDefinition {
+  name: string;
+  base: {
+    // todo support other base types
+    type: ComponentDefinitionType.HTMLElement;
+    tag: keyof HTMLElementTagNameMap;
+  };
+}
+
+export enum ComponentDefinitionType {
+  HTMLElement,
+  ImportedElement,
+  StyledElement,
+}
+
 export type ComponentDefinition = (
   | {
-      isHTMLElement: true;
+      type: ComponentDefinitionType.HTMLElement;
       tag: keyof HTMLElementTagNameMap;
     }
   | {
-      isHTMLElement?: false;
-      component: CustomComponentDefinition;
+      type: ComponentDefinitionType.ImportedElement;
+      component: ImportedComponentDefinition;
+    }
+  | {
+      type: ComponentDefinitionType.StyledElement;
+      component: StyledComponentDefinition;
+      defaultStyles?: string;
     }
 ) & {
-  attributes?: Record<string, unknown>;
+  display: {
+    name: string;
+    icon?: string;
+  };
+  // match: (element: SelectedElement) => boolean; // todo implement
+  defaultAttributes?: Record<string, unknown>;
+  // defaultChildren?: ComponentDefinition[]; // todo implement
 };
 
 export interface CustomComponentConfig {
   name: string;
   installed: (project: Project) => boolean;
   install: (project: Project, installPackage: PackageInstaller<string>) => void;
-  components: CustomComponentDefinition[];
+  components: ComponentDefinition[];
 }
 
 export type Mutable<T> = {

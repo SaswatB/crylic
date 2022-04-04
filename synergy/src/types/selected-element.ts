@@ -6,6 +6,7 @@ export interface SourceMetadata {
   componentName: string;
   directProps: Record<string, unknown>;
   availableImports?: string[]; // files that are imported in the file that this element is defined in
+  topLevelVars?: string[]; // variables that are defined at the top level of the file that this element is defined in
 }
 
 export interface SelectedElement {

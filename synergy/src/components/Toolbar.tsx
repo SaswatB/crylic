@@ -1,29 +1,15 @@
 import React, { FunctionComponent, useEffect } from "react";
 import ReactTooltip from "react-tooltip";
-import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import {
-  faBars,
-  faCaretSquareDown,
-  faCheckSquare,
   faCompressArrowsAlt,
-  faDotCircle,
-  faExternalLinkSquareAlt,
-  faFont,
-  faHeading,
-  faHSquare,
   faLocationArrow,
   faMousePointer,
   faPlus,
-  faPlusSquare,
   faSearchMinus,
   faSearchPlus,
 } from "@fortawesome/free-solid-svg-icons";
-import {
-  FontAwesomeIcon,
-  FontAwesomeIconProps,
-} from "@fortawesome/react-fontawesome";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Popover from "@material-ui/core/Popover";
-import { isEqual } from "lodash";
 import {
   bindPopover,
   bindTrigger,
@@ -37,7 +23,6 @@ import { useSelectInput } from "../hooks/useInput";
 import { useObservable } from "../hooks/useObservable";
 import { useService } from "../hooks/useService";
 import { Project } from "../lib/project/Project";
-import { renderSeparator } from "../lib/render-utils";
 import { useProject } from "../services/ProjectService";
 import { SelectService } from "../services/SelectService";
 import { ComponentViewZoomAction, PackageInstaller } from "../types/paint";
@@ -56,83 +41,14 @@ const useAdderTab = (
     renderSelectComponentConfig,
   ] = useSelectInput({
     options: [
-      { name: "Default", value: "-1" },
-      ...config.componentConfigs.map((config, index) => ({
-        name: config.name,
+      ...config.componentConfigs.map((c, index) => ({
+        name: c.name,
         value: `${index}`,
       })),
     ],
     label: "Component Library",
-    initialValue: "-1",
+    initialValue: "0",
   });
-
-  const renderHTMLAddOption = (
-    name: string,
-    icon: IconProp,
-    tag: keyof HTMLElementTagNameMap,
-    attributes?: Record<string, unknown>,
-    iconProps?: Omit<FontAwesomeIconProps, "icon">
-  ) => (
-    <button
-      className={`btn w-full ${
-        selectMode?.type === SelectModeType.AddElement &&
-        selectMode.isHTMLElement &&
-        selectMode.tag === tag &&
-        isEqual(selectMode.attributes, attributes)
-          ? "active"
-          : ""
-      }`}
-      onClick={() =>
-        setSelectMode({
-          type: SelectModeType.AddElement,
-          isHTMLElement: true,
-          tag,
-          attributes,
-        })
-      }
-    >
-      <FontAwesomeIcon icon={icon} {...iconProps} /> {name}
-    </button>
-  );
-
-  const renderDefaultElementAdder = () => (
-    <>
-      {renderSeparator("Containers")}
-      <div className="grid2x">
-        {renderHTMLAddOption("Row", faBars, "div", {
-          style: { display: "flex" },
-        })}
-        {renderHTMLAddOption(
-          "Column",
-          faBars,
-          "div",
-          { style: { display: "flex", flexDirection: "column" } },
-          { className: "transform rotate-90" }
-        )}
-      </div>
-      {renderSeparator("Text")}
-      <div className="grid2x">
-        {renderHTMLAddOption("Heading", faHeading, "h1", {
-          textContent: "Heading",
-        })}
-        {renderHTMLAddOption("Text", faFont, "span", { textContent: "Text" })}
-      </div>
-      {renderSeparator("Interactive")}
-      <div className="grid2x">
-        {renderHTMLAddOption("Button", faPlusSquare, "button")}
-        {renderHTMLAddOption("Link", faExternalLinkSquareAlt, "a")}
-      </div>
-      {renderSeparator("Form")}
-      <div className="grid2x">
-        {renderHTMLAddOption("Textbox", faHSquare, "input", { type: "text" })}
-        {renderHTMLAddOption("Select", faCaretSquareDown, "select")}
-        {renderHTMLAddOption("Checkbox", faCheckSquare, "input", {
-          type: "checkbox",
-        })}
-        {renderHTMLAddOption("Radio", faDotCircle, "input", { type: "radio" })}
-      </div>
-    </>
-  );
 
   const renderConfigElementAdder = () => {
     const componentConfig =
@@ -161,7 +77,6 @@ const useAdderTab = (
             key={index}
             className={`btn ${
               selectMode?.type === SelectModeType.AddElement &&
-              !selectMode.isHTMLElement &&
               selectMode.component === component
                 ? "active"
                 : ""
@@ -173,7 +88,7 @@ const useAdderTab = (
               })
             }
           >
-            {component.name}
+            {component.display.name}
           </button>
         ))}
       </div>
@@ -183,9 +98,7 @@ const useAdderTab = (
   return () => (
     <>
       {renderSelectComponentConfig({ style: { marginTop: 10 } })}
-      {selectedComponentConfigIndex === "-1"
-        ? renderDefaultElementAdder()
-        : renderConfigElementAdder()}
+      {renderConfigElementAdder()}
     </>
   );
 };

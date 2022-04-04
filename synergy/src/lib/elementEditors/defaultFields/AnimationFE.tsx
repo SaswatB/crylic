@@ -4,6 +4,7 @@ import { useSnackbar } from "notistack";
 import { AnimationEditorModal } from "../../../components/Animation/AnimationEditorModal";
 import { usePackageInstallerRecoil } from "../../../hooks/recoil/usePackageInstallerRecoil";
 import { useProject } from "../../../services/ProjectService";
+import { ComponentDefinitionType } from "../../../types/paint";
 import { ltTakeNext, sleep } from "../../utils";
 import { ElementEditorFieldProps } from "../ElementEditor";
 
@@ -29,9 +30,9 @@ export function AnimationFE({
     );
   }
   const { componentName } = selectedElement.sourceMetadata || {};
-  if (!componentName?.startsWith("motion.")) {
+  if (componentName && !componentName.startsWith("motion.")) {
     // todo support more elements for animation conversion
-    if (["div", "a", "button", "span"].includes(componentName || "")) {
+    if (["div", "a", "button", "span"].includes(componentName)) {
       const enableAnimation = async () => {
         const codeId = project.primaryElementEditor.getCodeIdFromLookupId(
           selectedElement.lookupId
@@ -43,13 +44,15 @@ export function AnimationFE({
         const newCodePromise = ltTakeNext(codeEntry.code$);
 
         await onChangeComponent({
+          type: ComponentDefinitionType.ImportedElement,
+          display: { name: componentName },
           component: {
             import: {
               path: "framer-motion",
               namespace: "motion",
-              name: componentName || "",
+              name: componentName,
             },
-            name: componentName || "",
+            name: componentName,
           },
         });
         // todo find a better way to refresh, or avoid errors when doing this operation, than a timed refresh

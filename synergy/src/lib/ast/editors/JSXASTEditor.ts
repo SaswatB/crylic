@@ -9,6 +9,7 @@ import { types } from "recast";
 
 import {
   ComponentDefinition,
+  ComponentDefinitionType,
   ImportDefinition,
   StyleKeys,
   Styles,
@@ -17,7 +18,9 @@ import { SourceMetadata } from "../../../types/selected-element";
 import { CodeEntry } from "../../project/CodeEntry";
 import {
   copyJSXName,
+  createStyledDeclaration,
   eitherIf,
+  getBlockIdentifiers,
   getName,
   getValue,
   ifIdentifier,
@@ -57,6 +60,11 @@ const JSX_RECENTLY_ADDED_DATA_ATTR = "paintlookupidnew";
 const JSX_RECENTLY_ADDED = "new";
 
 export class JSXASTEditor extends ElementASTEditor<t.File> {
+
+  constructor(private config: {styledComponentsImport: string}) {
+    super()
+  }
+
   protected addLookupDataToAST({
     ast,
     codeEntry,
@@ -147,7 +155,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
         path.value,
         childTag,
         {
-          ...child.attributes,
+          ...child.defaultAttributes,
           [`data-${JSX_RECENTLY_ADDED_DATA_ATTR}`]: JSX_RECENTLY_ADDED,
         },
         {
@@ -296,7 +304,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
   }
 
   public getRecentlyAddedElements({ ast, codeEntry }: ReadContext<t.File>) {
-    let resultIndicies: number[] = [];
+    let resultIndices: number[] = [];
     // find all jsx elements with recently added data attributes
     traverseJSXElements(ast, (path, index) => {
       const hasRecentlyAddedDataAttr = path.value.openingElement.attributes?.find(
@@ -305,11 +313,11 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
           `data-${JSX_RECENTLY_ADDED_DATA_ATTR}`
       );
       if (hasRecentlyAddedDataAttr) {
-        resultIndicies.push(index);
+        resultIndices.push(index);
       }
     });
     // map those elements to lookup ids and return them
-    return resultIndicies.map((index) => this.createLookupId(codeEntry, index));
+    return resultIndices.map((index) => this.createLookupId(codeEntry, 'j', index));
   }
 
   public getElementLookupIdAtCodePosition(
@@ -336,14 +344,14 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       }
     });
     return resultId !== undefined
-      ? this.createLookupId(codeEntry, resultId)
+      ? this.createLookupId(codeEntry, 'j', resultId)
       : undefined;
   }
 
   public getSourceMetaDataFromLookupId(
     { ast }: ReadContext<t.File>,
     lookupId: string,
-    options?: { includeImports?: boolean }
+    options?: { includeImports?: boolean, includeTopLevelVars?: boolean }
   ) {
     let sourceMetadata: SourceMetadata | undefined;
     this.getJSXElementByLookupId(ast, lookupId, (path) => {
@@ -402,6 +410,9 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
               node.source.type === "StringLiteral"
           )
           .map((o) => (o.source as t.StringLiteral).value);
+      }
+      if (options?.includeTopLevelVars) {
+        sourceMetadata.topLevelVars = getBlockIdentifiers([ast.program]).map(b => b.name)
       }
     });
     return sourceMetadata;
@@ -706,12 +717,33 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     codeEntry: CodeEntry,
     componentDef: ComponentDefinition
   ) {
-    if (componentDef.isHTMLElement) {
-      return b.jsxIdentifier(componentDef.tag);
-      // todo should this import React?
-    } else {
-      // ensure the import for components with a path
-      return this.getOrAddImport(ast, codeEntry, componentDef.component.import);
+    switch (componentDef.type) {
+      case ComponentDefinitionType.HTMLElement:
+        // todo should this import React?
+        return b.jsxIdentifier(componentDef.tag);
+      case ComponentDefinitionType.ImportedElement:
+        // ensure the import for components with a path
+        return this.getOrAddImport(ast, codeEntry, componentDef.component.import);
+      case ComponentDefinitionType.StyledElement: {
+        const styledTag = this.getOrAddImport(ast, codeEntry, {
+          name: "styled", // todo allow a different alias?
+          path: this.config.styledComponentsImport,
+          isDefault: true,
+        });
+        if (!styledTag) return null
+        if (styledTag.type !== "JSXIdentifier") throw new Error("Unexpected styled tag type " + styledTag.type);
+
+        // for styled-components, add a new component definition to the file
+        // todo reconcile or throw an error if this conflicts with a different var
+        const componentTag = b.jsxIdentifier(componentDef.component.name)
+        ast.program.body.push(createStyledDeclaration(
+          componentTag.name,
+          styledTag.name,
+          componentDef.component.base.tag,
+          componentDef.defaultStyles || '',
+        ))
+        return componentTag
+      }
     }
   }
 

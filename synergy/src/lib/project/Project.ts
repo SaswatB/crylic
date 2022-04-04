@@ -35,7 +35,12 @@ export abstract class Project {
     public config: ProjectConfig
   ) {
     this.elementEditorEntries = [
-      { editor: new JSXASTEditor(), shouldApply: (e) => e.isScriptEntry },
+      {
+        editor: new JSXASTEditor({
+          styledComponentsImport: config.getStyledComponentsImport(),
+        }),
+        shouldApply: (e) => e.isScriptEntry,
+      },
     ];
     this.styleEditorEntries = [
       { editor: new StyledASTEditor(), shouldApply: (e) => e.isScriptEntry },

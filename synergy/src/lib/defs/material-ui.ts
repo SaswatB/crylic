@@ -1,15 +1,20 @@
 import {
+  ComponentDefinition,
+  ComponentDefinitionType,
   CustomComponentConfig,
-  CustomComponentDefinition,
 } from "../../types/paint";
 
-function materialUIComponentDef(name: string): CustomComponentDefinition {
+function materialUIComponentDef(name: string): ComponentDefinition {
   return {
-    name,
-    import: {
+    type: ComponentDefinitionType.ImportedElement,
+    display: { name },
+    component: {
       name,
-      path: `@material-ui/core/${name}`,
-      isDefault: true,
+      import: {
+        name,
+        path: `@material-ui/core/${name}`,
+        isDefault: true,
+      },
     },
   };
 }

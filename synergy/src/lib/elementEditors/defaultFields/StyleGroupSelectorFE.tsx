@@ -162,7 +162,7 @@ export function StyleGroupSelectorFE({
           project.primaryElementEditor.getSourceMetaDataFromLookupId(
             await createNewReadContext(codeEntry),
             selectedElement.lookupId,
-            { includeImports: true }
+            { includeImports: true, includeTopLevelVars: true }
           ) || {};
 
         // translate imports to code entries

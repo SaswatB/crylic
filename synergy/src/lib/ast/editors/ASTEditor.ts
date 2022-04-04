@@ -177,7 +177,7 @@ export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
   public abstract getSourceMetaDataFromLookupId(
     readContext: ReadContext<ASTType>,
     lookupId: string,
-    options?: { includeImports?: boolean }
+    options?: { includeImports?: boolean; includeTopLevelVars?: boolean }
   ): SourceMetadata | undefined;
 
   public abstract getHTMLElementsByLookupId(

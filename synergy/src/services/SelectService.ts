@@ -158,7 +158,7 @@ export class SelectService {
         await addElementHelper(
           this.projectService.project$.getValue()!,
           element,
-          selectMode,
+          selectMode.component,
           hints,
           {
             renderEntry,

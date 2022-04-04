@@ -314,7 +314,10 @@ export const traverseJSXElements = (
 /**
  * Gets all the variables defined at the top level of the program
  */
-const getBlockIdentifiers = (nodes: t.ASTNode[], parents: t.ASTNode[] = []) => {
+export const getBlockIdentifiers = (
+  nodes: t.ASTNode[],
+  parents: t.ASTNode[] = []
+) => {
   const identifiers: {
     name: string;
     node: t.ASTNode;
@@ -681,4 +684,29 @@ export function eitherContent({
     return right(content as CSSASTNode[]);
   }
   return left(content as string);
+}
+
+export function createStyledDeclaration(
+  componentName: string,
+  styledTag: string,
+  styledMember: string,
+  styledContent: string
+) {
+  return b.variableDeclaration("const", [
+    b.variableDeclarator(
+      b.identifier(componentName),
+      b.taggedTemplateExpression(
+        b.memberExpression(b.identifier(styledTag), b.identifier(styledMember)),
+        b.templateLiteral(
+          [
+            b.templateElement(
+              { cooked: styledContent, raw: styledContent },
+              true
+            ),
+          ],
+          []
+        )
+      )
+    ),
+  ]);
 }

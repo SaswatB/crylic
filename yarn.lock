@@ -9511,8 +9511,6 @@ __metadata:
   dependencies:
     "@babel/preset-env": ^7.16.5
     "@babel/preset-typescript": ^7.16.5
-    "@emotion/react": ^11.8.2
-    "@emotion/styled": ^11.8.1
     "@fortawesome/fontawesome-svg-core": ^1.2.28
     "@fortawesome/free-solid-svg-icons": ^5.13.0
     "@fortawesome/react-fontawesome": ^0.1.9
@@ -23391,6 +23389,8 @@ resolve@1.15.0:
   dependencies:
     "@babel/parser": ^7.16.4
     "@emotion/css": ^11.7.1
+    "@emotion/react": ^11.8.2
+    "@emotion/styled": ^11.8.1
     "@fortawesome/fontawesome-svg-core": ^1.2.30
     "@fortawesome/free-solid-svg-icons": ^5.14.0
     "@fortawesome/react-fontawesome": ^0.1.11

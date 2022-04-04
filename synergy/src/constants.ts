@@ -23,9 +23,10 @@ export type SelectMode =
   | {
       type: SelectModeType.SelectElement;
     }
-  | ({
+  | {
       type: SelectModeType.AddElement;
-    } & ComponentDefinition);
+      component: ComponentDefinition;
+    };
 
 export const SelectModeCursor: Record<
   SelectModeType,

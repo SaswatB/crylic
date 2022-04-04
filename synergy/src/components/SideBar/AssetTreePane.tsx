@@ -33,6 +33,7 @@ import { renderSeparator } from "../../lib/render-utils";
 import { ltTakeNext } from "../../lib/utils";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
+import { ComponentDefinitionType } from "../../types/paint";
 import { IconButton } from "../IconButton";
 import { InputModal } from "../InputModal";
 import { NewComponentModal } from "../NewComponentModal";
@@ -290,12 +291,16 @@ export const AssetTreePane: FunctionComponent<Props> = ({
     selectService.setSelectMode({
       type: SelectModeType.AddElement,
       component: {
-        name,
-        import: {
-          // todo throw an error if exportName isn't set
-          name: (await ltTakeNext(codeEntry.exportName$))!,
-          path: codeEntry.filePath,
-          isDefault: await ltTakeNext(codeEntry.exportIsDefault$),
+        type: ComponentDefinitionType.ImportedElement,
+        display: { name },
+        component: {
+          name,
+          import: {
+            // todo throw an error if exportName isn't set
+            name: (await ltTakeNext(codeEntry.exportName$))!,
+            path: codeEntry.filePath,
+            isDefault: await ltTakeNext(codeEntry.exportIsDefault$),
+          },
         },
       },
     });

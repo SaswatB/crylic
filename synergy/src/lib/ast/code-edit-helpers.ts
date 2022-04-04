@@ -1,5 +1,8 @@
 import { SelectModeHints } from "../../constants";
-import { ComponentDefinition } from "../../types/paint";
+import {
+  ComponentDefinition,
+  ComponentDefinitionType,
+} from "../../types/paint";
 import { SelectedElement } from "../../types/selected-element";
 import { Project } from "../project/Project";
 import { RenderEntry } from "../project/RenderEntry";
@@ -48,7 +51,8 @@ export const addElementHelper = async (
   if (!codeEntry) return;
 
   const componentPath =
-    !component.isHTMLElement && component.component.import.path;
+    component.type === ComponentDefinitionType.ImportedElement &&
+    component.component.import.path;
 
   // don't allow adding a component to itself
   if (componentPath === codeEntry.filePath) {
