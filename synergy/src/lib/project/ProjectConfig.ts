@@ -66,6 +66,21 @@ export const ProjectConfigFile = it.type({
     }),
     it.undefined,
   ]),
+  componentLibraries: it.union([
+    it.type({
+      styledComponents: it.union([
+        it.type({
+          library: it.union([
+            it.literal("styled-components"), // default
+            it.literal("@emotion/styled"),
+            it.undefined,
+          ]),
+        }),
+        it.undefined,
+      ]),
+    }),
+    it.undefined,
+  ]),
 });
 export type ProjectConfigFile = it.TypeOf<typeof ProjectConfigFile>;
 
@@ -168,5 +183,12 @@ export abstract class ProjectConfig {
 
   public getAnalyzerMaxFileSizeBytes() {
     return this.configFile?.analyzer?.maxFileSizeBytes ?? 50 * 1024;
+  }
+
+  public getStyledComponentsImport() {
+    return (
+      this.configFile?.componentLibraries?.styledComponents?.library ??
+      "styled-components"
+    );
   }
 }

@@ -1,4 +1,5 @@
-import React, { CSSProperties } from "react";
+import React, { useMemo } from "react";
+import MonacoEditor from "react-monaco-editor";
 import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
@@ -8,53 +9,17 @@ import { camelCase, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
 
 import { useSelectInput, useTextInput } from "../hooks/useInput";
-import { prettyPrintTS } from "../lib/ast/ast-helpers";
+import { getBoilerPlateComponent } from "../lib/component-boilerplate";
 import { CodeEntry } from "../lib/project/CodeEntry";
 import { useProject } from "../services/ProjectService";
+import { Collapsible } from "./Collapsible";
 import { createModal } from "./PromiseModal";
 
 enum Preset {
   Basic = "Basic",
   BasicWSS = "Basic with Style Sheet",
+  BasicWSC = "Basic with Styled Component",
 }
-
-enum BaseComponent {
-  Button = "button",
-  Div = "div",
-  A = "a",
-  Span = "span",
-}
-
-const BaseComponentNames: Record<BaseComponent, string> = {
-  [BaseComponent.Button]: "Button",
-  [BaseComponent.Div]: "Container",
-  [BaseComponent.A]: "Link",
-  [BaseComponent.Span]: "Text",
-};
-
-const getBoilerPlateComponent = (
-  name: string,
-  baseComponent: string,
-  styles: CSSProperties,
-  includeStyleSheet: boolean
-) =>
-  prettyPrintTS(`
-import React from "react";
-${includeStyleSheet ? `import "./${name}.css";` : ""}
-
-export function ${name}() {
-  return (
-    <${baseComponent}
-      ${includeStyleSheet ? `className="${name}"` : ""}
-      ${
-        Object.entries(styles).length > 0
-          ? `style={${JSON.stringify(styles)}}`
-          : ""
-      }
-    />
-  );
-}
-`);
 
 const getBoilerPlateStyleSheet = (name: string) =>
   `.${name} {
@@ -81,19 +46,25 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
     })),
   });
 
-  const [base, renderBaseInput] = useSelectInput({
-    label: "Base",
-    initialValue: BaseComponent.Div,
-    options: Object.values(BaseComponent).map((b) => ({
-      name: BaseComponentNames[b],
-      value: b,
-    })),
-  });
-
   const [location, renderLocationInput] = useTextInput({
     label: "Component Location",
     initialValue: project.getDefaultNewComponentFolder(),
   });
+
+  const code = useMemo(
+    () =>
+      getBoilerPlateComponent(
+        normalizedComponentName || "Component",
+        preset === Preset.BasicWSC ? "Container" : "div",
+        {},
+        preset === Preset.BasicWSS,
+        preset === Preset.BasicWSC
+          ? // todo check if this needs to be installed
+            project.config.getStyledComponentsImport()
+          : undefined
+      ),
+    [normalizedComponentName, preset, project]
+  );
 
   const onSubmit = () => {
     if (!normalizedComponentName) {
@@ -104,12 +75,6 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
     // todo add validation/duplicate checking to name
     const filePath = project.getNormalizedSourcePath(
       `${location}/${normalizedComponentName}.tsx`
-    );
-    const code = getBoilerPlateComponent(
-      normalizedComponentName,
-      base,
-      {},
-      preset === Preset.BasicWSS
     );
     const codeEntry = new CodeEntry(project, filePath, code);
     project.addCodeEntries([codeEntry], { render: true });
@@ -138,8 +103,17 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
           {renderNameInput({ helperText: normalizedComponentName })}
         </div>
         <div className="mb-4">{renderPresetInput()}</div>
-        {/* <div className="mb-4">{renderBaseInput()}</div> */}
-        {renderLocationInput()}
+        {renderLocationInput({ fullWidth: true })}
+        <Collapsible title="Details" defaultCollapsed>
+          <MonacoEditor
+            language="typescript"
+            theme="darkVsPlus"
+            value={code}
+            options={{ automaticLayout: true, wordWrap: "on", readOnly: true }}
+            width="500px"
+            height="300px"
+          />
+        </Collapsible>
       </DialogContent>
       <DialogActions>
         <Button onClick={() => resolve(null)}>Cancel</Button>

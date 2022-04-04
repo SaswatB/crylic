@@ -111,7 +111,7 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
                 ? JSON.stringify(webpackConfig.result, null, 4)
                 : "loading..."
             }
-            options={{ automaticLayout: true, wordWrap: "on" }}
+            options={{ automaticLayout: true, wordWrap: "on", readOnly: true }}
           />
         </div>
         {webpackOverridePath ? (

@@ -8,4 +8,9 @@ module.exports = {
   htmlTemplate: {
     path: "../desktop/public/index.html",
   },
+  componentLibraries: {
+    styledComponents: {
+      library: "@emotion/styled",
+    },
+  },
 };
