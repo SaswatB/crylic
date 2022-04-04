@@ -37,7 +37,7 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
   }) {
     let lookupIds: string[] = [];
     traverseStyleSheetRuleSets(ast, (path, index) => {
-      const lookupId = this.createLookupId(codeEntry, index);
+      const lookupId = this.createLookupId(codeEntry, 'ss', index);
       const selector = this.getSelector(path);
       const ruleBlock = this.getRuleBlock(path);
       if (ruleBlock) {

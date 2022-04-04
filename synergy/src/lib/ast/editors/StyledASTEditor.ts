@@ -39,7 +39,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
   }) {
     let lookupIds: string[] = [];
     traverseStyledTemplatesElements(ast, (path, index) => {
-      const lookupId = this.createLookupId(codeEntry, index);
+      const lookupId = this.createLookupId(codeEntry, 's', index);
       const { value } = path.value.quasi.quasis[0] || {};
       if (value)
         value.raw = `${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookupId}: 1;${value.raw}`;

@@ -66,7 +66,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
   }) {
     let lookupIds: string[] = [];
     traverseJSXElements(ast, (path, index) => {
-      const lookupId = this.createLookupId(codeEntry, index);
+      const lookupId = this.createLookupId(codeEntry, 'j', index);
       // todo get 'React' from import
       const isReactFragment = pipe(
         path.value.openingElement.name,

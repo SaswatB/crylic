@@ -64,14 +64,18 @@ export abstract class ASTEditor<ASTType> {
 
   public onASTRender(iframe: HTMLIFrameElement) {}
 
-  protected createLookupId(codeEntry: CodeEntry, elementIndex: number) {
-    return `${codeEntry.id}-${elementIndex}`;
+  protected createLookupId(
+    codeEntry: CodeEntry,
+    editorTag: string,
+    elementIndex: number
+  ) {
+    return `${codeEntry.id}-${editorTag}-${elementIndex}`;
   }
   public getCodeIdFromLookupId(lookupId: string) {
     return lookupId.split("-")[0];
   }
   protected getElementIndexFromLookupId(lookupId: string) {
-    return parseInt(lookupId.split("-")[1]!);
+    return parseInt(lookupId.split("-")[2]!);
   }
   public abstract getCodeLineFromLookupId(
     readContext: ReadContext<ASTType>,
