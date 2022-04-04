@@ -9,6 +9,8 @@ import { clamp } from "lodash";
 
 import { ComponentViewZoomAction } from "../types/paint";
 
+const ratio = window.devicePixelRatio; // https://github.com/w3c/uievents/issues/40
+
 interface Props {
   zoomAction: ComponentViewZoomAction | undefined;
   onZoomChange: (zoom: number) => void;
@@ -22,6 +24,7 @@ export const TransformContainer: FunctionComponent<Props> = ({
   const transformRef = useRef({ scale: 1, x: 0, y: 0 });
   const transformContainerRef = useRef<HTMLDivElement>(null);
   const transformedElementRef = useRef<HTMLDivElement>(null);
+  const dragState = useRef<undefined | boolean>();
 
   const refreshTransform = () => {
     if (!transformedElementRef.current) return;
@@ -44,10 +47,19 @@ export const TransformContainer: FunctionComponent<Props> = ({
     [onZoomChange]
   );
 
+  const onPan = (dx: number, dy: number) => {
+    const { x, y } = transformRef.current;
+    const newX = x + dx;
+    const newY = y + dy;
+    transformRef.current = { ...transformRef.current, x: newX, y: newY };
+    refreshTransform();
+  };
+
   const onWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (dragState.current) return;
     if (!transformedElementRef.current) return;
     if (!transformContainerRef.current) return;
-    const { scale, x, y } = transformRef.current;
+    const { scale } = transformRef.current;
     if (e.ctrlKey) {
       const newScale = clamp(
         e.deltaY < 0 ? scale - e.deltaY / 600 : scale / (1 + e.deltaY / 600),
@@ -62,12 +74,10 @@ export const TransformContainer: FunctionComponent<Props> = ({
       const ox = e.nativeEvent.pageX - containerLeft;
       const oy = e.nativeEvent.pageY - containerTop;
       changeZoom(newScale, { x: ox, y: oy });
+      refreshTransform();
     } else {
-      const newX = x - e.deltaX / (scale * 2);
-      const newY = y - e.deltaY / (scale * 2);
-      transformRef.current = { ...transformRef.current, x: newX, y: newY };
+      onPan(-e.deltaX / (scale * 2), -e.deltaY / (scale * 2));
     }
-    refreshTransform();
   };
 
   useEffect(() => {
@@ -99,6 +109,25 @@ export const TransformContainer: FunctionComponent<Props> = ({
         overflow: "hidden",
         margin: 0,
         padding: 0,
+      }}
+      onPointerDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.button === 1) {
+          dragState.current = true;
+          (e.target as HTMLElement).setPointerCapture(e.pointerId);
+        }
+      }}
+      onPointerMove={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (dragState.current) {
+          const { scale } = transformRef.current;
+          onPan(e.movementX / ratio / scale, e.movementY / ratio / scale);
+        }
+      }}
+      onPointerUp={() => {
+        dragState.current = false;
       }}
       onWheel={onWheel}
     >
