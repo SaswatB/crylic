@@ -27,7 +27,7 @@ export const OutlinePane: FunctionComponent = () => {
       )}
       <div
         data-tour="outline-tab"
-        className="flex-1 overflow-auto"
+        className="flex-1 pr-4 overflow-auto"
         style={{ minHeight: 200 }}
       >
         {renderSeparator("Outline")}

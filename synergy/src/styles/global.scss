@@ -1,7 +1,7 @@
 // todo enable for keyboard use
 * {
   outline: none !important;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
 }
 
 body {
@@ -14,16 +14,23 @@ div[role="tooltip"] {
 }
 
 ::-webkit-scrollbar {
-  width: 16px;
+  width: 6px;
+  height: 6px;
 }
-
 ::-webkit-scrollbar-track {
   border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
 }
-
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.8);
-  border-left: 10px solid rgba(0, 0, 0, 0);
-  background-clip: padding-box;
   border-radius: 10px;
+  background: rgba(255, 255, 255, 0.4);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+::-webkit-scrollbar-thumb:active {
+  background: rgba(255, 255, 255, 1);
+}
+::-webkit-scrollbar-corner {
+  background: rgba(0, 0, 0, 0);
 }

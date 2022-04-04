@@ -459,7 +459,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
         )}
 
         {projectTree && treeNodeIds ? (
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 pr-4 overflow-auto">
             <TreeView
               defaultCollapseIcon={<ExpandMoreIcon />}
               defaultExpandIcon={<ChevronRightIcon />}
