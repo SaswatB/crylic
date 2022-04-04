@@ -45,12 +45,7 @@ export class ProjectService {
     this.project$
       .pipe(
         eagerMap((p) => p?.renderEntries$ || of<RenderEntry[]>([])),
-        eagerMapArrayAny((r) =>
-          r.compileStatus$.pipe(
-            filter((c) => c === RenderEntryCompileStatus.COMPILED),
-            map(() => r)
-          )
-        )
+        eagerMapArrayAny((r) => r.viewReloadedStart$.pipe(map(() => r)))
       )
       .subscribe((renderEntry) => {
         this.project$.getValue()?.editorEntries.forEach(({ editor }) => {

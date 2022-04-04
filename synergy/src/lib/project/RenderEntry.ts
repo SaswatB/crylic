@@ -14,6 +14,7 @@ export enum RenderEntryCompileStatus {
 export class RenderEntry {
   public publish = false;
   public readonly domChanged$ = new Subject();
+  public readonly viewReloadedStart$ = new Subject();
   public readonly viewReloaded$ = new Subject();
   public readonly reactMetadata$ = new BehaviorSubject<
     ReactMetadata | undefined

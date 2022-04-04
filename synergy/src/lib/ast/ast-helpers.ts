@@ -619,7 +619,9 @@ export function registerUninheritedCSSProperty(
       name: property,
       inherits: false,
     });
-  } catch (e) {}
+  } catch (e) {
+    console.warn("failed to register css property", e);
+  }
 }
 
 // convenience builder wrapper over createNode

@@ -284,6 +284,7 @@ export const webpackRunCodeWithWorker = async ({
       else if (status === "idle" && hasHmrApplied) {
         // run the callback on an idle after an apply
         hasHmrApplied = false;
+        renderEntry.viewReloadedStart$.next();
         // todo try to avoid timeout
         setTimeout(() => renderEntry.viewReloaded$.next(), 100);
       }
@@ -305,6 +306,7 @@ export const webpackRunCodeWithWorker = async ({
         });
       }
     );
+    renderEntry.viewReloadedStart$.next();
 
     try {
       frameWindow.paintBundle();
