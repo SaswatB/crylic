@@ -733,9 +733,16 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
         if (!styledTag) return null
         if (styledTag.type !== "JSXIdentifier") throw new Error("Unexpected styled tag type " + styledTag.type);
 
+        // get a unique name for the component out of all the top-level variable declarations
+        const existingIds = getBlockIdentifiers([ast.program]).map(id => id.name)
+        let componentName = componentDef.component.name
+        let i = 1
+        while(existingIds.includes(componentName)) {
+          componentName = `${componentDef.component.name}${++i}`
+        }
+
         // for styled-components, add a new component definition to the file
-        // todo reconcile or throw an error if this conflicts with a different var
-        const componentTag = b.jsxIdentifier(componentDef.component.name)
+        const componentTag = b.jsxIdentifier(componentName)
         ast.program.body.push(createStyledDeclaration(
           componentTag.name,
           styledTag.name,
