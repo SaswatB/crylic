@@ -292,7 +292,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
       type: SelectModeType.AddElement,
       component: {
         type: ComponentDefinitionType.ImportedElement,
-        display: { name },
+        display: { id: name, name },
         component: {
           name,
           import: {

@@ -4,7 +4,7 @@ import path from "path";
 
 import { SCRIPT_EXTENSION_REGEX } from "../ext-regex";
 import type { RemoteCodeEntry } from "../project/CodeEntry";
-import { getComponentExport, parseCodeEntryAST } from "./ast-helpers";
+import { getComponentExports, parseCodeEntryAST } from "./ast-helpers";
 
 export const workerModule = {
   async computeMetadata(remoteCodeEntry: RemoteCodeEntry) {
@@ -20,7 +20,7 @@ export const workerModule = {
       remoteCodeEntry.isRenderableScriptExtension ||
       remoteCodeEntry.isBootstrap
     ) {
-      const componentExport = getComponentExport(ast as t.File);
+      const { preferredExport } = getComponentExports(ast as t.File);
       const baseComponentName = upperFirst(
         camelCase(
           path
@@ -28,13 +28,13 @@ export const workerModule = {
             .replace(SCRIPT_EXTENSION_REGEX, "")
         )
       );
-      if (componentExport) {
+      if (preferredExport) {
         isComponent = !remoteCodeEntry.isBootstrap;
-        isRenderable = isComponent && !componentExport.isStyledComponent;
-        exportName = componentExport.name || baseComponentName;
+        isRenderable = isComponent && !preferredExport.isStyledComponent;
+        exportName = preferredExport.name || baseComponentName;
         exportIsDefault =
           remoteCodeEntry.config.forceUseComponentDefaultExports ||
-          componentExport.isDefault;
+          preferredExport.isDefault;
       } else if (remoteCodeEntry.config.disableComponentExportsGuard) {
         // since static analysis failed but we still need allow this file as a component guess that it's a default export
         isComponent = !remoteCodeEntry.isBootstrap;

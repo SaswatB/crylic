@@ -60,9 +60,8 @@ const JSX_RECENTLY_ADDED_DATA_ATTR = "paintlookupidnew";
 const JSX_RECENTLY_ADDED = "new";
 
 export class JSXASTEditor extends ElementASTEditor<t.File> {
-
-  constructor(private config: {styledComponentsImport: string}) {
-    super()
+  constructor(private config: { styledComponentsImport: string }) {
+    super();
   }
 
   protected addLookupDataToAST({
@@ -74,7 +73,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
   }) {
     let lookupIds: string[] = [];
     traverseJSXElements(ast, (path, index) => {
-      const lookupId = this.createLookupId(codeEntry, 'j', index);
+      const lookupId = this.createLookupId(codeEntry, "j", index);
       // todo get 'React' from import
       const isReactFragment = pipe(
         path.value.openingElement.name,
@@ -299,8 +298,11 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     throw new Error("Unsupported operation: Adding style groups to JSX");
   }
 
-  protected override addImportToAST ({ ast, codeEntry }: EditContext<t.File>, importDef: ImportDefinition) {
-    this.getOrAddImport(ast, codeEntry, importDef)
+  protected addImportToAST(
+    { ast, codeEntry }: EditContext<t.File>,
+    importDef: ImportDefinition
+  ) {
+    this.getOrAddImport(ast, codeEntry, importDef);
   }
 
   public getRecentlyAddedElements({ ast, codeEntry }: ReadContext<t.File>) {
@@ -317,7 +319,9 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       }
     });
     // map those elements to lookup ids and return them
-    return resultIndices.map((index) => this.createLookupId(codeEntry, 'j', index));
+    return resultIndices.map((index) =>
+      this.createLookupId(codeEntry, "j", index)
+    );
   }
 
   public getElementLookupIdAtCodePosition(
@@ -344,14 +348,14 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       }
     });
     return resultId !== undefined
-      ? this.createLookupId(codeEntry, 'j', resultId)
+      ? this.createLookupId(codeEntry, "j", resultId)
       : undefined;
   }
 
   public getSourceMetaDataFromLookupId(
     { ast }: ReadContext<t.File>,
     lookupId: string,
-    options?: { includeImports?: boolean, includeTopLevelVars?: boolean }
+    options?: { includeImports?: boolean; includeTopLevelVars?: boolean }
   ) {
     let sourceMetadata: SourceMetadata | undefined;
     this.getJSXElementByLookupId(ast, lookupId, (path) => {
@@ -412,7 +416,9 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
           .map((o) => (o.source as t.StringLiteral).value);
       }
       if (options?.includeTopLevelVars) {
-        sourceMetadata.topLevelVars = getBlockIdentifiers([ast.program]).map(b => b.name)
+        sourceMetadata.topLevelVars = getBlockIdentifiers([ast.program]).map(
+          (b) => b.name
+        );
       }
     });
     return sourceMetadata;
@@ -723,33 +729,42 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
         return b.jsxIdentifier(componentDef.tag);
       case ComponentDefinitionType.ImportedElement:
         // ensure the import for components with a path
-        return this.getOrAddImport(ast, codeEntry, componentDef.component.import);
+        return this.getOrAddImport(
+          ast,
+          codeEntry,
+          componentDef.component.import
+        );
       case ComponentDefinitionType.StyledElement: {
         const styledTag = this.getOrAddImport(ast, codeEntry, {
           name: "styled", // todo allow a different alias?
           path: this.config.styledComponentsImport,
           isDefault: true,
         });
-        if (!styledTag) return null
-        if (styledTag.type !== "JSXIdentifier") throw new Error("Unexpected styled tag type " + styledTag.type);
+        if (!styledTag) return null;
+        if (styledTag.type !== "JSXIdentifier")
+          throw new Error("Unexpected styled tag type " + styledTag.type);
 
         // get a unique name for the component out of all the top-level variable declarations
-        const existingIds = getBlockIdentifiers([ast.program]).map(id => id.name)
-        let componentName = componentDef.component.name
-        let i = 1
-        while(existingIds.includes(componentName)) {
-          componentName = `${componentDef.component.name}${++i}`
+        const existingIds = getBlockIdentifiers([ast.program]).map(
+          (id) => id.name
+        );
+        let componentName = componentDef.component.name;
+        let i = 1;
+        while (existingIds.includes(componentName)) {
+          componentName = `${componentDef.component.name}${++i}`;
         }
 
         // for styled-components, add a new component definition to the file
-        const componentTag = b.jsxIdentifier(componentName)
-        ast.program.body.push(createStyledDeclaration(
-          componentTag.name,
-          styledTag.name,
-          componentDef.component.base.tag,
-          componentDef.defaultStyles || '',
-        ))
-        return componentTag
+        const componentTag = b.jsxIdentifier(componentName);
+        ast.program.body.push(
+          createStyledDeclaration(
+            componentTag.name,
+            styledTag.name,
+            componentDef.component.base.tag,
+            componentDef.defaultStyles || ""
+          )
+        );
+        return componentTag;
       }
     }
   }

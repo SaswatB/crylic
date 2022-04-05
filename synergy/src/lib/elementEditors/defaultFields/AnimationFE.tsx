@@ -45,7 +45,7 @@ export function AnimationFE({
 
         await onChangeComponent({
           type: ComponentDefinitionType.ImportedElement,
-          display: { name: componentName },
+          display: { id: componentName, name: componentName },
           component: {
             import: {
               path: "framer-motion",

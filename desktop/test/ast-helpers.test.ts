@@ -1,4 +1,4 @@
-import { getComponentExport, parseAST } from "synergy/src/lib/ast/ast-helpers";
+import { getComponentExports, parseAST } from "synergy/src/lib/ast/ast-helpers";
 
 import exportDefaultFunctionExpressionFixture from "./fixtures/component-name/export-default-function-expression.fixture";
 import exportDefaultFunctionFixture from "./fixtures/component-name/export-default-function.fixture";
@@ -60,110 +60,134 @@ const exportSeparateNamedMemo = (exportSeparateNamedMemoFixture as unknown) as s
 const exportSeparateRenamedMemo = (exportSeparateRenamedMemoFixture as unknown) as string;
 const noComponentExport = (noComponentExportFixture as unknown) as string;
 
-describe("getComponentExport", () => {
+describe("getComponentExports", () => {
   test("gets name from simple exported function component", () => {
-    const comp = getComponentExport(parseAST(exportNamedFunction));
+    const comp = getComponentExports(parseAST(exportNamedFunction))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(false);
     expect(comp?.name).toEqual("ANamedFunction");
   });
   test("gets name from simple exported function expression component", () => {
-    const comp = getComponentExport(parseAST(exportNamedFunctionExpression));
+    const comp = getComponentExports(parseAST(exportNamedFunctionExpression))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(false);
     expect(comp?.name).toEqual("ANamedFunctionExpression");
   });
   test("gets name from simple exported function expression component with function name", () => {
-    const comp = getComponentExport(
+    const comp = getComponentExports(
       parseAST(exportNamedFunctionExpressionWithName)
-    );
+    ).preferredExport;
     expect(comp?.isDefault).toEqual(false);
     expect(comp?.name).toEqual("ANamedFunctionExpressionExport");
   });
   test("gets name from simple exported lambda function component", () => {
-    const comp = getComponentExport(parseAST(exportNamedLambda));
+    const comp = getComponentExports(parseAST(exportNamedLambda))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(false);
     expect(comp?.name).toEqual("ANamedLambda");
   });
   test("gets name from an exported memo component", () => {
-    const comp = getComponentExport(parseAST(exportNamedMemo));
+    const comp = getComponentExports(parseAST(exportNamedMemo)).preferredExport;
     expect(comp?.isDefault).toEqual(false);
     expect(comp?.name).toEqual("ANamedMemo");
   });
   test("gets name from an exported styled component", () => {
-    const comp = getComponentExport(parseAST(exportNamedStyled));
+    const comp = getComponentExports(parseAST(exportNamedStyled))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(false);
     expect(comp?.name).toEqual("StyledDiv");
   });
   test("gets name from an exported styled component", () => {
-    const comp = getComponentExport(parseAST(exportNamedStyledHoC));
+    const comp = getComponentExports(parseAST(exportNamedStyledHoC))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(false);
     expect(comp?.name).toEqual("StyledDiv");
   });
   test("prefers function component over styled component", () => {
-    const comp = getComponentExport(parseAST(exportNamedStyledWithFunction));
-    expect(comp?.isDefault).toEqual(false);
-    expect(comp?.name).toEqual("MyComponent");
+    const { preferredExport, allExports } = getComponentExports(
+      parseAST(exportNamedStyledWithFunction)
+    );
+    expect(preferredExport?.isDefault).toEqual(false);
+    expect(preferredExport?.name).toEqual("MyComponent");
+    expect(allExports.length).toEqual(2);
+    expect(allExports[0]?.name).toEqual("StyledDiv");
+    expect(allExports[1]?.name).toEqual("MyComponent");
   });
 
   test("gets export from simple default exported function component", () => {
-    const comp = getComponentExport(parseAST(exportDefaultFunction));
+    const comp = getComponentExports(parseAST(exportDefaultFunction))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(true);
   });
   test("gets export from simple default exported function expression component", () => {
-    const comp = getComponentExport(parseAST(exportDefaultFunctionExpression));
+    const comp = getComponentExports(parseAST(exportDefaultFunctionExpression))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(true);
   });
   test("gets export from simple default exported lambda function component", () => {
-    const comp = getComponentExport(parseAST(exportDefaultLambda));
+    const comp = getComponentExports(parseAST(exportDefaultLambda))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(true);
   });
   test("gets export from a default exported memo component", () => {
-    const comp = getComponentExport(parseAST(exportDefaultMemo));
+    const comp = getComponentExports(parseAST(exportDefaultMemo))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(true);
   });
   test("gets export from a default exported memo component, with memo explicitly imported", () => {
-    const comp = getComponentExport(parseAST(exportDefaultMemoExplicitImport));
+    const comp = getComponentExports(parseAST(exportDefaultMemoExplicitImport))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(true);
   });
   test("gets export from a default exported memo component, with memo explicitly imported and renamed", () => {
-    const comp = getComponentExport(parseAST(exportDefaultMemoRenamedImport));
+    const comp = getComponentExports(parseAST(exportDefaultMemoRenamedImport))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(true);
   });
 
   test("gets name from simple exported function component that's separate from the export", () => {
-    const comp = getComponentExport(parseAST(exportSeparateNamedFunction));
+    const comp = getComponentExports(parseAST(exportSeparateNamedFunction))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(false);
     expect(comp?.name).toEqual("ASeparateNamedFunction");
   });
   test("gets name from simple exported lambda function component that's separate from the export", () => {
-    const comp = getComponentExport(parseAST(exportSeparateNamedLambda));
+    const comp = getComponentExports(parseAST(exportSeparateNamedLambda))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(false);
     expect(comp?.name).toEqual("ASeparateNamedLambda");
   });
   test("gets name from an exported memo component that's separate from the export", () => {
-    const comp = getComponentExport(parseAST(exportSeparateNamedMemo));
+    const comp = getComponentExports(parseAST(exportSeparateNamedMemo))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(false);
     expect(comp?.name).toEqual("ASeparateMemo");
   });
   test("gets name from an exported memo component that's separate from the export and renamed", () => {
-    const comp = getComponentExport(parseAST(exportSeparateRenamedMemo));
+    const comp = getComponentExports(parseAST(exportSeparateRenamedMemo))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(false);
     expect(comp?.name).toEqual("ASeparateMemoRenamed");
   });
   test("gets export from simple default exported lambda function component that's separate from the export", () => {
-    const comp = getComponentExport(parseAST(exportSeparateDefaultFunction));
+    const comp = getComponentExports(parseAST(exportSeparateDefaultFunction))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(true);
   });
   test("gets export from simple default exported function component that's separate from the export", () => {
-    const comp = getComponentExport(parseAST(exportSeparateDefaultLambda));
+    const comp = getComponentExports(parseAST(exportSeparateDefaultLambda))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(true);
   });
   test("gets export from a default exported memo component that's separate from the export", () => {
-    const comp = getComponentExport(parseAST(exportSeparateDefaultMemo));
+    const comp = getComponentExports(parseAST(exportSeparateDefaultMemo))
+      .preferredExport;
     expect(comp?.isDefault).toEqual(true);
   });
 
   test("doesn't get component from file without a component", () => {
-    const comp = getComponentExport(parseAST(noComponentExport));
+    const comp = getComponentExports(parseAST(noComponentExport))
+      .preferredExport;
     expect(comp).toBeUndefined();
   });
 });

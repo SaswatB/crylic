@@ -23,13 +23,13 @@ export function SupportCTA({ openUrl }: { openUrl: (url: string) => void }) {
           openUrl("https://docs.crylic.io");
           break;
         case "feedback":
-          if (appzi) {
+          if (window.appzi) {
             window.appziSettings = {
               data: {
                 version: __COMMIT_HASH__,
               },
             };
-            appzi.openWidget("e0662074-0ac7-4f34-887e-9ee031379f0c");
+            window.appzi.openWidget("e0662074-0ac7-4f34-887e-9ee031379f0c");
           } else
             enqueueSnackbar("Feedback widget is not available", {
               variant: "error",

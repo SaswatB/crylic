@@ -372,12 +372,17 @@ export const getBlockIdentifiers = (
   return identifiers;
 };
 
-export const getComponentExport = (
+type AstComponentExport = (
+  | { isDefault: true; name?: undefined }
+  | { isDefault: false; name: string }
+) & { isStyledComponent?: boolean };
+
+export const getComponentExports = (
   ast: t.File
-):
-  | { isDefault: true; name?: undefined; isStyledComponent?: boolean }
-  | { isDefault: false; name: string; isStyledComponent?: boolean }
-  | undefined => {
+): {
+  preferredExport: AstComponentExport | undefined;
+  allExports: AstComponentExport[];
+} => {
   // get all export nodes at the top level of the program
   const exportNodes = ast.program.body.filter((node) => {
     switch (node.type) {
@@ -537,52 +542,49 @@ export const getComponentExport = (
         node.type === "ExportNamedDeclaration" ||
         node.type === "ExportDefaultDeclaration"
     )
-    .map(
-      (node): ReturnType<typeof getComponentExport> => {
-        // check whether the export's declaration is a component
-        if (node.declaration) {
-          const { isComponent, name, ...props } = isComponentNode(
-            node.declaration
-          );
-          if (isComponent) {
-            // name doesn't matter (and may not exist) for default export
-            if (node.type === "ExportDefaultDeclaration")
-              return { ...props, isDefault: true };
-            // name is required for a non-default export
-            return name ? { ...props, name, isDefault: false } : undefined;
-          }
-        }
-
-        // todo does this work if there's multiple components in one export specifier?
-        // check whether any named export specifiers are components
-        if (node.type === "ExportNamedDeclaration") {
-          const { name, ...props } =
-            node.specifiers
-              ?.map((specifier) => isComponentNode(specifier))
-              .filter((r) => r.isComponent)[0] || {};
+    .map((node): AstComponentExport | undefined => {
+      // check whether the export's declaration is a component
+      if (node.declaration) {
+        const { isComponent, name, ...props } = isComponentNode(
+          node.declaration
+        );
+        if (isComponent) {
+          // name doesn't matter (and may not exist) for default export
+          if (node.type === "ExportDefaultDeclaration")
+            return { ...props, isDefault: true };
           // name is required for a non-default export
           return name ? { ...props, name, isDefault: false } : undefined;
         }
-
-        return undefined;
       }
-    )
+
+      // todo does this work if there's multiple components in one export specifier?
+      // check whether any named export specifiers are components
+      if (node.type === "ExportNamedDeclaration") {
+        const { name, ...props } =
+          node.specifiers
+            ?.map((specifier) => isComponentNode(specifier))
+            .filter((r) => r.isComponent)[0] || {};
+        // name is required for a non-default export
+        return name ? { ...props, name, isDefault: false } : undefined;
+      }
+
+      return undefined;
+    })
     .filter(isDefined);
 
-  // return whether an export was found
-  if (exportedFunctions.length === 0) {
-    return undefined;
-  }
-
   // prefer default exports, then capitalized exports, then styled-component exports, and lastly the last export
-  return (
+  const preferredExport =
     exportedFunctions.find((f) => f.isDefault && !f.isStyledComponent) ||
     exportedFunctions.find(
       (f) => f.name?.match(/^[A-Z]/) && !f.isStyledComponent
     ) ||
     exportedFunctions.find((f) => f.isStyledComponent) ||
-    exportedFunctions[exportedFunctions.length - 1]!
-  );
+    exportedFunctions[exportedFunctions.length - 1]!;
+
+  return {
+    preferredExport,
+    allExports: exportedFunctions,
+  };
 };
 
 export const traverseStyleSheetRuleSets = (

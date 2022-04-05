@@ -17,7 +17,13 @@ const noStyleFinal = (noStyleFinalFixture as unknown) as string;
 const runJSXEditor = (
   code: string,
   apply: runEditorApply<JSXASTEditor, t.File>
-) => runEditor(new JSXASTEditor(), code, "tsx", apply);
+) =>
+  runEditor(
+    new JSXASTEditor({ styledComponentsImport: "" }),
+    code,
+    "tsx",
+    apply
+  );
 
 describe("JSXASTEditor tests", () => {
   test("applyStyles adds a new style attribute", () => {
