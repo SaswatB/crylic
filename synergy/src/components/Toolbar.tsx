@@ -23,13 +23,19 @@ import { useSelectInput } from "../hooks/useInput";
 import { useObservable } from "../hooks/useObservable";
 import { useService } from "../hooks/useService";
 import { Project } from "../lib/project/Project";
+import { renderSeparator } from "../lib/render-utils";
+import { isDefined } from "../lib/utils";
 import { useProject } from "../services/ProjectService";
 import { SelectService } from "../services/SelectService";
-import { ComponentViewZoomAction, PackageInstaller } from "../types/paint";
+import {
+  ComponentDefinition,
+  ComponentViewZoomAction,
+  PackageInstaller,
+} from "../types/paint";
 import { Tour } from "./Tour/Tour";
 
 const useAdderTab = (
-  project: Project | undefined,
+  project: Project,
   selectMode: SelectMode | undefined,
   setSelectMode: (mode: SelectMode | undefined) => void,
   installPackages: PackageInstaller
@@ -50,12 +56,32 @@ const useAdderTab = (
     initialValue: "0",
   });
 
+  const renderAdderButton = (component: ComponentDefinition, key: number) => (
+    <button
+      key={key}
+      className={`btn ${
+        selectMode?.type === SelectModeType.AddElement &&
+        selectMode.component === component
+          ? "active"
+          : ""
+      }`}
+      onClick={() =>
+        setSelectMode({
+          type: SelectModeType.AddElement,
+          component,
+        })
+      }
+    >
+      {component.display.icon?.() || null} {component.display.name}
+    </button>
+  );
+
   const renderConfigElementAdder = () => {
     const componentConfig =
       config.componentConfigs[parseInt(selectedComponentConfigIndex)];
     if (!componentConfig) return null; // todo error
 
-    if (project && !componentConfig.installed(project)) {
+    if (!componentConfig.installed(project)) {
       return (
         <>
           <div className="p-4 text-center">
@@ -70,27 +96,31 @@ const useAdderTab = (
         </>
       );
     }
+
+    if (componentConfig.adderLayout) {
+      const componentMap = new Map<string, ComponentDefinition>();
+      componentConfig.components.forEach((c) =>
+        componentMap.set(c.display.id, c)
+      );
+
+      return componentConfig.adderLayout.map((adder, index) => (
+        <React.Fragment key={index}>
+          {renderSeparator(adder.name)}
+          <div className="grid2x">
+            {adder.components
+              .map((id) => componentMap.get(id))
+              .filter(isDefined) // todo warn if not defined
+              .map((component, index2) => renderAdderButton(component, index2))}
+          </div>
+        </React.Fragment>
+      ));
+    }
+
     return (
       <div className="btngrp-v flex flex-col mt-2 w-64">
-        {componentConfig.components.map((component, index) => (
-          <button
-            key={index}
-            className={`btn ${
-              selectMode?.type === SelectModeType.AddElement &&
-              selectMode.component === component
-                ? "active"
-                : ""
-            }`}
-            onClick={() =>
-              setSelectMode({
-                type: SelectModeType.AddElement,
-                component,
-              })
-            }
-          >
-            {component.display.name}
-          </button>
-        ))}
+        {componentConfig.components.map((component, index) =>
+          renderAdderButton(component, index)
+        )}
       </div>
     );
   };

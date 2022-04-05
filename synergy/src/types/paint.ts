@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 import { Project } from "../lib/project/Project";
 import { ReactFiber, ReactFiberRoot } from "./react-devtools";
 
@@ -107,8 +109,9 @@ export type ComponentDefinition = (
     }
 ) & {
   display: {
+    id: string;
     name: string;
-    icon?: string;
+    icon?: () => ReactNode;
   };
   // match: (element: SelectedElement) => boolean; // todo implement
   defaultAttributes?: Record<string, unknown>;
@@ -120,6 +123,10 @@ export interface CustomComponentConfig {
   installed: (project: Project) => boolean;
   install: (project: Project, installPackage: PackageInstaller<string>) => void;
   components: ComponentDefinition[];
+  adderLayout?: {
+    name: string;
+    components: string[]; // display.id
+  }[];
 }
 
 export type Mutable<T> = {

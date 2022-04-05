@@ -7,7 +7,7 @@ import {
 function materialUIComponentDef(name: string): ComponentDefinition {
   return {
     type: ComponentDefinitionType.ImportedElement,
-    display: { name },
+    display: { id: name, name },
     component: {
       name,
       import: {
