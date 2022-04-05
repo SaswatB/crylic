@@ -19,7 +19,7 @@ import {
 import { SelectMode, SelectModeType } from "../constants";
 import { usePackageInstallerRecoil } from "../hooks/recoil/usePackageInstallerRecoil";
 import { useGlobalConfig } from "../hooks/useGlobalConfig";
-import { useSelectInput } from "../hooks/useInput";
+import { usePersistentSelectInput } from "../hooks/useInput";
 import { useObservable } from "../hooks/useObservable";
 import { useService } from "../hooks/useService";
 import { Project } from "../lib/project/Project";
@@ -45,15 +45,14 @@ const useAdderTab = (
   const [
     selectedComponentConfigIndex,
     renderSelectComponentConfig,
-  ] = useSelectInput({
-    options: [
-      ...config.componentConfigs.map((c, index) => ({
-        name: c.name,
-        value: `${index}`,
-      })),
-    ],
+  ] = usePersistentSelectInput({
+    options: config.componentConfigs.map((c, index) => ({
+      name: c.name,
+      value: `${index}`,
+    })),
     label: "Component Library",
     initialValue: "0",
+    localStorageKey: "adder-tab-cc-index",
   });
 
   const renderAdderButton = (component: ComponentDefinition, key: number) => (

@@ -26,6 +26,7 @@ import { DebouncingColorPicker } from "../components/DebouncingColorPicker";
 import { CSS_LENGTH_UNITS } from "../constants";
 import { useBoundState } from "./useBoundState";
 import { useDebouncedFunction } from "./useDebouncedFunction";
+import { useLocalStorage } from "./useLocalStorage";
 import { useThrottle } from "./useThrottle";
 
 const HEX_COLOR_REGEX = /^#([A-Fa-f0-9]{8}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
@@ -253,6 +254,24 @@ export const useSelectInput: useInputFunction<{
   );
 
   return [value, render];
+};
+
+export const usePersistentSelectInput: useInputFunction<{
+  options: { name: string; value: string }[];
+  localStorageKey: string;
+}> = ({ localStorageKey, ...props }) => {
+  const [lastValue, setLastValue] = useLocalStorage<string>(localStorageKey);
+
+  return useSelectInput({
+    ...props,
+    initialValue:
+      props.options.find((o) => o.value === lastValue)?.value ??
+      props.initialValue,
+    onChange: (v) => {
+      setLastValue(v);
+      props.onChange?.(v);
+    },
+  });
 };
 
 export const useColorPicker: useInputFunction<{
