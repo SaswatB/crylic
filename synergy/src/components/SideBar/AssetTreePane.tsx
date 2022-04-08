@@ -48,6 +48,15 @@ interface Tree {
   isCodeEntryAddable?: boolean;
 }
 
+function sortTree(tree: Tree) {
+  if (tree.children.length === 0) return;
+
+  tree.children.sort((a, b) =>
+    a.name.localeCompare(b.name, "en", { numeric: true })
+  );
+  tree.children.forEach(sortTree);
+}
+
 interface Props {
   onImportImageFile: () => Promise<string | undefined | null>;
 }
@@ -254,6 +263,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
             node.isCodeEntryRenderable = isRenderable;
             node.isCodeEntryAddable = isComponent;
           });
+          sortTree(newProjectTree);
           projectTreePostProcess?.(newProjectTree);
 
           return { projectTree: newProjectTree, treeNodeIds: newTreeNodeIds };
