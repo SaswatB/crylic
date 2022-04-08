@@ -29,6 +29,10 @@ export interface WebpackWorkerMessagePayload_Initialize {
   nodeModulesPath: string;
 }
 
+export interface WebpackWorkerMessagePayload_Reset {
+  action: "reset";
+}
+
 export interface WebpackWorkerMessagePayload_Compile {
   action: "compile";
   codeEntries: {
@@ -59,6 +63,7 @@ export interface WebpackWorkerMessagePayload_Compile {
 
 export type WebpackWorkerMessagePayload =
   | WebpackWorkerMessagePayload_Initialize
+  | WebpackWorkerMessagePayload_Reset
   | WebpackWorkerMessagePayload_Compile;
 
 interface RuntimeInfo {

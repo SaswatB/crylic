@@ -179,7 +179,7 @@ export class FileProject extends Project {
   private fileChangeQueue = new Set<string>()
   private fileChangeQueueTimer: number | undefined
 
-  private constructor(
+  protected constructor(
     path: string,
     sourceFolderPath: string,
     config: FileProjectConfig

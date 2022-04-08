@@ -17,7 +17,11 @@ import {
 import { publishComponent, unpublishComponent } from "../publish-component";
 import { getAppNodeModules } from "../utils";
 import { reactDevToolsFactory } from "./helpers/react-dev-tools-factory";
-import { dumpWebpackConfig, webpackRunCode } from "./run-code-webpack";
+import {
+  dumpWebpackConfig,
+  resetWebpack,
+  webpackRunCode,
+} from "./run-code-webpack";
 
 import errorBoundaryComponent from "!!raw-loader!synergy/src/components/ErrorBoundary";
 
@@ -344,6 +348,12 @@ export const webpackRunCodeWithWorker = async ({
     endCallbackTime - workerCallbackTime,
     workerCallbackTime - startTime
   );
+};
+
+export const resetWebpackWithWorker = () => {
+  if (WORKER_ENABLED)
+    ipcRenderer.send("webpack-worker-message", { action: "reset" });
+  else resetWebpack();
 };
 
 export const dumpWebpackConfigWithWorker = async (project: Project) => {

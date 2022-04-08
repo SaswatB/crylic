@@ -2,6 +2,7 @@ import { WebpackWorkerMessagePayload_Compile } from "../../types/ipc";
 import {
   dumpWebpackConfig,
   initialize,
+  resetWebpack,
   webpackRunCode,
 } from "./run-code-webpack";
 
@@ -11,6 +12,8 @@ ipcMain.on("webpack-worker-message", async (e, data) => {
   console.log("wbm", data.action);
   if (data.action === "initialize") {
     initialize(data.nodeModulesPath);
+  } else if (data.action === "reset") {
+    resetWebpack();
   } else if (data.action === "compile") {
     const { codeEntries, primaryCodeEntry, compileId, config } = data;
     const result = await webpackRunCode(

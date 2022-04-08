@@ -45,7 +45,7 @@ let webpackCache: Record<
 > = {};
 
 export function initialize(nodeModulesPath = "") {
-  webpackCache = {};
+  resetWebpack();
 
   // needed to resolve loaders and babel plugins/presets
   if (nodeModulesPath) {
@@ -94,6 +94,10 @@ export function initialize(nodeModulesPath = "") {
     `${nodeModulesPath}dotenv-expand`
   );
   nativeDeps.dotenv = __non_webpack_require__(`${nodeModulesPath}dotenv`);
+}
+
+export function resetWebpack() {
+  webpackCache = {};
 }
 
 function saveFileWithDirs(inputFs: IFs, filePath: string, data: string) {

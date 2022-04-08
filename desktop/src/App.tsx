@@ -40,7 +40,10 @@ import { CodeEditorPane } from "./components/SideBar/CodeEditorPane/CodeEditorPa
 import { Intro } from "./components/Workspace/Intro";
 import { WebpackConfigDialog } from "./components/Workspace/WebpackConfigDialog";
 import { openFilePicker } from "./hooks/useFilePicker";
-import { webpackRunCodeWithWorker } from "./utils/compilers/run-code-webpack-worker";
+import {
+  resetWebpackWithWorker,
+  webpackRunCodeWithWorker,
+} from "./utils/compilers/run-code-webpack-worker";
 import "./App.scss";
 
 const open = __non_webpack_require__("open") as typeof import("open");
@@ -74,6 +77,10 @@ export function App() {
   );
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [showWebpackConfigDialog, setShowWebpackConfigDialog] = useState(false);
+
+  useEffect(() => {
+    if (!project) resetWebpackWithWorker();
+  }, [project]);
 
   useObservableCallback(
     project?.projectSaved$,
