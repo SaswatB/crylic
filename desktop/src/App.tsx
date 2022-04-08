@@ -3,7 +3,6 @@ import { css } from "@emotion/css";
 import styled from "@emotion/styled";
 import { faCog } from "@fortawesome/free-solid-svg-icons";
 import { Checkbox } from "@material-ui/core";
-import * as Fathom from "fathom-client";
 import { useSnackbar } from "notistack";
 import { Resizable } from "re-resizable";
 import { distinctUntilChanged, map } from "rxjs/operators";
@@ -50,7 +49,6 @@ const Store = __non_webpack_require__(
   "electron-store"
 ) as typeof import("electron-store");
 const store = new Store();
-let isFathomLoaded = false;
 
 export function App() {
   const bus = useBus();
@@ -88,16 +86,6 @@ export function App() {
   );
   useEffect(() => {
     store.set("tracking_disabled", !allowTracking);
-    if (allowTracking && __IS_PRODUCTION__) {
-      if (!isFathomLoaded) {
-        Fathom.load("FFTBYUIQ");
-        isFathomLoaded = true;
-      } else {
-        Fathom.enableTrackingForMe();
-      }
-    } else if (isFathomLoaded) {
-      Fathom.blockTrackingForMe();
-    }
   }, [allowTracking]);
 
   const renderTrackingConfig = () => (
