@@ -2,6 +2,7 @@ import { MakeDirectoryOptions } from "fs";
 import { Readable } from "stream";
 import yauzl from "yauzl";
 
+import { bus, fileSyncConflict, fileSyncSuccess } from "synergy/src/lib/events";
 import {
   IMAGE_EXTENSION_REGEX,
   SCRIPT_EXTENSION_REGEX,
@@ -20,6 +21,9 @@ import { FileProjectConfig } from "./FileProjectConfig";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 const path = __non_webpack_require__("path") as typeof import("path");
+const chokidar = __non_webpack_require__(
+  "chokidar"
+) as typeof import("chokidar");
 
 export enum FileProjectTemplate {
   Blank = "blank",
@@ -171,24 +175,89 @@ export class FileProject extends Project {
     return project;
   }
 
-  private savedCodeRevisions: Record<string /* codeEntry.id */, number> = {};
+  private fileWatcher: import("chokidar").FSWatcher
+  private fileChangeQueue = new Set<string>()
+  private fileChangeQueueTimer: number | undefined
+
+  private constructor(
+    path: string,
+    sourceFolderPath: string,
+    config: FileProjectConfig
+  ) {
+    super(path, sourceFolderPath, config);
+
+    // watch for changes on files in the source folder
+    this.fileWatcher = chokidar.watch(sourceFolderPath).on("change", (path) => {
+      this.fileChangeQueue.add(path);
+      clearTimeout(this.fileChangeQueueTimer)
+      this.fileChangeQueueTimer = setTimeout(() => this.processFileChangeQueue(), 1000)
+    });
+  }
+
+  public override onClose() {
+    super.onClose()
+    void this.fileWatcher.close();
+    clearTimeout(this.fileChangeQueueTimer)
+  }
+
+  private savedCodeRevisions: Record<string /* codeEntry.id */, { id:number, code?: string }> = {};
+  private isCodeEntrySaved(codeEntry: CodeEntry) {
+    return codeEntry.codeRevisionId === INITIAL_CODE_REVISION_ID
+      || codeEntry.codeRevisionId === this.savedCodeRevisions[codeEntry.id]?.id
+  }
 
   public saveFiles() {
     this.codeEntries$
       .getValue()
       .filter(
-        (e) =>
-          e.code$.getValue() !== undefined &&
-          e.codeRevisionId !== INITIAL_CODE_REVISION_ID &&
-          e.codeRevisionId !== this.savedCodeRevisions[e.id]
+        (e) => e.code$.getValue() !== undefined && !this.isCodeEntrySaved(e)
       )
       .forEach((e) => this.saveFile(e));
     this.projectSaved$.next();
   }
   public saveFile({ id, filePath, code$, codeRevisionId }: CodeEntry) {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, code$.getValue());
-    this.savedCodeRevisions[id] = codeRevisionId;
+    const code = code$.getValue()
+    fs.writeFileSync(filePath, code);
+    this.savedCodeRevisions[id] = { id: codeRevisionId, code };
+  }
+
+  private async processFileChangeQueue() {
+    this.fileChangeQueueTimer = undefined
+    const filePaths = Array.from(this.fileChangeQueue)
+    this.fileChangeQueue.clear()
+    const codeEntries = this.codeEntries$.getValue()
+
+    const fileSyncSuccessPaths: string[] = []
+    const fileSyncConflictPaths: string[] = []
+    for (const filePath of filePaths) {
+      const codeEntry = codeEntries.find(entry => entry.filePath === filePath)
+      if (!codeEntry) continue; // skip files that aren't tracked
+      const code = codeEntry.code$.getValue();
+      if (code === undefined) continue; // skip files without code
+      const newCode = fs.readFileSync(filePath, { encoding: "utf-8" });
+      if (newCode === code) continue; // skip unchanged files
+
+      if (!this.isCodeEntrySaved(codeEntry)) {
+        if (newCode === this.savedCodeRevisions[codeEntry.id]?.code) continue; // skip files that match the last save
+
+        // in this case we have a file that was changed on disk and within Crylic, but Crylic did not save it
+        // which is a conflict
+        fileSyncConflictPaths.push(filePath)
+        console.error('file changed in memory and on disk (conflict)', filePath);
+        continue;
+      }
+
+      // last case, update the in-memory file
+      codeEntry.updateCode(newCode);
+      this.savedCodeRevisions[codeEntry.id] = { id: codeEntry.codeRevisionId, code: newCode }
+      fileSyncSuccessPaths.push(filePath)
+      console.info('file changed on disk and updated in-memory', filePath);
+    }
+    if (fileSyncSuccessPaths.length)
+      bus.publish(fileSyncSuccess({ paths: fileSyncSuccessPaths }))
+    if (fileSyncConflictPaths.length)
+      bus.publish(fileSyncConflict({ paths: fileSyncConflictPaths }))
   }
 
   public refreshConfig() {

@@ -1,14 +1,11 @@
 import { BehaviorSubject, of } from "rxjs";
-import { filter, map } from "rxjs/operators";
+import { map } from "rxjs/operators";
 import { singleton } from "tsyringe";
 
 import { useObservable } from "../hooks/useObservable";
 import { useService } from "../hooks/useService";
 import { Project } from "../lib/project/Project";
-import {
-  RenderEntry,
-  RenderEntryCompileStatus,
-} from "../lib/project/RenderEntry";
+import { RenderEntry } from "../lib/project/RenderEntry";
 import { eagerMap, eagerMapArrayAny } from "../lib/rxjs/eagerMap";
 
 const RECENT_PROJECTS_KEY = "recentProjects";
@@ -56,6 +53,7 @@ export class ProjectService {
   }
 
   public setProject(project: Project | undefined) {
+    this.project$.getValue()?.onClose();
     this.project$.next(project);
     project?.clearChangeHistory();
   }

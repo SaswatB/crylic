@@ -59,6 +59,8 @@ export abstract class Project {
   public abstract getNewStyleSheetPath(name: string): string;
   public abstract getNewAssetPath(fileName: string): string;
 
+  public onClose() {}
+
   public getDefaultNewComponentFolder() {
     // todo get from config & inference
     return "components";

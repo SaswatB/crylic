@@ -5,7 +5,9 @@ import { Button } from "@material-ui/core";
 import { useSnackbar } from "notistack";
 
 import { usePackageInstallerRecoil } from "../../hooks/recoil/usePackageInstallerRecoil";
+import { useBusSubscription } from "../../hooks/useBusSubscription";
 import { useService } from "../../hooks/useService";
+import { fileSyncConflict, fileSyncSuccess } from "../../lib/events";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
 
@@ -56,6 +58,40 @@ export const StateManager: FunctionComponent = () => {
       );
     }
   }, [closeSnackbar, enqueueSnackbar, installPackages, project]);
+
+  /* Notifications */
+
+  // handle file sync notifications
+  useBusSubscription(fileSyncSuccess, ({ paths }) => {
+    enqueueSnackbar(
+      <>
+        {paths.length} file{paths.length > 1 ? "s" : ""} synced from changes on
+        disk:
+        <br />
+        {paths.map((p, index) => (
+          <React.Fragment key={index}>
+            • {p} <br />
+          </React.Fragment>
+        ))}
+      </>,
+      { variant: "success" }
+    );
+  });
+  useBusSubscription(fileSyncConflict, ({ paths }) => {
+    enqueueSnackbar(
+      <>
+        {paths.length} file{paths.length > 1 ? "s" : ""} failed synced from
+        changes on disk due to unsaved changes in Crylic:
+        <br />
+        {paths.map((p, index) => (
+          <React.Fragment key={index}>
+            • {p} <br />
+          </React.Fragment>
+        ))}
+      </>,
+      { variant: "error" }
+    );
+  });
 
   /* Hotkeys */
 

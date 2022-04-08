@@ -9,3 +9,11 @@ export const editorOpenLocation = createEventDefinition<{
   codeEntry: CodeEntry;
   line?: number;
 }>()("editor.open");
+
+export const fileSyncSuccess = createEventDefinition<{
+  paths: string[];
+}>()("project.fileSync.success");
+
+export const fileSyncConflict = createEventDefinition<{
+  paths: string[];
+}>()("project.fileSync.conflict");
