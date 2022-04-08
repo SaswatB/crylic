@@ -103,34 +103,34 @@ jobs:
     resource_class: macos.x86.medium.gen2
     working_directory: << pipeline.parameters.workingdir >>
     steps:
-      - when:
-          condition:
-            matches: { pattern: "^v.+$", value: << pipeline.git.tag >> }
-          steps:
-            - build
-            - release
+      - build
+      - release
   build-and-release-windows:
     executor:
       name: win/default
       shell: powershell.exe
     working_directory: << pipeline.parameters.workingdir >>
     steps:
-      - when:
-          condition:
-            matches: { pattern: "^v.+$", value: << pipeline.git.tag >> }
-          steps:
-            - setup-windows-node
-            - build:
-                windows: true
-            - release-windows
+      - setup-windows-node
+      - build:
+          windows: true
+      - release-windows
 workflows:
   release:
     jobs:
       - build-and-release-macos:
           filters:
+            # ignore any commit on any branch by default
+            branches:
+              ignore: /.*/
+            # only act on version tags
             tags:
               only: /^v.*/
       - build-and-release-windows:
           filters:
+            # ignore any commit on any branch by default
+            branches:
+              ignore: /.*/
+            # only act on version tags
             tags:
               only: /^v.*/
