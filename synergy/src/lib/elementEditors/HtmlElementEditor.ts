@@ -106,6 +106,7 @@ export class HtmlElementEditor implements ElementEditor {
       },
       {
         name: "Colors",
+        defaultCollapsed: true,
         fields: [
           createBoundTextSGFE("opacity"),
           createBoundColorPickerSGFE("backgroundColor"),
@@ -128,6 +129,7 @@ export class HtmlElementEditor implements ElementEditor {
       // todo border
       {
         name: "Text",
+        defaultCollapsed: true, // todo don't collapse this by default for text elements
         fields: [
           createConditionalFE(
             createElementEditorField(TextContentFE),
@@ -151,27 +153,25 @@ export class HtmlElementEditor implements ElementEditor {
       },
       {
         name: "Content",
+        shouldHide: ({ selectedElement }) =>
+          getSelectedElementStyleValue(selectedElement, "display") !== "flex",
+        defaultCollapsed: true,
         fields: [
           createSelectSGFE("flexDirection", CSS_FLEX_DIRECTION_OPTIONS),
           createSelectSGFE("flexWrap", CSS_FLEX_WRAP_OPTIONS),
           createSelectSGFE("alignItems", CSS_ALIGN_ITEMS_OPTIONS),
           createSelectSGFE("justifyContent", CSS_JUSTIFY_CONTENT_OPTIONS),
-        ].map((e) =>
-          createConditionalFE(
-            e,
-            ({ selectedElement }) =>
-              getSelectedElementStyleValue(selectedElement, "display") ===
-              "flex"
-          )
-        ),
+        ],
       },
       {
         name: "Animation",
+        defaultCollapsed: true,
         fields: [createElementEditorField(AnimationFE)],
         grid: false,
       },
       {
         name: "Extras",
+        defaultCollapsed: true,
         fields: [
           createSelectSGFE("cursor", CSS_CURSOR_OPTIONS),
           createBoundTextAttrFE("id"),
@@ -182,7 +182,6 @@ export class HtmlElementEditor implements ElementEditor {
           ),
           createElementEditorField(DeleteFE),
         ],
-        defaultCollapsed: true,
       },
     ];
   }

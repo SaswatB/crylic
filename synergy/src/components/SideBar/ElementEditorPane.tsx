@@ -58,6 +58,8 @@ export const ElementEditorPane: FunctionComponent = () => {
 
   const renderSection = useCallback(
     (section: ElementEditorSection, index: number) => {
+      if (section.shouldHide?.(context)) return null;
+
       const renderedFields = section.fields.map(
         ({ component: Component, props }, i) => (
           <Component key={i} {...context} {...props} />
@@ -74,7 +76,11 @@ export const ElementEditorPane: FunctionComponent = () => {
       }
 
       return (
-        <Collapsible key={index} title={section.name}>
+        <Collapsible
+          key={index}
+          title={section.name}
+          defaultCollapsed={section.defaultCollapsed}
+        >
           <div className={section.grid === false ? "" : "grid2x"}>
             {renderedFields}
           </div>
