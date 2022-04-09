@@ -15,3 +15,4 @@ The following is a list of the main technical features Crylic currently supports
 * Reordering, moving, and deleting JSX children through AST transformations
 * Create new React components and CSS stylesheets with templates
 * Add and edit animations on HTML elements with framer-motion
+* Automatically picks up changes on disk for easier interoperability with other editors
