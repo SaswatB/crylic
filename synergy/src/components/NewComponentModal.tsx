@@ -8,7 +8,11 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import { camelCase, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
 
-import { useSelectInput, useTextInput } from "../hooks/useInput";
+import {
+  usePersistentSelectInput,
+  useSelectInput,
+  useTextInput,
+} from "../hooks/useInput";
 import { getBoilerPlateComponent } from "../lib/component-boilerplate";
 import { CodeEntry } from "../lib/project/CodeEntry";
 import { useProject } from "../services/ProjectService";
@@ -37,9 +41,10 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
     camelCase(name.replace(/[^a-zA-Z0-9 ]/g, ""))
   );
 
-  const [preset, renderPresetInput] = useSelectInput({
+  const [preset, renderPresetInput] = usePersistentSelectInput({
     label: "Preset",
     initialValue: Preset.BasicWSS,
+    localStorageKey: "new-component-dialog-preset",
     options: Object.values(Preset).map((b) => ({
       name: b,
       value: b,

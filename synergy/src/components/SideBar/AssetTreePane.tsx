@@ -118,7 +118,8 @@ export const AssetTreePane: FunctionComponent<Props> = ({
   const [, renderAddMenu, openAddMenu, closeAddMenu] = useMenuInput({
     options: [
       { name: "New Component", value: "component" },
-      { name: "New Style Sheet", value: "stylesheet" },
+      // todo restore this option when there's a way to connect a component to a stylesheet
+      // { name: "New Style Sheet", value: "stylesheet" },
       { name: "Import Image", value: "image" },
     ],
     disableSelection: true,
