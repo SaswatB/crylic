@@ -34,8 +34,8 @@ app.commandLine.appendSwitch("disable-site-isolation-trials");
 function createWindow() {
   // Load the previous state with fallback to defaults
   let mainWindowState = windowStateKeeper({
-    defaultWidth: 800,
-    defaultHeight: 600,
+    defaultWidth: 1200,
+    defaultHeight: 700,
   });
 
   // Create the browser window.
