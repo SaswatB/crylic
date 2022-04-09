@@ -316,8 +316,9 @@ export const AssetTreePane: FunctionComponent<Props> = ({
       },
     });
 
-  let renderedFirstEditableNode = false;
   let renderedFirstRenderableNode = false;
+  let renderedFirstAddableNode = false;
+  let renderedFirstEditableNode = false;
   const renderTreeLabel = ({
     name,
     codeEntry,
@@ -326,15 +327,20 @@ export const AssetTreePane: FunctionComponent<Props> = ({
   }: Tree) => {
     if (!codeEntry) return name;
 
-    let isFirstEditableNode = false;
-    if (!renderedFirstEditableNode && codeEntry.isEditable) {
-      isFirstEditableNode = true;
-      renderedFirstEditableNode = true;
-    }
     let isFirstRenderableNode = false;
     if (!renderedFirstRenderableNode && isCodeEntryRenderable) {
       isFirstRenderableNode = true;
       renderedFirstRenderableNode = true;
+    }
+    let isFirstAddableNode = false;
+    if (!renderedFirstAddableNode && isCodeEntryAddable) {
+      isFirstAddableNode = true;
+      renderedFirstAddableNode = true;
+    }
+    let isFirstEditableNode = false;
+    if (!renderedFirstEditableNode && codeEntry.isEditable) {
+      isFirstEditableNode = true;
+      renderedFirstEditableNode = true;
     }
 
     return (
@@ -372,12 +378,29 @@ export const AssetTreePane: FunctionComponent<Props> = ({
           </>
         )}
         {isCodeEntryAddable && hasRenderEntries && (
-          <IconButton
-            className="mr-3"
-            title="Add to Component"
-            icon={faPlus}
-            onClick={() => onAddToComponent(name, codeEntry)}
-          />
+          <>
+            {isFirstAddableNode && (
+              <Tour
+                name="asset-tree-compose"
+                dependencies={["asset-tree"]}
+                beaconStyle={{
+                  marginTop: 10,
+                  marginLeft: -7,
+                }}
+              >
+                Components can be composed together to create more complex
+                components. This action works the same as the add element tool
+                but allows you to combine your own components!
+              </Tour>
+            )}
+            <IconButton
+              data-tour={isFirstAddableNode ? "asset-tree-compose" : undefined}
+              title="Add to Component"
+              className="mr-3"
+              icon={faPlus}
+              onClick={() => onAddToComponent(name, codeEntry)}
+            />
+          </>
         )}
         {codeEntry.isEditable && (
           <>
