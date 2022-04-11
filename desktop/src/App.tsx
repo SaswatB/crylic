@@ -3,7 +3,9 @@ import { css } from "@emotion/css";
 import styled from "@emotion/styled";
 import { faCog } from "@fortawesome/free-solid-svg-icons";
 import { Checkbox } from "@material-ui/core";
+import { uniqueId } from "lodash";
 import { useSnackbar } from "notistack";
+import Nucleus from "nucleus-nodejs";
 import { Resizable } from "re-resizable";
 import { distinctUntilChanged, map } from "rxjs/operators";
 import { useBus } from "ts-bus/react";
@@ -25,6 +27,7 @@ import { Tour } from "synergy/src/components/Tour/Tour";
 import { TransformContainer } from "synergy/src/components/TransformContainer";
 import { ConfigurationDialog } from "synergy/src/components/Workspace/ConfigurationDialog";
 import { InstallDialog } from "synergy/src/components/Workspace/InstallDialog";
+import { useLocalStorage } from "synergy/src/hooks/useLocalStorage";
 import {
   useMemoObservable,
   useObservable,
@@ -53,8 +56,15 @@ const Store = __non_webpack_require__(
 ) as typeof import("electron-store");
 const store = new Store();
 
+Nucleus.init("625458c24bdc36ee283672da", {
+  disableErrorReports: true,
+  autoUserId: false,
+});
+let isNucleusStarted = false;
+
 export function App() {
   const bus = useBus();
+  const [installId, setInstallId] = useLocalStorage<string>("installId");
   const { enqueueSnackbar } = useSnackbar();
   const selectService = useService(SelectService);
   const hasSelectedElement = useMemoObservable(
@@ -93,7 +103,30 @@ export function App() {
   );
   useEffect(() => {
     store.set("tracking_disabled", !allowTracking);
-  }, [allowTracking]);
+    if (allowTracking && __IS_PRODUCTION__) {
+      if (!isNucleusStarted) {
+        let id = installId;
+        if (!id) {
+          id = uniqueId();
+          setInstallId(id);
+        }
+        Nucleus.identify(id, {});
+        Nucleus.setProps(
+          {
+            version: __BUILD_VERSION__,
+            userAgent: navigator.userAgent,
+          },
+          true
+        );
+
+        Nucleus.appStarted();
+      } else {
+        Nucleus.enableTracking();
+      }
+    } else if (isNucleusStarted) {
+      Nucleus.disableTracking();
+    }
+  }, [allowTracking, installId, setInstallId]);
 
   const renderTrackingConfig = () => (
     <TrackingControlGroup>

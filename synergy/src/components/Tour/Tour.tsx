@@ -7,6 +7,7 @@ import React, {
 import { createPortal } from "react-dom";
 
 import { useLocalStorage } from "../../hooks/useLocalStorage";
+import { track } from "../../hooks/useTracking";
 import "./styles.scss";
 
 export const TourContext = React.createContext({
@@ -83,11 +84,13 @@ export const Tour: FunctionComponent<Props> = ({
     setAFloaterVisible(true);
     setSpotlight(undefined);
     onOpen?.();
+    track("tour.open", { name });
   };
   const closeFloater = () => {
     setFloaterVisible(false);
     setAFloaterVisible(false);
     setShownTourSteps([...shownTourSteps, name]);
+    track("tour.close", { name });
   };
 
   // calculate the location of the spotlight when the floater is shown

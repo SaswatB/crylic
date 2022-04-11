@@ -8,11 +8,8 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import { camelCase, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
 
-import {
-  usePersistentSelectInput,
-  useSelectInput,
-  useTextInput,
-} from "../hooks/useInput";
+import { usePersistentSelectInput, useTextInput } from "../hooks/useInput";
+import { track, useTracking } from "../hooks/useTracking";
 import { getBoilerPlateComponent } from "../lib/component-boilerplate";
 import { CodeEntry } from "../lib/project/CodeEntry";
 import { useProject } from "../services/ProjectService";
@@ -32,6 +29,7 @@ const getBoilerPlateStyleSheet = (name: string) =>
 export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
   const project = useProject();
   const { enqueueSnackbar } = useSnackbar();
+  useTracking("create.component.dialog-open", { onMount: true });
 
   const [name, renderNameInput] = useTextInput({
     label: "Component Name",
@@ -96,6 +94,7 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
     }
 
     enqueueSnackbar("Started a new component!");
+    track("create.component", { preset });
 
     resolve(null);
   };

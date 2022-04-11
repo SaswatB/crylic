@@ -4,6 +4,7 @@ import { singleton } from "tsyringe";
 
 import { useObservable } from "../hooks/useObservable";
 import { useService } from "../hooks/useService";
+import { track } from "../hooks/useTracking";
 import { Project } from "../lib/project/Project";
 import { RenderEntry } from "../lib/project/RenderEntry";
 import { eagerMap, eagerMapArrayAny } from "../lib/rxjs/eagerMap";
@@ -23,6 +24,7 @@ export class ProjectService {
   constructor() {
     this.project$.subscribe((project) => {
       (window as any).project = project; // only for debugging purposes
+      track(project ? "project.open" : "project.close");
 
       // save recent projects, with this latest project on top
       if (project) {

@@ -2,6 +2,7 @@ import { MakeDirectoryOptions } from "fs";
 import { Readable } from "stream";
 import yauzl from "yauzl";
 
+import { track } from "synergy/src/hooks/useTracking";
 import { bus, fileSyncConflict, fileSyncSuccess } from "synergy/src/lib/events";
 import {
   IMAGE_EXTENSION_REGEX,
@@ -126,6 +127,7 @@ export class FileProject extends Project {
       });
     });
 
+    track('project.create', { template })
     // sleep to flush changes and avoid blank loading bug
     await sleep(1000);
 
@@ -214,6 +216,7 @@ export class FileProject extends Project {
       )
       .forEach((e) => this.saveFile(e));
     this.projectSaved$.next();
+    track('project.saved')
   }
   public saveFile({ id, filePath, code$, codeRevisionId }: CodeEntry) {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -254,10 +257,14 @@ export class FileProject extends Project {
       fileSyncSuccessPaths.push(filePath)
       console.info('file changed on disk and updated in-memory', filePath);
     }
-    if (fileSyncSuccessPaths.length)
+    if (fileSyncSuccessPaths.length) {
       bus.publish(fileSyncSuccess({ paths: fileSyncSuccessPaths }))
-    if (fileSyncConflictPaths.length)
+      track('project.fileSyncSuccess', { count: fileSyncSuccessPaths.length })
+    }
+    if (fileSyncConflictPaths.length) {
       bus.publish(fileSyncConflict({ paths: fileSyncConflictPaths }))
+      track('project.fileSyncConflict', { count: fileSyncConflictPaths.length })
+    }
   }
 
   public refreshConfig() {

@@ -13,6 +13,7 @@ import {
 import { NewProjectModal } from "synergy/src/components/NewProjectModal";
 import { Tour } from "synergy/src/components/Tour/Tour";
 import { useService } from "synergy/src/hooks/useService";
+import { useTracking } from "synergy/src/hooks/useTracking";
 import { normalizePath } from "synergy/src/lib/normalizePath";
 import { ProjectService } from "synergy/src/services/ProjectService";
 
@@ -49,6 +50,8 @@ export function Intro() {
       { filePath: "C:\\Users\\Me\\Documents\\project6" },
     ];
   }
+
+  useTracking("intro.loaded", { onMount: true });
 
   const createProject = async () => {
     const initialLocation =

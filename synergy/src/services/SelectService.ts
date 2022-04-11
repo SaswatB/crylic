@@ -4,6 +4,7 @@ import { map } from "rxjs/operators";
 import { singleton } from "tsyringe";
 
 import { SelectMode, SelectModeHints, SelectModeType } from "../constants";
+import { track } from "../hooks/useTracking";
 import {
   addElementHelper,
   updateElementHelper,
@@ -40,6 +41,9 @@ export class SelectService {
   private readonly overlayWarningsCache = new WeakMap<Element, string[]>();
 
   constructor(private projectService: ProjectService) {
+    this.selectMode$.subscribe((selectMode) =>
+      track("selectMode.change", { selectMode: selectMode?.type || false })
+    );
     this.selectedElement$.subscribe(async (selectedElement) => {
       (window as any).selectedElement = selectedElement; // for debugging purposes
 

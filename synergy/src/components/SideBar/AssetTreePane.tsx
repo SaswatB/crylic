@@ -18,6 +18,7 @@ import { SelectModeType } from "../../constants";
 import { useMenuInput } from "../../hooks/useInput";
 import { useMemoObservable } from "../../hooks/useObservable";
 import { useService } from "../../hooks/useService";
+import { track } from "../../hooks/useTracking";
 import {
   IMAGE_EXTENSION_REGEX,
   SCRIPT_EXTENSION_REGEX,
@@ -91,12 +92,14 @@ export const AssetTreePane: FunctionComponent<Props> = ({
       edit: true,
     });
     enqueueSnackbar("Created a new stylesheet!");
+    track("create.stylesheet");
   };
   const onImportImage = async () => {
     const file = await onImportImageFile();
     if (!file) return;
     project?.addAsset(file);
     enqueueSnackbar("Imported Image!");
+    track("create.image");
   };
 
   const [
