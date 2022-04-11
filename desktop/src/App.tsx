@@ -126,7 +126,8 @@ export function App() {
     } else if (isNucleusStarted) {
       Nucleus.disableTracking();
     }
-  }, [allowTracking, installId, setInstallId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allowTracking]);
 
   const renderTrackingConfig = () => (
     <TrackingControlGroup>
