@@ -14,3 +14,5 @@ All these features work on code without any proprietary formats or hosting.
 ### Guide
 
 🛠️ Work in Progress! 🛠️
+
+In the mean time check out the [component library guide](../workflows/component-library.md)!

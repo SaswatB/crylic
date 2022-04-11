@@ -14,47 +14,47 @@ To get started, download and install [GitHub Desktop](https://desktop.github.com
 
 In Git, code is stored in a 'repository'. Your development team should be able to provide a link that can be used to 'clone' (download a copy of) your project's repository. You may need a GitHub account with permissions to access your team's code.
 
-![Example of cloning a repository](../.gitbook/assets/image.png)
+![Example of cloning a repository](<../.gitbook/assets/image (1).png>)
 
 ### Working with Git and Crylic
 
 After cloning a repository, GitHub Desktop provides an interface to manage your copy. This includes the ability to download new code changes made by your development team and track your changes made through Crylic.
 
-![Viewing a freshly cloned repository](<../.gitbook/assets/image (3).png>)
+![Viewing a freshly cloned repository](<../.gitbook/assets/image (3) (1).png>)
 
 There are a lot of features and capabilities built into Git and GitHub Desktop, but to keep this guide simple we'll go through an example of making a change in Crylic.
 
 {% hint style="warning" %}
-If Crylic has issues working with your project, a developer may need to follow the [onboarding guide ](broken-reference)to get it working.
+If Crylic has issues working with your project, a developer may need to follow the [onboarding guide ](broken-reference/)to get it working.
 {% endhint %}
 
 After opening a project, making changes, and saving with Crylic, GitHub Desktop will show the code changes you made.
 
-![Example change of making an element bold](<../.gitbook/assets/image (6).png>)
+![Example change of making an element bold](<../.gitbook/assets/image (6) (1).png>)
 
 At this point, these changes can be put into a 'pull request'. Developers can review requests, make changes if necessary, and add the changes to the live version of the project.
 
 To create a pull request, first create a 'branch' (a new version of the project) with a short name representing your changes.
 
-![GitHub Desktop allows creating branches within the current branch menu](<../.gitbook/assets/image (7).png>)
+![GitHub Desktop allows creating branches within the current branch menu](<../.gitbook/assets/image (7) (1).png>)
 
-![Branch names aren't too important, but need to be unique](<../.gitbook/assets/image (4).png>)
+![Branch names aren't too important, but need to be unique](<../.gitbook/assets/image (4) (1).png>)
 
-![Make sure to bring changes over to the new branch!](<../.gitbook/assets/image (5).png>)
+![Make sure to bring changes over to the new branch!](<../.gitbook/assets/image (5) (1).png>)
 
 Next create a 'commit' (a bundle of changes that get tracked together) using the lower left menu. The summary and description should cover what you changed and why.
 
-![Good commit messages help developers understand changes when reviewing](<../.gitbook/assets/image (2).png>)
+![Good commit messages help developers understand changes when reviewing](<../.gitbook/assets/image (2) (1).png>)
 
 Only a couple of steps left! Next the branch needs to be published so that others in your team can view it.
 
-![GitHub Desktop automatically provides an option to publish a new branch with commits](<../.gitbook/assets/image (12).png>)
+![GitHub Desktop automatically provides an option to publish a new branch with commits](<../.gitbook/assets/image (12) (1).png>)
 
 After that, a pull request can be created!
 
 ![GitHub Desktop automatically provides an option to create a pull request for published branches](<../.gitbook/assets/image (9).png>)
 
-![GitHub allows specifying additional details, including images, within the pull request online](<../.gitbook/assets/image (1).png>)
+![GitHub allows specifying additional details, including images, within the pull request online](<../.gitbook/assets/image (1) (1).png>)
 
 ![](<../.gitbook/assets/image (11).png>)
 
