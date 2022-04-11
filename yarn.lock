@@ -5514,6 +5514,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/uuid@npm:^8.3.4":
+  version: 8.3.4
+  resolution: "@types/uuid@npm:8.3.4"
+  checksum: 6f11f3ff70f30210edaa8071422d405e9c1d4e53abbe50fdce365150d3c698fe7bbff65c1e71ae080cbfb8fded860dbb5e174da96fdbbdfcaa3fb3daa474d20f
+  languageName: node
+  linkType: hard
+
 "@types/verror@npm:^1.10.3":
   version: 1.10.5
   resolution: "@types/verror@npm:1.10.5"
@@ -23556,6 +23563,7 @@ resolve@1.15.0:
     "@material-ui/core": ^4.11.0
     "@material-ui/lab": ^4.0.0-alpha.56
     "@types/react-router-dom": ^5.1.5
+    "@types/uuid": ^8.3.4
     ast-types: ^0.14.1
     classnames: ^2.2.6
     clone: ^2.1.2
@@ -23593,6 +23601,7 @@ resolve@1.15.0:
     ts-bus: ^2.3.1
     tsyringe: ^4.6.0
     typescript: ^4.5.2
+    uuid: ^8.3.2
     value-equal: ^1.0.1
     xterm: ^4.8.1
   languageName: unknown
@@ -24828,6 +24837,15 @@ resolve@1.15.0:
   bin:
     uuid: dist/bin/uuid
   checksum: f5b7b5cc28accac68d5c083fd51cca64896639ebd4cca88c6cfb363801aaa83aa439c86dfc8446ea250a7a98d17afd2ad9e88d9d4958c79a412eccb93bae29de
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^8.3.2":
+  version: 8.3.2
+  resolution: "uuid@npm:8.3.2"
+  bin:
+    uuid: dist/bin/uuid
+  checksum: 5575a8a75c13120e2f10e6ddc801b2c7ed7d8f3c8ac22c7ed0c7b2ba6383ec0abda88c905085d630e251719e0777045ae3236f04c812184b7c765f63a70e58df
   languageName: node
   linkType: hard
 

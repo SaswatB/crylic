@@ -3,12 +3,12 @@ import { css } from "@emotion/css";
 import styled from "@emotion/styled";
 import { faCog } from "@fortawesome/free-solid-svg-icons";
 import { Checkbox } from "@material-ui/core";
-import { uniqueId } from "lodash";
 import { useSnackbar } from "notistack";
 import Nucleus from "nucleus-nodejs";
 import { Resizable } from "re-resizable";
 import { distinctUntilChanged, map } from "rxjs/operators";
 import { useBus } from "ts-bus/react";
+import { v4 as uuidV4 } from "uuid";
 
 import { Button } from "synergy/src/components/base/Button";
 import {
@@ -107,7 +107,7 @@ export function App() {
       if (!isNucleusStarted) {
         let id = installId;
         if (!id) {
-          id = uniqueId();
+          id = uuidV4();
           setInstallId(id);
         }
         Nucleus.identify(id, {});
