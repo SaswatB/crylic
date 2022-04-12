@@ -3,7 +3,8 @@
   "workspaces": [
     "synergy",
     "desktop",
-    "web"
+    "web",
+    "figma"
   ],
   "resolutions": {
     "immer": "patch:immer@6.0.3#./patches/immer+6.0.3.patch",

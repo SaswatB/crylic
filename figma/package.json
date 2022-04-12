@@ -1,0 +1,19 @@
+{
+  "name": "figma",
+  "version": "1.0.0",
+  "description": "Crylic integration with Figma",
+  "author": "Saswat Bhattacharya",
+  "private": true,
+  "main": "build/code.js",
+  "scripts": {
+    "dev": "nodemon -e ts,html --watch src --exec 'yarn build'",
+    "build": "rimraf build/ && copyfiles -f src/public/* build/public && tsc"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.44.0",
+    "copyfiles": "^2.4.1",
+    "nodemon": "^2.0.15",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.5.2"
+  }
+}
