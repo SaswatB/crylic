@@ -4,7 +4,7 @@
   "description": "Crylic integration with Figma",
   "author": "Saswat Bhattacharya",
   "private": true,
-  "main": "build/code.js",
+  "main": "build/index.js",
   "scripts": {
     "dev": "nodemon -e ts,html --watch src --exec 'yarn build'",
     "build": "rimraf build/ && copyfiles -f src/public/* build/public && tsc"

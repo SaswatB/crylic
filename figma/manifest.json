@@ -2,7 +2,7 @@
   "name": "Crylic",
   "id": "1095578080264600867",
   "api": "1.0.0",
-  "main": "build/code.js",
+  "main": "build/index.js",
   "editorType": ["figma"],
   "ui": "build/public/ui.html"
 }
