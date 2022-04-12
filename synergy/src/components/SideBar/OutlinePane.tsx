@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from "react";
+import React from "react";
 
 import { useObservable } from "../../hooks/useObservable";
 import { renderSeparator } from "../../lib/render-utils";
@@ -6,7 +6,11 @@ import { useProject } from "../../services/ProjectService";
 import { Tour } from "../Tour/Tour";
 import { OutlinePaneEntry } from "./OutlinePaneEntry";
 
-export const OutlinePane: FunctionComponent = () => {
+export const OutlinePane = ({
+  openUrl,
+}: {
+  openUrl: (url: string) => void;
+}) => {
   const project = useProject();
   const renderEntries = useObservable(project?.renderEntries$);
 
@@ -32,7 +36,11 @@ export const OutlinePane: FunctionComponent = () => {
       >
         {renderSeparator("Outline")}
         {renderEntries.map((renderEntry) => (
-          <OutlinePaneEntry key={renderEntry.id} renderEntry={renderEntry} />
+          <OutlinePaneEntry
+            key={renderEntry.id}
+            renderEntry={renderEntry}
+            openUrl={openUrl}
+          />
         ))}
       </div>
     </>

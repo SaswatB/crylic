@@ -24,6 +24,7 @@ interface TreeContext {
   selectMode?: SelectMode;
   expanded: string[];
   selected: string;
+  openUrl: (url: string) => void;
   onRefresh: () => void;
   onExpandAllNodes: () => void;
   onNodeToggle: (newExpandedNodes: string[]) => void;
@@ -186,6 +187,7 @@ function OutlineTreeItem({ node, ...context }: OutlineTreeItemProps) {
             if (exported) {
               void FigmaExportModal({
                 json: JSON.stringify(exported, null, 2),
+                openUrl: context.openUrl,
               });
             } else {
               enqueueSnackbar("Failed to export element", { variant: "error" });

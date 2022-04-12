@@ -1,21 +1,5 @@
-// This plugin will open a window to prompt the user to enter a number, and
-// it will then create that many rectangles on the screen.
-
-// This file holds the main code for the plugins. It has access to the *document*.
-// You can access browser APIs in the <script> tag inside "ui.html" which has a
-// full browser environment (see documentation).
-
 // This shows the HTML page in "ui.html".
 figma.showUI(__html__, { width: 800, height: 400 });
-
-// figma.ui.postMessage()
-
-function recurse(node: SceneNode) {
-  console.log("node", node.type, JSON.stringify(node));
-  if ("children" in node) node.children.forEach(recurse);
-}
-
-figma.currentPage.selection.forEach(recurse);
 
 function extractColor(str: string): SolidPaint {
   let color: RGB = { r: 0, g: 0, b: 0 };
@@ -158,20 +142,21 @@ async function createFigma(node: ExportedOutline, context: { fonts: Font[] }) {
 // callback. The callback will be passed the "pluginMessage" property of the
 // posted message.
 figma.ui.onmessage = async (msg) => {
-  // One way of distinguishing between different types of messages sent from
-  // your HTML page is to use an object with a "type" property like this.
   if (msg.type === "create-component") {
     let node: ExportedOutline;
     try {
       node = JSON.parse(msg.input);
     } catch (e) {
       console.error(e);
-      // todo display error
+      figma.ui.postMessage({
+        type: "error",
+        message: "Failed to import, invalid component",
+      });
       return;
     }
 
-    // default font
     const fonts = await figma.listAvailableFontsAsync();
+    // default font
     await figma.loadFontAsync({ family: "Inter", style: "Regular" });
 
     const comp = await createFigma(node, { fonts });
@@ -180,7 +165,5 @@ figma.ui.onmessage = async (msg) => {
     figma.viewport.scrollAndZoomIntoView([comp]);
   }
 
-  // Make sure to close the plugin when you're done. Otherwise the plugin will
-  // keep running, which shows the cancel button at the bottom of the screen.
   figma.closePlugin();
 };

@@ -164,9 +164,10 @@ function useExpandedNodes({
 
 interface Props {
   renderEntry: RenderEntry;
+  openUrl: (url: string) => void;
 }
 
-export function OutlinePaneEntry({ renderEntry }: Props) {
+export function OutlinePaneEntry({ renderEntry, openUrl }: Props) {
   const { enqueueSnackbar } = useSnackbar();
   const project = useProject();
   const selectService = useService(SelectService);
@@ -195,6 +196,7 @@ export function OutlinePaneEntry({ renderEntry }: Props) {
       selectMode={selectMode}
       expanded={expandedNodes}
       selected={selectedElementNodeId || ""}
+      openUrl={openUrl}
       onNodeToggle={(newExpandedNodes) =>
         // only store nodes that have been collapsed
         setCollapsedNodes(

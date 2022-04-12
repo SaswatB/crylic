@@ -1,10 +1,84 @@
-<h2>Crylic Figma Plugin</h2>
-<p>Paste your exported component below</p>
-<textarea id="input" rows="10" cols="80"></textarea>
-<button id="create">Import</button>
-<button id="cancel">Cancel</button>
+<div class="container">
+  <h1 class="heading">Crylic Figma Plugin</h1>
+  <div id="error">Failed to import</div>
+  <div class="description">Paste your exported component below</div>
+  <textarea id="input" rows="13" cols="80"></textarea>
+  <div class="footer">
+    <a
+      class="help"
+      target="_blank"
+      href="https://docs.crylic.io/workflows/exporting-to-figma"
+      >Help</a
+    >
+    <div class="button-group">
+      <button id="import">Import</button>
+      <button id="cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+<style>
+  body {
+    margin: 0px;
+  }
+  .container {
+    color: #ffffff;
+    font-family: Roboto;
+    background-color: #65758a;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  .heading {
+    margin: 0px;
+    margin-bottom: 20px;
+    font-weight: 400;
+    padding: 15px;
+    text-align: center;
+    background-color: #27303e;
+    font-size: 30px;
+  }
+  #error {
+    color: #ff5f52;
+    padding: 0 20px;
+    display: none;
+  }
+  .description {
+    padding: 8px;
+    display: block;
+    padding: 0 20px;
+    margin-bottom: 20px;
+  }
+  #input {
+    margin: 0px 20px;
+  }
+  .footer {
+    display: flex;
+    flex-direction: row;
+    padding: 20px;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  .help {
+    color: #ffffff;
+    text-decoration-line: none;
+  }
+  .button-group {
+    display: flex;
+  }
+  .button-group button:first-child {
+    margin-right: 10px;
+  }
+</style>
 <script>
-  document.getElementById("create").onclick = () => {
+  window.addEventListener("message", (msg) => {
+    if ((msg.data.pluginMessage || {}).type === "error") {
+      const errEle = document.getElementById("error");
+      errEle.textContent = (msg.data.pluginMessage || {}).message;
+      errEle.style.display = "block";
+    }
+    console.log("aoosjkmda,s", msg);
+  });
+  document.getElementById("import").onclick = () => {
     const textbox = document.getElementById("input");
     parent.postMessage(
       { pluginMessage: { type: "create-component", input: textbox.value } },
@@ -16,3 +90,7 @@
     parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
   };
 </script>
+<link
+  href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap"
+  rel="stylesheet"
+/>

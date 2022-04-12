@@ -10,40 +10,48 @@ import { useSnackbar } from "notistack";
 import { Spacer } from "../base/Flex";
 import { createModal } from "../PromiseModal";
 
-export const FigmaExportModal = createModal<{ json: string }, null>(
-  ({ json, resolve }) => {
-    const { enqueueSnackbar } = useSnackbar();
-    return (
-      <Dialog open={true} onClose={() => resolve(null)}>
-        <DialogTitle className="flex justify-between">
-          Figma Export Data
-        </DialogTitle>
-        <DialogContent>
-          Use the Crylic Figma Plugin to import this component into your Figma
-          project!
-          <MonacoEditor
-            language="typescript"
-            theme="darkVsPlus"
-            value={json}
-            options={{ automaticLayout: true, wordWrap: "on", readOnly: true }}
-            width="500px"
-            height="300px"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              navigator.clipboard.writeText(json);
-              enqueueSnackbar("Copied to clipboard", { variant: "success" });
-            }}
-            color="primary"
-          >
-            Copy
-          </Button>
-          <Spacer />
-          <Button onClick={() => resolve(null)}>Close</Button>
-        </DialogActions>
-      </Dialog>
-    );
-  }
-);
+export const FigmaExportModal = createModal<
+  { json: string; openUrl: (url: string) => void },
+  null
+>(({ json, openUrl, resolve }) => {
+  const { enqueueSnackbar } = useSnackbar();
+  return (
+    <Dialog open={true} onClose={() => resolve(null)}>
+      <DialogTitle className="flex justify-between">
+        Figma Export Data
+      </DialogTitle>
+      <DialogContent>
+        Use the Crylic Figma Plugin to add this component to your Figma project!
+        <div className="mb-4" />
+        <MonacoEditor
+          language="typescript"
+          theme="darkVsPlus"
+          value={json}
+          options={{ automaticLayout: true, wordWrap: "on", readOnly: true }}
+          width="500px"
+          height="300px"
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button
+          onClick={() => {
+            navigator.clipboard.writeText(json);
+            enqueueSnackbar("Copied to clipboard", { variant: "success" });
+          }}
+          color="primary"
+        >
+          Copy
+        </Button>
+        <Button
+          onClick={() =>
+            openUrl("https://docs.crylic.io/workflows/exporting-to-figma")
+          }
+        >
+          Help
+        </Button>
+        <Spacer />
+        <Button onClick={() => resolve(null)}>Close</Button>
+      </DialogActions>
+    </Dialog>
+  );
+});

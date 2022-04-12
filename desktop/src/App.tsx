@@ -160,7 +160,7 @@ export function App() {
           onClose={() => setShowWebpackConfigDialog(false)}
         />
       </Flex>
-      <OutlinePane />
+      <OutlinePane openUrl={open} />
       <Resizable
         minHeight={100}
         defaultSize={{ height: 225, width: "auto" }}
