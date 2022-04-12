@@ -3,9 +3,11 @@ import { useDrag, useDrop } from "react-dnd";
 import {
   faChevronDown,
   faChevronRight,
+  faCloudUploadAlt,
   faExpandAlt,
   faSync,
 } from "@fortawesome/free-solid-svg-icons";
+import { useSnackbar } from "notistack";
 
 import {
   SelectMode,
@@ -13,8 +15,10 @@ import {
   SelectModeHints,
   SelectModeType,
 } from "../../constants";
+import { exportOutline } from "../../lib/export-outline";
 import { OutlineElement, OutlineElementType } from "../../types/paint";
 import { IconButton } from "../IconButton";
+import { FigmaExportModal } from "./FigmaExportModal";
 
 interface TreeContext {
   selectMode?: SelectMode;
@@ -89,6 +93,7 @@ interface OutlineTreeItemProps extends TreeContext {
 }
 
 function OutlineTreeItem({ node, ...context }: OutlineTreeItemProps) {
+  const { enqueueSnackbar } = useSnackbar();
   const dragType = `OutlineTreeItem-${node.renderId}`;
   const [, drag] = useDrag<OutlineElement>(
     () => ({
@@ -170,6 +175,23 @@ function OutlineTreeItem({ node, ...context }: OutlineTreeItemProps) {
             }}
           />
         </>
+      )}
+      {isSelected && (
+        <IconButton
+          title="Export to Figma"
+          icon={faCloudUploadAlt}
+          onClick={(e) => {
+            e.stopPropagation();
+            const exported = exportOutline(node);
+            if (exported) {
+              void FigmaExportModal({
+                json: JSON.stringify(exported, null, 2),
+              });
+            } else {
+              enqueueSnackbar("Failed to export element", { variant: "error" });
+            }
+          }}
+        />
       )}
     </div>
   );
