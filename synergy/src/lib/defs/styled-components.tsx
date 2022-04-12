@@ -23,22 +23,24 @@ import {
 function styledComponentDef(
   tag: keyof HTMLElementTagNameMap,
   icon: IconDefinition | (() => ReactNode),
-  name: string = capitalize(tag),
+  name: string | { name: string; displayName: string } = capitalize(tag),
   defaultStyles?: string,
   defaultAttributes?: Record<string, unknown>
 ): ComponentDefinition {
+  const displayName = typeof name === "object" ? name.displayName : name;
+  const componentName = typeof name === "object" ? name.name : name;
   return {
     type: ComponentDefinitionType.StyledElement,
     display: {
-      id: name,
-      name,
+      id: componentName,
+      name: displayName,
       icon:
         typeof icon === "function"
           ? icon
           : () => <FontAwesomeIcon icon={icon} />,
     },
     component: {
-      name,
+      name: componentName,
       base: {
         type: ComponentDefinitionType.HTMLElement,
         tag,
@@ -78,9 +80,15 @@ export const styledComponents: CustomComponentConfig = {
     }),
     styledComponentDef("button", faPlusSquare),
     styledComponentDef("a", faExternalLinkSquareAlt, "Link"),
-    styledComponentDef("input", faHSquare, "Text Box", undefined, {
-      type: "text",
-    }),
+    styledComponentDef(
+      "input",
+      faHSquare,
+      { name: "TextBox", displayName: "Text Box" },
+      undefined,
+      {
+        type: "text",
+      }
+    ),
     styledComponentDef("select", faCaretSquareDown),
     styledComponentDef("input", faCheckSquare, "Checkbox", undefined, {
       type: "checkbox",
@@ -93,6 +101,6 @@ export const styledComponents: CustomComponentConfig = {
     { name: "Containers", components: ["Row", "Column"] },
     { name: "Text", components: ["Heading", "Text"] },
     { name: "Interactive", components: ["Button", "Link"] },
-    { name: "Form", components: ["Text Box", "Select", "Checkbox", "Radio"] },
+    { name: "Form", components: ["TextBox", "Select", "Checkbox", "Radio"] },
   ],
 };
