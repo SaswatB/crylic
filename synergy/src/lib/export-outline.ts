@@ -22,6 +22,21 @@ function expandDirectionsSuffixed<T extends string, U extends string>(
   ] as const;
 }
 
+function getTextOffsetRelativeToElement(
+  element: HTMLElement,
+  textNode: ChildNode
+) {
+  const elementRect = element.getBoundingClientRect();
+  const range = document.createRange();
+  range.selectNode(textNode);
+  const textRect = range.getBoundingClientRect();
+  return {
+    top: textRect.top - elementRect.top,
+    left: textRect.left - elementRect.left,
+  };
+}
+
+// lm_e5c40550c3 copied interface
 interface ExportedOutline {
   type: string;
   name: string;
@@ -32,7 +47,7 @@ interface ExportedOutline {
 
 export function exportOutline(
   node: OutlineElement,
-  isRoot = true
+  parentElement?: HTMLElement
 ): ExportedOutline | undefined {
   let type = node.element ? "container" : "group";
   switch (node.element?.tagName.toLowerCase()) {
@@ -52,6 +67,7 @@ export function exportOutline(
         child.nodeType === Node.TEXT_NODE &&
         child.textContent?.trim().length
       ) {
+        // extract text specific styles
         const textStyles: { [key: string]: string } = {};
         ([
           "color",
@@ -66,9 +82,18 @@ export function exportOutline(
           if (style === "fontStyle" && elementStyles[style] === "normal")
             return;
           if (style === "fontWeight" && elementStyles[style] === "400") return;
+          if (style === "fontFamily") {
+            textStyles[style] = elementStyles[style].replaceAll('"', "");
+            return;
+          }
 
           textStyles[style] = elementStyles[style];
         });
+
+        // get text location
+        const textOffset = getTextOffsetRelativeToElement(node.element!, child);
+        textStyles.top = `${textOffset.top}px`;
+        textStyles.left = `${textOffset.left}px`;
 
         children.push({
           type: "text",
@@ -84,7 +109,10 @@ export function exportOutline(
             c.closestElements.includes(child as HTMLElement)
         );
         if (childOutlineElement) {
-          const exportedChild = exportOutline(childOutlineElement, false);
+          const exportedChild = exportOutline(
+            childOutlineElement,
+            node.element
+          );
           if (exportedChild) children.push(exportedChild);
         }
       }
@@ -94,19 +122,19 @@ export function exportOutline(
     if (elementStyles.display === "none") {
       return undefined;
     }
-    if (!isRoot) {
-      styles.offsetTop = `${node.element.offsetTop}px`;
-      styles.offsetLeft = `${node.element.offsetLeft}px`;
+    if (parentElement) {
+      const pbox = parentElement.getBoundingClientRect();
+      const ebox = node.element.getBoundingClientRect();
+      styles.top = `${ebox.top - pbox.top}px`;
+      styles.left = `${ebox.left - pbox.left}px`;
     }
+    styles.width = `${node.element.offsetWidth}px`;
+    styles.height = `${node.element.offsetHeight}px`;
 
     ([
       "backgroundColor",
       "opacity",
-      "width",
-      "height",
       "transform",
-      ...expandDirections("padding"),
-      ...expandDirections("margin"),
       ...expandDirectionsSuffixed("border", "Width"),
       ...expandDirectionsSuffixed("border", "Color"),
       ...expandDirectionsSuffixed("border", "Style"),
@@ -122,9 +150,12 @@ export function exportOutline(
 
       styles[style] = elementStyles[style];
     });
+    if (elementStyles.overflow === "hidden") styles.clip = "true";
   } else {
     children.push(
-      ...node.children.map((c) => exportOutline(c, false)).filter(isDefined)
+      ...node.children
+        .map((c) => exportOutline(c, parentElement))
+        .filter(isDefined)
     );
   }
 
