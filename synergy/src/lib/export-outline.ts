@@ -27,7 +27,7 @@ interface ExportedOutline {
   name: string;
   children: ExportedOutline[];
   textContent?: string; // type: "text"
-  styles?: { [key: string]: string | number }; // type: "container"
+  styles?: { [key: string]: string }; // type: "container"
 }
 
 export function exportOutline(
@@ -42,19 +42,40 @@ export function exportOutline(
   }
 
   const children: ExportedOutline[] = [];
-  const styles: { [key: string]: string | number } = {};
+  const styles: { [key: string]: string } = {};
   if (node.element) {
+    const elementStyles = window.getComputedStyle(node.element);
+
     // add children based on DOM order, while handling text
     Array.from(node.element.childNodes).forEach((child) => {
       if (
         child.nodeType === Node.TEXT_NODE &&
         child.textContent?.trim().length
       ) {
+        const textStyles: { [key: string]: string } = {};
+        ([
+          "color",
+          "fontFamily",
+          "fontSize",
+          "fontStyle",
+          "fontWeight",
+          // "textDecoration", // todo add this
+          "lineHeight",
+        ] as const).forEach((style) => {
+          if (!elementStyles[style]) return;
+          if (style === "fontStyle" && elementStyles[style] === "normal")
+            return;
+          if (style === "fontWeight" && elementStyles[style] === "400") return;
+
+          textStyles[style] = elementStyles[style];
+        });
+
         children.push({
           type: "text",
           name: "Text",
           children: [],
           textContent: child.textContent,
+          styles: textStyles,
         });
       } else if (child.nodeType === Node.ELEMENT_NODE) {
         const childOutlineElement = node.children.find(
@@ -70,23 +91,15 @@ export function exportOutline(
     });
 
     // add attributes
-    const elementStyles = window.getComputedStyle(node.element);
     if (elementStyles.display === "none") {
       return undefined;
     }
     if (!isRoot) {
-      styles.offsetTop = node.element.offsetTop;
-      styles.offsetLeft = node.element.offsetLeft;
+      styles.offsetTop = `${node.element.offsetTop}px`;
+      styles.offsetLeft = `${node.element.offsetLeft}px`;
     }
 
     ([
-      "color",
-      "fontFamily",
-      "fontSize",
-      "fontStyle",
-      "fontWeight",
-      // "textDecoration", // todo add this
-      "lineHeight",
       "backgroundColor",
       "opacity",
       "width",
@@ -106,8 +119,6 @@ export function exportOutline(
       if (["rgb(0, 0, 0)", "0px", "none"].includes(elementStyles[style]))
         return;
       if (style === "opacity" && elementStyles[style] === "1") return;
-      if (style === "fontStyle" && elementStyles[style] === "normal") return;
-      if (style === "fontWeight" && elementStyles[style] === "400") return;
 
       styles[style] = elementStyles[style];
     });
