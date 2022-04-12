@@ -23,7 +23,7 @@ Copy this data for the next section.
 
 ### Importing from Figma
 
-Within Figma, create a new document and open the Crylic Figma Plugin (currently pending availablity through the community directory).
+Within Figma, create a new document and open the Crylic Figma Plugin (available [here](https://www.figma.com/community/plugin/1095578080264600867/Crylic)).
 
 ![The Crylic Figma plugin](<../.gitbook/assets/image (8).png>)
 
