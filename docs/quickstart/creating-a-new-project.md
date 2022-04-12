@@ -6,7 +6,7 @@ Crylic includes all that's needed to start with a basic new React project. When 
 Crylic comes with everything you need to start a new project built in! There's no need to install additional software when getting started.
 {% endhint %}
 
-![Crylic's project creation dialog](<../.gitbook/assets/image (8) (1).png>)
+![Crylic's project creation dialog](<../.gitbook/assets/image (8) (1) (1).png>)
 
 This is an actual software project that a developer familiar with React will be able to take and publish into a real website, without needing to know Crylic was ever used.
 

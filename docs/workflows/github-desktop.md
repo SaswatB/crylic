@@ -10,7 +10,7 @@ Utilizing Git directly from Crylic is in the roadmap
 
 To get started, download and install [GitHub Desktop](https://desktop.github.com).
 
-![GitHub Desktop's welcome screen](<../.gitbook/assets/image (10).png>)
+![GitHub Desktop's welcome screen](<../.gitbook/assets/image (10) (1).png>)
 
 In Git, code is stored in a 'repository'. Your development team should be able to provide a link that can be used to 'clone' (download a copy of) your project's repository. You may need a GitHub account with permissions to access your team's code.
 
@@ -36,7 +36,7 @@ At this point, these changes can be put into a 'pull request'. Developers can re
 
 To create a pull request, first create a 'branch' (a new version of the project) with a short name representing your changes.
 
-![GitHub Desktop allows creating branches within the current branch menu](<../.gitbook/assets/image (7) (1).png>)
+![GitHub Desktop allows creating branches within the current branch menu](<../.gitbook/assets/image (7) (1) (1).png>)
 
 ![Branch names aren't too important, but need to be unique](<../.gitbook/assets/image (4) (1).png>)
 
@@ -48,11 +48,11 @@ Next create a 'commit' (a bundle of changes that get tracked together) using the
 
 Only a couple of steps left! Next the branch needs to be published so that others in your team can view it.
 
-![GitHub Desktop automatically provides an option to publish a new branch with commits](<../.gitbook/assets/image (12) (1).png>)
+![GitHub Desktop automatically provides an option to publish a new branch with commits](<../.gitbook/assets/image (12) (1) (1).png>)
 
 After that, a pull request can be created!
 
-![GitHub Desktop automatically provides an option to create a pull request for published branches](<../.gitbook/assets/image (9).png>)
+![GitHub Desktop automatically provides an option to create a pull request for published branches](<../.gitbook/assets/image (9) (1).png>)
 
 ![GitHub allows specifying additional details, including images, within the pull request online](<../.gitbook/assets/image (1) (1).png>)
 

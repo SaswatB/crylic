@@ -44,7 +44,7 @@ Crylic supports multiple component libraries out of the box. To continue with `s
 
 New elements can be added by clicking on an existing element within the workspace or the outline pane.
 
-![A heading added to the new component](<../.gitbook/assets/image (7).png>)
+![A heading added to the new component](<../.gitbook/assets/image (7) (1).png>)
 
 Elements can also be reordered by dragging them in the outline pane.
 
@@ -62,7 +62,7 @@ Crylic supports composing components together within the editor, utilizing the a
 
 This button works the same as the add element tool but allows you to compose your own components easily!
 
-![A custom button added from the existing component library to the new component](<../.gitbook/assets/image (8).png>)
+![A custom button added from the existing component library to the new component](<../.gitbook/assets/image (8) (1).png>)
 
 {% hint style="info" %}
 Does that button look familiar? It's because the project open in the screenshot is Crylic's own component library! Crylic is able to contribute to itself 🚀

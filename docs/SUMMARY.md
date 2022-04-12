@@ -15,6 +15,7 @@
 * [Workflows Overview](workflows/workflows-overview.md)
 * [Working with Git](workflows/github-desktop.md)
 * [Component Library](workflows/component-library.md)
+* [Exporting to Figma](workflows/exporting-to-figma.md)
 * [Prototyping](workflows/prototyping.md)
 * [Fit and Finish](workflows/fit-and-finish.md)
 
