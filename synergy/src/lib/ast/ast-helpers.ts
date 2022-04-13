@@ -372,6 +372,19 @@ export const getBlockIdentifiers = (
   return identifiers;
 };
 
+/**
+ * Get a unique name for a new variable in the given block out of all the block-level variable declarations
+ */
+export function getNewBlockIdentifier(block: t.ASTNode, preferredName: string) {
+  const existingIds = getBlockIdentifiers([block]).map((id) => id.name);
+  let componentName = preferredName;
+  let i = 1;
+  while (existingIds.includes(componentName)) {
+    componentName = `${preferredName}${++i}`;
+  }
+  return componentName;
+}
+
 type AstComponentExport = (
   | { isDefault: true; name?: undefined }
   | { isDefault: false; name: string }

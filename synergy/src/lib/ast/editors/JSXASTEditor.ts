@@ -22,6 +22,7 @@ import {
   eitherIf,
   getBlockIdentifiers,
   getName,
+  getNewBlockIdentifier,
   getValue,
   ifIdentifier,
   ifJSXAttribute,
@@ -744,18 +745,10 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
         if (styledTag.type !== "JSXIdentifier")
           throw new Error("Unexpected styled tag type " + styledTag.type);
 
-        // get a unique name for the component out of all the top-level variable declarations
-        const existingIds = getBlockIdentifiers([ast.program]).map(
-          (id) => id.name
-        );
-        let componentName = componentDef.component.name;
-        let i = 1;
-        while (existingIds.includes(componentName)) {
-          componentName = `${componentDef.component.name}${++i}`;
-        }
-
         // for styled-components, add a new component definition to the file
-        const componentTag = b.jsxIdentifier(componentName);
+        const componentTag = b.jsxIdentifier(
+          getNewBlockIdentifier(ast.program, componentDef.component.name)
+        );
         ast.program.body.push(
           createStyledDeclaration(
             componentTag.name,
@@ -801,27 +794,30 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
 
     if (importDef.skipIdentifier) return null;
 
-    // try to find a default export on the import declaration
-    let assetImportIdentifier = assetImport!.specifiers?.find((node): node is
+    // try to find the requested export specifier on the import declaration
+    let assetImportIdentifier = assetImport.specifiers?.find((node): node is
       | t.ImportDefaultSpecifier
       | t.ImportSpecifier =>
       importDef.isDefault
         ? node.type === "ImportDefaultSpecifier"
         : node.type === "ImportSpecifier" && node.imported.name === importName
     );
-    // add a default import if none is found
+    // add an import specifier if none is found
     if (!assetImportIdentifier) {
-      assetImportIdentifier = importDef.isDefault
-        ? b.importDefaultSpecifier(
-            b.identifier(importDef.preferredAlias || importName)
-          )
-        : // todo add local if there's a name conflict
-          b.importSpecifier(
-            b.identifier(importName),
-            importDef.preferredAlias
-              ? b.identifier(importDef.preferredAlias)
-              : null
-          );
+      // get a unique id to avoid conflicts, if necessary
+      const localId = getNewBlockIdentifier(
+        ast.program,
+        importDef.preferredAlias || importName
+      );
+
+      if (importDef.isDefault) {
+        assetImportIdentifier = b.importDefaultSpecifier(b.identifier(localId));
+      } else {
+        assetImportIdentifier = b.importSpecifier(
+          b.identifier(importName),
+          localId !== importName ? b.identifier(localId) : null
+        );
+      }
       assetImport.specifiers = assetImport.specifiers || [];
       assetImport.specifiers.push(assetImportIdentifier);
     }
