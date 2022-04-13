@@ -24,7 +24,7 @@ const STYLED_LOOKUP_MATCHER = new RegExp(
 );
 
 const getStyleMatcherRule = (cssStyleName: string) =>
-  `(($|[^\\S\\r\\n])[^\\S\\r\\n]*)${cssStyleName}: ([^:;]+);`;
+  `((?:^|\\b|\\s)\\s*)${cssStyleName}: ([^:;]+);`
 
 export class StyledASTEditor extends StyleASTEditor<t.File> {
   private createdIds = new Set<string>();
@@ -196,8 +196,8 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
       ]!.value;
       const indent =
         new RegExp(getStyleMatcherRule("[^\\s]+")).exec(quasiValue.raw)?.[1] ||
-        "";
-      quasiValue.raw = `${quasiValue.raw}${indent}${cssStyleName}: ${styleValue};\n`;
+        "  ";
+      quasiValue.raw = `${quasiValue.raw}${quasiValue.raw.includes('\n') ? '':'\n'}${indent}${cssStyleName}: ${styleValue};\n`;
     });
   };
 }
