@@ -11962,7 +11962,7 @@ __metadata:
     rgb-hex: ^3.0.0
     rimraf: ^3.0.2
     rxjs: ^6.5.5
-    sass: ^1.49.8
+    sass: ^1.50.1
     sass-loader: ^8.0.2
     semver: ^6.3.0
     style-loader: ^1.2.1
@@ -26745,16 +26745,16 @@ react-refresh@0.8.3:
   languageName: node
   linkType: hard
 
-"sass@npm:^1.49.8":
-  version: 1.49.8
-  resolution: "sass@npm:1.49.8"
+"sass@npm:^1.50.1":
+  version: 1.50.1
+  resolution: "sass@npm:1.50.1"
   dependencies:
     chokidar: ">=3.0.0 <4.0.0"
     immutable: ^4.0.0
     source-map-js: ">=0.6.2 <2.0.0"
   bin:
     sass: sass.js
-  checksum: ff4051c11223cb6e56ae62fa71448ed65b402949facfbd831f9781244eece9f1d22be45e61af8e0d0fbe186857de2613b07d9247b036ac2326c24e6ebd19bbbe
+  checksum: c06334dbf8eddd508d90ca529c6ffb88cb5861d18cec285480d212b9dbe0a46441cbfd8aa10565780551c71372617465e6c77298e734180e2da2628ce6c46545
   languageName: node
   linkType: hard
 
