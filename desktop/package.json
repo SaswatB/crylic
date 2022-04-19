@@ -61,7 +61,7 @@
     "framer-motion": "^2.4.3-beta.2",
     "fs-extra": "^8.1.0",
     "gonzales-pe": "^4.3.0",
-    "html-webpack-plugin": "^4.0.0-beta.11",
+    "html-webpack-plugin": "^4.5.2",
     "identity-obj-proxy": "^3.0.0",
     "immer": "^9.0.12",
     "io-ts": "^2.2.1",
