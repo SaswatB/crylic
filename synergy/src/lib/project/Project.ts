@@ -34,16 +34,20 @@ export abstract class Project {
     public readonly sourceFolderPath: string,
     public config: ProjectConfig
   ) {
+    const jsxAstEditor = new JSXASTEditor({
+      styledComponentsImport: config.getStyledComponentsImport(),
+    });
     this.elementEditorEntries = [
       {
-        editor: new JSXASTEditor({
-          styledComponentsImport: config.getStyledComponentsImport(),
-        }),
+        editor: jsxAstEditor,
         shouldApply: (e) => e.isScriptEntry,
       },
     ];
     this.styleEditorEntries = [
-      { editor: new StyledASTEditor(), shouldApply: (e) => e.isScriptEntry },
+      {
+        editor: new StyledASTEditor(jsxAstEditor),
+        shouldApply: (e) => e.isScriptEntry,
+      },
       { editor: new StyleSheetASTEditor(), shouldApply: (e) => e.isStyleEntry },
     ];
     this.initUndoRedo();

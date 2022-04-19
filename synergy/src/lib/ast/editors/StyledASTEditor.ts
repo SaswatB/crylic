@@ -1,6 +1,8 @@
 import { namedTypes as t } from "ast-types";
+import { ExpressionKind } from "ast-types/gen/kinds";
 import { NodePath } from "ast-types/lib/node-path";
-import { kebabCase } from "lodash";
+import { kebabCase, startCase } from "lodash";
+import path from "path";
 import { types } from "recast";
 
 import { Styles } from "../../../types/paint";
@@ -16,6 +18,9 @@ import {
   STYLED_COMPONENTS_STYLE_GROUP_TYPE,
   StyleGroup,
 } from "./ASTEditor";
+import { JSXASTEditor } from "./JSXASTEditor";
+
+const { builders: b } = types;
 
 const STYLED_LOOKUP_CSS_VAR_PREFIX = "--paint-styledlookup-";
 
@@ -29,6 +34,10 @@ const getStyleMatcherRule = (cssStyleName: string) =>
 export class StyledASTEditor extends StyleASTEditor<t.File> {
   private createdIds = new Set<string>();
   private lookupIdNameMap: Record<string, string | undefined> = {};
+
+  constructor(private jsxASTEditor: JSXASTEditor) {
+    super();
+  }
 
   protected addLookupDataToAST({
     ast,
@@ -114,7 +123,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
 
   protected applyStylesToAST(
     { ast, lookupId }: EditContext<t.File>,
-    styles: Styles
+    styles: Styles<string | (string | ExpressionKind)[]>
   ): void {
     let madeChange = false;
     this.getStyledTemplateByLookup(ast, lookupId, (path) => {
@@ -126,11 +135,28 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
   }
 
   protected updateElementImageInAST(
-    { ast, lookupId }: EditContext<t.File>,
+    context: EditContext<t.File>,
     imageProp: "backgroundImage",
     assetEntry: CodeEntry
   ) {
-    // todo: implement
+    // get the import for the asset
+    const relativeAssetPath = context.codeEntry.getRelativeImportPath(
+      assetEntry.filePath
+    );
+    const assetDefaultName = `Asset${startCase(
+      path.basename(assetEntry.filePath).replace(/\..*$/, "")
+    ).replace(/\s+/g, "")}`;
+    this.jsxASTEditor.addImport(context, {
+      name: assetDefaultName,
+      path: relativeAssetPath,
+      isDefault: true,
+    });
+
+    // add the css
+    this.applyStylesToAST(context, {
+      // todo it's not safe to use assetDefaultName here as the import might use a different name
+      [imageProp]: ['url(', b.identifier(assetDefaultName) , ')']
+    });
   }
 
   protected addStyleGroupToAST() {
@@ -162,7 +188,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
       types.namedTypes.TaggedTemplateExpression,
       t.TaggedTemplateExpression
     >,
-    styles: Styles
+    styles: Styles<string | (string | ExpressionKind)[]>
   ) => {
     Object.entries(styles).forEach(([styleName, styleValue]) => {
       const cssStyleName = kebabCase(`${styleName}`);
@@ -177,12 +203,14 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
               new RegExp(`\n?${styleMatcherRule}`),
               ""
             );
-          } else {
+          } else if (typeof styleValue === "string") {
             // replace existing rule
             quasiValue.raw = quasiValue.raw.replace(
-              styleMatcher,
-              `${res[1]}${cssStyleName}: ${styleValue};`
-            );
+                styleMatcher,
+                `${res[1]}${cssStyleName}: ${styleValue};`
+              );
+          } else {
+            styleValue
           }
           return true;
         }
