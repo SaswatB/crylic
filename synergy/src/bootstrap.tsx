@@ -46,7 +46,7 @@ if (__IS_CRYLIC__) {
     "href",
     "https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap"
   );
-  document.getElementsByTagName("head")[0]?.appendChild(fontImport);
+  document.head.appendChild(fontImport);
 }
 
 export const Bootstrap: FunctionComponent = ({ children }) => (

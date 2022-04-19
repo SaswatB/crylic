@@ -2,6 +2,7 @@ import React from "react";
 import { useSnackbar } from "notistack";
 
 import { useMenuInput } from "../../hooks/useInput";
+import { sleep } from "../../lib/utils";
 import { Tour } from "../Tour/Tour";
 
 export function SupportCTA({ openUrl }: { openUrl: (url: string) => void }) {
@@ -16,13 +17,27 @@ export function SupportCTA({ openUrl }: { openUrl: (url: string) => void }) {
       { name: "End User License Agreement", value: "eula" },
     ].filter((o): o is { name: string; value: string } => !!o),
     disableSelection: true,
-    onChange: (value) => {
+    onChange: async (value) => {
       closeMenu();
       switch (value) {
         case "documentation":
           openUrl("https://docs.crylic.io");
           break;
         case "feedback":
+          if (!document.getElementById("appzi-script")) {
+            const scriptImport = document.createElement("script");
+            const onScriptImport = new Promise((resolve) =>
+              scriptImport.addEventListener("load", resolve)
+            );
+            scriptImport.src = "https://w.appzi.io/w.js?token=CzwSp";
+            document.head.appendChild(scriptImport);
+            await Promise.race([onScriptImport, sleep(2000)]);
+            for (let i = 0; i < 10; i++) {
+              if (window.appzi) break;
+              await sleep(100);
+            }
+          }
+
           if (window.appzi) {
             window.appziSettings = {
               data: {
