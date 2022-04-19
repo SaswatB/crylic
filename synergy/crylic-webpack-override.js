@@ -6,7 +6,7 @@
  * @returns {import('webpack').Configuration} Modified webpack config
  */
 module.exports = function (options, webpack) {
-  const {jsc} = options.module.rules[0].oneOf.find(o => o?.use?.loader === 'swc-loader').use.options;
+  const {jsc} = options.module.rules[0].oneOf.filter(o => o?.use?.loader === 'swc-loader')[1].use.options;
   jsc.parser = {
       syntax: "typescript",
       tsx: true,

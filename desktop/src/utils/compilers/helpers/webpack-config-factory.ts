@@ -98,6 +98,35 @@ const getWebpackModules = async (
     sourceInclude += path.sep;
   }
 
+  const swcOptions = {
+    // lm_a95a542d63 electron version
+    // todo change on publish or support more options
+    env: {
+      targets: { chrome: "98" },
+      include: [
+        "proposal-nullish-coalescing-operator",
+        "proposal-optional-chaining",
+      ],
+    },
+    sourceMaps: "inline",
+    jsc: {
+      transform: {
+        react: {
+          runtime: enableReactRuntimeCompat ? "automatic" : "classic",
+          ...(!disableWebpackExternals &&
+          !disableReactExternals &&
+          enableReactRuntimeCompat
+            ? {
+                importSource: path.dirname(
+                  __non_webpack_require__.resolve("react")
+                ),
+              }
+            : {}),
+        },
+      },
+    },
+  };
+
   const loaders = [
     // embed small images as data urls
     {
@@ -112,39 +141,24 @@ const getWebpackModules = async (
 
     // handle project code (swc)
     !disableSWC && {
-      // Include ts, tsx, js, and jsx files.
-      test: /\.(jsx?|tsx?|mjs)$/,
+      // Include javascript files
+      test: /\.(jsx?|mjs)$/,
       exclude: /node_modules/,
       use: {
         loader: "swc-loader",
         options: {
-          // lm_a95a542d63 electron version
-          // todo change on publish or support more options
-          env: {
-            targets: { chrome: "98" },
-            include: [
-              "proposal-nullish-coalescing-operator",
-              "proposal-optional-chaining",
-            ],
-          },
-          sourceMaps: "inline",
-          jsc: {
-            transform: {
-              react: {
-                runtime: enableReactRuntimeCompat ? "automatic" : "classic",
-                ...(!disableWebpackExternals &&
-                !disableReactExternals &&
-                enableReactRuntimeCompat
-                  ? {
-                      importSource: path.dirname(
-                        __non_webpack_require__.resolve("react")
-                      ),
-                    }
-                  : {}),
-              },
-            },
-          },
+          ...swcOptions,
+          jsc: { ...swcOptions.jsc, parser: { jsx: true } },
         },
+      },
+    },
+    !disableSWC && {
+      // Include typescript files
+      test: /\.tsx?$/,
+      exclude: /node_modules/,
+      use: {
+        loader: "swc-loader",
+        options: swcOptions,
       },
     },
 
