@@ -39,6 +39,14 @@ if (__IS_CRYLIC__) {
         return {};
     }
   };
+  // lm_e8bb3c48c7 roboto import
+  const fontImport = document.createElement("link");
+  fontImport.setAttribute("rel", "stylesheet");
+  fontImport.setAttribute(
+    "href",
+    "https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap"
+  );
+  document.getElementsByTagName("head")[0]?.appendChild(fontImport);
 }
 
 export const Bootstrap: FunctionComponent = ({ children }) => (
