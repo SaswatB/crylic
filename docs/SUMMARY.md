@@ -6,10 +6,6 @@
 
 * [Creating a new project](quickstart/creating-a-new-project.md)
 
-## Overview
-
-* [Walkthrough](overview/walkthrough.md)
-
 ## Workflows
 
 * [Workflows Overview](workflows/workflows-overview.md)
