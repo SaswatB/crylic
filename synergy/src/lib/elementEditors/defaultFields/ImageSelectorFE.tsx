@@ -1,5 +1,6 @@
 import React from "react";
 import { startCase } from "lodash";
+import { useSnackbar } from "notistack";
 import path from "path";
 
 import { StylePropNameMap } from "../../../components/SideBar/css-options";
@@ -20,6 +21,7 @@ export function ImageSelectorFE({
   const project = useProject();
   const selectService = useService(SelectService);
   const selectedStyleGroup = useObservable(selectService.selectedStyleGroup$);
+  const { enqueueSnackbar } = useSnackbar();
 
   const onChange = (assetEntry: CodeEntry) => {
     if (!selectedStyleGroup) return;
@@ -28,7 +30,10 @@ export function ImageSelectorFE({
       selectedStyleGroup,
       (editor, editContext) =>
         editor.updateElementImage(editContext, imageProp, assetEntry)
-    );
+    ).catch((err) => {
+      enqueueSnackbar(err.message, { variant: "error" });
+      console.error(err);
+    });
   };
   const label = StylePropNameMap[imageProp] || startCase(`${imageProp || ""}`);
   const initialValue = getSelectedElementStyleValue(selectedElement, imageProp);

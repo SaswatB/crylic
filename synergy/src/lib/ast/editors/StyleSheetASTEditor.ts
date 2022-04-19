@@ -136,11 +136,16 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
   }
 
   protected updateElementImageInAST(
-    { ast, lookupId }: EditContext<CSSASTNode>,
+    context: EditContext<CSSASTNode>,
     imageProp: "backgroundImage",
     assetEntry: CodeEntry
   ) {
-    // todo: implement
+    // get the import for the asset
+    const relativeAssetPath = context.codeEntry.getRelativeImportPath(
+      assetEntry.filePath
+    );
+    // add the css
+    this.applyStylesToAST(context, { [imageProp]: `url(${relativeAssetPath})` });
   }
 
   

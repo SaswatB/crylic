@@ -62,7 +62,7 @@ export type StyleKeys<
         never
       >
     : never;
-export type Styles = { [P in StyleKeys]?: string | null };
+export type Styles<T = string> = { [P in StyleKeys]?: T | null };
 
 export interface ImportedComponentDefinition {
   name: string;

@@ -130,7 +130,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
     imageProp: "backgroundImage",
     assetEntry: CodeEntry
   ) {
-    // todo: implement
+    throw new Error("Adding images to a styled-component is not currently supported");
   }
 
   protected addStyleGroupToAST() {
