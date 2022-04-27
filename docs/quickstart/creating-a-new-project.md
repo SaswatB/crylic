@@ -11,7 +11,7 @@ Crylic comes with everything you need to start a new project built in! There's n
 This is an actual software project that a developer familiar with React will be able to take and publish into a real website, without needing to know Crylic was ever used.
 
 {% hint style="warning" %}
-Crylic is built to help designers and developers work together more efficiently, so developers are still needed when working with projects, but in the future Crylic will be able to publish sites as well!
+Crylic is built to help designers and developers work together more efficiently, so developers are still needed for some aspects when working with projects, such as publishing or adding interactivity.
 
 Take a look at some ideas for how Crylic can fit in your [workflow](../workflows/workflows-overview.md).
 {% endhint %}

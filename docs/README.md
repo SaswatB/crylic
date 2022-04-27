@@ -8,7 +8,7 @@ Crylic is a design tool that edits code.
 
 > Not export, not generate, _edit_.
 
-This means that Crylic can be used to edit existing codebases, and there's no migration if you stop using the tool as it only changes code!
+This means that Crylic can be used to edit existing codebases, and there's no migration or offboarding if you stop using the tool as it only changes code!
 
 Crylic is a new software platform, and right now is focused on [creating basic components and editing styles](workflows/component-library.md). Over time more no-code features will be added, such as handling state, creating variants of components, and working with a backend. Currently Crylic supports React projects, with support for more frameworks, such as Angular & Vue, planned in the future.
 
@@ -22,7 +22,9 @@ Some aspects of Crylic require technical skills, such as [onboarding existing pr
 Due to Crylic's position as a tool that straddles the designer and developer worlds, documentation may sometimes be developer-focused.
 {% endhint %}
 
-To get started, choose an entry point that best fits your requirements.
+To get started, [download Crylic](https://www.crylic.io/download) and choose an entry point below that best fits your requirements.
+
+_Remember to reach out on_ [_Discord_](https://discord.com/invite/qazKnvmF9F) _or at_ [_info@crylic.io_](mailto:info@crylic.io) _if you need any help or encounter any issues!_
 
 #### Designer Friendly
 
