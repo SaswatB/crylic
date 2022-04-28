@@ -202,7 +202,10 @@
     },
     "mac": {
       "target": "dmg",
-      "icon": "./src/assets/icon.png"
+      "icon": "./src/assets/icon.png",
+      "hardenedRuntime": true,
+      "entitlements": "./entitlements.mac.plist",
+      "entitlementsInherit": "./entitlements.mac.plist"
     },
     "directories": {
       "buildResources": "assets"
