@@ -21,7 +21,7 @@ const nativeDeps = {
   joinPath: (undefined as unknown) as typeof import("memory-fs/lib/join"),
   unionfs: (undefined as unknown) as typeof import("unionfs"),
   webpack: (undefined as unknown) as typeof import("webpack"),
-  WebpackDevServer: (undefined as unknown) as typeof import("webpack-dev-server"),
+  WebpackDevServer: (undefined as unknown) as typeof import("../../../app/node_modules/webpack-dev-server"),
   HtmlWebpackPlugin: (undefined as unknown) as typeof import("html-webpack-plugin"),
   // @ts-ignore todo add types
   tailwindcss: (undefined as unknown) as typeof import("tailwindcss"),
@@ -179,6 +179,7 @@ export const webpackRunCode = async (
       primaryCodeEntry,
       onProgress
     );
+
     const compiler = webpack(options);
     const volume = new memfs.Volume();
     const inputFs = memfs.createFsFromVolume(volume);
@@ -198,10 +199,6 @@ export const webpackRunCode = async (
     );
 
     compiler.inputFileSystem = ufs1;
-    // cast to any b/c of bad types
-    (compiler as any).resolvers.normal.fileSystem = compiler.inputFileSystem;
-    (compiler as any).resolvers.context.fileSystem = compiler.inputFileSystem;
-    (compiler as any).resolvers.loader.fileSystem = compiler.inputFileSystem;
 
     // bug in typescript
     (compiler as any).outputFileSystem = {
@@ -213,49 +210,50 @@ export const webpackRunCode = async (
     // const compilerWatch = compiler.watch;
     compiler.watch = () => ({ close() {}, invalidate() {} });
 
-    const devServer = new WebpackDevServer(compiler, {
-      disableHostCheck: true,
-      compress: true,
-      clientLogLevel: "none",
-      contentBase: path.resolve(config.paths.projectFolder, "public"),
-      // contentBasePublicPath: paths.publicUrlOrPath,
-      // todo fix hmr behavior for non-source code assets
-      // watchContentBase: true,
-      hot: !config.disableFastRefresh,
-      transportMode: "ws",
-      injectClient: true,
-      // sockHost,
-      // sockPath,
-      // sockPort,
-      // publicPath: paths.publicUrlOrPath.slice(0, -1),
-      publicPath: "/",
-      // quiet: true,
-      // watchOptions: { ignored: ignoredFiles(paths.appSrc) },
-      // host,
-      // overlay: false,
-      historyApiFallback: {
-        disableDotRule: true,
-        index: "/", //paths.publicUrlOrPath,
+    const devServer = new WebpackDevServer(
+      {
+        allowedHosts: "all",
+        compress: true,
+        hot: !config.disableFastRefresh,
+        webSocketServer: "ws",
+        // sockHost,
+        // sockPath,
+        // sockPort,
+        // quiet: true,
+        // watchOptions: { ignored: ignoredFiles(paths.appSrc) },
+        // host,
+        // overlay: false,
+        historyApiFallback: {
+          disableDotRule: true,
+          index: "/", //paths.publicUrlOrPath,
+        },
+        // public: allowedHost,
+        // proxy,
+        devMiddleware: {
+          // @ts-expect-error meh
+          outputFileSystem: compiler.outputFileSystem,
+          // publicPath: paths.publicUrlOrPath.slice(0, -1),
+          publicPath: "/",
+        },
+        static: {
+          // publicPath: paths.publicUrlOrPath,
+          directory: path.resolve(config.paths.projectFolder, "public"),
+          // todo fix hmr behavior for non-source code assets
+          // watch: true,
+        },
+        client: {
+          logging: "none",
+        },
       },
-      // public: allowedHost,
-      // proxy,
-      // @ts-expect-error ignore type error for hidden option
-      fs: compiler.outputFileSystem,
-    });
+      compiler
+    );
+
+    // WebpackDevServer.getFreePort
 
     // Launch WebpackDevServer.
-    const server = devServer.listen(0, (err) => {
-      if (err) {
-        return console.log(err);
-      }
-    });
-    const devport = await new Promise<number>((resolve) => {
-      server.once("listening", () => {
-        console.log("dev server listening", server.address());
-        resolve((server.address() as AddressInfo).port);
-        // todo add timeout
-      });
-    });
+    await devServer.start();
+    const devport = devServer.options.port! as number;
+    console.log("dev server listening", devServer.server?.address());
 
     console.log("initialized webpack");
     webpackCache[primaryCodeEntry.id] = {

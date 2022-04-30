@@ -96,7 +96,7 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
   return (
     // todo this onClose should undo changes
     <Dialog open={open} onClose={onClose} maxWidth="xl">
-      <DialogTitle>Webpack Configuration</DialogTitle>
+      <DialogTitle>Webpack 5 Configuration</DialogTitle>
       <DialogContent
         className="flex flex-col"
         // todo fix weird layout issues

@@ -54,25 +54,26 @@ const getEnvVars = (context: WebpackConfigFactoryContext) => {
   };
 
   if (!__IS_RENDERER_BUNDLE__) {
-    // preserve this app's env vars
-    // todo clear app specific vars
-    const originalEnv = process.env;
-    process.env = cloneDeep(originalEnv);
-
+    let env: Record<string, string> = { ...(process["env"] as object) };
     dotenvFiles.forEach((dotenvFile) => {
-      if (fs.existsSync(dotenvFile))
-        dotenvExpand(dotenv.config({ path: dotenvFile }));
-    });
-
-    // copy REACT_APP env vars
-    Object.keys(process.env)
-      .filter((key) => REACT_APP.test(key))
-      .forEach((key) => {
-        appEnv[key] = JSON.stringify(process.env[key]);
+      if (!fs.existsSync(dotenvFile)) return;
+      const parsed = dotenv.parse(
+        fs.readFileSync(dotenvFile, { encoding: "utf8" })
+      );
+      Object.entries(parsed).forEach(([key, value]) => {
+        if (!(key in env)) env[key] = value;
       });
+    });
+    env =
+      dotenvExpand.expand({ ignoreProcessEnv: true, parsed: env }).parsed ||
+      env;
 
-    // restore the original env vars
-    process.env = originalEnv;
+    // copy REACT_APP env vars & .env vars
+    Object.keys(env)
+      .filter((key) => REACT_APP.test(key) || !(key in process["env"]))
+      .forEach((key) => {
+        appEnv[key] = JSON.stringify(env[key]);
+      });
   }
 
   return appEnv;
@@ -377,7 +378,7 @@ export const webpackConfigFactory = async (
       chunkFilename: "[name].chunk.js",
       library: "paintbundle",
       libraryTarget: "umd",
-      globalObject: "this",
+      globalObject: "self",
     },
     optimization: {
       // Automatically split vendor and commons
@@ -415,6 +416,24 @@ export const webpackConfigFactory = async (
         ...(modules.webpackAliases || {}),
       },
       // plugins: [PnpWebpackPlugin]
+      // @ts-expect-error meh
+      fallback: {
+        os: false,
+        fs: false,
+        tls: false,
+        net: false,
+        path: false,
+        zlib: false,
+        http: false,
+        https: false,
+        stream: false,
+        crypto: false,
+        module: false,
+        dgram: false,
+        dns: false,
+        http2: false,
+        child_process: false,
+      },
     },
     // resolveLoader: { plugins: [PnpWebpackPlugin.moduleLoader(module)] },
     plugins: [
@@ -429,10 +448,12 @@ export const webpackConfigFactory = async (
         "process.env": env,
         __IS_CRYLIC__: JSON.stringify(true),
       }),
-      !disableFastRefresh && new webpack.HotModuleReplacementPlugin(),
       // WatchMissingNodeModulesPlugin
       // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
-      new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^\.\/locale$/,
+        contextRegExp: /moment$/,
+      }),
       new webpack.ProgressPlugin({
         handler(percentage, message, ...args) {
           onProgress({ percentage, message });
@@ -440,16 +461,6 @@ export const webpackConfigFactory = async (
       }),
       !disableFastRefresh && new ReactRefreshPlugin({ forceEnable: true }),
     ].filter((p): p is typeof webpack.Plugin => !!p),
-    node: {
-      module: "empty",
-      dgram: "empty",
-      dns: "mock",
-      fs: "empty",
-      http2: "empty",
-      net: "empty",
-      tls: "empty",
-      child_process: "empty",
-    },
   };
 
   // handle a config override specified for this project

@@ -11892,8 +11892,8 @@ __metadata:
     cosmiconfig: ^6.0.0
     cpy-cli: ^3.1.1
     css-loader: ^3.5.3
-    dotenv: ^8.2.0
-    dotenv-expand: ^5.1.0
+    dotenv: ^16.0.0
+    dotenv-expand: ^8.0.3
     electron: ^17.1.0
     electron-builder: ^22.14.5
     electron-devtools-installer: ^3.0.0
@@ -13333,6 +13333,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dotenv-expand@npm:^8.0.3":
+  version: 8.0.3
+  resolution: "dotenv-expand@npm:8.0.3"
+  checksum: 128ce90ac825b543de3ece0154a51b056ab0dc36bb26d97a68cd0b8707327ecd3c182fb6ac63b26a0fcdfa85064419906a1065cb634f1f9dc08ad311375f1fc0
+  languageName: node
+  linkType: hard
+
 "dotenv@npm:^10.0.0":
   version: 10.0.0
   resolution: "dotenv@npm:10.0.0"
@@ -13340,7 +13347,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^8.0.0, dotenv@npm:^8.2.0":
+"dotenv@npm:^16.0.0":
+  version: 16.0.0
+  resolution: "dotenv@npm:16.0.0"
+  checksum: 664cebb51f0a9a1d1b930f51f0271e72e26d62feaecc9dc03df39453dd494b4e724809ca480fb3ec3213382b1ed3f791aaeb83569a137f9329ce58efd4853dbf
+  languageName: node
+  linkType: hard
+
+"dotenv@npm:^8.0.0":
   version: 8.2.0
   resolution: "dotenv@npm:8.2.0"
   checksum: ad4c8e0df3e24b4811c8e93377d048a10a9b213dcd9f062483b4a2d3168f08f10ec9c618c23f5639060d230ccdb174c08761479e9baa29610aa978e1ee66df76

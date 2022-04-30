@@ -1,0 +1,22 @@
+diff --git a/node_modules/webpack/lib/library/UmdLibraryPlugin.js b/node_modules/webpack/lib/library/UmdLibraryPlugin.js
+index 629f87d..5957de6 100644
+--- a/node_modules/webpack/lib/library/UmdLibraryPlugin.js
++++ b/node_modules/webpack/lib/library/UmdLibraryPlugin.js
+@@ -3,7 +3,7 @@
+ 	Author Tobias Koppers @sokra
+ */
+ 
+-"use strict";
++
+ 
+ const { ConcatSource, OriginalSource } = require("webpack-sources");
+ const ExternalModule = require("../ExternalModule");
+@@ -254,7 +254,7 @@ class UmdLibraryPlugin extends AbstractLibraryPlugin {
+ 
+ 		return new ConcatSource(
+ 			new OriginalSource(
+-				"(function webpackUniversalModuleDefinition(root, factory) {\n" +
++				"window.paintBundle = () => (function webpackUniversalModuleDefinition(root, factory) {\n" +
+ 					getAuxiliaryComment("commonjs2") +
+ 					"	if(typeof exports === 'object' && typeof module === 'object')\n" +
+ 					"		module.exports = factory(" +
