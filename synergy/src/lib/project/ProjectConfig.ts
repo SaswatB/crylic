@@ -81,12 +81,12 @@ export const ProjectConfigFile = it.type({
     it.undefined,
   ]),
 });
-export type ProjectConfigFile = it.TypeOf<typeof ProjectConfigFile>;
+export type ProjectConfigFile = Partial<it.TypeOf<typeof ProjectConfigFile>>;
 
 export abstract class ProjectConfig {
   protected constructor(
     public readonly projectPath: string,
-    public readonly configFile: ProjectConfigFile | undefined,
+    public readonly configFile: ProjectConfigFile,
     public readonly packageJson: PackageJson | undefined
   ) {}
 

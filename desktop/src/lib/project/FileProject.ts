@@ -16,7 +16,9 @@ import {
   INITIAL_CODE_REVISION_ID,
 } from "synergy/src/lib/project/CodeEntry";
 import { Project } from "synergy/src/lib/project/Project";
+import { ProjectConfig } from "synergy/src/lib/project/ProjectConfig";
 import { sleep } from "synergy/src/lib/utils";
+import { PluginService } from "synergy/src/services/PluginService";
 
 import { streamToString } from "../../utils/utils";
 import { FileProjectConfig } from "./FileProjectConfig";
@@ -41,7 +43,8 @@ const TemplateBuffers: Record<FileProjectTemplate, () => Promise<Buffer>> = {
 export class FileProject extends Project {
   public static async createNewProjectInDirectory(
     folderPath: string,
-    template: FileProjectTemplate
+    template: FileProjectTemplate,
+    pluginService: PluginService
   ) {
     console.log(folderPath);
     if (!fs.existsSync(folderPath))
@@ -132,14 +135,16 @@ export class FileProject extends Project {
     // sleep to flush changes and avoid blank loading bug
     await sleep(1000);
 
-    return FileProject.createProjectFromDirectory(folderPath);
+    return FileProject.createProjectFromDirectory(folderPath, pluginService);
   }
 
-  public static async createProjectFromDirectory(folderPath: string) {
+  public static async createProjectFromDirectory(folderPath: string, pluginService: PluginService) {
     // build metadata
-    const config = FileProjectConfig.createProjectConfigFromDirectory(
+    let config: ProjectConfig = FileProjectConfig.createProjectConfigFromDirectory(
       folderPath
     );
+    pluginService.activatePlugins(config);
+    config = pluginService.reduceActive((acc, p) => p.overrideConfig(acc, { path, fs }), config);
     const project = new FileProject(folderPath, config);
 
     // process all the source files
@@ -188,7 +193,7 @@ export class FileProject extends Project {
   private fileChangeQueue = new Set<string>();
   private fileChangeQueueTimer: number | undefined;
 
-  protected constructor(path: string, config: FileProjectConfig) {
+  protected constructor(path: string, config: ProjectConfig) {
     super(path, config);
 
     // watch for changes on files in the source folder

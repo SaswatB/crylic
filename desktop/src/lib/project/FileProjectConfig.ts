@@ -48,7 +48,7 @@ export class FileProjectConfig extends ProjectConfig {
       );
     }
 
-    return new FileProjectConfig(projectPath, configFile, packageJson);
+    return new FileProjectConfig(projectPath, configFile || {}, packageJson);
   }
 
   private packageManager: PackageManager | undefined;

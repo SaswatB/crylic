@@ -8,6 +8,7 @@ import { track } from "../hooks/useTracking";
 import { Project } from "../lib/project/Project";
 import { RenderEntry } from "../lib/project/RenderEntry";
 import { eagerMap, eagerMapArrayAny } from "../lib/rxjs/eagerMap";
+import { PluginService } from "./PluginService";
 
 const RECENT_PROJECTS_KEY = "recentProjects";
 
@@ -17,14 +18,24 @@ export interface RecentProjectEntry {
 
 @singleton()
 export class ProjectService {
+  private projectSubjectLoaded = false;
   public readonly project$ = new BehaviorSubject<Project | undefined>(
     undefined
   );
 
-  constructor() {
+  constructor(private pluginService: PluginService) {
     this.project$.subscribe((project) => {
       (window as any).project = project; // only for debugging purposes
-      track(project ? "project.open" : "project.close");
+      if (!this.projectSubjectLoaded) this.projectSubjectLoaded = true;
+      else {
+        track(project ? "project.open" : "project.close");
+        if (project) {
+          pluginService.forEachActive((p) => p.onInit(project));
+        } else {
+          pluginService.forEachActive((p) => p.onClose());
+          pluginService.deactivatePlugins();
+        }
+      }
 
       // save recent projects, with this latest project on top
       if (project) {

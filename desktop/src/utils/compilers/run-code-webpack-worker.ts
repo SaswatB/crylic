@@ -129,7 +129,9 @@ try {
 ReactDOM.render((
   <ErrorBoundary>
     ${
-      bootstrapImport ? "<Bootstrap><Component /></Bootstrap>" : "<Component />"
+      bootstrapImport
+        ? "<Bootstrap Component={Component}><Component /></Bootstrap>"
+        : "<Component />"
     }
   </ErrorBoundary>),
   document.getElementById("${project.config.getHtmlTemplateSelector()}")

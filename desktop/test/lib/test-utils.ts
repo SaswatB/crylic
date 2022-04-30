@@ -15,7 +15,7 @@ import { FileProjectConfig } from "../../src/lib/project/FileProjectConfig";
 
 class TestProjectConfig extends FileProjectConfig {
   public constructor(
-    configFile: ProjectConfigFile | undefined = undefined,
+    configFile: ProjectConfigFile = {},
     packageJson: PackageJson | undefined = undefined
   ) {
     super("", configFile, packageJson);
