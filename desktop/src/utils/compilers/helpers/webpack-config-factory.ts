@@ -85,15 +85,15 @@ const getWebpackModules = async (
     disableFastRefresh,
     disableSWC,
     enableReactRuntimeCompat,
-    paths: { projectSrcFolder },
+    paths: { projectFolder },
   } = context.config;
 
   const fileLoaderOptions = {
     name: "static/media/[name].[hash:8].[ext]",
   };
 
-  console.log("sourcePath", projectSrcFolder);
-  let sourceInclude = normalizePath(projectSrcFolder, path.sep);
+  console.log("sourcePath", projectFolder);
+  let sourceInclude = normalizePath(projectFolder, path.sep);
   if (!sourceInclude.endsWith(path.sep)) {
     sourceInclude += path.sep;
   }
@@ -166,6 +166,7 @@ const getWebpackModules = async (
     !!disableSWC && {
       test: /\.(jsx?|tsx?|mjs)$/,
       include: sourceInclude,
+      exclude: /node_modules/,
       loader: "babel-loader",
       options: {
         presets: [
@@ -326,7 +327,11 @@ export const webpackConfigFactory = async (
       : { templateContent: baseAppEntry };
 
   const projectNodeModules = path.resolve(paths.projectFolder, "node_modules"); // appNodeModules
-  const modules = getCraModules({ ...paths, projectNodeModules });
+  const modules = getCraModules({
+    ...paths,
+    projectSrcFolder: `${paths.projectFolder}/src`,
+    projectNodeModules,
+  });
 
   let options: import("webpack").Configuration = {
     mode: NODE_ENV,

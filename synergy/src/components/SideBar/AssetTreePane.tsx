@@ -87,7 +87,9 @@ export const AssetTreePane: FunctionComponent<Props> = ({
     if (!inputName) return;
     // todo add validation/duplicate checking to name
     const name = camelCase(inputName);
-    const filePath = project!.getNewStyleSheetPath(name);
+    const filePath = project.getNormalizedPath(
+      `${project.config.getDefaultNewStylesFolder()}/${name}.css`
+    );
     project?.addCodeEntries([new CodeEntry(project, filePath, "")], {
       edit: true,
     });
@@ -212,7 +214,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
         ltMap((codeEntriesWithRenderable) => {
           const newTreeNodeIds = new Set<string>("root");
           const newProjectTree: Tree = { id: "root", name: "", children: [] };
-          const projectPath = project?.sourceFolderPath.replace(/\\/g, "/");
+          const projectPath = project.path.replace(/\\/g, "/");
           codeEntriesWithRenderable.forEach((v) => {
             if (!v) return;
 

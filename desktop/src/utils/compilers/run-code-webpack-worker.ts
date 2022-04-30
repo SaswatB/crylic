@@ -154,7 +154,6 @@ const generateJobConfig = (
   enableReactRuntimeCompat: project.config.isReactOverV17(),
   paths: {
     projectFolder: project.path,
-    projectSrcFolder: project.sourceFolderPath,
     overrideWebpackConfig: project.config.getFullOverrideWebpackPath(),
     htmlTemplate: project.config.getFullHtmlTemplatePath(),
   },
@@ -177,7 +176,7 @@ export const webpackRunCodeWithWorker = async ({
   const bundleCodeEntry = {
     id: `bundle-${renderEntry.codeId}`,
     code: await generateBundleCode(project, componentCodeEntry),
-    filePath: path.join(project.sourceFolderPath, "paintbundle.tsx"),
+    filePath: path.join(project.path, "paintbundle.tsx"),
   };
 
   const trimEntry = async (codeEntry: CodeEntry) => ({

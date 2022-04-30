@@ -1,4 +1,5 @@
 import { MakeDirectoryOptions } from "fs";
+import minimatch from "minimatch";
 import { Readable } from "stream";
 import yauzl from "yauzl";
 
@@ -127,7 +128,7 @@ export class FileProject extends Project {
       });
     });
 
-    track('project.create', { template })
+    track("project.create", { template });
     // sleep to flush changes and avoid blank loading bug
     await sleep(1000);
 
@@ -139,36 +140,42 @@ export class FileProject extends Project {
     const config = FileProjectConfig.createProjectConfigFromDirectory(
       folderPath
     );
-    const srcFolderPath = config.getFullSourceFolderPath();
-    const project = new FileProject(folderPath, srcFolderPath, config);
+    const project = new FileProject(folderPath, config);
 
     // process all the source files
     const fileCodeEntries: CodeEntry[] = [];
-    if (fs.existsSync(srcFolderPath)) {
-      // recursive function for creating code entries from a folder
-      const read = (subFolderPath: string) =>
-        fs.readdirSync(subFolderPath).forEach((file) => {
-          const filePath = path.join(subFolderPath, file);
-          if (fs.statSync(filePath).isDirectory()) {
-            // recurse through the directory's children
-            read(filePath);
-          } else if (
-            file.match(SCRIPT_EXTENSION_REGEX) ||
-            file.match(STYLE_EXTENSION_REGEX)
-          ) {
-            // add scripts/styles as code entries
-            const code = fs.readFileSync(filePath, { encoding: "utf-8" });
-            fileCodeEntries.push(new CodeEntry(project, filePath, code));
-          } else if (file.match(IMAGE_EXTENSION_REGEX)) {
-            // add images as code entries without text code
-            fileCodeEntries.push(new CodeEntry(project, filePath, undefined));
-          } else {
-            console.log("ignoring file", filePath);
-          }
-        });
-      // read all files within the source folder
-      read(srcFolderPath);
-    }
+    // recursive function for creating code entries from a folder
+    const read = (subFolderPath: string) =>
+      fs.readdirSync(subFolderPath).forEach((file) => {
+        const filePath = path.join(subFolderPath, file);
+        // skip ignored paths
+        if (
+          config
+            .getIgnoredPaths()
+            .find((g) => minimatch(filePath.replace(folderPath, "").replaceAll("\\", "/"), g))
+        ) {
+          console.log("ignoring file due to config", filePath);
+          return
+        }
+        if (fs.statSync(filePath).isDirectory()) {
+          // recurse through the directory's children
+          read(filePath);
+        } else if (
+          file.match(SCRIPT_EXTENSION_REGEX) ||
+          file.match(STYLE_EXTENSION_REGEX)
+        ) {
+          // add scripts/styles as code entries
+          const code = fs.readFileSync(filePath, { encoding: "utf-8" });
+          fileCodeEntries.push(new CodeEntry(project, filePath, code));
+        } else if (file.match(IMAGE_EXTENSION_REGEX)) {
+          // add images as code entries without text code
+          fileCodeEntries.push(new CodeEntry(project, filePath, undefined));
+        } else {
+          console.log("ignoring file due to extension", filePath);
+        }
+      });
+    // read all files within the folder
+    read(folderPath);
 
     // set the window name
     document.title = `${config.name} - Crylic`;
@@ -177,35 +184,45 @@ export class FileProject extends Project {
     return project;
   }
 
-  private fileWatcher: import("chokidar").FSWatcher
-  private fileChangeQueue = new Set<string>()
-  private fileChangeQueueTimer: number | undefined
+  private fileWatcher: import("chokidar").FSWatcher;
+  private fileChangeQueue = new Set<string>();
+  private fileChangeQueueTimer: number | undefined;
 
-  protected constructor(
-    path: string,
-    sourceFolderPath: string,
-    config: FileProjectConfig
-  ) {
-    super(path, sourceFolderPath, config);
+  protected constructor(path: string, config: FileProjectConfig) {
+    super(path, config);
 
     // watch for changes on files in the source folder
-    this.fileWatcher = chokidar.watch(sourceFolderPath).on("change", (path) => {
-      this.fileChangeQueue.add(path);
-      clearTimeout(this.fileChangeQueueTimer)
-      this.fileChangeQueueTimer = setTimeout(() => this.processFileChangeQueue(), 1000)
-    });
+    this.fileWatcher = chokidar
+      .watch(path, {
+        ignored: (p) => !!config
+          .getIgnoredPaths()
+          .find((g) => minimatch(p.replace(path, "").replaceAll("\\", "/"), g))
+      })
+      .on("change", (path) => {
+        this.fileChangeQueue.add(path);
+        clearTimeout(this.fileChangeQueueTimer);
+        this.fileChangeQueueTimer = setTimeout(
+          () => this.processFileChangeQueue(),
+          1000
+        );
+      });
   }
 
   public override onClose() {
-    super.onClose()
+    super.onClose();
     void this.fileWatcher.close();
-    clearTimeout(this.fileChangeQueueTimer)
+    clearTimeout(this.fileChangeQueueTimer);
   }
 
-  private savedCodeRevisions: Record<string /* codeEntry.id */, { id:number, code?: string }> = {};
+  private savedCodeRevisions: Record<
+    string /* codeEntry.id */,
+    { id: number; code?: string }
+  > = {};
   private isCodeEntrySaved(codeEntry: CodeEntry) {
-    return codeEntry.codeRevisionId === INITIAL_CODE_REVISION_ID
-      || codeEntry.codeRevisionId === this.savedCodeRevisions[codeEntry.id]?.id
+    return (
+      codeEntry.codeRevisionId === INITIAL_CODE_REVISION_ID ||
+      codeEntry.codeRevisionId === this.savedCodeRevisions[codeEntry.id]?.id
+    );
   }
 
   public saveFiles() {
@@ -216,25 +233,27 @@ export class FileProject extends Project {
       )
       .forEach((e) => this.saveFile(e));
     this.projectSaved$.next();
-    track('project.saved')
+    track("project.saved");
   }
   public saveFile({ id, filePath, code$, codeRevisionId }: CodeEntry) {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    const code = code$.getValue()
+    const code = code$.getValue();
     fs.writeFileSync(filePath, code);
     this.savedCodeRevisions[id] = { id: codeRevisionId, code };
   }
 
   private async processFileChangeQueue() {
-    this.fileChangeQueueTimer = undefined
-    const filePaths = Array.from(this.fileChangeQueue)
-    this.fileChangeQueue.clear()
-    const codeEntries = this.codeEntries$.getValue()
+    this.fileChangeQueueTimer = undefined;
+    const filePaths = Array.from(this.fileChangeQueue);
+    this.fileChangeQueue.clear();
+    const codeEntries = this.codeEntries$.getValue();
 
-    const fileSyncSuccessPaths: string[] = []
-    const fileSyncConflictPaths: string[] = []
+    const fileSyncSuccessPaths: string[] = [];
+    const fileSyncConflictPaths: string[] = [];
     for (const filePath of filePaths) {
-      const codeEntry = codeEntries.find(entry => entry.filePath === filePath)
+      const codeEntry = codeEntries.find(
+        (entry) => entry.filePath === filePath
+      );
       if (!codeEntry) continue; // skip files that aren't tracked
       const code = codeEntry.code$.getValue();
       if (code === undefined) continue; // skip files without code
@@ -246,24 +265,32 @@ export class FileProject extends Project {
 
         // in this case we have a file that was changed on disk and within Crylic, but Crylic did not save it
         // which is a conflict
-        fileSyncConflictPaths.push(filePath)
-        console.error('file changed in memory and on disk (conflict)', filePath);
+        fileSyncConflictPaths.push(filePath);
+        console.error(
+          "file changed in memory and on disk (conflict)",
+          filePath
+        );
         continue;
       }
 
       // last case, update the in-memory file
       codeEntry.updateCode(newCode);
-      this.savedCodeRevisions[codeEntry.id] = { id: codeEntry.codeRevisionId, code: newCode }
-      fileSyncSuccessPaths.push(filePath)
-      console.info('file changed on disk and updated in-memory', filePath);
+      this.savedCodeRevisions[codeEntry.id] = {
+        id: codeEntry.codeRevisionId,
+        code: newCode,
+      };
+      fileSyncSuccessPaths.push(filePath);
+      console.info("file changed on disk and updated in-memory", filePath);
     }
     if (fileSyncSuccessPaths.length) {
-      bus.publish(fileSyncSuccess({ paths: fileSyncSuccessPaths }))
-      track('project.fileSyncSuccess', { count: fileSyncSuccessPaths.length })
+      bus.publish(fileSyncSuccess({ paths: fileSyncSuccessPaths }));
+      track("project.fileSyncSuccess", { count: fileSyncSuccessPaths.length });
     }
     if (fileSyncConflictPaths.length) {
-      bus.publish(fileSyncConflict({ paths: fileSyncConflictPaths }))
-      track('project.fileSyncConflict', { count: fileSyncConflictPaths.length })
+      bus.publish(fileSyncConflict({ paths: fileSyncConflictPaths }));
+      track("project.fileSyncConflict", {
+        count: fileSyncConflictPaths.length,
+      });
     }
   }
 
@@ -273,17 +300,19 @@ export class FileProject extends Project {
   }
 
   public addAsset(filePath: string) {
+    const getAssetPath = (name: string) =>
+      this.getNormalizedPath(
+        `${this.config.getDefaultNewAssetFolder()}/${name}`
+      );
     const fileName = path.basename(filePath);
-    const assetPath = { path: this.getNewAssetPath(fileName) };
+    const assetPath = { path: getAssetPath(fileName) };
     let counter = 1;
     while (
       this.codeEntries$
         .getValue()
         .find((entry) => entry.filePath === assetPath.path)
     ) {
-      assetPath.path = this.getNewAssetPath(
-        fileName.replace(/\./, `-${counter++}.`)
-      );
+      assetPath.path = getAssetPath(fileName.replace(/\./, `-${counter++}.`));
     }
     fs.writeFileSync(
       assetPath.path,
@@ -293,23 +322,7 @@ export class FileProject extends Project {
     this.addCodeEntries([new CodeEntry(this, assetPath.path, undefined)]);
   }
 
-  // #region new paths
-
   public getNormalizedPath(p: string) {
     return normalizePath(p, path.sep);
   }
-
-  public getNormalizedSourcePath(srcPath: string) {
-    return path.join(this.sourceFolderPath, this.getNormalizedPath(srcPath));
-  }
-
-  public getNewStyleSheetPath(name: string) {
-    return this.getNormalizedSourcePath(`styles/${name}.css`);
-  }
-
-  public getNewAssetPath(fileName: string) {
-    return this.getNormalizedSourcePath(`assets/${fileName}`);
-  }
-
-  // #endregion
 }

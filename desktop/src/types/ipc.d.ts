@@ -49,7 +49,6 @@ export interface WebpackWorkerMessagePayload_Compile {
   config: {
     paths: {
       projectFolder: string; // appPath
-      projectSrcFolder: string; // appSrc
       overrideWebpackConfig: string | undefined;
       htmlTemplate: string;
     };

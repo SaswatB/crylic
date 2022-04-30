@@ -5,14 +5,13 @@ import semver from "semver";
 import {
   DEFAULT_HTML_TEMPLATE_SELECTOR,
   DEFAULT_PROJECT_HTML_TEMPLATE_PATH,
-  DEFAULT_PROJECT_SOURCE_FOLDER,
 } from "../../constants";
 import { PackageJson } from "../../types/paint";
 import { PackageManager } from "../pkgManager/PackageManager";
 
 export const ProjectConfigFile = it.type({
   bootstrap: it.union([it.string, it.undefined]),
-  sourceFolder: it.union([it.string, it.undefined]),
+  ignored: it.union([it.array(it.string), it.undefined]), // globs
   webpack: it.union([
     it.type({
       overrideConfig: it.union([
@@ -140,6 +139,7 @@ export abstract class ProjectConfig {
     return !!mv && semver.gte(mv, "17.0.0");
   };
   public isVueInstalled = () => this.isPackageInstalled("vue");
+  public isNextInstalled = () => this.isPackageInstalled("next");
 
   public abstract getPackageManager(): PackageManager;
 
@@ -149,13 +149,6 @@ export abstract class ProjectConfig {
     return path.join(
       this.projectPath.replace(/\\/g, "/"),
       projectBootstrap.replace(/\\/g, "/")
-    );
-  }
-  public getFullSourceFolderPath() {
-    return path.join(
-      this.projectPath.replace(/\\/g, "/"),
-      this.configFile?.sourceFolder?.replace(/\\/g, "/") ||
-        DEFAULT_PROJECT_SOURCE_FOLDER
     );
   }
   public getFullOverrideWebpackPath() {
@@ -178,6 +171,33 @@ export abstract class ProjectConfig {
     return (
       this.configFile?.htmlTemplate?.rootSelector ||
       DEFAULT_HTML_TEMPLATE_SELECTOR
+    );
+  }
+
+  public getDefaultNewComponentFolder() {
+    // todo get from config & inference
+    return "src/components";
+  }
+  public getDefaultNewAssetFolder() {
+    // todo get from config & inference
+    return "src/assets";
+  }
+  public getDefaultNewStylesFolder() {
+    // todo get from config & inference
+    return "src/styles";
+  }
+
+  /**
+   * Returns globs
+   */
+  public getIgnoredPaths() {
+    return (
+      this.configFile?.ignored || [
+        "**/.*", // ignore files/folders that start with a ., like .git
+        "**/node_modules",
+        "**/dist",
+        "**/build",
+      ]
     );
   }
 

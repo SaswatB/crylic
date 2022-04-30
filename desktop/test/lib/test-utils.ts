@@ -24,7 +24,7 @@ class TestProjectConfig extends FileProjectConfig {
 
 export class TestProject extends FileProject {
   public constructor(config = new TestProjectConfig()) {
-    super("", "", config);
+    super("", config);
   }
 }
 

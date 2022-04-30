@@ -31,7 +31,6 @@ export abstract class Project {
 
   protected constructor(
     public readonly path: string,
-    public readonly sourceFolderPath: string,
     public config: ProjectConfig
   ) {
     this.elementEditorEntries = [
@@ -53,18 +52,9 @@ export abstract class Project {
   public abstract saveFile(codeEntry: CodeEntry): void;
   public abstract addAsset(filePath: string): void;
   public abstract refreshConfig(): void;
-
   public abstract getNormalizedPath(srcPath: string): string;
-  public abstract getNormalizedSourcePath(srcPath: string): string;
-  public abstract getNewStyleSheetPath(name: string): string;
-  public abstract getNewAssetPath(fileName: string): string;
 
   public onClose() {}
-
-  public getDefaultNewComponentFolder() {
-    // todo get from config & inference
-    return "components";
-  }
 
   public get editorEntries() {
     return [...this.elementEditorEntries, ...this.styleEditorEntries];

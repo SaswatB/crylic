@@ -76,7 +76,7 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
     }
 
     // todo add validation/duplicate checking to name
-    const filePath = project.getNormalizedSourcePath(
+    const filePath = project.getNormalizedPath(
       `${location}/${normalizedComponentName}.tsx`
     );
     const codeEntry = new CodeEntry(project, filePath, code);
@@ -84,7 +84,7 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
     project.saveFile(codeEntry);
 
     if (preset === Preset.BasicWSS) {
-      const filePath2 = project.getNormalizedSourcePath(
+      const filePath2 = project.getNormalizedPath(
         `${location}/${normalizedComponentName}.css`
       );
       const code2 = getBoilerPlateStyleSheet(normalizedComponentName);
