@@ -176,7 +176,8 @@ export class CodeEntry {
     return (
       this.isScriptEntry &&
       // by default component files must start with an uppercase letter
-      (this.project.config.configFile?.analyzer?.allowLowerCaseComponentFiles ||
+      (this.project.config.configFile?.analyzer
+        ?.allowLowerCaseComponentFiles !== false ||
         !!this.filePath.match(/(^|\\|\/)[A-Z][^/\\]*$/)) &&
       // by default test and declaration files are ignored)
       (this.project.config.configFile?.analyzer?.allowTestComponentFiles ||
