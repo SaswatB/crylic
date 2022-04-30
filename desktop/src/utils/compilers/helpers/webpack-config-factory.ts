@@ -11,6 +11,11 @@ import baseAppEntry from "!!raw-loader!../../../assets/base-app-entry.html";
 const NODE_ENV = "development";
 const REACT_APP = /^REACT_APP_/i;
 
+const cssRegex = /\.css$/;
+const cssModuleRegex = /\.module\.css$/;
+const sassRegex = /\.(scss|sass)$/;
+const sassModuleRegex = /\.module\.(scss|sass)$/;
+
 interface WebpackConfigFactoryContext {
   deps: {
     path: typeof import("path");
@@ -266,11 +271,23 @@ const getWebpackModules = async (
 
     // style loaders for css/scss/less
     {
-      test: /\.css$/,
+      test: cssRegex,
+      exclude: cssModuleRegex,
       use: ["style-loader", "css-loader"],
     },
     {
-      test: /\.s[ac]ss$/,
+      test: cssModuleRegex,
+      use: [
+        "style-loader",
+        {
+          loader: "css-loader",
+          options: { modules: true },
+        },
+      ],
+    },
+    {
+      test: sassRegex,
+      exclude: sassModuleRegex,
       use: [
         "style-loader",
         "css-loader",
@@ -280,6 +297,17 @@ const getWebpackModules = async (
             ident: "postcss",
             plugins: [tailwindcss],
           },
+        },
+        "sass-loader",
+      ],
+    },
+    {
+      test: sassModuleRegex,
+      use: [
+        "style-loader",
+        {
+          loader: "css-loader",
+          options: { modules: true },
         },
         "sass-loader",
       ],
