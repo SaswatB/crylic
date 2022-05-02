@@ -11,12 +11,14 @@ import { debounceTime, map } from "rxjs/operators";
 import { useMemoObservable } from "../../hooks/useObservable";
 import { useObservableCallback } from "../../hooks/useObservableCallback";
 import { useRerender } from "../../hooks/useRerender";
+import { useService } from "../../hooks/useService";
 import {
   RenderEntry,
   RenderEntryCompileStatus,
   RenderEntryDeployerContext,
 } from "../../lib/project/RenderEntry";
 import { eagerMapArray } from "../../lib/rxjs/eagerMap";
+import { PluginService } from "../../services/PluginService";
 import { useProject } from "../../services/ProjectService";
 import { StyleKeys, Styles, ViewContext } from "../../types/paint";
 import { ErrorBoundary } from "../ErrorBoundary";
@@ -33,6 +35,7 @@ export const CompilerComponentView: FunctionComponent<
 > = ({ renderEntry, compiler, onNewPublishUrl, ...props }) => {
   const rerender = useRerender();
   const project = useProject();
+  const pluginService = useService(PluginService);
   const frame = useRef<{
     frameElement: HTMLIFrameElement;
   }>(null);
@@ -111,6 +114,7 @@ export const CompilerComponentView: FunctionComponent<
       try {
         await compiler.deploy({
           project,
+          pluginService,
           renderEntry,
           frame: frame.current?.frameElement,
           onPublish(url) {

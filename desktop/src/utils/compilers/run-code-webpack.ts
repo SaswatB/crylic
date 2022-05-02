@@ -1,5 +1,4 @@
 import { forOwn, get, isArray } from "lodash";
-import { AddressInfo } from "net";
 
 import { normalizePath } from "synergy/src/lib/normalizePath";
 
@@ -55,20 +54,21 @@ export function initialize(nodeModulesPath = "") {
       console.error(e);
     }
 
+    // todo restore if project module paths can be allowed
     // block deps from being loaded outside the provided nodeModulesPath
     // _nodeModulePaths is private
-    const nodeModulePaths = (nativeDeps.nodeModule as any)._nodeModulePaths; //backup the original method
-    (nativeDeps.nodeModule as any)._nodeModulePaths = function (
-      ...args: unknown[]
-    ) {
-      const paths: string[] = nodeModulePaths.call(this, ...args); // call the original method
+    // const nodeModulePaths = (nativeDeps.nodeModule as any)._nodeModulePaths; //backup the original method
+    // (nativeDeps.nodeModule as any)._nodeModulePaths = function (
+    //   ...args: unknown[]
+    // ) {
+    //   const paths: string[] = nodeModulePaths.call(this, ...args); // call the original method
 
-      // remove any paths that are not within the provided nodeModulesPath
-      let rootPath = nodeModulesPath.replaceAll("\\", "/");
-      if (rootPath.endsWith("/"))
-        rootPath = rootPath.substring(0, rootPath.length - 1);
-      return paths.filter((p) => p.replaceAll("\\", "/").startsWith(rootPath));
-    };
+    //   // remove any paths that are not within the provided nodeModulesPath
+    //   let rootPath = nodeModulesPath.replaceAll("\\", "/");
+    //   if (rootPath.endsWith("/"))
+    //     rootPath = rootPath.substring(0, rootPath.length - 1);
+    //   return paths.filter((p) => p.replaceAll("\\", "/").startsWith(rootPath));
+    // };
   }
 
   nativeDeps.memfs = __non_webpack_require__(`${nodeModulesPath}memfs`);
@@ -230,7 +230,7 @@ export const webpackRunCode = async (
         // public: allowedHost,
         // proxy,
         devMiddleware: {
-          // @ts-expect-error meh
+          // @ts-expect-error bad types
           outputFileSystem: compiler.outputFileSystem,
           // publicPath: paths.publicUrlOrPath.slice(0, -1),
           publicPath: "/",

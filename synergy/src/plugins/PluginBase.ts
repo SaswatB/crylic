@@ -1,15 +1,19 @@
 import { Project } from "../lib/project/Project";
 import { ProjectConfig } from "../lib/project/ProjectConfig";
+import { RenderStarterDefinition } from "../lib/render-starter";
 
 export abstract class PluginBase {
   public abstract shouldActivate(project: ProjectConfig): boolean;
 
-  public onInit(project: Project) {}
+  public onInit(_project: Project) {}
   public onClose() {}
-  public overrideConfig(
+  public overrideProjectConfig(
     config: ProjectConfig,
-    context: { fs: typeof import("fs"); path: typeof import("path") }
+    _context: { fs: typeof import("fs"); path: typeof import("path") }
   ) {
     return config;
+  }
+  public overrideRenderStarter(def: RenderStarterDefinition) {
+    return def;
   }
 }

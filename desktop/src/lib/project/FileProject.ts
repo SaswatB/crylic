@@ -144,7 +144,7 @@ export class FileProject extends Project {
       folderPath
     );
     pluginService.activatePlugins(config);
-    config = pluginService.reduceActive((acc, p) => p.overrideConfig(acc, { path, fs }), config);
+    config = pluginService.reduceActive((acc, p) => p.overrideProjectConfig(acc, { path, fs }), config);
     const project = new FileProject(folderPath, config);
 
     // process all the source files

@@ -435,7 +435,11 @@ export const webpackConfigFactory = async (
         child_process: false,
       },
     },
-    // resolveLoader: { plugins: [PnpWebpackPlugin.moduleLoader(module)] },
+    resolveLoader: {
+      modules: ["node_modules", projectNodeModules].concat(
+        modules.additionalModulePaths || []
+      ),
+    },
     plugins: [
       // Generates an `index.html` file with the <script> injected.
       new HtmlWebpackPlugin({
