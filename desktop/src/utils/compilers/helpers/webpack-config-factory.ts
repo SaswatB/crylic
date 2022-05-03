@@ -21,7 +21,7 @@ interface WebpackConfigFactoryContext {
     path: typeof import("path");
     fs: typeof import("fs");
 
-    webpack: typeof import("webpack");
+    webpack: typeof import("../../../../app/node_modules/webpack");
     HtmlWebpackPlugin: typeof import("html-webpack-plugin");
     ReactRefreshPlugin: typeof import("@pmmmwh/react-refresh-webpack-plugin");
 
@@ -328,7 +328,16 @@ const getWebpackModules = async (
     },
   ].filter(<T>(l: T | boolean): l is T => !!l);
 
-  return { rules: [{ oneOf: loaders }] };
+  return {
+    rules: [
+      { oneOf: loaders },
+      // https://github.com/webpack/webpack/issues/11467
+      {
+        test: /\.m?js$/,
+        resolve: { fullySpecified: false },
+      },
+    ],
+  };
 };
 
 export const webpackConfigFactory = async (
@@ -336,7 +345,7 @@ export const webpackConfigFactory = async (
   primaryCodeEntry: WebpackWorkerMessagePayload_Compile["primaryCodeEntry"],
   onProgress: (arg: { percentage: number; message: string }) => void,
   forwardOverrideError?: boolean
-): Promise<import("webpack").Configuration> => {
+): Promise<import("../../../../app/node_modules/webpack").Configuration> => {
   const {
     path,
     fs,
@@ -365,7 +374,7 @@ export const webpackConfigFactory = async (
     projectNodeModules,
   });
 
-  let options: import("webpack").Configuration = {
+  let options: import("../../../../app/node_modules/webpack").Configuration = {
     mode: NODE_ENV,
     // entry: [require.resolve('react-dev-utils/webpackHotDevClient'),primaryCodeEntry.filePath]
     entry: primaryCodeEntry.filePath,
@@ -391,7 +400,7 @@ export const webpackConfigFactory = async (
       },
       // Keep the runtime chunk separated to enable long term caching
       runtimeChunk: {
-        name: (entrypoint) => `runtime-${entrypoint.name}`,
+        name: (entrypoint: { name: string }) => `runtime-${entrypoint.name}`,
       },
     },
     module: await getWebpackModules(context, env),
@@ -419,7 +428,6 @@ export const webpackConfigFactory = async (
         ...(modules.webpackAliases || {}),
       },
       // plugins: [PnpWebpackPlugin]
-      // @ts-expect-error meh
       fallback: {
         os: false,
         fs: false,
@@ -467,7 +475,7 @@ export const webpackConfigFactory = async (
         },
       }),
       !disableFastRefresh && new ReactRefreshPlugin({ forceEnable: true }),
-    ].filter((p): p is typeof webpack.Plugin => !!p),
+    ].filter((p) => !!p),
   };
 
   // handle plugin overrides

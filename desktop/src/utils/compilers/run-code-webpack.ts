@@ -19,7 +19,7 @@ const nativeDeps = {
   memfs: (undefined as unknown) as typeof import("memfs"),
   joinPath: (undefined as unknown) as typeof import("memory-fs/lib/join"),
   unionfs: (undefined as unknown) as typeof import("unionfs"),
-  webpack: (undefined as unknown) as typeof import("webpack"),
+  webpack: (undefined as unknown) as typeof import("../../../app/node_modules/webpack"),
   WebpackDevServer: (undefined as unknown) as typeof import("../../../app/node_modules/webpack-dev-server"),
   HtmlWebpackPlugin: (undefined as unknown) as typeof import("html-webpack-plugin"),
   // @ts-ignore todo add types
@@ -33,7 +33,7 @@ const nativeDeps = {
 let webpackCache: Record<
   string,
   | {
-      compiler: import("webpack").Compiler;
+      compiler: import("../../../app/node_modules/webpack").Compiler;
       inputFs: IFs;
       outputFs: IFs;
       fsContext: LazyReadFileContext;
@@ -214,7 +214,7 @@ export const webpackRunCode = async (
     };
 
     // stub out compiler.watch so that webpack-dev-server doesn't call it and instead relies on the manual compiler.run calls made below
-    // const compilerWatch = compiler.watch;
+    // @ts-expect-error todo fix types?
     compiler.watch = () => ({ close() {}, invalidate() {} });
 
     const devServer = new WebpackDevServer(

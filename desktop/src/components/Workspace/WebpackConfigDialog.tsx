@@ -51,10 +51,7 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
   const project = useProject();
   const pluginService = useService(PluginService);
   const { enqueueSnackbar } = useSnackbar();
-  const webpackConfig = useAsyncCallback(
-    dumpWebpackConfigWithWorker,
-    pluginService
-  );
+  const webpackConfig = useAsyncCallback(dumpWebpackConfigWithWorker);
   const webpackOverridePath = project.config.getFullOverrideWebpackPath();
   const [webpackOverride, setWebpackOverride] = useState(exampleWebpackConfig);
   const [webpackOverrideOriginal, setWebpackOverrideOriginal] = useState<
@@ -73,7 +70,7 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
         setWebpackOverrideOriginal(currentWebpackOverride);
       }
     }
-    void webpackConfig.execute(project);
+    void webpackConfig.execute(project, pluginService);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, project]);
@@ -91,7 +88,7 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
   const refreshWebpackConfig = useDebouncedFunction((newOverride) => {
     if (!webpackOverridePath) return;
     fs.writeFileSync(webpackOverridePath, newOverride);
-    void webpackConfig.execute(project);
+    void webpackConfig.execute(project, pluginService);
   }, 1000);
 
   const updateWebpackOverride = (newOverride: string) => {
