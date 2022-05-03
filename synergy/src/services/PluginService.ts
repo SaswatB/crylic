@@ -19,6 +19,9 @@ export class PluginService {
   public forEachActive(apply: (plugin: PluginBase) => void) {
     this.activePlugins.forEach(apply);
   }
+  public mapActive<T>(apply: (plugin: PluginBase) => T): T[] {
+    return this.activePlugins.map(apply);
+  }
   public reduceActive<U>(
     apply: (
       previousValue: U,

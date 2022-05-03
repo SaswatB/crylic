@@ -29,8 +29,10 @@ interface WebpackConfigFactoryContext {
     tailwindcss: typeof import("tailwindcss");
     dotenv: typeof import("dotenv");
     dotenvExpand: typeof import("dotenv-expand");
+    requireFromString: typeof import("require-from-string");
   };
   config: WebpackWorkerMessagePayload_Compile["config"];
+  pluginEvalDirectory: string;
 }
 
 const getEnvVars = (context: WebpackConfigFactoryContext) => {
@@ -341,6 +343,7 @@ export const webpackConfigFactory = async (
     webpack,
     HtmlWebpackPlugin,
     ReactRefreshPlugin,
+    requireFromString,
   } = context.deps;
   const {
     paths,
@@ -466,6 +469,25 @@ export const webpackConfigFactory = async (
       !disableFastRefresh && new ReactRefreshPlugin({ forceEnable: true }),
     ].filter((p): p is typeof webpack.Plugin => !!p),
   };
+
+  // handle plugin overrides
+  for (const modifier of context.config.pluginEvals.webpack) {
+    try {
+      const override = requireFromString(
+        modifier.code,
+        path.join(
+          context.pluginEvalDirectory,
+          `${modifier.name}-webpack-config-override.js`
+        )
+      );
+      const result = await override(options, webpack);
+      if (result) {
+        options = result;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
 
   // handle a config override specified for this project
   if (paths.overrideWebpackConfig) {

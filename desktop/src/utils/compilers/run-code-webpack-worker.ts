@@ -10,7 +10,7 @@ import {
   generateRenderStarter,
   RenderStarterDefinition,
 } from "synergy/src/lib/render-starter";
-import { ltTakeNext } from "synergy/src/lib/utils";
+import { isDefined, ltTakeNext } from "synergy/src/lib/utils";
 import { PluginService } from "synergy/src/services/PluginService";
 import { ReactDevToolsHook } from "synergy/src/types/react-devtools";
 
@@ -159,7 +159,8 @@ const generateBundleCode = async (
 };
 
 const generateJobConfig = (
-  project: Project
+  project: Project,
+  pluginService: PluginService
 ): WebpackWorkerMessagePayload_Compile["config"] => ({
   disableWebpackExternals:
     project.config.configFile?.webpack?.overrideConfig
@@ -173,6 +174,20 @@ const generateJobConfig = (
     projectFolder: project.path,
     overrideWebpackConfig: project.config.getFullOverrideWebpackPath(),
     htmlTemplate: project.config.getFullHtmlTemplatePath(),
+  },
+  pluginEvals: {
+    webpack: pluginService
+      .mapActive((p) => {
+        const code = p.overrideWebpackConfig();
+        return code ? { name: p.constructor.name, code } : undefined;
+      })
+      .filter(isDefined),
+    webpackDevServer: pluginService
+      .mapActive((p) => {
+        const code = p.overrideWebpackDevServer();
+        return code ? { name: p.constructor.name, code } : undefined;
+      })
+      .filter(isDefined),
   },
 });
 
@@ -207,7 +222,7 @@ export const webpackRunCodeWithWorker = async ({
   );
   console.log("compiling codeEntries", codeEntries);
 
-  const config = generateJobConfig(project);
+  const config = generateJobConfig(project, pluginService);
   console.log("webpack job config", config);
 
   const takeNextCode = async (codeEntryId: string) => {
@@ -373,8 +388,11 @@ export const resetWebpackWithWorker = () => {
   else resetWebpack();
 };
 
-export const dumpWebpackConfigWithWorker = async (project: Project) => {
-  const config = generateJobConfig(project);
+export const dumpWebpackConfigWithWorker = async (
+  project: Project,
+  pluginService: PluginService
+) => {
+  const config = generateJobConfig(project, pluginService);
 
   if (WORKER_ENABLED) {
     return ipcRenderer.invoke("webpack-worker-message-dump-config", config);

@@ -11,6 +11,8 @@ import {
 import { useSnackbar } from "notistack";
 
 import { useDebouncedFunction } from "synergy/src/hooks/useDebouncedFunction";
+import { useService } from "synergy/src/hooks/useService";
+import { PluginService } from "synergy/src/services/PluginService";
 import { useProject } from "synergy/src/services/ProjectService";
 
 import { dumpWebpackConfigWithWorker } from "../../utils/compilers/run-code-webpack-worker";
@@ -47,8 +49,12 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
   onClose: () => void;
 }> = ({ open, onClose }) => {
   const project = useProject();
+  const pluginService = useService(PluginService);
   const { enqueueSnackbar } = useSnackbar();
-  const webpackConfig = useAsyncCallback(dumpWebpackConfigWithWorker);
+  const webpackConfig = useAsyncCallback(
+    dumpWebpackConfigWithWorker,
+    pluginService
+  );
   const webpackOverridePath = project.config.getFullOverrideWebpackPath();
   const [webpackOverride, setWebpackOverride] = useState(exampleWebpackConfig);
   const [webpackOverrideOriginal, setWebpackOverrideOriginal] = useState<

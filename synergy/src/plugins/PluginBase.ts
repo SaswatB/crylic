@@ -16,4 +16,10 @@ export abstract class PluginBase {
   public overrideRenderStarter(def: RenderStarterDefinition) {
     return def;
   }
+  public overrideWebpackConfig(): string | undefined {
+    return undefined;
+  }
+  public overrideWebpackDevServer(): string | undefined {
+    return undefined;
+  }
 }

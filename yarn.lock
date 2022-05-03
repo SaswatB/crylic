@@ -7043,6 +7043,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/require-from-string@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "@types/require-from-string@npm:1.2.1"
+  checksum: 05ce1e554cff03b6f5837e7e3ff3f8e2c4a9bef23900680f15155c8ccdd5e97f6083332aae11b4d266cb4f862e64d8a4fd139ba6411b31a0fcc72ee049699ca0
+  languageName: node
+  linkType: hard
+
 "@types/resolve@npm:1.17.1":
   version: 1.17.1
   resolution: "@types/resolve@npm:1.17.1"
@@ -11870,6 +11877,7 @@ __metadata:
     "@types/react-color": ^3.0.1
     "@types/react-dev-utils": ^9.0.4
     "@types/react-dom": ^16.9.0
+    "@types/require-from-string": ^1.2.1
     "@types/semver": ^7.3.9
     "@types/styled-components": ^5.1.1
     "@types/webpack": ^4.41.10

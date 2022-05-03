@@ -27,6 +27,7 @@ const nativeDeps = {
   ReactRefreshPlugin: (undefined as unknown) as typeof import("@pmmmwh/react-refresh-webpack-plugin"),
   dotenvExpand: (undefined as unknown) as typeof import("dotenv-expand"),
   dotenv: (undefined as unknown) as typeof import("dotenv"),
+  requireFromString: (undefined as unknown) as typeof import("require-from-string"),
 };
 
 let webpackCache: Record<
@@ -42,6 +43,7 @@ let webpackCache: Record<
     }
   | undefined
 > = {};
+let pluginEvalDirectory = "";
 
 export function initialize(nodeModulesPath = "") {
   resetWebpack();
@@ -70,6 +72,7 @@ export function initialize(nodeModulesPath = "") {
     //   return paths.filter((p) => p.replaceAll("\\", "/").startsWith(rootPath));
     // };
   }
+  pluginEvalDirectory = nodeModulesPath || __dirname;
 
   nativeDeps.memfs = __non_webpack_require__(`${nodeModulesPath}memfs`);
   nativeDeps.joinPath = __non_webpack_require__(
@@ -94,6 +97,9 @@ export function initialize(nodeModulesPath = "") {
     `${nodeModulesPath}dotenv-expand`
   );
   nativeDeps.dotenv = __non_webpack_require__(`${nodeModulesPath}dotenv`);
+  nativeDeps.requireFromString = __non_webpack_require__(
+    `${nodeModulesPath}require-from-string`
+  );
 }
 
 export function resetWebpack() {
@@ -158,6 +164,7 @@ export const webpackRunCode = async (
     unionfs,
     joinPath,
     WebpackDevServer,
+    requireFromString,
   } = nativeDeps;
 
   const startTime = new Date().getTime();
@@ -175,7 +182,7 @@ export const webpackRunCode = async (
     };
 
     const options = await webpackConfigFactory(
-      { deps: nativeDeps, config },
+      { deps: nativeDeps, config, pluginEvalDirectory },
       primaryCodeEntry,
       onProgress
     );
@@ -248,9 +255,23 @@ export const webpackRunCode = async (
       compiler
     );
 
-    // WebpackDevServer.getFreePort
+    // run any plugins that modify WebpackDevServer
+    config.pluginEvals.webpackDevServer.forEach((modifier) => {
+      try {
+        const override = requireFromString(
+          modifier.code,
+          path.join(
+            pluginEvalDirectory,
+            `${modifier.name}-webpack-dev-override.js`
+          )
+        );
+        override(devServer);
+      } catch (e) {
+        console.error(e);
+      }
+    });
 
-    // Launch WebpackDevServer.
+    // launch WebpackDevServer
     await devServer.start();
     const devport = devServer.options.port! as number;
     console.log("dev server listening", devServer.server?.address());
@@ -333,7 +354,7 @@ export const dumpWebpackConfig = async (
   config: WebpackWorkerMessagePayload_Compile["config"]
 ) => {
   const options = await webpackConfigFactory(
-    { deps: nativeDeps, config },
+    { deps: nativeDeps, config, pluginEvalDirectory },
     {
       id: "dumpWebpackConfig",
       filePath: "target.tsx",
