@@ -7043,6 +7043,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/require-from-string@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "@types/require-from-string@npm:1.2.1"
+  checksum: 05ce1e554cff03b6f5837e7e3ff3f8e2c4a9bef23900680f15155c8ccdd5e97f6083332aae11b4d266cb4f862e64d8a4fd139ba6411b31a0fcc72ee049699ca0
+  languageName: node
+  linkType: hard
+
 "@types/resolve@npm:1.17.1":
   version: 1.17.1
   resolution: "@types/resolve@npm:1.17.1"
@@ -9859,6 +9866,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"brace-expansion@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "brace-expansion@npm:2.0.1"
+  dependencies:
+    balanced-match: ^1.0.0
+  checksum: a61e7cd2e8a8505e9f0036b3b6108ba5e926b4b55089eeb5550cd04a471fe216c96d4fe7e4c7f995c728c554ae20ddfc4244cad10aef255e72b62930afd233d1
+  languageName: node
+  linkType: hard
+
 "braces@npm:^2.3.1, braces@npm:^2.3.2":
   version: 2.3.2
   resolution: "braces@npm:2.3.2"
@@ -11861,6 +11877,7 @@ __metadata:
     "@types/react-color": ^3.0.1
     "@types/react-dev-utils": ^9.0.4
     "@types/react-dom": ^16.9.0
+    "@types/require-from-string": ^1.2.1
     "@types/semver": ^7.3.9
     "@types/styled-components": ^5.1.1
     "@types/webpack": ^4.41.10
@@ -11883,8 +11900,8 @@ __metadata:
     cosmiconfig: ^6.0.0
     cpy-cli: ^3.1.1
     css-loader: ^3.5.3
-    dotenv: ^8.2.0
-    dotenv-expand: ^5.1.0
+    dotenv: ^16.0.0
+    dotenv-expand: ^8.0.3
     electron: ^17.1.0
     electron-builder: ^22.14.5
     electron-devtools-installer: ^3.0.0
@@ -11923,6 +11940,7 @@ __metadata:
     memory-fs: ^0.5.0
     mime: ^2.4.6
     mini-css-extract-plugin: ^0.9.0
+    minimatch: ^5.0.1
     monaco-editor-textmate: ^2.2.1
     monaco-editor-webpack-plugin: ^1.9.0
     monaco-textmate: ^3.0.1
@@ -13323,6 +13341,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dotenv-expand@npm:^8.0.3":
+  version: 8.0.3
+  resolution: "dotenv-expand@npm:8.0.3"
+  checksum: 128ce90ac825b543de3ece0154a51b056ab0dc36bb26d97a68cd0b8707327ecd3c182fb6ac63b26a0fcdfa85064419906a1065cb634f1f9dc08ad311375f1fc0
+  languageName: node
+  linkType: hard
+
 "dotenv@npm:^10.0.0":
   version: 10.0.0
   resolution: "dotenv@npm:10.0.0"
@@ -13330,7 +13355,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^8.0.0, dotenv@npm:^8.2.0":
+"dotenv@npm:^16.0.0":
+  version: 16.0.0
+  resolution: "dotenv@npm:16.0.0"
+  checksum: 664cebb51f0a9a1d1b930f51f0271e72e26d62feaecc9dc03df39453dd494b4e724809ca480fb3ec3213382b1ed3f791aaeb83569a137f9329ce58efd4853dbf
+  languageName: node
+  linkType: hard
+
+"dotenv@npm:^8.0.0":
   version: 8.2.0
   resolution: "dotenv@npm:8.2.0"
   checksum: ad4c8e0df3e24b4811c8e93377d048a10a9b213dcd9f062483b4a2d3168f08f10ec9c618c23f5639060d230ccdb174c08761479e9baa29610aa978e1ee66df76
@@ -20868,6 +20900,15 @@ fsevents@~2.1.2:
   dependencies:
     brace-expansion: ^1.1.7
   checksum: c154e566406683e7bcb746e000b84d74465b3a832c45d59912b9b55cd50dee66e5c4b1e5566dba26154040e51672f9aa450a9aef0c97cfc7336b78b7afb9540a
+  languageName: node
+  linkType: hard
+
+"minimatch@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "minimatch@npm:5.0.1"
+  dependencies:
+    brace-expansion: ^2.0.1
+  checksum: b34b98463da4754bc526b244d680c69d4d6089451ebe512edaf6dd9eeed0279399cfa3edb19233513b8f830bf4bfcad911dddcdf125e75074100d52f724774f0
   languageName: node
   linkType: hard
 

@@ -1,9 +1,9 @@
 import { fold } from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
-import path from "path";
 
 import { CONFIG_FILE_NAME } from "synergy/src/constants";
 import { PackageManager } from "synergy/src/lib/pkgManager/PackageManager";
+import { PortablePath } from "synergy/src/lib/project/PortablePath";
 import {
   ProjectConfig,
   ProjectConfigFile,
@@ -15,16 +15,16 @@ import { InbuiltPackageManager } from "../pkgManager/InbuiltPackageManager";
 const fs = __non_webpack_require__("fs") as typeof import("fs");
 
 export class FileProjectConfig extends ProjectConfig {
-  public static createProjectConfigFromDirectory(projectPath: string) {
+  public static createProjectConfigFromDirectory(projectPath: PortablePath) {
     let configFile;
     let packageJson;
 
     // process the config file
-    const configFilePath = path.join(projectPath, CONFIG_FILE_NAME);
-    if (fs.existsSync(configFilePath)) {
+    const configFilePath = projectPath.join(CONFIG_FILE_NAME);
+    if (fs.existsSync(configFilePath.getNativePath())) {
       // todo use a more secure require/allow async
       configFile = pipe(
-        configFilePath,
+        configFilePath.getNativePath(),
         // require the config file
         requireUncached,
         // parse the config file
@@ -41,14 +41,14 @@ export class FileProjectConfig extends ProjectConfig {
     }
 
     // process package.json
-    const packageJsonPath = path.join(projectPath, "package.json");
-    if (fs.existsSync(packageJsonPath)) {
+    const packageJsonPath = projectPath.join("package.json");
+    if (fs.existsSync(packageJsonPath.getNativePath())) {
       packageJson = JSON.parse(
-        fs.readFileSync(packageJsonPath, { encoding: "utf-8" })
+        fs.readFileSync(packageJsonPath.getNativePath(), { encoding: "utf-8" })
       );
     }
 
-    return new FileProjectConfig(projectPath, configFile, packageJson);
+    return new FileProjectConfig(projectPath, configFile || {}, packageJson);
   }
 
   private packageManager: PackageManager | undefined;
@@ -62,7 +62,7 @@ export class FileProjectConfig extends ProjectConfig {
           this.projectPath,
           packageManagerType === "inbuilt-yarn" ||
             (packageManagerType !== "inbuilt-npm" &&
-              fs.existsSync(path.join(this.projectPath, "yarn.lock")))
+              fs.existsSync(this.projectPath.join("yarn.lock").getNativePath()))
         );
       } else if (packageManagerType === "yarn") {
         // yarn

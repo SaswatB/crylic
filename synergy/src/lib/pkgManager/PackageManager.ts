@@ -1,3 +1,5 @@
+import { PortablePath } from "../project/PortablePath";
+
 interface PackageInstallJob {
   stdout?: {
     on(event: "data", callback: (chunk: Buffer) => void): void;
@@ -9,7 +11,7 @@ interface PackageInstallJob {
 }
 
 export abstract class PackageManager {
-  public constructor(protected path: string) {}
+  public constructor(protected path: PortablePath) {}
 
   public abstract installPackage(
     packageName: string | undefined,

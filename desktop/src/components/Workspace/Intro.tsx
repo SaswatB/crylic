@@ -15,10 +15,12 @@ import { Tour } from "synergy/src/components/Tour/Tour";
 import { useService } from "synergy/src/hooks/useService";
 import { useTracking } from "synergy/src/hooks/useTracking";
 import { normalizePath } from "synergy/src/lib/normalizePath";
+import { PluginService } from "synergy/src/services/PluginService";
 import { ProjectService } from "synergy/src/services/ProjectService";
 
 import icon from "../../assets/icon.png";
 import { getUserFolder, openFilePicker } from "../../hooks/useFilePicker";
+import { FilePortablePath } from "../../lib/project/FilePortablePath";
 import {
   FileProject,
   FileProjectTemplate,
@@ -33,6 +35,7 @@ const FileProjectTemplateNames: Record<FileProjectTemplate, string> = {
 
 export function Intro() {
   const projectService = useService(ProjectService);
+  const pluginService = useService(PluginService);
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(0);
   let recentProjects = projectService.getRecentProjects();
@@ -71,8 +74,9 @@ export function Intro() {
 
     setLoading((l) => l + 1);
     FileProject.createNewProjectInDirectory(
-      path.join(res.location, res.name),
-      res.template as FileProjectTemplate
+      new FilePortablePath(res.location).join(res.name),
+      res.template as FileProjectTemplate,
+      pluginService
     )
       .then((p) => projectService.setProject(p))
       .finally(() => setLoading((l) => l - 1));
@@ -89,7 +93,10 @@ export function Intro() {
     // the main thread get's pegged from opening the project
     setTimeout(
       () =>
-        FileProject.createProjectFromDirectory(filePath)
+        FileProject.createProjectFromDirectory(
+          new FilePortablePath(filePath),
+          pluginService
+        )
           .then((p) => projectService.setProject(p))
           .finally(() => setLoading((l) => l - 1)),
       150

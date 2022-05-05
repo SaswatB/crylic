@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 
+import { PortablePath } from "../lib/project/PortablePath";
 import { Project } from "../lib/project/Project";
 import { ReactFiber, ReactFiberRoot } from "./react-devtools";
 
@@ -70,7 +71,7 @@ export interface ImportedComponentDefinition {
 }
 
 export interface ImportDefinition {
-  path: string; // absolute path or node module, todo support path relative to project root
+  path: PortablePath | string; // absolute path or node module, todo support path relative to project root
   namespace?: string;
   name: string;
   isDefault?: boolean;

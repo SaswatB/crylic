@@ -72,7 +72,7 @@ export const CodeEditorPane: FunctionComponent = () => {
       tabs={editableEntries?.map((codeEntry, index) => ({
         key: codeEntry.id,
         name: codeEntry.friendlyName,
-        title: codeEntry.filePath,
+        title: codeEntry.filePath.getNativePath(),
         render: () =>
           codeEntry.isImageEntry ? (
             <ImageViewer codeEntry={codeEntry} />

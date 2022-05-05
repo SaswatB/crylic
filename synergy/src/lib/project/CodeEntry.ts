@@ -1,5 +1,4 @@
 import { startCase } from "lodash";
-import path from "path";
 
 import { memoize } from "../../vendor/ts-memoize";
 import {
@@ -17,6 +16,7 @@ import {
 import { LTBehaviorSubject } from "../lightObservable/LTBehaviorSubject";
 import { ltMap } from "../lightObservable/LTOperator";
 import { ltTakeNext } from "../utils";
+import { PortablePath } from "./PortablePath";
 import { Project } from "./Project";
 
 export const INITIAL_CODE_REVISION_ID = 1;
@@ -40,12 +40,12 @@ export interface RemoteCodeEntry {
 }
 
 export class CodeEntry {
-  public readonly id = hashString(this.filePath);
+  public readonly id = hashString(this.filePath.getNativePath());
   public readonly code$ = new LTBehaviorSubject(this._code);
 
   public constructor(
     private readonly project: Project,
-    public readonly filePath: string,
+    public readonly filePath: PortablePath,
     private _code: string | undefined,
     private _codeRevisionId = INITIAL_CODE_REVISION_ID
   ) {}
@@ -85,15 +85,15 @@ export class CodeEntry {
 
   @memoize()
   public get isScriptEntry() {
-    return !!this.filePath.match(SCRIPT_EXTENSION_REGEX);
+    return !!this.filePath.getNativePath().match(SCRIPT_EXTENSION_REGEX);
   }
   @memoize()
   public get isStyleEntry() {
-    return !!this.filePath.match(STYLE_EXTENSION_REGEX);
+    return !!this.filePath.getNativePath().match(STYLE_EXTENSION_REGEX);
   }
   @memoize()
   public get isImageEntry() {
-    return !!this.filePath.match(IMAGE_EXTENSION_REGEX);
+    return !!this.filePath.getNativePath().match(IMAGE_EXTENSION_REGEX);
   }
 
   @memoize()
@@ -103,7 +103,7 @@ export class CodeEntry {
 
   @memoize()
   public get styleEntryExtension() {
-    return this.filePath.match(STYLE_EXTENSION_REGEX)?.[1] as
+    return this.filePath.getNativePath().match(STYLE_EXTENSION_REGEX)?.[1] as
       | "css"
       | "scss"
       | "sass"
@@ -113,15 +113,15 @@ export class CodeEntry {
 
   @memoize()
   public get fileExtensionLanguage() {
-    if (this.filePath.match(/\.[jt]sx?$/)) {
+    if (this.filePath.getNativePath().match(/\.[jt]sx?$/)) {
       return "typescript";
-    } else if (this.filePath.match(/\.css$/)) {
+    } else if (this.filePath.getNativePath().match(/\.css$/)) {
       return "css";
-    } else if (this.filePath.match(/\.s[ac]ss$/)) {
+    } else if (this.filePath.getNativePath().match(/\.s[ac]ss$/)) {
       return "scss";
-    } else if (this.filePath.match(/\.less$/)) {
+    } else if (this.filePath.getNativePath().match(/\.less$/)) {
       return "less";
-    } else if (this.filePath.match(/\.(svg|html)$/)) {
+    } else if (this.filePath.getNativePath().match(/\.(svg|html)$/)) {
       return "html";
     }
     return undefined;
@@ -130,9 +130,9 @@ export class CodeEntry {
   @memoize()
   public get baseName() {
     return this.filePath
-      ?.replace(/^.*(\/|\\)/, "")
-      ?.replace(SCRIPT_EXTENSION_REGEX, "")
-      ?.replace(STYLE_EXTENSION_REGEX, "");
+      .getBasename()
+      .replace(SCRIPT_EXTENSION_REGEX, "")
+      .replace(STYLE_EXTENSION_REGEX, "");
   }
 
   @memoize()
@@ -147,15 +147,12 @@ export class CodeEntry {
 
   // #endregion
 
-  public getRelativeImportPath(target: string) {
-    target = target.replace(/\\/g, "/");
-
-    if (!target.startsWith("/") && !target.includes(":")) return target;
-
+  public getRelativeImportPath(target: PortablePath) {
     // make absolute paths relative
-    let newPath = path
-      .relative(path.dirname(this.filePath.replace(/\\/g, "/")), target)
-      .replace(/\\/g, "/")
+    let newPath = this.filePath
+      .getDirname()
+      .relative(target)
+      .getNormalizedPath()
       .replace(SCRIPT_EXTENSION_REGEX, "");
 
     if (!newPath.startsWith(".")) {
@@ -166,8 +163,7 @@ export class CodeEntry {
 
   public isBootstrap() {
     return (
-      this.project.config.getBootstrapPath() ===
-      this.filePath.replace(/\\/g, "/")
+      this.project.config.getBootstrapPath()?.isEqual(this.filePath) ?? false
     );
   }
 
@@ -176,14 +172,15 @@ export class CodeEntry {
     return (
       this.isScriptEntry &&
       // by default component files must start with an uppercase letter
-      (this.project.config.configFile?.analyzer?.allowLowerCaseComponentFiles ||
-        !!this.filePath.match(/(^|\\|\/)[A-Z][^/\\]*$/)) &&
+      (this.project.config.configFile?.analyzer
+        ?.allowLowerCaseComponentFiles !== false ||
+        !!this.filePath.getNativePath().match(/(^|\\|\/)[A-Z][^/\\]*$/)) &&
       // by default test and declaration files are ignored)
       (this.project.config.configFile?.analyzer?.allowTestComponentFiles ||
-        !this.filePath.match(/\.test\.[jt]sx?$/)) &&
+        !this.filePath.getNativePath().match(/\.test\.[jt]sx?$/)) &&
       (this.project.config.configFile?.analyzer
         ?.allowDeclarationComponentFiles ||
-        !this.filePath.match(/\.d\.ts$/))
+        !this.filePath.getNativePath().match(/\.d\.ts$/))
     );
   }
 
@@ -191,7 +188,7 @@ export class CodeEntry {
     return {
       code: this.code$.getValue(),
       codeRevisionId: this.codeRevisionId,
-      filePath: this.filePath,
+      filePath: this.filePath.getNativePath(),
       isBootstrap: this.isBootstrap(),
       isRenderableScriptExtension: this.isRenderableScriptExtension(),
       isStyleEntry: this.isStyleEntry,

@@ -11,6 +11,8 @@ import {
 import { useSnackbar } from "notistack";
 
 import { useDebouncedFunction } from "synergy/src/hooks/useDebouncedFunction";
+import { useService } from "synergy/src/hooks/useService";
+import { PluginService } from "synergy/src/services/PluginService";
 import { useProject } from "synergy/src/services/ProjectService";
 
 import { dumpWebpackConfigWithWorker } from "../../utils/compilers/run-code-webpack-worker";
@@ -47,6 +49,7 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
   onClose: () => void;
 }> = ({ open, onClose }) => {
   const project = useProject();
+  const pluginService = useService(PluginService);
   const { enqueueSnackbar } = useSnackbar();
   const webpackConfig = useAsyncCallback(dumpWebpackConfigWithWorker);
   const webpackOverridePath = project.config.getFullOverrideWebpackPath();
@@ -61,13 +64,16 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
   useEffect(() => {
     let currentWebpackOverride;
     if (webpackOverridePath) {
-      currentWebpackOverride = fs.readFileSync(webpackOverridePath, "utf8");
+      currentWebpackOverride = fs.readFileSync(
+        webpackOverridePath.getNativePath(),
+        "utf8"
+      );
       if (currentWebpackOverride) {
         setWebpackOverride(currentWebpackOverride);
         setWebpackOverrideOriginal(currentWebpackOverride);
       }
     }
-    void webpackConfig.execute(project);
+    void webpackConfig.execute(project, pluginService);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, project]);
@@ -84,8 +90,8 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
 
   const refreshWebpackConfig = useDebouncedFunction((newOverride) => {
     if (!webpackOverridePath) return;
-    fs.writeFileSync(webpackOverridePath, newOverride);
-    void webpackConfig.execute(project);
+    fs.writeFileSync(webpackOverridePath.getNativePath(), newOverride);
+    void webpackConfig.execute(project, pluginService);
   }, 1000);
 
   const updateWebpackOverride = (newOverride: string) => {
@@ -96,7 +102,7 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
   return (
     // todo this onClose should undo changes
     <Dialog open={open} onClose={onClose} maxWidth="xl">
-      <DialogTitle>Webpack Configuration</DialogTitle>
+      <DialogTitle>Webpack 5 Configuration</DialogTitle>
       <DialogContent
         className="flex flex-col"
         // todo fix weird layout issues

@@ -1,5 +1,6 @@
 import { BehaviorSubject, Subject } from "rxjs";
 
+import { PluginService } from "../../services/PluginService";
 import { ReactMetadata, ViewContext } from "../../types/paint";
 import { CodeEntry } from "./CodeEntry";
 import { Project } from "./Project";
@@ -73,6 +74,7 @@ export class RenderEntry {
 
 export interface RenderEntryDeployerContext {
   project: Project;
+  pluginService: PluginService;
   renderEntry: RenderEntry;
   frame: HTMLIFrameElement | undefined;
   onPublish: (url: string) => void;

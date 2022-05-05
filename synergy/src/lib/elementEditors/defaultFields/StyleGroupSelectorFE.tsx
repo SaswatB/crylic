@@ -12,7 +12,6 @@ import {
   Select,
 } from "@material-ui/core";
 import { useSnackbar } from "notistack";
-import path from "path";
 import { useBus } from "ts-bus/react";
 
 import { IconButton } from "../../../components/IconButton";
@@ -153,9 +152,7 @@ export function StyleGroupSelectorFE({
         const codeEntry = project.getCodeEntryValue(codeId);
         if (!codeEntry) return;
 
-        const codeEntryFolder = path.dirname(
-          normalizePath(codeEntry.filePath, path.sep)
-        );
+        const codeEntryFolder = codeEntry.filePath.getDirname();
 
         // get the available imports
         const { availableImports, directProps } =
@@ -172,10 +169,8 @@ export function StyleGroupSelectorFE({
           ?.filter((i) => i.startsWith("./") || i.startsWith("../"))
           // todo support preference config
           .sort((a, b) => b.length - a.length)
-          .map((i) => path.join(codeEntryFolder, i))
-          .map((i) =>
-            codeEntries.find((e) => normalizePath(e.filePath, path.sep) === i)
-          )
+          .map((i) => codeEntryFolder.join(i))
+          .map((i) => codeEntries.find((e) => e.filePath.isEqual(i)))
           .filter(isDefined)
           .filter((e) => e.isStyleEntry);
 
@@ -190,13 +185,11 @@ export function StyleGroupSelectorFE({
         let styleEntry: CodeEntry;
         if (res.createNewCodeEntry) {
           const getPath = (suffix = "") =>
-            project.getNormalizedPath(
-              path.join(codeEntryFolder, codeEntry.baseName + suffix + ".css")
-            );
+            codeEntryFolder.join(codeEntry.baseName + suffix + ".css");
           let filePath = getPath();
           let index = 1;
           // todo better duplicate handling
-          while (codeEntries.find((e) => e.filePath === filePath)) {
+          while (codeEntries.find((e) => e.filePath.isEqual(filePath))) {
             filePath = getPath(`-${index++}`);
           }
           styleEntry = new CodeEntry(project, filePath, "");

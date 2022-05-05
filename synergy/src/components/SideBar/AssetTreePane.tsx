@@ -30,6 +30,7 @@ import {
   ltMap,
 } from "../../lib/lightObservable/LTOperator";
 import { CodeEntry } from "../../lib/project/CodeEntry";
+import { PortablePath } from "../../lib/project/PortablePath";
 import { renderSeparator } from "../../lib/render-utils";
 import { ltTakeNext } from "../../lib/utils";
 import { useProject } from "../../services/ProjectService";
@@ -59,7 +60,7 @@ function sortTree(tree: Tree) {
 }
 
 interface Props {
-  onImportImageFile: () => Promise<string | undefined | null>;
+  onImportImageFile: () => Promise<PortablePath | null>;
 }
 
 export const AssetTreePane: FunctionComponent<Props> = ({
@@ -87,7 +88,9 @@ export const AssetTreePane: FunctionComponent<Props> = ({
     if (!inputName) return;
     // todo add validation/duplicate checking to name
     const name = camelCase(inputName);
-    const filePath = project!.getNewStyleSheetPath(name);
+    const filePath = project.path.join(
+      `${project.config.getDefaultNewStylesFolder()}/${name}.css`
+    );
     project?.addCodeEntries([new CodeEntry(project, filePath, "")], {
       edit: true,
     });
@@ -212,7 +215,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
         ltMap((codeEntriesWithRenderable) => {
           const newTreeNodeIds = new Set<string>("root");
           const newProjectTree: Tree = { id: "root", name: "", children: [] };
-          const projectPath = project?.sourceFolderPath.replace(/\\/g, "/");
+          const projectPath = project.path.getNormalizedPath();
           codeEntriesWithRenderable.forEach((v) => {
             if (!v) return;
 
@@ -222,8 +225,8 @@ export const AssetTreePane: FunctionComponent<Props> = ({
             } = v;
 
             const path = codeEntry.filePath
-              .replace(/\\/g, "/")
-              .replace(projectPath || "", "")
+              .getNormalizedPath()
+              .replace(projectPath, "")
               .replace(/^\//, "")
               .replace(extensionRegex || "", "")
               .split("/");
@@ -270,7 +273,10 @@ export const AssetTreePane: FunctionComponent<Props> = ({
           sortTree(newProjectTree);
           projectTreePostProcess?.(newProjectTree);
 
-          return { projectTree: newProjectTree, treeNodeIds: newTreeNodeIds };
+          return {
+            projectTree: newProjectTree,
+            treeNodeIds: Array.from(newTreeNodeIds),
+          };
         })
       );
     }, [assetsFilter, project]) || {};
@@ -506,7 +512,10 @@ export const AssetTreePane: FunctionComponent<Props> = ({
             <TreeView
               defaultCollapseIcon={<ExpandMoreIcon />}
               defaultExpandIcon={<ChevronRightIcon />}
-              expanded={expandedTreeNodes || Array.from(treeNodeIds)}
+              expanded={
+                expandedTreeNodes ||
+                (treeNodeIds.length < 1000 ? treeNodeIds : [])
+              }
               onNodeToggle={(event, nodeIds) => setExpandedTreeNodes(nodeIds)}
               selected={null as any}
             >

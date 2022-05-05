@@ -1,5 +1,4 @@
 import { forOwn, get, isArray } from "lodash";
-import { AddressInfo } from "net";
 
 import { normalizePath } from "synergy/src/lib/normalizePath";
 
@@ -20,20 +19,21 @@ const nativeDeps = {
   memfs: (undefined as unknown) as typeof import("memfs"),
   joinPath: (undefined as unknown) as typeof import("memory-fs/lib/join"),
   unionfs: (undefined as unknown) as typeof import("unionfs"),
-  webpack: (undefined as unknown) as typeof import("webpack"),
-  WebpackDevServer: (undefined as unknown) as typeof import("webpack-dev-server"),
+  webpack: (undefined as unknown) as typeof import("../../../app/node_modules/webpack"),
+  WebpackDevServer: (undefined as unknown) as typeof import("../../../app/node_modules/webpack-dev-server"),
   HtmlWebpackPlugin: (undefined as unknown) as typeof import("html-webpack-plugin"),
   // @ts-ignore todo add types
   tailwindcss: (undefined as unknown) as typeof import("tailwindcss"),
   ReactRefreshPlugin: (undefined as unknown) as typeof import("@pmmmwh/react-refresh-webpack-plugin"),
   dotenvExpand: (undefined as unknown) as typeof import("dotenv-expand"),
   dotenv: (undefined as unknown) as typeof import("dotenv"),
+  requireFromString: (undefined as unknown) as typeof import("require-from-string"),
 };
 
 let webpackCache: Record<
   string,
   | {
-      compiler: import("webpack").Compiler;
+      compiler: import("../../../app/node_modules/webpack").Compiler;
       inputFs: IFs;
       outputFs: IFs;
       fsContext: LazyReadFileContext;
@@ -43,6 +43,7 @@ let webpackCache: Record<
     }
   | undefined
 > = {};
+let pluginEvalDirectory = "";
 
 export function initialize(nodeModulesPath = "") {
   resetWebpack();
@@ -55,21 +56,23 @@ export function initialize(nodeModulesPath = "") {
       console.error(e);
     }
 
+    // todo restore if project module paths can be allowed
     // block deps from being loaded outside the provided nodeModulesPath
     // _nodeModulePaths is private
-    const nodeModulePaths = (nativeDeps.nodeModule as any)._nodeModulePaths; //backup the original method
-    (nativeDeps.nodeModule as any)._nodeModulePaths = function (
-      ...args: unknown[]
-    ) {
-      const paths: string[] = nodeModulePaths.call(this, ...args); // call the original method
+    // const nodeModulePaths = (nativeDeps.nodeModule as any)._nodeModulePaths; //backup the original method
+    // (nativeDeps.nodeModule as any)._nodeModulePaths = function (
+    //   ...args: unknown[]
+    // ) {
+    //   const paths: string[] = nodeModulePaths.call(this, ...args); // call the original method
 
-      // remove any paths that are not within the provided nodeModulesPath
-      let rootPath = nodeModulesPath.replaceAll("\\", "/");
-      if (rootPath.endsWith("/"))
-        rootPath = rootPath.substring(0, rootPath.length - 1);
-      return paths.filter((p) => p.replaceAll("\\", "/").startsWith(rootPath));
-    };
+    //   // remove any paths that are not within the provided nodeModulesPath
+    //   let rootPath = nodeModulesPath.replaceAll("\\", "/");
+    //   if (rootPath.endsWith("/"))
+    //     rootPath = rootPath.substring(0, rootPath.length - 1);
+    //   return paths.filter((p) => p.replaceAll("\\", "/").startsWith(rootPath));
+    // };
   }
+  pluginEvalDirectory = nodeModulesPath || __dirname;
 
   nativeDeps.memfs = __non_webpack_require__(`${nodeModulesPath}memfs`);
   nativeDeps.joinPath = __non_webpack_require__(
@@ -94,6 +97,9 @@ export function initialize(nodeModulesPath = "") {
     `${nodeModulesPath}dotenv-expand`
   );
   nativeDeps.dotenv = __non_webpack_require__(`${nodeModulesPath}dotenv`);
+  nativeDeps.requireFromString = __non_webpack_require__(
+    `${nodeModulesPath}require-from-string`
+  );
 }
 
 export function resetWebpack() {
@@ -158,6 +164,7 @@ export const webpackRunCode = async (
     unionfs,
     joinPath,
     WebpackDevServer,
+    requireFromString,
   } = nativeDeps;
 
   const startTime = new Date().getTime();
@@ -175,10 +182,11 @@ export const webpackRunCode = async (
     };
 
     const options = await webpackConfigFactory(
-      { deps: nativeDeps, config },
+      { deps: nativeDeps, config, pluginEvalDirectory },
       primaryCodeEntry,
       onProgress
     );
+
     const compiler = webpack(options);
     const volume = new memfs.Volume();
     const inputFs = memfs.createFsFromVolume(volume);
@@ -198,10 +206,6 @@ export const webpackRunCode = async (
     );
 
     compiler.inputFileSystem = ufs1;
-    // cast to any b/c of bad types
-    (compiler as any).resolvers.normal.fileSystem = compiler.inputFileSystem;
-    (compiler as any).resolvers.context.fileSystem = compiler.inputFileSystem;
-    (compiler as any).resolvers.loader.fileSystem = compiler.inputFileSystem;
 
     // bug in typescript
     (compiler as any).outputFileSystem = {
@@ -210,52 +214,67 @@ export const webpackRunCode = async (
     };
 
     // stub out compiler.watch so that webpack-dev-server doesn't call it and instead relies on the manual compiler.run calls made below
-    // const compilerWatch = compiler.watch;
+    // @ts-expect-error todo fix types?
     compiler.watch = () => ({ close() {}, invalidate() {} });
 
-    const devServer = new WebpackDevServer(compiler, {
-      disableHostCheck: true,
-      compress: true,
-      clientLogLevel: "none",
-      contentBase: path.resolve(config.paths.projectFolder, "public"),
-      // contentBasePublicPath: paths.publicUrlOrPath,
-      // todo fix hmr behavior for non-source code assets
-      // watchContentBase: true,
-      hot: !config.disableFastRefresh,
-      transportMode: "ws",
-      injectClient: true,
-      // sockHost,
-      // sockPath,
-      // sockPort,
-      // publicPath: paths.publicUrlOrPath.slice(0, -1),
-      publicPath: "/",
-      // quiet: true,
-      // watchOptions: { ignored: ignoredFiles(paths.appSrc) },
-      // host,
-      // overlay: false,
-      historyApiFallback: {
-        disableDotRule: true,
-        index: "/", //paths.publicUrlOrPath,
+    const devServer = new WebpackDevServer(
+      {
+        allowedHosts: "all",
+        compress: true,
+        hot: !config.disableFastRefresh,
+        webSocketServer: "ws",
+        // sockHost,
+        // sockPath,
+        // sockPort,
+        // quiet: true,
+        // watchOptions: { ignored: ignoredFiles(paths.appSrc) },
+        // host,
+        // overlay: false,
+        historyApiFallback: {
+          disableDotRule: true,
+          index: "/", //paths.publicUrlOrPath,
+        },
+        // public: allowedHost,
+        // proxy,
+        devMiddleware: {
+          // @ts-expect-error bad types
+          outputFileSystem: compiler.outputFileSystem,
+          // publicPath: paths.publicUrlOrPath.slice(0, -1),
+          publicPath: "/",
+        },
+        static: {
+          // publicPath: paths.publicUrlOrPath,
+          directory: path.resolve(config.paths.projectFolder, "public"),
+          // todo fix hmr behavior for non-source code assets
+          // watch: true,
+        },
+        client: {
+          logging: "none",
+        },
       },
-      // public: allowedHost,
-      // proxy,
-      // @ts-expect-error ignore type error for hidden option
-      fs: compiler.outputFileSystem,
-    });
+      compiler
+    );
 
-    // Launch WebpackDevServer.
-    const server = devServer.listen(0, (err) => {
-      if (err) {
-        return console.log(err);
+    // run any plugins that modify WebpackDevServer
+    config.pluginEvals.webpackDevServer.forEach((modifier) => {
+      try {
+        const override = requireFromString(
+          modifier.code,
+          path.join(
+            pluginEvalDirectory,
+            `${modifier.name}-webpack-dev-override.js`
+          )
+        );
+        override(devServer);
+      } catch (e) {
+        console.error(e);
       }
     });
-    const devport = await new Promise<number>((resolve) => {
-      server.once("listening", () => {
-        console.log("dev server listening", server.address());
-        resolve((server.address() as AddressInfo).port);
-        // todo add timeout
-      });
-    });
+
+    // launch WebpackDevServer
+    await devServer.start();
+    const devport = devServer.options.port! as number;
+    console.log("dev server listening", devServer.server?.address());
 
     console.log("initialized webpack");
     webpackCache[primaryCodeEntry.id] = {
@@ -335,7 +354,7 @@ export const dumpWebpackConfig = async (
   config: WebpackWorkerMessagePayload_Compile["config"]
 ) => {
   const options = await webpackConfigFactory(
-    { deps: nativeDeps, config },
+    { deps: nativeDeps, config, pluginEvalDirectory },
     {
       id: "dumpWebpackConfig",
       filePath: "target.tsx",

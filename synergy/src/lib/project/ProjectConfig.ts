@@ -1,18 +1,17 @@
 import * as it from "io-ts";
-import path from "path";
 import semver from "semver";
 
 import {
   DEFAULT_HTML_TEMPLATE_SELECTOR,
   DEFAULT_PROJECT_HTML_TEMPLATE_PATH,
-  DEFAULT_PROJECT_SOURCE_FOLDER,
 } from "../../constants";
 import { PackageJson } from "../../types/paint";
 import { PackageManager } from "../pkgManager/PackageManager";
+import { PortablePath } from "./PortablePath";
 
 export const ProjectConfigFile = it.type({
   bootstrap: it.union([it.string, it.undefined]),
-  sourceFolder: it.union([it.string, it.undefined]),
+  ignored: it.union([it.array(it.string), it.undefined]), // globs
   webpack: it.union([
     it.type({
       overrideConfig: it.union([
@@ -82,17 +81,17 @@ export const ProjectConfigFile = it.type({
     it.undefined,
   ]),
 });
-export type ProjectConfigFile = it.TypeOf<typeof ProjectConfigFile>;
+export type ProjectConfigFile = Partial<it.TypeOf<typeof ProjectConfigFile>>;
 
 export abstract class ProjectConfig {
   protected constructor(
-    public readonly projectPath: string,
-    public readonly configFile: ProjectConfigFile | undefined,
+    public readonly projectPath: PortablePath,
+    public readonly configFile: ProjectConfigFile,
     public readonly packageJson: PackageJson | undefined
   ) {}
 
   get name() {
-    return path.basename(this.projectPath.replace(/\\/g, "/"));
+    return this.projectPath.getBasename();
   }
 
   public getAllPackages() {
@@ -140,44 +139,56 @@ export abstract class ProjectConfig {
     return !!mv && semver.gte(mv, "17.0.0");
   };
   public isVueInstalled = () => this.isPackageInstalled("vue");
+  public isNextInstalled = () => this.isPackageInstalled("next");
 
   public abstract getPackageManager(): PackageManager;
 
   public getBootstrapPath() {
     const projectBootstrap = this.configFile?.bootstrap;
-    if (!projectBootstrap) return undefined;
-    return path.join(
-      this.projectPath.replace(/\\/g, "/"),
-      projectBootstrap.replace(/\\/g, "/")
-    );
-  }
-  public getFullSourceFolderPath() {
-    return path.join(
-      this.projectPath.replace(/\\/g, "/"),
-      this.configFile?.sourceFolder?.replace(/\\/g, "/") ||
-        DEFAULT_PROJECT_SOURCE_FOLDER
-    );
+    return projectBootstrap
+      ? this.projectPath.join(projectBootstrap)
+      : undefined;
   }
   public getFullOverrideWebpackPath() {
     const webpackPath = this.configFile?.webpack?.overrideConfig?.path;
-    return webpackPath
-      ? path.join(
-          this.projectPath.replace(/\\/g, "/"),
-          webpackPath.replace(/\\/g, "/")
-        )
-      : undefined;
+    return webpackPath ? this.projectPath.join(webpackPath) : undefined;
   }
   public getFullHtmlTemplatePath() {
-    return path.join(
-      this.projectPath.replace(/\\/g, "/"),
-      this.configFile?.htmlTemplate?.path?.replace(/\\/g, "/") ||
-        DEFAULT_PROJECT_HTML_TEMPLATE_PATH
+    return this.projectPath.join(
+      this.configFile?.htmlTemplate?.path || DEFAULT_PROJECT_HTML_TEMPLATE_PATH
     );
   }
   public getHtmlTemplateSelector() {
     return (
       this.configFile?.htmlTemplate?.rootSelector ||
       DEFAULT_HTML_TEMPLATE_SELECTOR
+    );
+  }
+
+  public getDefaultNewComponentFolder() {
+    // todo get from config & inference
+    return "src/components";
+  }
+  public getDefaultNewAssetFolder() {
+    // todo get from config & inference
+    return "src/assets";
+  }
+  public getDefaultNewStylesFolder() {
+    // todo get from config & inference
+    return "src/styles";
+  }
+
+  /**
+   * Returns globs
+   */
+  public getIgnoredPaths() {
+    return (
+      this.configFile?.ignored || [
+        "**/.*", // ignore files/folders that start with a ., like .git
+        "**/node_modules",
+        "**/dist",
+        "**/build",
+      ]
     );
   }
 

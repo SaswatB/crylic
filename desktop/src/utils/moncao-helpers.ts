@@ -38,8 +38,8 @@ export function setupLanguageService(
   if (language === "typescript") {
     const fileUrl = monaco.Uri.parse(
       `file://${codeEntry.filePath
+        .getNormalizedPath()
         .replace(":", "")
-        .replace(/\\/g, "/")
         .replace(/\.jsx?$/, ".tsx")}`
     );
     const model =

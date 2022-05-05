@@ -51,7 +51,7 @@ function createWindow() {
       contextIsolation: false,
       // nodeIntegrationInSubFrames: true,
       webSecurity: false,
-      devTools: process.env.NODE_ENV === "development",
+      devTools: true,
       additionalArguments: [`--appPath=${app.getAppPath()}`],
     },
   });

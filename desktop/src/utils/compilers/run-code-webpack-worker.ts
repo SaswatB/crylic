@@ -6,7 +6,12 @@ import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
 import { Project } from "synergy/src/lib/project/Project";
 import { RenderEntryDeployerContext } from "synergy/src/lib/project/RenderEntry";
 import { findFiber } from "synergy/src/lib/react-dev-tools";
-import { ltTakeNext } from "synergy/src/lib/utils";
+import {
+  generateRenderStarter,
+  RenderStarterDefinition,
+} from "synergy/src/lib/render-starter";
+import { isDefined, ltTakeNext } from "synergy/src/lib/utils";
+import { PluginService } from "synergy/src/services/PluginService";
 import { ReactDevToolsHook } from "synergy/src/types/react-devtools";
 
 import {
@@ -26,7 +31,6 @@ import {
 import errorBoundaryComponent from "!!raw-loader!synergy/src/components/ErrorBoundary";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
-const path = __non_webpack_require__("path") as typeof import("path");
 
 const { ipcRenderer } = __non_webpack_require__(
   "electron"
@@ -78,13 +82,15 @@ const getImportFromCodeEntry = async (local: string, codeEntry: CodeEntry) => {
     declaration = `{ ${exportName} as ${local} }`;
   }
 
-  const src = codeEntry.filePath.replace(/\\/g, "\\\\");
+  // todo is there any benefit to a relative path here instead of absolute?
+  const src = codeEntry.filePath.getNativePath().replace(/\\/g, "\\\\");
   return `import ${declaration} from "${src}";`;
 };
 
 const generateBundleCode = async (
   project: Project,
-  componentCodeEntry: CodeEntry
+  componentCodeEntry: CodeEntry,
+  pluginService: PluginService
 ) => {
   const componentImport = await getImportFromCodeEntry(
     "Component",
@@ -92,7 +98,7 @@ const generateBundleCode = async (
   );
 
   // get the bootstrap file
-  let bootstrapImport = "";
+  let bootstrapImport = undefined;
   const bootstrapFilePath = project.config.getBootstrapPath();
   if (bootstrapFilePath) {
     let bootstrapCodeEntry = project.codeEntries$
@@ -103,7 +109,9 @@ const generateBundleCode = async (
       bootstrapCodeEntry = new CodeEntry(
         project,
         bootstrapFilePath,
-        fs.readFileSync(bootstrapFilePath, { encoding: "utf-8" })
+        fs.readFileSync(bootstrapFilePath.getNativePath(), {
+          encoding: "utf-8",
+        })
       );
       project.addCodeEntries([bootstrapCodeEntry]);
     }
@@ -113,36 +121,48 @@ const generateBundleCode = async (
     );
   }
 
-  return `
-import React, { ErrorInfo } from "react";
-import ReactDOM from "react-dom";
-${bootstrapImport}
-${componentImport}
+  const def: RenderStarterDefinition = {
+    imports: [
+      'import React, { ErrorInfo } from "react";',
+      'import ReactDOM from "react-dom";',
+      ...(bootstrapImport ? [bootstrapImport] : []),
+      componentImport,
+    ],
+    beforeRender: [
+      errorBoundaryComponent
+        .replace('import React, { ErrorInfo } from "react";', "")
+        .replace("export", ""),
+      `try {
+        Component.${ROOT_COMPONENT_PROP} = true
+      } catch (e) {}`,
+    ],
+    render: {
+      root: project.config.getHtmlTemplateSelector(),
+      errorWrapper: "ErrorBoundary",
+      wrappers: bootstrapImport
+        ? [
+            {
+              open: "Bootstrap Component={Component} pageProps={{}}",
+              close: "Bootstrap",
+            },
+          ]
+        : [],
+    },
+    afterRender: [
+      `if ((module || {}).hot && (window || {}).${HMR_STATUS_HANDLER_PROP}) {
+        module.hot.addStatusHandler(window.${HMR_STATUS_HANDLER_PROP});
+      }`,
+    ],
+  };
 
-${errorBoundaryComponent
-  .replace('import React, { ErrorInfo } from "react";', "")
-  .replace("export", "")}
-
-try {
-  Component.${ROOT_COMPONENT_PROP} = true
-} catch (e) {}
-ReactDOM.render((
-  <ErrorBoundary>
-    ${
-      bootstrapImport ? "<Bootstrap><Component /></Bootstrap>" : "<Component />"
-    }
-  </ErrorBoundary>),
-  document.getElementById("${project.config.getHtmlTemplateSelector()}")
-);
-
-if ((module || {}).hot && (window || {}).${HMR_STATUS_HANDLER_PROP}) {
-  module.hot.addStatusHandler(window.${HMR_STATUS_HANDLER_PROP});
-}
-`.trim();
+  return generateRenderStarter(
+    pluginService.reduceActive((d, p) => p.overrideRenderStarter(d), def)
+  );
 };
 
 const generateJobConfig = (
-  project: Project
+  project: Project,
+  pluginService: PluginService
 ): WebpackWorkerMessagePayload_Compile["config"] => ({
   disableWebpackExternals:
     project.config.configFile?.webpack?.overrideConfig
@@ -153,10 +173,25 @@ const generateJobConfig = (
   disableSWC: project.config.configFile?.webpack?.overrideConfig?.disableSWC,
   enableReactRuntimeCompat: project.config.isReactOverV17(),
   paths: {
-    projectFolder: project.path,
-    projectSrcFolder: project.sourceFolderPath,
-    overrideWebpackConfig: project.config.getFullOverrideWebpackPath(),
-    htmlTemplate: project.config.getFullHtmlTemplatePath(),
+    projectFolder: project.path.getNativePath(),
+    overrideWebpackConfig: project.config
+      .getFullOverrideWebpackPath()
+      ?.getNativePath(),
+    htmlTemplate: project.config.getFullHtmlTemplatePath().getNativePath(),
+  },
+  pluginEvals: {
+    webpack: pluginService
+      .mapActive((p) => {
+        const code = p.overrideWebpackConfig();
+        return code ? { name: p.constructor.name, code } : undefined;
+      })
+      .filter(isDefined),
+    webpackDevServer: pluginService
+      .mapActive((p) => {
+        const code = p.overrideWebpackDevServer();
+        return code ? { name: p.constructor.name, code } : undefined;
+      })
+      .filter(isDefined),
   },
 });
 
@@ -167,6 +202,7 @@ let compileIdCounter = 0;
  */
 export const webpackRunCodeWithWorker = async ({
   project,
+  pluginService,
   renderEntry,
   frame,
   onPublish,
@@ -176,13 +212,13 @@ export const webpackRunCodeWithWorker = async ({
   const componentCodeEntry = renderEntry.codeEntry;
   const bundleCodeEntry = {
     id: `bundle-${renderEntry.codeId}`,
-    code: await generateBundleCode(project, componentCodeEntry),
-    filePath: path.join(project.sourceFolderPath, "paintbundle.tsx"),
+    code: await generateBundleCode(project, componentCodeEntry, pluginService),
+    filePath: project.path.join("paintbundle.tsx").getNativePath(),
   };
 
   const trimEntry = async (codeEntry: CodeEntry) => ({
     id: codeEntry.id,
-    filePath: codeEntry.filePath,
+    filePath: codeEntry.filePath.getNativePath(),
     codeRevisionId: codeEntry.codeRevisionId,
   });
   const codeEntries = await Promise.all(
@@ -190,7 +226,7 @@ export const webpackRunCodeWithWorker = async ({
   );
   console.log("compiling codeEntries", codeEntries);
 
-  const config = generateJobConfig(project);
+  const config = generateJobConfig(project, pluginService);
   console.log("webpack job config", config);
 
   const takeNextCode = async (codeEntryId: string) => {
@@ -356,8 +392,11 @@ export const resetWebpackWithWorker = () => {
   else resetWebpack();
 };
 
-export const dumpWebpackConfigWithWorker = async (project: Project) => {
-  const config = generateJobConfig(project);
+export const dumpWebpackConfigWithWorker = async (
+  project: Project,
+  pluginService: PluginService
+) => {
+  const config = generateJobConfig(project, pluginService);
 
   if (WORKER_ENABLED) {
     return ipcRenderer.invoke("webpack-worker-message-dump-config", config);

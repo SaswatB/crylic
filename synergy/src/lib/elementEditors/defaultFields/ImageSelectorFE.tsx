@@ -1,7 +1,6 @@
 import React from "react";
 import { startCase } from "lodash";
 import { useSnackbar } from "notistack";
-import path from "path";
 
 import { StylePropNameMap } from "../../../components/SideBar/css-options";
 import { useMenuInput, useTextInput } from "../../../hooks/useInput";
@@ -42,7 +41,7 @@ export function ImageSelectorFE({
     options: (project?.codeEntries$.getValue() || [])
       .filter((e) => e.isImageEntry)
       .map((entry) => ({
-        name: path.basename(entry.filePath),
+        name: entry.filePath.getBasename(),
         value: entry.id,
       })),
     disableSelection: true,

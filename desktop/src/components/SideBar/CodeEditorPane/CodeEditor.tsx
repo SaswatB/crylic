@@ -245,7 +245,11 @@ export const CodeEditor: FunctionComponent<Props> = ({
           monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S,
           () => {
             try {
-              fs.writeFileSync(codeEntry.filePath, localValueRef.current);
+              // todo this probably has weird side effects
+              fs.writeFileSync(
+                codeEntry.filePath.getNativePath(),
+                localValueRef.current
+              );
             } catch (error) {
               enqueueSnackbar(
                 `There was an error while saving: ${(error as Error).message}`,

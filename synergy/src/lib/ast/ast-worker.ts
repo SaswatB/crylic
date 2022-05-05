@@ -3,6 +3,7 @@ import { camelCase, upperFirst } from "lodash";
 import path from "path";
 
 import { SCRIPT_EXTENSION_REGEX } from "../ext-regex";
+import { normalizePath } from "../normalizePath";
 import type { RemoteCodeEntry } from "../project/CodeEntry";
 import { getComponentExports, parseCodeEntryAST } from "./ast-helpers";
 
@@ -24,7 +25,7 @@ export const workerModule = {
       const baseComponentName = upperFirst(
         camelCase(
           path
-            .basename(remoteCodeEntry.filePath)
+            .basename(normalizePath(remoteCodeEntry.filePath, path.sep))
             .replace(SCRIPT_EXTENSION_REGEX, "")
         )
       );
