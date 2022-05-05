@@ -483,8 +483,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
               onClick={() => setEnableNameFilter((b) => !b)}
             />
             <Tour name="asset-tree-add" dependencies={["asset-tree"]}>
-              Use this menu to add new components, stylesheets and images to
-              your project!
+              Use this menu to add new components and images to your project!
             </Tour>
             <IconButton
               data-tour="asset-tree-add"
