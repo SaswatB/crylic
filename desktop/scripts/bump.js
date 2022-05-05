@@ -7,7 +7,6 @@ const exec = util.promisify(require("child_process").exec);
 const supportedReleaseStrategies = ["major", "minor", "patch"];
 const packageJsonPath = path.join(__dirname, "../package.json");
 const appPackageJsonPath = path.join(__dirname, "../app/package.json");
-const appPackageJsonLockPath = path.join(__dirname, "../app/package-lock.json");
 
 const releaseStrategy = process.argv[2] || "patch";
 
@@ -35,14 +34,6 @@ if (!supportedReleaseStrategies.includes(releaseStrategy)) {
   fs.writeFileSync(
     appPackageJsonPath,
     JSON.stringify(appPackageJson, null, 2) + "\n"
-  );
-
-  const appPackageLockJson = require(appPackageJsonLockPath);
-  appPackageLockJson.version = newVersion;
-  appPackageLockJson.packages[""].version = newVersion;
-  fs.writeFileSync(
-    appPackageJsonLockPath,
-    JSON.stringify(appPackageLockJson, null, 2) + "\n"
   );
 
   await exec("git add -A");

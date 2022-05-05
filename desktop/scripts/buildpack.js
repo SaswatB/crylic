@@ -31,12 +31,7 @@ output.on("end", function () {
 archive.pipe(output);
 
 // append files
-[
-  "package.json",
-  "package-lock.json",
-  "app/package.json",
-  "app/package-lock.json",
-].forEach((name) => {
+["package.json", "app/package.json", "app/yarn.lock"].forEach((name) => {
   archive.file(getProjectPath(name), { name });
 });
 
