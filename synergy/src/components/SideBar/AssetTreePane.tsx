@@ -272,7 +272,10 @@ export const AssetTreePane: FunctionComponent<Props> = ({
           sortTree(newProjectTree);
           projectTreePostProcess?.(newProjectTree);
 
-          return { projectTree: newProjectTree, treeNodeIds: newTreeNodeIds };
+          return {
+            projectTree: newProjectTree,
+            treeNodeIds: Array.from(newTreeNodeIds),
+          };
         })
       );
     }, [assetsFilter, project]) || {};
@@ -508,7 +511,10 @@ export const AssetTreePane: FunctionComponent<Props> = ({
             <TreeView
               defaultCollapseIcon={<ExpandMoreIcon />}
               defaultExpandIcon={<ChevronRightIcon />}
-              expanded={expandedTreeNodes || Array.from(treeNodeIds)}
+              expanded={
+                expandedTreeNodes ||
+                (treeNodeIds.length < 1000 ? treeNodeIds : [])
+              }
               onNodeToggle={(event, nodeIds) => setExpandedTreeNodes(nodeIds)}
               selected={null as any}
             >
