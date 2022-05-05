@@ -51,7 +51,7 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
 
   const [location, renderLocationInput] = useTextInput({
     label: "Component Location",
-    initialValue: project.getDefaultNewComponentFolder(),
+    initialValue: project.config.getDefaultNewComponentFolder(),
   });
 
   const code = useMemo(
@@ -76,7 +76,7 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
     }
 
     // todo add validation/duplicate checking to name
-    const filePath = project.getNormalizedPath(
+    const filePath = project.path.join(
       `${location}/${normalizedComponentName}.tsx`
     );
     const codeEntry = new CodeEntry(project, filePath, code);
@@ -84,7 +84,7 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
     project.saveFile(codeEntry);
 
     if (preset === Preset.BasicWSS) {
-      const filePath2 = project.getNormalizedPath(
+      const filePath2 = project.path.join(
         `${location}/${normalizedComponentName}.css`
       );
       const code2 = getBoilerPlateStyleSheet(normalizedComponentName);

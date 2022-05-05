@@ -15,6 +15,7 @@ import {
   CodeEntry,
   INITIAL_CODE_REVISION_ID,
 } from "synergy/src/lib/project/CodeEntry";
+import { PortablePath } from "synergy/src/lib/project/PortablePath";
 import { Project } from "synergy/src/lib/project/Project";
 import { ProjectConfig } from "synergy/src/lib/project/ProjectConfig";
 import { sleep } from "synergy/src/lib/utils";
@@ -24,7 +25,6 @@ import { streamToString } from "../../utils/utils";
 import { FileProjectConfig } from "./FileProjectConfig";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
-const path = __non_webpack_require__("path") as typeof import("path");
 const chokidar = __non_webpack_require__(
   "chokidar"
 ) as typeof import("chokidar");
@@ -42,13 +42,13 @@ const TemplateBuffers: Record<FileProjectTemplate, () => Promise<Buffer>> = {
 
 export class FileProject extends Project {
   public static async createNewProjectInDirectory(
-    folderPath: string,
+    folderPath: PortablePath,
     template: FileProjectTemplate,
     pluginService: PluginService
   ) {
     console.log(folderPath);
-    if (!fs.existsSync(folderPath))
-      fs.mkdirSync(folderPath, { recursive: true });
+    if (!fs.existsSync(folderPath.getNativePath()))
+      fs.mkdirSync(folderPath.getNativePath(), { recursive: true });
 
     const buffer = await TemplateBuffers[template]();
 
@@ -68,7 +68,7 @@ export class FileProject extends Project {
           console.log("zip entry", entry);
 
           try {
-            const dest = path.join(folderPath, entry.fileName);
+            const dest = folderPath.join(entry.fileName);
 
             // convert external file attr int into a fs stat mode int
             const mode = (entry.externalFileAttributes >> 16) & 0xffff;
@@ -96,13 +96,13 @@ export class FileProject extends Project {
             const procMode = (mode || (isDir ? 0o755 : 0o644)) & umask;
 
             // always ensure folders are created
-            const destDir = isDir ? dest : path.dirname(dest);
+            const destDir = isDir ? dest : dest.getDirname();
 
             const mkdirOptions: MakeDirectoryOptions = { recursive: true };
             if (isDir) {
               mkdirOptions.mode = procMode;
             }
-            fs.mkdirSync(destDir, mkdirOptions);
+            fs.mkdirSync(destDir.getNativePath(), mkdirOptions);
             if (isDir) return;
 
             const readStream = await new Promise<Readable>(
@@ -115,9 +115,9 @@ export class FileProject extends Project {
             );
 
             if (symlink) {
-              fs.symlinkSync(await streamToString(readStream), dest);
+              fs.symlinkSync(await streamToString(readStream), dest.getNativePath());
             } else {
-              readStream.pipe(fs.createWriteStream(dest, { mode: procMode }));
+              readStream.pipe(fs.createWriteStream(dest.getNativePath(), { mode: procMode }));
             }
 
             if (++readCount === zipFile.entryCount) {
@@ -138,31 +138,31 @@ export class FileProject extends Project {
     return FileProject.createProjectFromDirectory(folderPath, pluginService);
   }
 
-  public static async createProjectFromDirectory(folderPath: string, pluginService: PluginService) {
+  public static async createProjectFromDirectory(folderPath: PortablePath, pluginService: PluginService) {
     // build metadata
     let config: ProjectConfig = FileProjectConfig.createProjectConfigFromDirectory(
       folderPath
     );
     pluginService.activatePlugins(config);
-    config = pluginService.reduceActive((acc, p) => p.overrideProjectConfig(acc, { path, fs }), config);
+    config = pluginService.reduceActive((acc, p) => p.overrideProjectConfig(acc, { fs }), config);
     const project = new FileProject(folderPath, config);
 
     // process all the source files
     const fileCodeEntries: CodeEntry[] = [];
     // recursive function for creating code entries from a folder
-    const read = (subFolderPath: string) =>
-      fs.readdirSync(subFolderPath).forEach((file) => {
-        const filePath = path.join(subFolderPath, file);
+    const read = (subFolderPath: PortablePath) =>
+      fs.readdirSync(subFolderPath.getNativePath()).forEach((file) => {
+        const filePath = subFolderPath.join(file);
         // skip ignored paths
         if (
           config
             .getIgnoredPaths()
-            .find((g) => minimatch(filePath.replace(folderPath, "").replaceAll("\\", "/"), g))
+            .find((g) => minimatch(filePath.getNormalizedPath().replace(folderPath.getNormalizedPath(), ""), g))
         ) {
           console.log("ignoring file due to config", filePath);
           return
         }
-        if (fs.statSync(filePath).isDirectory()) {
+        if (fs.statSync(filePath.getNativePath()).isDirectory()) {
           // recurse through the directory's children
           read(filePath);
         } else if (
@@ -170,7 +170,7 @@ export class FileProject extends Project {
           file.match(STYLE_EXTENSION_REGEX)
         ) {
           // add scripts/styles as code entries
-          const code = fs.readFileSync(filePath, { encoding: "utf-8" });
+          const code = fs.readFileSync(filePath.getNativePath(), { encoding: "utf-8" });
           fileCodeEntries.push(new CodeEntry(project, filePath, code));
         } else if (file.match(IMAGE_EXTENSION_REGEX)) {
           // add images as code entries without text code
@@ -193,18 +193,18 @@ export class FileProject extends Project {
   private fileChangeQueue = new Set<string>();
   private fileChangeQueueTimer: number | undefined;
 
-  protected constructor(path: string, config: ProjectConfig) {
+  protected constructor(path: PortablePath, config: ProjectConfig) {
     super(path, config);
 
     // watch for changes on files in the source folder
     this.fileWatcher = chokidar
-      .watch(path, {
+      .watch(path.getNativePath(), {
         ignored: (p) => !!config
           .getIgnoredPaths()
-          .find((g) => minimatch(p.replace(path, "").replaceAll("\\", "/"), g))
+          .find((g) => minimatch(normalizePath(p.replace(path.getNativePath(), ""), "/"), g))
       })
-      .on("change", (path) => {
-        this.fileChangeQueue.add(path);
+      .on("change", (changePath) => {
+        this.fileChangeQueue.add(changePath);
         clearTimeout(this.fileChangeQueueTimer);
         this.fileChangeQueueTimer = setTimeout(
           () => this.processFileChangeQueue(),
@@ -241,9 +241,9 @@ export class FileProject extends Project {
     track("project.saved");
   }
   public saveFile({ id, filePath, code$, codeRevisionId }: CodeEntry) {
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.mkdirSync(filePath.getDirname().getNativePath(), { recursive: true });
     const code = code$.getValue();
-    fs.writeFileSync(filePath, code);
+    fs.writeFileSync(filePath.getNativePath(), code);
     this.savedCodeRevisions[id] = { id: codeRevisionId, code };
   }
 
@@ -257,7 +257,7 @@ export class FileProject extends Project {
     const fileSyncConflictPaths: string[] = [];
     for (const filePath of filePaths) {
       const codeEntry = codeEntries.find(
-        (entry) => entry.filePath === filePath
+        (entry) => entry.filePath.getNativePath() === filePath
       );
       if (!codeEntry) continue; // skip files that aren't tracked
       const code = codeEntry.code$.getValue();
@@ -304,30 +304,26 @@ export class FileProject extends Project {
     this.config = FileProjectConfig.createProjectConfigFromDirectory(this.path);
   }
 
-  public addAsset(filePath: string) {
+  public addAsset(source: PortablePath) {
     const getAssetPath = (name: string) =>
-      this.getNormalizedPath(
+      this.path.join(
         `${this.config.getDefaultNewAssetFolder()}/${name}`
       );
-    const fileName = path.basename(filePath);
+    const fileName = source.getBasename();
     const assetPath = { path: getAssetPath(fileName) };
     let counter = 1;
     while (
       this.codeEntries$
         .getValue()
-        .find((entry) => entry.filePath === assetPath.path)
+        .find((entry) => entry.filePath.isEqual(assetPath.path))
     ) {
       assetPath.path = getAssetPath(fileName.replace(/\./, `-${counter++}.`));
     }
     fs.writeFileSync(
-      assetPath.path,
-      fs.readFileSync(filePath, { encoding: null }),
+      assetPath.path.getNativePath(),
+      fs.readFileSync(source.getNativePath(), { encoding: null }),
       { encoding: null }
     );
     this.addCodeEntries([new CodeEntry(this, assetPath.path, undefined)]);
-  }
-
-  public getNormalizedPath(p: string) {
-    return normalizePath(p, path.sep);
   }
 }

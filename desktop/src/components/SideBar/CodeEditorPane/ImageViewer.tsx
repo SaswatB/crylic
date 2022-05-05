@@ -12,13 +12,16 @@ export const ImageViewer: FunctionComponent<Props> = ({ codeEntry }) => {
   const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
-    const blob = new Blob([fs.readFileSync(codeEntry.filePath)], {
-      type: mime.getType(codeEntry.filePath) || "image/jpeg",
-    });
+    const blob = new Blob(
+      [fs.readFileSync(codeEntry.filePath.getNativePath())],
+      {
+        type: mime.getType(codeEntry.filePath.getNativePath()) || "image/jpeg",
+      }
+    );
     const url = URL.createObjectURL(blob);
     imgRef.current!.src = url;
     return () => URL.revokeObjectURL(url);
   }, [codeEntry.filePath]);
 
-  return <img ref={imgRef} alt={codeEntry.filePath} />;
+  return <img ref={imgRef} alt={codeEntry.filePath.getNativePath()} />;
 };

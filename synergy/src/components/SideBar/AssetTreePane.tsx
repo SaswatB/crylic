@@ -30,6 +30,7 @@ import {
   ltMap,
 } from "../../lib/lightObservable/LTOperator";
 import { CodeEntry } from "../../lib/project/CodeEntry";
+import { PortablePath } from "../../lib/project/PortablePath";
 import { renderSeparator } from "../../lib/render-utils";
 import { ltTakeNext } from "../../lib/utils";
 import { useProject } from "../../services/ProjectService";
@@ -59,7 +60,7 @@ function sortTree(tree: Tree) {
 }
 
 interface Props {
-  onImportImageFile: () => Promise<string | undefined | null>;
+  onImportImageFile: () => Promise<PortablePath | null>;
 }
 
 export const AssetTreePane: FunctionComponent<Props> = ({
@@ -87,7 +88,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
     if (!inputName) return;
     // todo add validation/duplicate checking to name
     const name = camelCase(inputName);
-    const filePath = project.getNormalizedPath(
+    const filePath = project.path.join(
       `${project.config.getDefaultNewStylesFolder()}/${name}.css`
     );
     project?.addCodeEntries([new CodeEntry(project, filePath, "")], {
@@ -214,7 +215,7 @@ export const AssetTreePane: FunctionComponent<Props> = ({
         ltMap((codeEntriesWithRenderable) => {
           const newTreeNodeIds = new Set<string>("root");
           const newProjectTree: Tree = { id: "root", name: "", children: [] };
-          const projectPath = project.path.replace(/\\/g, "/");
+          const projectPath = project.path.getNormalizedPath();
           codeEntriesWithRenderable.forEach((v) => {
             if (!v) return;
 
@@ -224,8 +225,8 @@ export const AssetTreePane: FunctionComponent<Props> = ({
             } = v;
 
             const path = codeEntry.filePath
-              .replace(/\\/g, "/")
-              .replace(projectPath || "", "")
+              .getNormalizedPath()
+              .replace(projectPath, "")
               .replace(/^\//, "")
               .replace(extensionRegex || "", "")
               .split("/");

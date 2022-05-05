@@ -1,4 +1,3 @@
-import { normalizePath } from "../../lib/normalizePath";
 import { ProjectConfig } from "../../lib/project/ProjectConfig";
 import { RenderStarterDefinition } from "../../lib/render-starter";
 import { PluginBase } from "../PluginBase";
@@ -8,11 +7,11 @@ export class NextPlugin extends PluginBase {
     return config.isNextInstalled();
   }
 
-  public override overrideProjectConfig(config: ProjectConfig, { fs, path }: { fs: typeof import('fs'), path: typeof import('path')}): ProjectConfig {
+  public override overrideProjectConfig(config: ProjectConfig, { fs }: { fs: typeof import('fs') }): ProjectConfig {
     // if a bootstrap file isn't explicitly defined, use Next's default
     if (config.configFile.bootstrap === undefined) {
       const nextBootstrap = ['', 'src/'].reduce((acc, dir) => [...acc, ...['js', 'jsx', 'ts', 'tsx'].map(ext => `${dir}pages/_app.${ext}`)], [] as string[]).find(file =>
-        fs.existsSync(path.join(config.projectPath, normalizePath(file, path.sep))));
+        fs.existsSync(config.projectPath.join(file).getNativePath()));
       if (nextBootstrap) {
         config.configFile.bootstrap = nextBootstrap;
       }

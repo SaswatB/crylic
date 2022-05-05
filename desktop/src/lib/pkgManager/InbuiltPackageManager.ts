@@ -1,6 +1,7 @@
-import path from "path";
-
 import { PackageManager } from "synergy/src/lib/pkgManager/PackageManager";
+import { PortablePath } from "synergy/src/lib/project/PortablePath";
+
+import { FilePortablePath } from "../project/FilePortablePath";
 
 const { fork } = __non_webpack_require__(
   "child_process"
@@ -15,11 +16,14 @@ const Store = __non_webpack_require__(
 ) as typeof import("electron-store");
 const store = new Store();
 
-let dirname = "";
-ipcRenderer.invoke("runtimeInfo").then((data) => ({ dirname } = data));
+let dirname: PortablePath;
+ipcRenderer
+  .invoke("runtimeInfo")
+  .then((data) => (dirname = new FilePortablePath(data.dirname)))
+  .catch(console.error);
 
 export class InbuiltPackageManager extends PackageManager {
-  constructor(path: string, protected yarnMode: boolean) {
+  constructor(path: PortablePath, protected yarnMode: boolean) {
     super(path);
   }
 
@@ -27,10 +31,10 @@ export class InbuiltPackageManager extends PackageManager {
     // todo support multiple npm versions
     console.log("starting child process - installPackage", packageName, devDep);
     return fork(
-      path.join(dirname, "electron-child.js"),
+      dirname.join("electron-child.js").getNativePath(),
       [
         this.yarnMode ? "yarn-install" : "npm-install",
-        this.path,
+        this.path.getNativePath(),
         packageName || "",
         `${devDep}`,
       ],
@@ -46,6 +50,6 @@ export class InbuiltPackageManager extends PackageManager {
 
   public hasDepsInstalled() {
     // todo support node_modules in a higher directory
-    return fs.existsSync(path.join(this.path, "node_modules"));
+    return fs.existsSync(this.path.join("node_modules").getNativePath());
   }
 }

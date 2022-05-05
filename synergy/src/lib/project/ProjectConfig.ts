@@ -1,5 +1,4 @@
 import * as it from "io-ts";
-import path from "path";
 import semver from "semver";
 
 import {
@@ -8,6 +7,7 @@ import {
 } from "../../constants";
 import { PackageJson } from "../../types/paint";
 import { PackageManager } from "../pkgManager/PackageManager";
+import { PortablePath } from "./PortablePath";
 
 export const ProjectConfigFile = it.type({
   bootstrap: it.union([it.string, it.undefined]),
@@ -85,13 +85,13 @@ export type ProjectConfigFile = Partial<it.TypeOf<typeof ProjectConfigFile>>;
 
 export abstract class ProjectConfig {
   protected constructor(
-    public readonly projectPath: string,
+    public readonly projectPath: PortablePath,
     public readonly configFile: ProjectConfigFile,
     public readonly packageJson: PackageJson | undefined
   ) {}
 
   get name() {
-    return path.basename(this.projectPath.replace(/\\/g, "/"));
+    return this.projectPath.getBasename();
   }
 
   public getAllPackages() {
@@ -145,26 +145,17 @@ export abstract class ProjectConfig {
 
   public getBootstrapPath() {
     const projectBootstrap = this.configFile?.bootstrap;
-    if (!projectBootstrap) return undefined;
-    return path.join(
-      this.projectPath.replace(/\\/g, "/"),
-      projectBootstrap.replace(/\\/g, "/")
-    );
+    return projectBootstrap
+      ? this.projectPath.join(projectBootstrap)
+      : undefined;
   }
   public getFullOverrideWebpackPath() {
     const webpackPath = this.configFile?.webpack?.overrideConfig?.path;
-    return webpackPath
-      ? path.join(
-          this.projectPath.replace(/\\/g, "/"),
-          webpackPath.replace(/\\/g, "/")
-        )
-      : undefined;
+    return webpackPath ? this.projectPath.join(webpackPath) : undefined;
   }
   public getFullHtmlTemplatePath() {
-    return path.join(
-      this.projectPath.replace(/\\/g, "/"),
-      this.configFile?.htmlTemplate?.path?.replace(/\\/g, "/") ||
-        DEFAULT_PROJECT_HTML_TEMPLATE_PATH
+    return this.projectPath.join(
+      this.configFile?.htmlTemplate?.path || DEFAULT_PROJECT_HTML_TEMPLATE_PATH
     );
   }
   public getHtmlTemplateSelector() {

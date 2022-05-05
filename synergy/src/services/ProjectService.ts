@@ -42,9 +42,9 @@ export class ProjectService {
         localStorage.setItem(
           RECENT_PROJECTS_KEY,
           JSON.stringify([
-            { filePath: project.path },
+            { filePath: project.path.getNativePath() },
             ...this.getRecentProjects().filter(
-              (e) => e.filePath !== project.path
+              (e) => e.filePath !== project.path.getNativePath()
             ),
           ])
         );

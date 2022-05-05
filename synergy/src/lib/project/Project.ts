@@ -12,6 +12,7 @@ import { ltMap } from "../lightObservable/LTOperator";
 import { eagerMapArrayAny } from "../rxjs/eagerMap";
 import { produceNext } from "../utils";
 import { CodeEntry } from "./CodeEntry";
+import { PortablePath } from "./PortablePath";
 import { ProjectConfig } from "./ProjectConfig";
 import { RenderEntry } from "./RenderEntry";
 
@@ -30,7 +31,7 @@ export abstract class Project {
   private readonly styleEditorEntries: EditorEntry<StyleASTEditor<any>>[];
 
   protected constructor(
-    public readonly path: string,
+    public readonly path: PortablePath,
     public config: ProjectConfig
   ) {
     this.elementEditorEntries = [
@@ -50,9 +51,8 @@ export abstract class Project {
 
   public abstract saveFiles(): void;
   public abstract saveFile(codeEntry: CodeEntry): void;
-  public abstract addAsset(filePath: string): void;
+  public abstract addAsset(source: PortablePath): void;
   public abstract refreshConfig(): void;
-  public abstract getNormalizedPath(srcPath: string): string;
 
   public onClose() {}
 

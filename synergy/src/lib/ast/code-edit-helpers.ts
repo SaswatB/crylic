@@ -55,7 +55,11 @@ export const addElementHelper = async (
     component.component.import.path;
 
   // don't allow adding a component to itself
-  if (componentPath === codeEntry.filePath) {
+  if (
+    componentPath &&
+    typeof componentPath !== "string" &&
+    codeEntry.filePath.isEqual(componentPath)
+  ) {
     throw new Error("Cannot add a component as a child of itself");
   }
 

@@ -64,7 +64,10 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
   useEffect(() => {
     let currentWebpackOverride;
     if (webpackOverridePath) {
-      currentWebpackOverride = fs.readFileSync(webpackOverridePath, "utf8");
+      currentWebpackOverride = fs.readFileSync(
+        webpackOverridePath.getNativePath(),
+        "utf8"
+      );
       if (currentWebpackOverride) {
         setWebpackOverride(currentWebpackOverride);
         setWebpackOverrideOriginal(currentWebpackOverride);
@@ -87,7 +90,7 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
 
   const refreshWebpackConfig = useDebouncedFunction((newOverride) => {
     if (!webpackOverridePath) return;
-    fs.writeFileSync(webpackOverridePath, newOverride);
+    fs.writeFileSync(webpackOverridePath.getNativePath(), newOverride);
     void webpackConfig.execute(project, pluginService);
   }, 1000);
 

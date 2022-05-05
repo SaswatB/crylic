@@ -10,6 +10,7 @@ import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
 import { ProjectConfigFile } from "synergy/src/lib/project/ProjectConfig";
 import { PackageJson } from "synergy/src/types/paint";
 
+import { FilePortablePath } from "../../src/lib/project/FilePortablePath";
 import { FileProject } from "../../src/lib/project/FileProject";
 import { FileProjectConfig } from "../../src/lib/project/FileProjectConfig";
 
@@ -18,13 +19,13 @@ class TestProjectConfig extends FileProjectConfig {
     configFile: ProjectConfigFile = {},
     packageJson: PackageJson | undefined = undefined
   ) {
-    super("", configFile, packageJson);
+    super(new FilePortablePath(""), configFile, packageJson);
   }
 }
 
 export class TestProject extends FileProject {
   public constructor(config = new TestProjectConfig()) {
-    super("", config);
+    super(new FilePortablePath(""), config);
   }
 }
 
@@ -47,7 +48,7 @@ export const runEditor = <
   const config = new TestProjectConfig();
   const codeEntry = new CodeEntry(
     new TestProject(config),
-    `/file.${codeExtension}`,
+    new FilePortablePath(`/file.${codeExtension}`),
     code,
     0
   );

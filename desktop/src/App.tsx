@@ -43,6 +43,7 @@ import { CodeEditorPane } from "./components/SideBar/CodeEditorPane/CodeEditorPa
 import { Intro } from "./components/Workspace/Intro";
 import { WebpackConfigDialog } from "./components/Workspace/WebpackConfigDialog";
 import { openFilePicker } from "./hooks/useFilePicker";
+import { FilePortablePath } from "./lib/project/FilePortablePath";
 import {
   resetWebpackWithWorker,
   webpackRunCodeWithWorker,
@@ -186,7 +187,9 @@ export function App() {
                   extensions: ["jpg", "jpeg", "png", "gif", "svg"],
                 },
               ],
-            })
+            }).then((f: string | undefined | null) =>
+              f ? new FilePortablePath(f) : null
+            )
           }
         />
       </Resizable>

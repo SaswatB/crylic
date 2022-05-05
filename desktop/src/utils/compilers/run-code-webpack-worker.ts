@@ -31,7 +31,6 @@ import {
 import errorBoundaryComponent from "!!raw-loader!synergy/src/components/ErrorBoundary";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
-const path = __non_webpack_require__("path") as typeof import("path");
 
 const { ipcRenderer } = __non_webpack_require__(
   "electron"
@@ -83,7 +82,8 @@ const getImportFromCodeEntry = async (local: string, codeEntry: CodeEntry) => {
     declaration = `{ ${exportName} as ${local} }`;
   }
 
-  const src = codeEntry.filePath.replace(/\\/g, "\\\\");
+  // todo is there any benefit to a relative path here instead of absolute?
+  const src = codeEntry.filePath.getNativePath().replace(/\\/g, "\\\\");
   return `import ${declaration} from "${src}";`;
 };
 
@@ -109,7 +109,9 @@ const generateBundleCode = async (
       bootstrapCodeEntry = new CodeEntry(
         project,
         bootstrapFilePath,
-        fs.readFileSync(bootstrapFilePath, { encoding: "utf-8" })
+        fs.readFileSync(bootstrapFilePath.getNativePath(), {
+          encoding: "utf-8",
+        })
       );
       project.addCodeEntries([bootstrapCodeEntry]);
     }
@@ -171,9 +173,11 @@ const generateJobConfig = (
   disableSWC: project.config.configFile?.webpack?.overrideConfig?.disableSWC,
   enableReactRuntimeCompat: project.config.isReactOverV17(),
   paths: {
-    projectFolder: project.path,
-    overrideWebpackConfig: project.config.getFullOverrideWebpackPath(),
-    htmlTemplate: project.config.getFullHtmlTemplatePath(),
+    projectFolder: project.path.getNativePath(),
+    overrideWebpackConfig: project.config
+      .getFullOverrideWebpackPath()
+      ?.getNativePath(),
+    htmlTemplate: project.config.getFullHtmlTemplatePath().getNativePath(),
   },
   pluginEvals: {
     webpack: pluginService
@@ -209,12 +213,12 @@ export const webpackRunCodeWithWorker = async ({
   const bundleCodeEntry = {
     id: `bundle-${renderEntry.codeId}`,
     code: await generateBundleCode(project, componentCodeEntry, pluginService),
-    filePath: path.join(project.path, "paintbundle.tsx"),
+    filePath: project.path.join("paintbundle.tsx").getNativePath(),
   };
 
   const trimEntry = async (codeEntry: CodeEntry) => ({
     id: codeEntry.id,
-    filePath: codeEntry.filePath,
+    filePath: codeEntry.filePath.getNativePath(),
     codeRevisionId: codeEntry.codeRevisionId,
   });
   const codeEntries = await Promise.all(

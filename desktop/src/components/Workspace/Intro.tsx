@@ -20,6 +20,7 @@ import { ProjectService } from "synergy/src/services/ProjectService";
 
 import icon from "../../assets/icon.png";
 import { getUserFolder, openFilePicker } from "../../hooks/useFilePicker";
+import { FilePortablePath } from "../../lib/project/FilePortablePath";
 import {
   FileProject,
   FileProjectTemplate,
@@ -73,7 +74,7 @@ export function Intro() {
 
     setLoading((l) => l + 1);
     FileProject.createNewProjectInDirectory(
-      path.join(res.location, res.name),
+      new FilePortablePath(res.location).join(res.name),
       res.template as FileProjectTemplate,
       pluginService
     )
@@ -92,7 +93,10 @@ export function Intro() {
     // the main thread get's pegged from opening the project
     setTimeout(
       () =>
-        FileProject.createProjectFromDirectory(filePath, pluginService)
+        FileProject.createProjectFromDirectory(
+          new FilePortablePath(filePath),
+          pluginService
+        )
           .then((p) => projectService.setProject(p))
           .finally(() => setLoading((l) => l - 1)),
       150

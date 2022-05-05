@@ -9,7 +9,7 @@ export abstract class PluginBase {
   public onClose() {}
   public overrideProjectConfig(
     config: ProjectConfig,
-    _context: { fs: typeof import("fs"); path: typeof import("path") }
+    _context: { fs: typeof import("fs") }
   ) {
     return config;
   }

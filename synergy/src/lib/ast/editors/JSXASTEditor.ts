@@ -4,7 +4,6 @@ import { fold } from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
 import { omit, startCase } from "lodash";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-import path from "path";
 import { types } from "recast";
 
 import {
@@ -229,15 +228,12 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     assetEntry: CodeEntry
   ) {
     // get the import for the asset
-    const relativeAssetPath = codeEntry.getRelativeImportPath(
-      assetEntry.filePath
-    );
     const assetDefaultName = `Asset${startCase(
-      path.basename(assetEntry.filePath).replace(/\..*$/, "")
+      assetEntry.filePath.getBasename().replace(/\..*$/, "")
     ).replace(/\s+/g, "")}`;
     const assetIdentifier = this.getOrAddImport(ast, codeEntry, {
       name: assetDefaultName,
-      path: relativeAssetPath,
+      path: codeEntry.filePath,
       isDefault: true,
     });
 
@@ -767,7 +763,10 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     codeEntry: CodeEntry,
     importDef: ImportDefinition
   ) {
-    const importPath = codeEntry.getRelativeImportPath(importDef.path);
+    const importPath =
+      typeof importDef.path === "string"
+        ? importDef.path
+        : codeEntry.getRelativeImportPath(importDef.path);
     const importName = importDef.namespace || importDef.name;
 
     // try to find an existing import declaration
