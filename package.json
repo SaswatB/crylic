@@ -9,5 +9,5 @@
   "resolutions": {
     "react-refresh": "patch:react-refresh@0.8.3#./patches/react-refresh+0.8.3.patch"
   },
-  "packageManager": "yarn@3.1.1"
+  "packageManager": "yarn@3.2.0"
 }

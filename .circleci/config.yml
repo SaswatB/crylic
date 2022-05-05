@@ -42,7 +42,7 @@ commands:
           steps:
             - node/install-packages:
                 app-dir: "<< pipeline.parameters.workingdir >>/app"
-                pkg-manager: npm
+                pkg-manager: yarn
       # use the windows orb when running on windows
       - when:
           condition:
@@ -50,7 +50,7 @@ commands:
           steps:
             - run:
                 name: Install app deps
-                command: npm i
+                command: yarn
                 working_directory: "<< pipeline.parameters.workingdir >>/app"
       - run:
           name: Install workspace deps
