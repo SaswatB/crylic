@@ -17,3 +17,4 @@ The following is a list of the main technical features Crylic currently supports
 * Add and edit animations on HTML elements with framer-motion
 * Automatically picks up changes on disk for easier interoperability with other editors
 * Export components to Figma
+* Partial support for NextJS

@@ -5,7 +5,7 @@ Crylic comes bundled with the following technologies:
 * Node v16
 * NPM v6.14
 * Yarn v1
-* Webpack v4
+* Webpack v5
 * SWC & Babel v7
 * React v17
 * React Refresh

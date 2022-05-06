@@ -7,7 +7,7 @@ Config type:
 ```typescript
 type ProjectConfigFile = {
     bootstrap?: string;
-    sourceFolder?: string;
+    ignored?: string[];
     webpack?: {
         overrideConfig?: {
             path?: string;
@@ -61,11 +61,11 @@ Defines a path to the [bootstrap file](../onboarding/bootstrap-file.md) for the 
 
 <details>
 
-<summary>sourceFolder?: string</summary>
+<summary>ignored?: string</summary>
 
-_Default: "src/"_
+_Default: \["\*\*/.\*", "\*\*/node\_modules", "\*\*/dist", "\*\*/build"]_
 
-Defines the root folder for all source files relative to the project root. Currently, only one source folder is supported.
+Defines a list of globs, relative to the project folder, that Crylic should ignore when searching for source files.
 
 </details>
 
@@ -159,7 +159,7 @@ Additional information about the analyzer can be found under [Analyzer Overrides
 
 <summary>analyzer.allowLowerCaseComponentFiles?: boolean</summary>
 
-_Default: false_
+_Default: true_
 
 Allows files that start with a lower case letter to be considered component files.
 
