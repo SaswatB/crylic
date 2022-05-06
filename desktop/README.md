@@ -51,6 +51,18 @@ npm run package
 
 ### Template project creation
 
-- npx create-react-app paint-starter --template typescript --use-npm
-- add bootstrap file
-- zip contents (without node modules)
+- add/modify template within `templates/`
+- run `yarn zip-templates`
+
+### Notary steps
+
+```
+# upload to notary:
+xcrun altool --notarize-app --primary-bundle-id "com.hstar.crylic" -u <AC_USER> -p <AC_PASS> -f dist/crylic-<version>.dmg
+
+# check notary status:
+xcrun altool --notarization-history 0 -u <AC_USER> -p <AC_PASS>
+
+# check if app passes gatekeeper:
+spctl -a -t exec -vv dist/mac/crylic.app
+```

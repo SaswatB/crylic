@@ -75,13 +75,17 @@ commands:
           command: rm /tmp/dist/*.yml
       - store_artifacts:
           path: /tmp/dist
-  release:
+  release-macos:
     steps:
       # Only release to s3 if the build is tagged
       - when:
           condition:
             matches: { pattern: "^v.+$", value: << pipeline.git.tag >> }
           steps:
+            # Notarize app on Mac to pass Gatekeeper
+            - run:
+                name: Upload to Notary
+                command: xcrun altool --notarize-app --primary-bundle-id "com.hstar.crylic" -u $AC_USER -p $AC_PASS -f dist/crylic-$(echo "<< pipeline.git.tag >>" | sed 's/v//').dmg
             - s3/copy:
                 arguments: "--recursive"
                 from: /tmp/dist/
@@ -104,7 +108,7 @@ jobs:
     working_directory: << pipeline.parameters.workingdir >>
     steps:
       - build
-      - release
+      - release-macos
   build-and-release-windows:
     executor:
       name: win/default

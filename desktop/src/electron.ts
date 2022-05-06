@@ -78,7 +78,7 @@ function createWindow() {
   // load the url of the app.
   mainWindow.loadURL(
     process.env.NODE_ENV === "development"
-      ? "http://localhost:4000"
+      ? "http://localhost:12000"
       : `file://${path.join(dirPath, "build/index.html")}`
   );
 
