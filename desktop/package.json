@@ -198,6 +198,15 @@
     "extends": null,
     "asar": false,
     "electronVersion": "17.1.0",
+    "files": [
+      "!node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "app/node_modules",
+        "to": "app/node_modules"
+      }
+    ],
     "win": {
       "target": "portable",
       "icon": "./src/assets/icon.ico"

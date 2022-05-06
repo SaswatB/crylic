@@ -4183,6 +4183,7 @@ __metadata:
     patch-package: ^6.4.7
     postcss: ^8.4.13
     postcss-loader: ^6.2.1
+    postinstall-postinstall: ^2.1.0
     react: ^17.0.2
     react-dom: ^17.0.2
     react-refresh: ^0.13.0
@@ -8931,6 +8932,13 @@ __metadata:
     picocolors: ^1.0.0
     source-map-js: ^1.0.2
   checksum: 514fb3552805a5d039a2d6b4df3e73f657001716ca93c0d57e6067b0473abdea70276d80afc96005c9aaff82ed5d98062bd97724d3f47ca400fba0b5e9e436ed
+  languageName: node
+  linkType: hard
+
+"postinstall-postinstall@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "postinstall-postinstall@npm:2.1.0"
+  checksum: e1d34252cf8d2c5641c7d2db7426ec96e3d7a975f01c174c68f09ef5b8327bc8d5a9aa2001a45e693db2cdbf69577094d3fe6597b564ad2d2202b65fba76134b
   languageName: node
   linkType: hard
 
