@@ -85,7 +85,7 @@ commands:
             # Notarize app on Mac to pass Gatekeeper
             - run:
                 name: Upload to Notary
-                command: xcrun altool --notarize-app --primary-bundle-id "com.hstar.crylic" -u $AC_USER -p $AC_PASS -f dist/crylic-$(echo "<< pipeline.git.tag >>" | sed 's/v//').dmg
+                command: xcrun altool --notarize-app --primary-bundle-id "com.hstar.crylic" -u $AC_USER -p $AC_PASS -f /tmp/dist/crylic-$(echo "<< pipeline.git.tag >>" | sed 's/v//').dmg
             - s3/copy:
                 arguments: "--recursive"
                 from: /tmp/dist/
