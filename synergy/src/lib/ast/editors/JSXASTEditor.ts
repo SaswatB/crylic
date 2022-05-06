@@ -233,7 +233,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     ).replace(/\s+/g, "")}`;
     const assetIdentifier = this.getOrAddImport(ast, codeEntry, {
       name: assetDefaultName,
-      path: codeEntry.filePath,
+      path: assetEntry.filePath,
       isDefault: true,
     });
 

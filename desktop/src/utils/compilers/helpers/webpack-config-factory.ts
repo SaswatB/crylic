@@ -1,5 +1,3 @@
-import { cloneDeep } from "lodash";
-
 import { normalizePath } from "synergy/src/lib/normalizePath";
 
 import { WebpackWorkerMessagePayload_Compile } from "../../../types/ipc";
@@ -10,11 +8,6 @@ import baseAppEntry from "!!raw-loader!../../../assets/base-app-entry.html";
 
 const NODE_ENV = "development";
 const REACT_APP = /^REACT_APP_/i;
-
-const cssRegex = /\.css$/;
-const cssModuleRegex = /\.module\.css$/;
-const sassRegex = /\.(scss|sass)$/;
-const sassModuleRegex = /\.module\.(scss|sass)$/;
 
 interface WebpackConfigFactoryContext {
   deps: {
@@ -82,10 +75,7 @@ const getEnvVars = (context: WebpackConfigFactoryContext) => {
 };
 
 // supports ts(x), js(x), css, sass, less and everything else as static files
-const getWebpackModules = async (
-  context: WebpackConfigFactoryContext,
-  env: Record<string, string | undefined>
-) => {
+const getWebpackModules = async (context: WebpackConfigFactoryContext) => {
   const { path, tailwindcss } = context.deps;
   const {
     disableWebpackExternals,
@@ -139,12 +129,7 @@ const getWebpackModules = async (
     // embed small images as data urls
     {
       test: [/\.bmp$/, /\.gif$/, /\.jpe?g$/, /\.png$/],
-      loader: "url-loader",
-      options: {
-        limit: parseInt(env.IMAGE_INLINE_SIZE_LIMIT || "10000"),
-        fallback: "file-loader",
-        ...fileLoaderOptions,
-      },
+      type: "asset/resource",
     },
 
     // handle project code (swc)
@@ -274,23 +259,11 @@ const getWebpackModules = async (
 
     // style loaders for css/scss/less
     {
-      test: cssRegex,
-      exclude: cssModuleRegex,
+      test: /\.css$/,
       use: ["style-loader", "css-loader"],
     },
     {
-      test: cssModuleRegex,
-      use: [
-        "style-loader",
-        {
-          loader: "css-loader",
-          options: { modules: true },
-        },
-      ],
-    },
-    {
-      test: sassRegex,
-      exclude: sassModuleRegex,
+      test: /\.(scss|sass)$/,
       use: [
         "style-loader",
         "css-loader",
@@ -300,17 +273,6 @@ const getWebpackModules = async (
             ident: "postcss",
             plugins: [tailwindcss],
           },
-        },
-        "sass-loader",
-      ],
-    },
-    {
-      test: sassModuleRegex,
-      use: [
-        "style-loader",
-        {
-          loader: "css-loader",
-          options: { modules: true },
         },
         "sass-loader",
       ],
@@ -403,7 +365,7 @@ export const webpackConfigFactory = async (
         name: (entrypoint: { name: string }) => `runtime-${entrypoint.name}`,
       },
     },
-    module: await getWebpackModules(context, env),
+    module: await getWebpackModules(context),
     resolve: {
       modules: ["node_modules", projectNodeModules].concat(
         modules.additionalModulePaths || []
