@@ -44,6 +44,7 @@ commands:
                 app-dir: "<< pipeline.parameters.workingdir >>/app"
                 pkg-manager: yarn
                 with-cache: false
+                cache-path: ./.yarn/cache
       # use the windows orb when running on windows
       - when:
           condition:
