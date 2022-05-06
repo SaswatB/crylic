@@ -1,6 +1,6 @@
 {
   "name": "crylic",
-  "version": "0.7.8",
+  "version": "0.7.9",
   "private": true,
   "author": "Saswat Bhattacharya",
   "main": "build-main-dev/electron.js",
