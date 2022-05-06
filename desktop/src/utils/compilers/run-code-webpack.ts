@@ -22,8 +22,6 @@ const nativeDeps = {
   webpack: (undefined as unknown) as typeof import("../../../app/node_modules/webpack"),
   WebpackDevServer: (undefined as unknown) as typeof import("../../../app/node_modules/webpack-dev-server"),
   HtmlWebpackPlugin: (undefined as unknown) as typeof import("html-webpack-plugin"),
-  // @ts-ignore todo add types
-  tailwindcss: (undefined as unknown) as typeof import("tailwindcss"),
   ReactRefreshPlugin: (undefined as unknown) as typeof import("@pmmmwh/react-refresh-webpack-plugin"),
   dotenvExpand: (undefined as unknown) as typeof import("dotenv-expand"),
   dotenv: (undefined as unknown) as typeof import("dotenv"),
@@ -85,9 +83,6 @@ export function initialize(nodeModulesPath = "") {
   );
   nativeDeps.HtmlWebpackPlugin = __non_webpack_require__(
     `${nodeModulesPath}html-webpack-plugin`
-  );
-  nativeDeps.tailwindcss = __non_webpack_require__(
-    `${nodeModulesPath}tailwindcss`
   );
   nativeDeps.ReactRefreshPlugin = __non_webpack_require__(
     `${nodeModulesPath}@pmmmwh/react-refresh-webpack-plugin`

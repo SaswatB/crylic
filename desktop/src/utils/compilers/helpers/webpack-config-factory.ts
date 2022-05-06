@@ -18,8 +18,6 @@ interface WebpackConfigFactoryContext {
     HtmlWebpackPlugin: typeof import("html-webpack-plugin");
     ReactRefreshPlugin: typeof import("@pmmmwh/react-refresh-webpack-plugin");
 
-    // @ts-ignore todo add types
-    tailwindcss: typeof import("tailwindcss");
     dotenv: typeof import("dotenv");
     dotenvExpand: typeof import("dotenv-expand");
     requireFromString: typeof import("require-from-string");
@@ -76,7 +74,7 @@ const getEnvVars = (context: WebpackConfigFactoryContext) => {
 
 // supports ts(x), js(x), css, sass, less and everything else as static files
 const getWebpackModules = async (context: WebpackConfigFactoryContext) => {
-  const { path, tailwindcss } = context.deps;
+  const { path } = context.deps;
   const {
     disableWebpackExternals,
     disableReactExternals,
@@ -264,18 +262,7 @@ const getWebpackModules = async (context: WebpackConfigFactoryContext) => {
     },
     {
       test: /\.(scss|sass)$/,
-      use: [
-        "style-loader",
-        "css-loader",
-        {
-          loader: "postcss-loader",
-          options: {
-            ident: "postcss",
-            plugins: [tailwindcss],
-          },
-        },
-        "sass-loader",
-      ],
+      use: ["style-loader", "css-loader", "sass-loader"],
     },
     {
       test: /\.less$/,
