@@ -33,7 +33,7 @@
     "lodash": "^4.17.20",
     "notistack": "^0.9.9",
     "nucleus-nodejs": "^3.0.9",
-    "prettier": "^2.1.1",
+    "prettier": "^2.6.2",
     "prop-types": "^15.7.2",
     "rc-trigger": "^4.4.2",
     "rc-util": "^5.2.1",

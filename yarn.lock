@@ -11958,7 +11958,7 @@ __metadata:
     postcss-normalize: ^8.0.1
     postcss-preset-env: ^6.7.0
     postcss-safe-parser: ^4.0.1
-    prettier: ^2.1.1
+    prettier: ^2.6.2
     raw-loader: ^4.0.0
     rc-color-picker: ^1.2.6
     re-resizable: ^6.3.2
@@ -24646,12 +24646,12 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
-"prettier@npm:^2.1.1":
-  version: 2.1.1
-  resolution: "prettier@npm:2.1.1"
+"prettier@npm:^2.6.2":
+  version: 2.6.2
+  resolution: "prettier@npm:2.6.2"
   bin:
     prettier: bin-prettier.js
-  checksum: c6cd8449f9ce78b7b44533072d36e17dd85d5adcc6f883d8dd8d266fa226ae8b0e91090162445c42641cbd264af94faec0fa2939661ec6f610a20a7b1fcd1889
+  checksum: 48d08dde8e9fb1f5bccdd205baa7f192e9fc8bc98f86e1b97d919de804e28c806b0e6cc685e4a88211aa7987fa9668f30baae19580d87ced3ed0f2ec6572106f
   languageName: node
   linkType: hard
 
@@ -28340,7 +28340,7 @@ react-refresh@0.8.3:
     lodash: ^4.17.20
     notistack: ^0.9.9
     nucleus-nodejs: ^3.0.9
-    prettier: ^2.1.1
+    prettier: ^2.6.2
     prop-types: ^15.7.2
     rc-trigger: ^4.4.2
     rc-util: ^5.2.1
