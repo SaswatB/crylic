@@ -4,6 +4,9 @@ global.__non_webpack_require__ = (name) => {
       ipcRenderer: {
         once() {},
         send() {},
+        invoke() {
+          return Promise.resolve("");
+        },
       },
     };
   }

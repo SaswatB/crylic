@@ -82,6 +82,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
   }
 
   public override onASTRender(iframe: HTMLIFrameElement) {
+    // todo investigate using `.class * { ${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookupId}: false }` instead
     // prevent property inheritance for data lookup ids
     this.createdIds.forEach((lookupId) =>
       registerUninheritedCSSProperty(

@@ -60,5 +60,9 @@ export const runEditor = <
   }));
   ast = apply({ editor, ast, codeEntry, lookupIds });
   ast = editor.removeLookupData({ ast, codeEntry });
-  return prettyPrintCodeEntryAST(config, codeEntry.getRemoteCodeEntry(), ast);
+  return prettyPrintCodeEntryAST(
+    config,
+    codeEntry.getRemoteCodeEntry(),
+    ast
+  ).replaceAll("\r", "");
 };

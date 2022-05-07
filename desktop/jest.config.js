@@ -7,16 +7,7 @@ module.exports = {
   testRegex: ".*(test|spec)\\.tsx?$",
   transform: {
     "^.+\\.fixture\\..+$": "jest-raw-loader",
-    "^.+\\.(t|j)sx?$": [
-      // use babel instead of swc here for much better debugging (ex: working & accurate breakpoints)
-      "babel-jest",
-      {
-        presets: [
-          "@babel/preset-typescript",
-          ["@babel/preset-env", { targets: { node: 16 } }],
-        ],
-      },
-    ],
+    "^.+\\.(t|j)sx?$": ["@swc/jest", require("./swc.config")],
     "^.+\\.css$": "<rootDir>/config/jest/cssTransform.js",
     "^(?!.*\\.(js|jsx|ts|tsx|css|json)$)":
       "<rootDir>/config/jest/fileTransform.js",
