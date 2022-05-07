@@ -6,6 +6,7 @@ import exportDefaultLambdaFixture from "./fixtures/component-name/export-default
 import exportDefaultMemoExplicitImportFixture from "./fixtures/component-name/export-default-memo-explicit-import.fixture";
 import exportDefaultMemoRenamedImportFixture from "./fixtures/component-name/export-default-memo-renamed-import.fixture";
 import exportDefaultMemoFixture from "./fixtures/component-name/export-default-memo.fixture";
+import exportMultipleFunctionsFixture from "./fixtures/component-name/export-multiple-functions.fixture";
 // @ts-expect-error fixture
 import exportNamedFunctionExpressionWithNameFixture from "./fixtures/component-name/export-named-function-expression-with-name.fixture";
 // @ts-expect-error fixture
@@ -46,6 +47,8 @@ const exportDefaultMemoExplicitImport =
 const exportDefaultMemoRenamedImport =
   exportDefaultMemoRenamedImportFixture as unknown as string;
 const exportDefaultMemo = exportDefaultMemoFixture as unknown as string;
+const exportMultipleFunctions =
+  exportMultipleFunctionsFixture as unknown as string;
 const exportNamedFunctionExpressionWithName =
   exportNamedFunctionExpressionWithNameFixture as unknown as string;
 const exportNamedFunctionExpression =
@@ -214,6 +217,23 @@ describe("getComponentExports", () => {
       parseAST(exportSeparateDefaultMemo)
     ).preferredExport;
     expect(comp?.isDefault).toEqual(true);
+  });
+
+  test("gets all component-like exports", () => {
+    const { preferredExport, allExports } = getComponentExports(
+      parseAST(exportMultipleFunctions)
+    );
+    expect(preferredExport?.isDefault).toEqual(true);
+    expect(preferredExport?.name).toEqual(undefined);
+    expect(allExports.length).toEqual(4);
+    expect(allExports[0]?.isDefault).toEqual(false);
+    expect(allExports[0]?.name).toEqual("ComponentFunction1");
+    expect(allExports[1]?.isDefault).toEqual(true);
+    expect(allExports[1]?.name).toEqual(undefined);
+    expect(allExports[2]?.isDefault).toEqual(false);
+    expect(allExports[2]?.name).toEqual("ComponentFunction3");
+    expect(allExports[3]?.isDefault).toEqual(false);
+    expect(allExports[3]?.name).toEqual("ComponentFunction4");
   });
 
   test("doesn't get component from file without a component", () => {
