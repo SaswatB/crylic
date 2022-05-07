@@ -7,8 +7,8 @@ import existingStyleFinalFixture from "./fixtures/styles/styled/existing-style-f
 import { runEditor, runEditorApply } from "./lib/test-utils";
 
 // these are imported as fixtures so they're actually strings
-const existingStyleBase = (existingStyleBaseFixture as unknown) as string;
-const existingStyleFinal = (existingStyleFinalFixture as unknown) as string;
+const existingStyleBase = existingStyleBaseFixture as unknown as string;
+const existingStyleFinal = existingStyleFinalFixture as unknown as string;
 
 const runStyledEditor = (
   code: string,

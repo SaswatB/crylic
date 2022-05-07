@@ -69,15 +69,17 @@ export function exportOutline(
       ) {
         // extract text specific styles
         const textStyles: { [key: string]: string } = {};
-        ([
-          "color",
-          "fontFamily",
-          "fontSize",
-          "fontStyle",
-          "fontWeight",
-          // "textDecoration", // todo add this
-          "lineHeight",
-        ] as const).forEach((style) => {
+        (
+          [
+            "color",
+            "fontFamily",
+            "fontSize",
+            "fontStyle",
+            "fontWeight",
+            // "textDecoration", // todo add this
+            "lineHeight",
+          ] as const
+        ).forEach((style) => {
           if (!elementStyles[style]) return;
           if (style === "fontStyle" && elementStyles[style] === "normal")
             return;
@@ -131,18 +133,20 @@ export function exportOutline(
     styles.width = `${node.element.offsetWidth}px`;
     styles.height = `${node.element.offsetHeight}px`;
 
-    ([
-      "backgroundColor",
-      "opacity",
-      "transform",
-      ...expandDirectionsSuffixed("border", "Width"),
-      ...expandDirectionsSuffixed("border", "Color"),
-      ...expandDirectionsSuffixed("border", "Style"),
-      "borderTopLeftRadius",
-      "borderTopRightRadius",
-      "borderBottomLeftRadius",
-      "borderBottomRightRadius",
-    ] as const).forEach((style) => {
+    (
+      [
+        "backgroundColor",
+        "opacity",
+        "transform",
+        ...expandDirectionsSuffixed("border", "Width"),
+        ...expandDirectionsSuffixed("border", "Color"),
+        ...expandDirectionsSuffixed("border", "Style"),
+        "borderTopLeftRadius",
+        "borderTopRightRadius",
+        "borderBottomLeftRadius",
+        "borderBottomRightRadius",
+      ] as const
+    ).forEach((style) => {
       if (!elementStyles[style]) return;
       if (["rgb(0, 0, 0)", "0px", "none"].includes(elementStyles[style]))
         return;

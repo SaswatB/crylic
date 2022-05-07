@@ -7,16 +7,30 @@ export class NextPlugin extends PluginBase {
     return config.isNextInstalled();
   }
 
-  public override overrideProjectConfig(config: ProjectConfig, { fs }: { fs: typeof import('fs') }): ProjectConfig {
+  public override overrideProjectConfig(
+    config: ProjectConfig,
+    { fs }: { fs: typeof import("fs") }
+  ): ProjectConfig {
     // if a bootstrap file isn't explicitly defined, use Next's default
     if (config.configFile.bootstrap === undefined) {
-      const nextBootstrap = ['', 'src/'].reduce((acc, dir) => [...acc, ...['js', 'jsx', 'ts', 'tsx'].map(ext => `${dir}pages/_app.${ext}`)], [] as string[]).find(file =>
-        fs.existsSync(config.projectPath.join(file).getNativePath()));
+      const nextBootstrap = ["", "src/"]
+        .reduce(
+          (acc, dir) => [
+            ...acc,
+            ...["js", "jsx", "ts", "tsx"].map(
+              (ext) => `${dir}pages/_app.${ext}`
+            ),
+          ],
+          [] as string[]
+        )
+        .find((file) =>
+          fs.existsSync(config.projectPath.join(file).getNativePath())
+        );
       if (nextBootstrap) {
         config.configFile.bootstrap = nextBootstrap;
       }
     }
-    return config
+    return config;
   }
 
   public override overrideRenderStarter(def: RenderStarterDefinition) {
@@ -103,7 +117,7 @@ module.exports = function (options, webpack) {
 };
 `.trim();
   }
-  
+
   public override overrideWebpackDevServer() {
     return `
 /**

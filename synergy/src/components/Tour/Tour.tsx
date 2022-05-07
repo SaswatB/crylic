@@ -21,13 +21,11 @@ export const TourContext = React.createContext({
 });
 
 export const TourProvider: FunctionComponent = ({ children }) => {
-  const [shownTourSteps, setShownTourSteps] = useLocalStorage<string[]>(
-    "shownTourSteps"
-  );
+  const [shownTourSteps, setShownTourSteps] =
+    useLocalStorage<string[]>("shownTourSteps");
   const [isAFloaterVisible, setAFloaterVisible] = useState(false);
-  const [tourDisabled, setTourDisabled] = useLocalStorage<boolean>(
-    "tourDisabled"
-  );
+  const [tourDisabled, setTourDisabled] =
+    useLocalStorage<boolean>("tourDisabled");
   return (
     <TourContext.Provider
       value={{

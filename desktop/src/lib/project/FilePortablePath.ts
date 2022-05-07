@@ -7,18 +7,24 @@ export class FilePortablePath extends PortablePath {
   public constructor(protected nativePath: string) {
     super();
   }
-  
+
   public override isEqual(path: PortablePath): boolean {
-    if (!(path instanceof FilePortablePath)) throw new Error("Unsupported PortablePath type");
+    if (!(path instanceof FilePortablePath))
+      throw new Error("Unsupported PortablePath type");
     return this.nativePath === path.nativePath;
   }
 
   public override join(path: string): PortablePath {
-    return new FilePortablePath(pathModule.join(this.nativePath, normalizePath(path, pathModule.sep)));
+    return new FilePortablePath(
+      pathModule.join(this.nativePath, normalizePath(path, pathModule.sep))
+    );
   }
   public override relative(to: PortablePath): PortablePath {
-    if (!(to instanceof FilePortablePath)) throw new Error("Unsupported PortablePath type");
-    return new FilePortablePath(pathModule.relative(this.nativePath, to.nativePath));
+    if (!(to instanceof FilePortablePath))
+      throw new Error("Unsupported PortablePath type");
+    return new FilePortablePath(
+      pathModule.relative(this.nativePath, to.nativePath)
+    );
   }
 
   public override getDirname(): PortablePath {

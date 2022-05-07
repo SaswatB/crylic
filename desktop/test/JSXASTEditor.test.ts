@@ -9,10 +9,10 @@ import noStyleFinalFixture from "./fixtures/styles/inline/no-style-final.fixture
 import { runEditor, runEditorApply } from "./lib/test-utils";
 
 // these are imported as fixtures so they're actually strings
-const existingStyleBase = (existingStyleBaseFixture as unknown) as string;
-const existingStyleFinal = (existingStyleFinalFixture as unknown) as string;
-const noStyleBase = (noStyleBaseFixture as unknown) as string;
-const noStyleFinal = (noStyleFinalFixture as unknown) as string;
+const existingStyleBase = existingStyleBaseFixture as unknown as string;
+const existingStyleFinal = existingStyleFinalFixture as unknown as string;
+const noStyleBase = noStyleBaseFixture as unknown as string;
+const noStyleFinal = noStyleFinalFixture as unknown as string;
 
 const runJSXEditor = (
   code: string,

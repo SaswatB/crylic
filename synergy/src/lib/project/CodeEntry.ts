@@ -251,9 +251,8 @@ export class CodeEntry {
   public readonly exportIsDefault$ = this.metadata$.pipe(
     ltMap((m) => m.exportIsDefault)
   );
-  private astCache:
-    | { codeRevisionId: number; ast: ASTType }
-    | undefined = undefined;
+  private astCache: { codeRevisionId: number; ast: ASTType } | undefined =
+    undefined;
   public readonly ast$ = this.metadata$.pipe(
     ltMap((m): any => {
       if (!m.rawAst) return undefined;

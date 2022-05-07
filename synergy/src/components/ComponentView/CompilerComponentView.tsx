@@ -157,9 +157,8 @@ export const CompilerComponentView: FunctionComponent<
                 tempStyles.current[lookupId] =
                   tempStyles.current[lookupId] || {};
                 Object.entries(styles).forEach(([styleName, styleValue]) => {
-                  tempStyles.current[lookupId]![
-                    styleName as StyleKeys
-                  ] = styleValue;
+                  tempStyles.current[lookupId]![styleName as StyleKeys] =
+                    styleValue;
                 });
                 applyTempStyles();
                 if (persistRender) rerender();

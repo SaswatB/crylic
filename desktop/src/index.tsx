@@ -6,9 +6,8 @@ if (__IS_PRODUCTION__) {
 
   // @sentry/electron breaks webpack compilation, so just use @sentry/browser instead
   const Sentry = require("@sentry/browser") as typeof import("@sentry/browser");
-  const {
-    RewriteFrames,
-  } = require("@sentry/integrations") as typeof import("@sentry/integrations");
+  const { RewriteFrames } =
+    require("@sentry/integrations") as typeof import("@sentry/integrations");
 
   const appPath = window.process.argv
     .find((s) => s.startsWith("--appPath="))
@@ -16,8 +15,7 @@ if (__IS_PRODUCTION__) {
     .replace(/\\/g, "/");
 
   Sentry.init({
-    dsn:
-      "https://bdbb761a7a54493a8ef0343516421d0a@o400877.ingest.sentry.io/5259708",
+    dsn: "https://bdbb761a7a54493a8ef0343516421d0a@o400877.ingest.sentry.io/5259708",
     release: __COMMIT_HASH__,
     beforeSend: (e) => {
       if (store.get("tracking_disabled") === true) return null;

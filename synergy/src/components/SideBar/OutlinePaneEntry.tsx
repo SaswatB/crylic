@@ -45,11 +45,10 @@ function useOutline(renderEntry: RenderEntry) {
     );
   }, [project, reactMetadata, renderEntry, viewContext]);
 
-  useEffect(() => void refreshOutline(), [
-    renderEntry,
-    reactMetadata,
-    refreshOutline,
-  ]);
+  useEffect(
+    () => void refreshOutline(),
+    [renderEntry, reactMetadata, refreshOutline]
+  );
 
   // recalculate the component view outline when the component view compiles, reloads, or changes its route
   useObservableCallback(renderEntry.viewReloaded$, refreshOutline);

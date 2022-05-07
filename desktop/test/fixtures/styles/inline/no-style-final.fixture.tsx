@@ -5,7 +5,8 @@ export default function () {
     <div
       style={{
         display: "flex",
-        backgroundColor: "#000000"
-      }} />
+        backgroundColor: "#000000",
+      }}
+    />
   );
 }

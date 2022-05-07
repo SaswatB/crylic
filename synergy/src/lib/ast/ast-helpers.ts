@@ -133,15 +133,15 @@ export const ifVariableDeclarator = (
     ? (node as t.VariableDeclarator)
     : undefined;
 
-export const eitherIf = <S, T, U extends S>(check: (n: S) => T | undefined) => (
-  n: U
-) => {
-  const checkRes = check(n);
-  if (checkRes !== undefined) {
-    return left(checkRes);
-  }
-  return right(n as Exclude<U, T>);
-};
+export const eitherIf =
+  <S, T, U extends S>(check: (n: S) => T | undefined) =>
+  (n: U) => {
+    const checkRes = check(n);
+    if (checkRes !== undefined) {
+      return left(checkRes);
+    }
+    return right(n as Exclude<U, T>);
+  };
 
 export const ifString = (value: unknown) =>
   typeof value === "string" ? value : undefined;
@@ -610,29 +610,28 @@ export const traverseStyleSheetRuleSets = (
   });
 };
 
-export const editAST = <R, S, T extends object | void, U extends any[]>(
-  apply: (arg0: S & { ast: R }, ...rest: U) => T
-) => (
-  arg0: S & { ast: R },
-  ...rest: U
-): T extends void ? R : T & { ast: R } => {
-  let applyResult: T | undefined = undefined;
-  const newAst = clone(arg0.ast, undefined, undefined, undefined, true);
-  // const newAst = produce(ast, (draft) => {
-  //   console.log('using draft')
-  applyResult = apply({ ...arg0, ast: newAst }, ...rest);
-  //   console.log('finished draft')
-  // });
-  if (applyResult) {
+export const editAST =
+  <R, S, T extends object | void, U extends any[]>(
+    apply: (arg0: S & { ast: R }, ...rest: U) => T
+  ) =>
+  (arg0: S & { ast: R }, ...rest: U): T extends void ? R : T & { ast: R } => {
+    let applyResult: T | undefined = undefined;
+    const newAst = clone(arg0.ast, undefined, undefined, undefined, true);
+    // const newAst = produce(ast, (draft) => {
+    //   console.log('using draft')
+    applyResult = apply({ ...arg0, ast: newAst }, ...rest);
+    //   console.log('finished draft')
+    // });
+    if (applyResult) {
+      // @ts-ignore ts bug
+      return {
+        ...applyResult,
+        ast: deepFreeze(newAst),
+      };
+    }
     // @ts-ignore ts bug
-    return {
-      ...applyResult,
-      ast: deepFreeze(newAst),
-    };
-  }
-  // @ts-ignore ts bug
-  return deepFreeze(newAst);
-};
+    return deepFreeze(newAst);
+  };
 
 export function hashString(input: string) {
   let hash = 0;

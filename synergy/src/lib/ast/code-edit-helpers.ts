@@ -36,9 +36,8 @@ export const addElementHelper = async (
   if (typeof targetElement === "string") {
     lookupId = targetElement;
   } else {
-    lookupId = project.primaryElementEditor.getLookupIdFromHTMLElement(
-      targetElement
-    );
+    lookupId =
+      project.primaryElementEditor.getLookupIdFromHTMLElement(targetElement);
     if (!lookupId) return;
   }
 

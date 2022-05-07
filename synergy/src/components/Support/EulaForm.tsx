@@ -358,9 +358,8 @@ const eula = (
 
 export function EulaForm({ children }: { children: React.ReactNode }) {
   const { enqueueSnackbar } = useSnackbar();
-  const [acceptedEula, setAcceptedEula] = useLocalStorage<boolean>(
-    "acceptedEula"
-  );
+  const [acceptedEula, setAcceptedEula] =
+    useLocalStorage<boolean>("acceptedEula");
 
   if (acceptedEula) return <>{children}</>;
 

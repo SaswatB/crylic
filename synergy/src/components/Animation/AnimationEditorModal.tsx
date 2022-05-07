@@ -28,9 +28,8 @@ import {
 export const AnimationEditorModal = createModal<{}, void>(({ resolve }) => {
   const selectService = useService(SelectService);
 
-  const [animationProperties, setAnimationProperties] = useState<
-    AnimationPropertyMap
-  >({});
+  const [animationProperties, setAnimationProperties] =
+    useState<AnimationPropertyMap>({});
   useObservableCallback(selectService.selectedElement$, (selectedElement) => {
     // convert the selected element's props to a map of animation properties per animation type
     const props = selectedElement?.sourceMetadata?.directProps || {};

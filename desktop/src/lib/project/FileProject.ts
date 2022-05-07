@@ -115,9 +115,14 @@ export class FileProject extends Project {
             );
 
             if (symlink) {
-              fs.symlinkSync(await streamToString(readStream), dest.getNativePath());
+              fs.symlinkSync(
+                await streamToString(readStream),
+                dest.getNativePath()
+              );
             } else {
-              readStream.pipe(fs.createWriteStream(dest.getNativePath(), { mode: procMode }));
+              readStream.pipe(
+                fs.createWriteStream(dest.getNativePath(), { mode: procMode })
+              );
             }
 
             if (++readCount === zipFile.entryCount) {
@@ -138,13 +143,18 @@ export class FileProject extends Project {
     return FileProject.createProjectFromDirectory(folderPath, pluginService);
   }
 
-  public static async createProjectFromDirectory(folderPath: PortablePath, pluginService: PluginService) {
+  public static async createProjectFromDirectory(
+    folderPath: PortablePath,
+    pluginService: PluginService
+  ) {
     // build metadata
-    let config: ProjectConfig = FileProjectConfig.createProjectConfigFromDirectory(
-      folderPath
-    );
+    let config: ProjectConfig =
+      FileProjectConfig.createProjectConfigFromDirectory(folderPath);
     pluginService.activatePlugins(config);
-    config = pluginService.reduceActive((acc, p) => p.overrideProjectConfig(acc, { fs }), config);
+    config = pluginService.reduceActive(
+      (acc, p) => p.overrideProjectConfig(acc, { fs }),
+      config
+    );
     const project = new FileProject(folderPath, config);
 
     // process all the source files
@@ -157,10 +167,17 @@ export class FileProject extends Project {
         if (
           config
             .getIgnoredPaths()
-            .find((g) => minimatch(filePath.getNormalizedPath().replace(folderPath.getNormalizedPath(), ""), g))
+            .find((g) =>
+              minimatch(
+                filePath
+                  .getNormalizedPath()
+                  .replace(folderPath.getNormalizedPath(), ""),
+                g
+              )
+            )
         ) {
           console.log("ignoring file due to config", filePath);
-          return
+          return;
         }
         if (fs.statSync(filePath.getNativePath()).isDirectory()) {
           // recurse through the directory's children
@@ -170,7 +187,9 @@ export class FileProject extends Project {
           file.match(STYLE_EXTENSION_REGEX)
         ) {
           // add scripts/styles as code entries
-          const code = fs.readFileSync(filePath.getNativePath(), { encoding: "utf-8" });
+          const code = fs.readFileSync(filePath.getNativePath(), {
+            encoding: "utf-8",
+          });
           fileCodeEntries.push(new CodeEntry(project, filePath, code));
         } else if (file.match(IMAGE_EXTENSION_REGEX)) {
           // add images as code entries without text code
@@ -199,9 +218,15 @@ export class FileProject extends Project {
     // watch for changes on files in the source folder
     this.fileWatcher = chokidar
       .watch(path.getNativePath(), {
-        ignored: (p) => !!config
-          .getIgnoredPaths()
-          .find((g) => minimatch(normalizePath(p.replace(path.getNativePath(), ""), "/"), g))
+        ignored: (p) =>
+          !!config
+            .getIgnoredPaths()
+            .find((g) =>
+              minimatch(
+                normalizePath(p.replace(path.getNativePath(), ""), "/"),
+                g
+              )
+            ),
       })
       .on("change", (changePath) => {
         this.fileChangeQueue.add(changePath);
@@ -306,9 +331,7 @@ export class FileProject extends Project {
 
   public addAsset(source: PortablePath) {
     const getAssetPath = (name: string) =>
-      this.path.join(
-        `${this.config.getDefaultNewAssetFolder()}/${name}`
-      );
+      this.path.join(`${this.config.getDefaultNewAssetFolder()}/${name}`);
     const fileName = source.getBasename();
     const assetPath = { path: getAssetPath(fileName) };
     let counter = 1;

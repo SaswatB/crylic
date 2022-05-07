@@ -368,7 +368,7 @@ export const useAutocomplete: useInputFunction<{
               name: `${value}`,
               value,
             }
-          : ((null as unknown) as undefined))
+          : (null as unknown as undefined))
       }
       onChange={(event, newValue) => {
         const v =

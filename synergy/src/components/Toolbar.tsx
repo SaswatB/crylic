@@ -42,18 +42,16 @@ const useAdderTab = (
 ) => {
   const { config } = useGlobalConfig();
 
-  const [
-    selectedComponentConfigIndex,
-    renderSelectComponentConfig,
-  ] = usePersistentSelectInput({
-    options: config.componentConfigs.map((c, index) => ({
-      name: c.name,
-      value: `${index}`,
-    })),
-    label: "Component Library",
-    initialValue: "0",
-    localStorageKey: "adder-tab-cc-index",
-  });
+  const [selectedComponentConfigIndex, renderSelectComponentConfig] =
+    usePersistentSelectInput({
+      options: config.componentConfigs.map((c, index) => ({
+        name: c.name,
+        value: `${index}`,
+      })),
+      label: "Component Library",
+      initialValue: "0",
+      localStorageKey: "adder-tab-cc-index",
+    });
 
   const renderAdderButton = (component: ComponentDefinition, key: number) => (
     <button

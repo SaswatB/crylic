@@ -32,9 +32,10 @@ export class RenderEntry {
   }
 
   // #region compile tracking
-  public readonly compileStatus$ = new BehaviorSubject<
-    RenderEntryCompileStatus
-  >(RenderEntryCompileStatus.PENDING);
+  public readonly compileStatus$ =
+    new BehaviorSubject<RenderEntryCompileStatus>(
+      RenderEntryCompileStatus.PENDING
+    );
   private compileTasks: (() => void)[] = []; // list of tasks to run on compile, cleared on compile or error
 
   public updateCompileStatus(status: RenderEntryCompileStatus) {

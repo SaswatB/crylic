@@ -54,9 +54,8 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
   const webpackConfig = useAsyncCallback(dumpWebpackConfigWithWorker);
   const webpackOverridePath = project.config.getFullOverrideWebpackPath();
   const [webpackOverride, setWebpackOverride] = useState(exampleWebpackConfig);
-  const [webpackOverrideOriginal, setWebpackOverrideOriginal] = useState<
-    string
-  >();
+  const [webpackOverrideOriginal, setWebpackOverrideOriginal] =
+    useState<string>();
   const madeChanges =
     webpackOverrideOriginal !== undefined &&
     webpackOverride !== webpackOverrideOriginal;

@@ -179,11 +179,12 @@ export const CodeEditor: FunctionComponent<Props> = ({
       // try to find an element at the cursor location in the latest code ast
       let lookupId;
       try {
-        lookupId = project.primaryElementEditor.getElementLookupIdAtCodePosition(
-          { ast: (await ltTakeNext(codeEntry.ast$))!, codeEntry },
-          e.position.lineNumber,
-          e.position.column
-        );
+        lookupId =
+          project.primaryElementEditor.getElementLookupIdAtCodePosition(
+            { ast: (await ltTakeNext(codeEntry.ast$))!, codeEntry },
+            e.position.lineNumber,
+            e.position.column
+          );
       } catch (err) {
         console.log(err);
       }

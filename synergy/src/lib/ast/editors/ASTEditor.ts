@@ -108,9 +108,9 @@ export abstract class StyleASTEditor<ASTType> extends ASTEditor<ASTType> {
   ): void;
 }
 
-export abstract class ElementASTEditor<ASTType> extends StyleASTEditor<
+export abstract class ElementASTEditor<
   ASTType
-> {
+> extends StyleASTEditor<ASTType> {
   public abstract getLookupIdFromHTMLElement(
     element: HTMLElement
   ): string | undefined;

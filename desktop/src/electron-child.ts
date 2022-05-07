@@ -67,9 +67,8 @@ if (process.argv[2] === "npm-install") {
   moduleRequire("yarn/lib/cli");
 } else if (process.argv[2] === "yarn2-install") {
   // not currently used, likely won't be needed since yarn1 can invoke yarn2
-  const { Cache, Configuration, Project, StreamReport } = moduleRequire(
-    "@yarnpkg/core"
-  );
+  const { Cache, Configuration, Project, StreamReport } =
+    moduleRequire("@yarnpkg/core");
   const { npath } = moduleRequire("@yarnpkg/fslib");
   const yarnPlugins = [
     "@yarnpkg/plugin-compat",

@@ -376,7 +376,8 @@ export function CSSUtilities() {}
     //for pseudo-elements that were defined in CSS2 (first-letter, first-line, before and after)
     //this is non-greedy because it's used to check one selector at a time, not multiple
     //comma-delimited selectors, and a single selector is only allowed to contain one pseudo-element
-    REGEX_SINGLE_PSEUDO_ELEMENT = /[:]{1,2}(?:first\-(letter|line)|before|after|selection|value|choices|repeat\-(item|index)|outside|alternate|(line\-)?marker|slot\([_a-z0-9\-\+\.\\]*\))/i,
+    REGEX_SINGLE_PSEUDO_ELEMENT =
+      /[:]{1,2}(?:first\-(letter|line)|before|after|selection|value|choices|repeat\-(item|index)|outside|alternate|(line\-)?marker|slot\([_a-z0-9\-\+\.\\]*\))/i,
     //match pseudo-elements, used as part of specificity calculation
     //I know this code is almost an exact duplication of the single pseudo-element regex
     //that we could avoid by saving the common code as a string and then using the RegExp constructor
@@ -384,15 +385,18 @@ export function CSSUtilities() {}
     //and I've done extensive testing with these ones now, it would make me too nervous to change them
     //(because I did change them, and it made me nervous, so I changed them back!)
     //anyway it's only 142 bytes, so it's not gonna break the bank to repeat it once :-P
-    REGEX_PSEUDO_ELEMENTS = /([:]{1,2}(?:first\-(letter|line)|before|after|selection|value|choices|repeat\-(item|index)|outside|alternate|(line\-)?marker|slot\([_a-z0-9\-\+\.\\]*\)))/gi,
+    REGEX_PSEUDO_ELEMENTS =
+      /([:]{1,2}(?:first\-(letter|line)|before|after|selection|value|choices|repeat\-(item|index)|outside|alternate|(line\-)?marker|slot\([_a-z0-9\-\+\.\\]*\)))/gi,
     //match all pseudo-classes except :not(), used as part of specificity calculation:
     //for the purposes of specificity calculation, selectors inside :not() conditions
     //are counted irrespective of the negation, however :not() itself is not counted as a pseudo-class
     //this will also let through some fake permutations, like "nth-letter" and "only-of-child",
     //but that doesn't really matter .. it might be fun for someone to fool with, you never know!
-    REGEX_PSEUDO_CLASSES_EXCEPT_NOT = /([:](?:(link|visited|active|hover|focus|lang|root|empty|target|enabled|disabled|checked|default|valid|invalid|required|optional)|((in|out\-of)\-range)|(read\-(only|write))|(first|last|only|nth)(\-last)?\-(child|of\-type))(?:\([_a-z0-9\-\+\.\\]*\))?)/gi,
+    REGEX_PSEUDO_CLASSES_EXCEPT_NOT =
+      /([:](?:(link|visited|active|hover|focus|lang|root|empty|target|enabled|disabled|checked|default|valid|invalid|required|optional)|((in|out\-of)\-range)|(read\-(only|write))|(first|last|only|nth)(\-last)?\-(child|of\-type))(?:\([_a-z0-9\-\+\.\\]*\))?)/gi,
     //match attribute selectors (including substring-matching), used as part of specificity calculation
-    REGEX_ATTR_SELECTORS = /(\[\s*[_a-z0-9-:\.\|\\]+\s*(?:[~\|\*\^\$]?=\s*[\"\'][^\"\']*[\"\'])?\s*\])/gi,
+    REGEX_ATTR_SELECTORS =
+      /(\[\s*[_a-z0-9-:\.\|\\]+\s*(?:[~\|\*\^\$]?=\s*[\"\'][^\"\']*[\"\'])?\s*\])/gi,
     //match ID selectors, used as part of specificity calculation
     REGEX_ID_SELECTORS = /(#[a-z]+[_a-z0-9-:\\]*)/gi,
     //match class selectors, used as part of specificity calculation
@@ -2114,7 +2118,8 @@ export function CSSUtilities() {}
 
     //define regexes for matching import statements
     //which may include media definitions and queries
-    var importreg = /@import\s*(?:url\s*\(\s*[\'\"]?|[\'\"])([^\'\"\)]+)(?:[\'\"]|[\'\"]?\s*\))([^;]*)(;|$)/gi;
+    var importreg =
+      /@import\s*(?:url\s*\(\s*[\'\"]?|[\'\"])([^\'\"\)]+)(?:[\'\"]|[\'\"]?\s*\))([^;]*)(;|$)/gi;
 
     //look for @import statements in the text
     var matches = styletext.match(importreg);

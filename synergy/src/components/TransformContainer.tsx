@@ -66,10 +66,8 @@ export const TransformContainer: FunctionComponent<Props> = ({
         0.1,
         3
       );
-      const {
-        top: containerTop,
-        left: containerLeft,
-      } = transformContainerRef.current.getBoundingClientRect();
+      const { top: containerTop, left: containerLeft } =
+        transformContainerRef.current.getBoundingClientRect();
 
       const ox = e.nativeEvent.pageX - containerLeft;
       const oy = e.nativeEvent.pageY - containerTop;

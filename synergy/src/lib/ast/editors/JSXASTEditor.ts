@@ -306,11 +306,12 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     let resultIndices: number[] = [];
     // find all jsx elements with recently added data attributes
     traverseJSXElements(ast, (path, index) => {
-      const hasRecentlyAddedDataAttr = path.value.openingElement.attributes?.find(
-        (attr) =>
-          ifJSXAttribute(attr)?.name.name ===
-          `data-${JSX_RECENTLY_ADDED_DATA_ATTR}`
-      );
+      const hasRecentlyAddedDataAttr =
+        path.value.openingElement.attributes?.find(
+          (attr) =>
+            ifJSXAttribute(attr)?.name.name ===
+            `data-${JSX_RECENTLY_ADDED_DATA_ATTR}`
+        );
       if (hasRecentlyAddedDataAttr) {
         resultIndices.push(index);
       }
@@ -570,10 +571,9 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     const child = b.jsxElement(
       b.jsxOpeningElement(
         childElementTag,
-        Object.entries(
-          omit(childAttributes, "textContent")
-        ).map(([name, value]) =>
-          b.jsxAttribute(b.jsxIdentifier(name), valueToJSXLiteral(value))
+        Object.entries(omit(childAttributes, "textContent")).map(
+          ([name, value]) =>
+            b.jsxAttribute(b.jsxIdentifier(name), valueToJSXLiteral(value))
         ),
         selfClosing
       ),
@@ -689,9 +689,10 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       if (existingStyleProp) {
         if (styleValue === null) {
           // if the style is set to null, delete the attribute
-          existingStyleLiteral!.properties = existingStyleLiteral!.properties.filter(
-            (prop) => prop !== existingStyleProp
-          );
+          existingStyleLiteral!.properties =
+            existingStyleLiteral!.properties.filter(
+              (prop) => prop !== existingStyleProp
+            );
         } else {
           existingStyleProp.value = styleValue;
         }
@@ -794,12 +795,11 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     if (importDef.skipIdentifier) return null;
 
     // try to find the requested export specifier on the import declaration
-    let assetImportIdentifier = assetImport.specifiers?.find((node): node is
-      | t.ImportDefaultSpecifier
-      | t.ImportSpecifier =>
-      importDef.isDefault
-        ? node.type === "ImportDefaultSpecifier"
-        : node.type === "ImportSpecifier" && node.imported.name === importName
+    let assetImportIdentifier = assetImport.specifiers?.find(
+      (node): node is t.ImportDefaultSpecifier | t.ImportSpecifier =>
+        importDef.isDefault
+          ? node.type === "ImportDefaultSpecifier"
+          : node.type === "ImportSpecifier" && node.imported.name === importName
     );
     // add an import specifier if none is found
     if (!assetImportIdentifier) {

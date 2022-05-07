@@ -99,8 +99,8 @@ export class SelectService {
         eagerMap((project) => project?.renderEntries$ || of<RenderEntry[]>([]))
       )
       .subscribe((renderEntries) => {
-        const selectedElementRenderId = this.selectedElement$.getValue()
-          ?.renderEntry.id;
+        const selectedElementRenderId =
+          this.selectedElement$.getValue()?.renderEntry.id;
         if (
           selectedElementRenderId !== undefined &&
           !renderEntries.find((e) => e.id === selectedElementRenderId)
@@ -221,9 +221,8 @@ export class SelectService {
     }
 
     // resolve code entry
-    const codeId = this.project?.primaryElementEditor.getCodeIdFromLookupId(
-      lookupId
-    );
+    const codeId =
+      this.project?.primaryElementEditor.getCodeIdFromLookupId(lookupId);
     if (!codeId) {
       console.log("dropping element select, no code id");
       return;
@@ -278,10 +277,11 @@ export class SelectService {
       renderEntry,
       lookupId,
       index,
-      sourceMetadata: this.project!.primaryElementEditor.getSourceMetaDataFromLookupId(
-        { ast: (await codeEntry.getLatestAst()) as ASTType, codeEntry },
-        lookupId
-      ),
+      sourceMetadata:
+        this.project!.primaryElementEditor.getSourceMetaDataFromLookupId(
+          { ast: (await codeEntry.getLatestAst()) as ASTType, codeEntry },
+          lookupId
+        ),
       hasDomPassthrough: true,
       element: primaryElement,
       elements: componentElements,

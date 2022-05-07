@@ -19,26 +19,29 @@ export const ElementEditorPane: FunctionComponent = () => {
   const { selectedElement, editor: elementEditor } =
     useObservable(elementEditorService.selectedElementWithEditor$) || {};
 
-  const onChangeStyleGroup: ElementEditorFieldProps["onChangeStyleGroup"] = useMemo(
-    () => selectService.updateSelectedStyleGroup.bind(selectService),
-    [selectService]
-  );
+  const onChangeStyleGroup: ElementEditorFieldProps["onChangeStyleGroup"] =
+    useMemo(
+      () => selectService.updateSelectedStyleGroup.bind(selectService),
+      [selectService]
+    );
 
-  const onChangeAttributes: ElementEditorFieldProps["onChangeAttributes"] = useCallback(
-    (attr) =>
-      selectService.updateSelectedElement((editor, editContext) =>
-        editor.updateElementAttributes(editContext, attr)
-      ),
-    [selectService]
-  );
+  const onChangeAttributes: ElementEditorFieldProps["onChangeAttributes"] =
+    useCallback(
+      (attr) =>
+        selectService.updateSelectedElement((editor, editContext) =>
+          editor.updateElementAttributes(editContext, attr)
+        ),
+      [selectService]
+    );
 
-  const onChangeComponent: ElementEditorFieldProps["onChangeComponent"] = useCallback(
-    (component) =>
-      selectService.updateSelectedElement((editor, editContext) =>
-        editor.updateElementComponent(editContext, component)
-      ),
-    [selectService]
-  );
+  const onChangeComponent: ElementEditorFieldProps["onChangeComponent"] =
+    useCallback(
+      (component) =>
+        selectService.updateSelectedElement((editor, editContext) =>
+          editor.updateElementComponent(editContext, component)
+        ),
+      [selectService]
+    );
 
   const context = useMemo<ElementEditorFieldProps>(
     () => ({

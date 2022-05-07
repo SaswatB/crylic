@@ -11,10 +11,8 @@ import { usePackageInstallerRecoil } from "../../hooks/recoil/usePackageInstalle
 import { Terminal } from "../Terminal";
 
 export const InstallDialog: FunctionComponent = () => {
-  const {
-    installingPackages,
-    installPackagesOutput,
-  } = usePackageInstallerRecoil();
+  const { installingPackages, installPackagesOutput } =
+    usePackageInstallerRecoil();
 
   const [showInstallDialog, setShowInstallDialog] = useState(false);
   useEffect(() => {

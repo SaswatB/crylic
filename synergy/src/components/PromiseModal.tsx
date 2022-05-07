@@ -10,13 +10,13 @@ export const ModalContainer = () => {
   return <>{modal}</>;
 };
 
-export const createModal = <P, R>(
-  Modal: React.FunctionComponent<P & { resolve: (v: R) => void }>
-) => (props: P) =>
-  new Promise<R>((resolve) => {
-    const resolveWrapper = (r: R) => {
-      resolve(r);
-      setModalInContainer?.(null);
-    };
-    setModalInContainer?.(<Modal {...props} resolve={resolveWrapper} />);
-  });
+export const createModal =
+  <P, R>(Modal: React.FunctionComponent<P & { resolve: (v: R) => void }>) =>
+  (props: P) =>
+    new Promise<R>((resolve) => {
+      const resolveWrapper = (r: R) => {
+        resolve(r);
+        setModalInContainer?.(null);
+      };
+      setModalInContainer?.(<Modal {...props} resolve={resolveWrapper} />);
+    });

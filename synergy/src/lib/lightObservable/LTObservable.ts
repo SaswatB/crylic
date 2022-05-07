@@ -15,8 +15,11 @@ export class LTObservable<T> {
     let isSubscribed = true;
 
     return {
-      unsubscribe: () => {this.unsubscribe(id); isSubscribed = false},
-      isSubscribed: () => isSubscribed
+      unsubscribe: () => {
+        this.unsubscribe(id);
+        isSubscribed = false;
+      },
+      isSubscribed: () => isSubscribed,
     };
   }
 
@@ -51,11 +54,15 @@ class LTDerivedObservable<S, T> extends LTObservable<T> {
     if (!this.baseSubscription) {
       const subscription = this.base.subscribe((newValue) =>
         this.operator.next(newValue, (newOperatorValue) => {
-          if (!subscription.isSubscribed()) return // ignore events from the operator if the base is unsubscribed
+          if (!subscription.isSubscribed()) return; // ignore events from the operator if the base is unsubscribed
 
-          if (newOperatorValue instanceof LTObservable) { // if the operator returns an observable, subscribe to it
-            if (this.operatorSubscription) this.operatorSubscription.unsubscribe();
-            this.operatorSubscription = newOperatorValue.subscribe((subOperatorValue) => this.pushToSubscribers(subOperatorValue))
+          if (newOperatorValue instanceof LTObservable) {
+            // if the operator returns an observable, subscribe to it
+            if (this.operatorSubscription)
+              this.operatorSubscription.unsubscribe();
+            this.operatorSubscription = newOperatorValue.subscribe(
+              (subOperatorValue) => this.pushToSubscribers(subOperatorValue)
+            );
           } else {
             this.pushToSubscribers(newOperatorValue);
           }

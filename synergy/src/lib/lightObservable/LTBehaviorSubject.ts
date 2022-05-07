@@ -3,7 +3,7 @@ import { BehaviorSubject } from "rxjs";
 import { LTObservable } from "./LTObservable";
 
 export class LTBehaviorSubject<T> extends LTObservable<T> {
-  private rxjsSubject: BehaviorSubject<T> | undefined
+  private rxjsSubject: BehaviorSubject<T> | undefined;
 
   public constructor(private value: T) {
     super();
@@ -25,11 +25,11 @@ export class LTBehaviorSubject<T> extends LTObservable<T> {
     this.pushToSubscribers(value);
     this.rxjsSubject?.next(value);
   }
-  
+
   public toRXJS() {
     if (!this.rxjsSubject) {
       this.rxjsSubject = new BehaviorSubject(this.value);
     }
-    return this.rxjsSubject
+    return this.rxjsSubject;
   }
 }

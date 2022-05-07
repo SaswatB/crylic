@@ -15,10 +15,10 @@ export function useTracking(
     data?: { [key: string]: string | number | boolean };
   }
 ) {
-  const trackEvent = useCallback(() => track(eventName, options?.data), [
-    eventName,
-    options,
-  ]);
+  const trackEvent = useCallback(
+    () => track(eventName, options?.data),
+    [eventName, options]
+  );
   useEffect(() => {
     if (options?.onMount) trackEvent();
     // eslint-disable-next-line react-hooks/exhaustive-deps

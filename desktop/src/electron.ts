@@ -16,9 +16,8 @@ const sentryPath = path.join(
 __non_webpack_require__(sentryPath);
 
 const windowStateKeeper = __non_webpack_require__("electron-window-state");
-const { app, ipcMain, BrowserWindow, dialog } = __non_webpack_require__(
-  "electron"
-);
+const { app, ipcMain, BrowserWindow, dialog } =
+  __non_webpack_require__("electron");
 
 app.commandLine.appendSwitch(
   "disable-features",

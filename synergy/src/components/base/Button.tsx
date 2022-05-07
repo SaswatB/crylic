@@ -54,7 +54,7 @@ export const ButtonGroupH = styled("div", {
   flex-shrink: 0;
   overflow-x: auto;
 
-  > ${Button}, > ${(): string => (ButtonGroupV as unknown) as string} {
+  > ${Button}, > ${(): string => ButtonGroupV as unknown as string} {
     flex-grow: 1;
     min-width: min-content;
 

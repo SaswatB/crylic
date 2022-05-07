@@ -116,9 +116,11 @@ export class JSXActionProvider extends ActionProvider<JSXASTEditorAction> {
           );
           // todo allow the user to give the class name
           styleClassName = `st-${codeEntry.friendlyName.toLowerCase()}-${elementName}-${index}`;
-          path.node.openingElement.attributes = path.node.openingElement.attributes?.filter(
-            (attr) => attr.type !== "JSXAttribute" || attr.name.name !== "style"
-          );
+          path.node.openingElement.attributes =
+            path.node.openingElement.attributes?.filter(
+              (attr) =>
+                attr.type !== "JSXAttribute" || attr.name.name !== "style"
+            );
           // todo merge with existing attribute
           path.node.openingElement.attributes?.push(
             b.jsxAttribute(

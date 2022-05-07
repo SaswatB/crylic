@@ -3,9 +3,7 @@ import { useEffect } from "react";
 import { useUpdatingRef } from "./useUpdatingRef";
 
 export interface BaseObservable<T> {
-  subscribe(
-    callback: (newValue: T) => void
-  ): {
+  subscribe(callback: (newValue: T) => void): {
     unsubscribe(): void;
   };
 }

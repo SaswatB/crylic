@@ -162,9 +162,8 @@ export const AssetTreePane: FunctionComponent<Props> = ({
 
       // todo add an option to keep showing extensions
       let extensionRegex: RegExp | undefined;
-      let projectTreePostProcess:
-        | ((projectTree: Tree) => void)
-        | undefined = undefined;
+      let projectTreePostProcess: ((projectTree: Tree) => void) | undefined =
+        undefined;
       switch (assetsFilter) {
         case "components":
           codeEntriesWithComponent$ = codeEntriesWithComponent$.pipe(
@@ -182,7 +181,8 @@ export const AssetTreePane: FunctionComponent<Props> = ({
                 node.children[0]!.children.length === 0
               ) {
                 node.codeEntry = node.children[0]!.codeEntry;
-                node.isCodeEntryRenderable = node.children[0]!.isCodeEntryRenderable;
+                node.isCodeEntryRenderable =
+                  node.children[0]!.isCodeEntryRenderable;
                 node.isCodeEntryAddable = node.children[0]!.isCodeEntryAddable;
                 node.children = [];
                 return;

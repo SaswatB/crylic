@@ -37,7 +37,7 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
   }) {
     let lookupIds: string[] = [];
     traverseStyleSheetRuleSets(ast, (path, index) => {
-      const lookupId = this.createLookupId(codeEntry, 'ss', index);
+      const lookupId = this.createLookupId(codeEntry, "ss", index);
       const selector = this.getSelector(path);
       const ruleBlock = this.getRuleBlock(path);
       if (ruleBlock) {
@@ -64,8 +64,12 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
         const ruleBlockContent = ruleBlock.content as CSSASTNode[];
         // clean up spacing and semi-colons after the rule
         if (ruleBlockContent[index + 1]?.type === "declarationDelimiter") {
-          const nextNext = ruleBlockContent[index + 2]
-          if (nextNext?.type === "space" && typeof nextNext.content === 'string' && !nextNext.content.includes(' ')) {
+          const nextNext = ruleBlockContent[index + 2];
+          if (
+            nextNext?.type === "space" &&
+            typeof nextNext.content === "string" &&
+            !nextNext.content.includes(" ")
+          ) {
             ruleBlock.removeChild(index + 2);
           }
           ruleBlock.removeChild(index + 1);
@@ -145,16 +149,17 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
       assetEntry.filePath
     );
     // add the css
-    this.applyStylesToAST(context, { [imageProp]: `url(${relativeAssetPath})` });
+    this.applyStylesToAST(context, {
+      [imageProp]: `url(${relativeAssetPath})`,
+    });
   }
 
-  
   protected addStyleGroupToAST({ ast }: EditContext<CSSASTNode>, name: string) {
     (ast.content as CSSASTNode[]).push(
       cb.ruleset([
         cb.selector([cb.class([cb.ident(name)])]),
-        cb.space(' '),
-        cb.block([cb.space('\n')]),
+        cb.space(" "),
+        cb.block([cb.space("\n")]),
       ])
     );
   }

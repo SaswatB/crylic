@@ -24,7 +24,7 @@ const STYLED_LOOKUP_MATCHER = new RegExp(
 );
 
 const getStyleMatcherRule = (cssStyleName: string) =>
-  `((?:^|\\b|\\s)\\s*)${cssStyleName}: ([^:;]+);`
+  `((?:^|\\b|\\s)\\s*)${cssStyleName}: ([^:;]+);`;
 
 export class StyledASTEditor extends StyleASTEditor<t.File> {
   private createdIds = new Set<string>();
@@ -39,7 +39,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
   }) {
     let lookupIds: string[] = [];
     traverseStyledTemplatesElements(ast, (path, index) => {
-      const lookupId = this.createLookupId(codeEntry, 's', index);
+      const lookupId = this.createLookupId(codeEntry, "s", index);
       const { value } = path.value.quasi.quasis[0] || {};
       if (value)
         value.raw = `${STYLED_LOOKUP_CSS_VAR_PREFIX}${lookupId}: 1;${value.raw}`;
@@ -130,7 +130,9 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
     imageProp: "backgroundImage",
     assetEntry: CodeEntry
   ) {
-    throw new Error("Adding images to a styled-component is not currently supported");
+    throw new Error(
+      "Adding images to a styled-component is not currently supported"
+    );
   }
 
   protected addStyleGroupToAST() {
@@ -191,13 +193,14 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
       if (found || styleValue === null) return;
 
       // add rule to the end of the template
-      const quasiValue = path.value.quasi.quasis[
-        path.value.quasi.quasis.length - 1
-      ]!.value;
+      const quasiValue =
+        path.value.quasi.quasis[path.value.quasi.quasis.length - 1]!.value;
       const indent =
         new RegExp(getStyleMatcherRule("[^\\s]+")).exec(quasiValue.raw)?.[1] ||
         "  ";
-      quasiValue.raw = `${quasiValue.raw}${quasiValue.raw.includes('\n') ? '':'\n'}${indent}${cssStyleName}: ${styleValue};\n`;
+      quasiValue.raw = `${quasiValue.raw}${
+        quasiValue.raw.includes("\n") ? "" : "\n"
+      }${indent}${cssStyleName}: ${styleValue};\n`;
     });
   };
 }

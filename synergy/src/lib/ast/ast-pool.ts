@@ -4,10 +4,8 @@ import type { AstWorkerModule } from "./ast-worker";
 
 const worker = new Worker();
 
-const pendingActions: Record<
-  string,
-  { resolve: Function; reject: Function }
-> = {};
+const pendingActions: Record<string, { resolve: Function; reject: Function }> =
+  {};
 
 worker.onmessage = (event) => {
   const { id, result, error } = event.data;

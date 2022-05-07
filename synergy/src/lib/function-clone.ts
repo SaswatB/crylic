@@ -11,9 +11,9 @@ function visit<T extends object>(
     if (
       obj[k] !== null &&
       typeof obj[k] === "object" &&
-      !visitedObjects.has((obj[k] as unknown) as object)
+      !visitedObjects.has(obj[k] as unknown as object)
     )
-      visit((obj[k] as unknown) as object, func, visitedObjects);
+      visit(obj[k] as unknown as object, func, visitedObjects);
   }
 }
 
@@ -22,7 +22,7 @@ export function stringifyFunctions<T extends object>(obj: T) {
     if (typeof o[k] === "function")
       o[k] = {
         t: "function_lm_51b86cff7e",
-        v: ((o[k] as unknown) as Function).toString(),
+        v: (o[k] as unknown as Function).toString(),
       } as any;
   });
   return obj;
@@ -36,7 +36,7 @@ export function unstringifyFunctions<T extends object>(obj: T) {
       (o[k] as any).t === "function_lm_51b86cff7e"
     ) {
       try {
-        o[k] = eval(`(${((o[k] as unknown) as { v: string }).v})`) as any;
+        o[k] = eval(`(${(o[k] as unknown as { v: string }).v})`) as any;
       } catch (e) {
         console.error(e, o[k]);
       }

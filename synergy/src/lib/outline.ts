@@ -52,13 +52,13 @@ const buildOutlineRecurse = (
 ): OutlineElement[] =>
   Array.from(element.children)
     .map((child) => {
-      const lookupId = context.project.primaryElementEditor.getLookupIdFromHTMLElement(
-        child as HTMLElement
-      );
+      const lookupId =
+        context.project.primaryElementEditor.getLookupIdFromHTMLElement(
+          child as HTMLElement
+        );
       if (lookupId) {
-        const codeId = context.project.primaryElementEditor.getCodeIdFromLookupId(
-          lookupId
-        )!;
+        const codeId =
+          context.project.primaryElementEditor.getCodeIdFromLookupId(lookupId)!;
         return [
           {
             id: "", // ids are filled in later
@@ -89,73 +89,72 @@ const buildReactFiberRecurse = (
   node: ReactFiber
 ): Promise<OutlineElement[]> =>
   Promise.all(
-    getChildrenFromFiber(node).map(
-      async (child): Promise<OutlineElement[]> => {
-        const lookupId = context.project.primaryElementEditor.getLookupIdFromProps(
+    getChildrenFromFiber(node).map(async (child): Promise<OutlineElement[]> => {
+      const lookupId =
+        context.project.primaryElementEditor.getLookupIdFromProps(
           child.memoizedProps
         );
-        if (!lookupId) return buildReactFiberRecurse(context, child);
+      if (!lookupId) return buildReactFiberRecurse(context, child);
 
-        try {
-          const codeId = context.project.primaryElementEditor.getCodeIdFromLookupId(
-            lookupId
-          )!;
-          const codeEntry = context.project.getCodeEntryValue(codeId)!;
-          const sourceMetadata = context.project.primaryElementEditor.getSourceMetaDataFromLookupId(
+      try {
+        const codeId =
+          context.project.primaryElementEditor.getCodeIdFromLookupId(lookupId)!;
+        const codeEntry = context.project.getCodeEntryValue(codeId)!;
+        const sourceMetadata =
+          context.project.primaryElementEditor.getSourceMetaDataFromLookupId(
             await createNewReadContext(codeEntry),
             lookupId
           );
 
-          const tag =
-            sourceMetadata?.componentName ||
-            child.type?.displayName ||
-            child.type?.name ||
-            child.type;
-          const element = isHTMLElement(child.stateNode)
-            ? child.stateNode
-            : undefined;
-          const children = await buildReactFiberRecurse(context, child);
+        const tag =
+          sourceMetadata?.componentName ||
+          child.type?.displayName ||
+          child.type?.name ||
+          child.type;
+        const element = isHTMLElement(child.stateNode)
+          ? child.stateNode
+          : undefined;
+        const children = await buildReactFiberRecurse(context, child);
 
-          // hide components that don't affect the dom
-          if (!element && children.length === 0) {
-            return [];
-          }
-
-          // collapse passthrough components, like material ui's button
-          if (children.length === 1 && children[0]?.lookupId === lookupId) {
-            return children;
-          }
-
-          const closestElements: HTMLElement[] = [];
-          if (element) {
-            closestElements.push(element);
-          } else {
-            closestElements.push(
-              ...children
-                .map((c) => c.closestElements)
-                .reduce((p, c) => [...p, ...c], [])
-            );
-          }
-
-          return [
-            {
-              id: "", // ids are filled in later
-              tag: typeof tag === "string" ? tag : "unknown",
-              type: OutlineElementType.Element,
-              renderId: context.renderId,
-              lookupId,
-              codeId,
-              element,
-              closestElements,
-              children,
-            },
-          ];
-        } catch (e) {
-          console.error("Error while building outline", e);
+        // hide components that don't affect the dom
+        if (!element && children.length === 0) {
           return [];
         }
+
+        // collapse passthrough components, like material ui's button
+        if (children.length === 1 && children[0]?.lookupId === lookupId) {
+          return children;
+        }
+
+        const closestElements: HTMLElement[] = [];
+        if (element) {
+          closestElements.push(element);
+        } else {
+          closestElements.push(
+            ...children
+              .map((c) => c.closestElements)
+              .reduce((p, c) => [...p, ...c], [])
+          );
+        }
+
+        return [
+          {
+            id: "", // ids are filled in later
+            tag: typeof tag === "string" ? tag : "unknown",
+            type: OutlineElementType.Element,
+            renderId: context.renderId,
+            lookupId,
+            codeId,
+            element,
+            closestElements,
+            children,
+          },
+        ];
+      } catch (e) {
+        console.error("Error while building outline", e);
+        return [];
       }
-    )
+    })
   ).then((r) => r.reduce((p, c) => [...p, ...c], []));
 
 export const findEntryRecurse = (

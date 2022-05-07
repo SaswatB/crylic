@@ -16,16 +16,21 @@ const nativeDeps = {
   nodeModule: __non_webpack_require__("module") as typeof import("module"),
   // library deps
 
-  memfs: (undefined as unknown) as typeof import("memfs"),
-  joinPath: (undefined as unknown) as typeof import("memory-fs/lib/join"),
-  unionfs: (undefined as unknown) as typeof import("unionfs"),
-  webpack: (undefined as unknown) as typeof import("../../../app/node_modules/webpack"),
-  WebpackDevServer: (undefined as unknown) as typeof import("../../../app/node_modules/webpack-dev-server"),
-  HtmlWebpackPlugin: (undefined as unknown) as typeof import("html-webpack-plugin"),
-  ReactRefreshPlugin: (undefined as unknown) as typeof import("@pmmmwh/react-refresh-webpack-plugin"),
-  dotenvExpand: (undefined as unknown) as typeof import("dotenv-expand"),
-  dotenv: (undefined as unknown) as typeof import("dotenv"),
-  requireFromString: (undefined as unknown) as typeof import("require-from-string"),
+  memfs: undefined as unknown as typeof import("memfs"),
+  joinPath: undefined as unknown as typeof import("memory-fs/lib/join"),
+  unionfs: undefined as unknown as typeof import("unionfs"),
+  webpack:
+    undefined as unknown as typeof import("../../../app/node_modules/webpack"),
+  WebpackDevServer:
+    undefined as unknown as typeof import("../../../app/node_modules/webpack-dev-server"),
+  HtmlWebpackPlugin:
+    undefined as unknown as typeof import("html-webpack-plugin"),
+  ReactRefreshPlugin:
+    undefined as unknown as typeof import("@pmmmwh/react-refresh-webpack-plugin"),
+  dotenvExpand: undefined as unknown as typeof import("dotenv-expand"),
+  dotenv: undefined as unknown as typeof import("dotenv"),
+  requireFromString:
+    undefined as unknown as typeof import("require-from-string"),
 };
 
 let webpackCache: Record<
@@ -128,19 +133,21 @@ interface LazyReadFileContext {
   fetchCodeEntry: (codeEntryId: string) => Promise<string | undefined>;
 }
 
-const lazyReadFileFactory = (
-  inputFs: IFs,
-  context: LazyReadFileContext
-) => async (...args: Parameters<typeof inputFs["readFile"]>) => {
-  const filePath = args[0] as string;
-  const entry = context.codeEntriesMap.get(
-    normalizePath(filePath, nativeDeps.path.sep)
-  );
-  if (entry && entry.codeRevisionId !== context.savedCodeRevisions[entry.id]) {
-    await fetchAndSave(inputFs, context, entry);
-  }
-  inputFs.readFile(...args);
-};
+const lazyReadFileFactory =
+  (inputFs: IFs, context: LazyReadFileContext) =>
+  async (...args: Parameters<typeof inputFs["readFile"]>) => {
+    const filePath = args[0] as string;
+    const entry = context.codeEntriesMap.get(
+      normalizePath(filePath, nativeDeps.path.sep)
+    );
+    if (
+      entry &&
+      entry.codeRevisionId !== context.savedCodeRevisions[entry.id]
+    ) {
+      await fetchAndSave(inputFs, context, entry);
+    }
+    inputFs.readFile(...args);
+  };
 
 export const webpackRunCode = async (
   codeEntries: WebpackWorkerMessagePayload_Compile["codeEntries"],
