@@ -47,7 +47,12 @@ export const DebouncingColorPicker: FunctionComponent<Props> = ({
     console.log("flushQueuedChange", queuedChange.current, valueRef.current);
     if (queuedChange.current) {
       if (valueRef.current !== queuedChange.current)
-        setTimeout(onChange(queuedChange.current), 100);
+        setTimeout(
+          () =>
+            queuedChange.current !== undefined &&
+            onChange(queuedChange.current),
+          100
+        );
       queuedChange.current = undefined;
     }
   };

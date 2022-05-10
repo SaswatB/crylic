@@ -87,7 +87,7 @@ export const WebpackConfigDialog: VoidFunctionComponent<{
     }
   }, [enqueueSnackbar, madeChanges, open]);
 
-  const refreshWebpackConfig = useDebouncedFunction((newOverride) => {
+  const refreshWebpackConfig = useDebouncedFunction((newOverride: string) => {
     if (!webpackOverridePath) return;
     fs.writeFileSync(webpackOverridePath.getNativePath(), newOverride);
     void webpackConfig.execute(project, pluginService);

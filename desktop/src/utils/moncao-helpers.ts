@@ -5,10 +5,10 @@ import { Registry } from "monaco-textmate";
 import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
 import darkVs from "synergy/src/vendor/dark-vs.json";
 
-import cssTypes from "!!raw-loader!synergy/src/vendor/css-types.d";
-import propTypes from "!!raw-loader!synergy/src/vendor/prop-types.d";
-import reactTypes from "!!raw-loader!synergy/src/vendor/react-types.d";
-import tracingTypes from "!!raw-loader!synergy/src/vendor/tracing-types.d";
+import cssTypes from "!!raw-loader!synergy/src/vendor/css-types.ts.txt";
+import propTypes from "!!raw-loader!synergy/src/vendor/prop-types.ts.txt";
+import reactTypes from "!!raw-loader!synergy/src/vendor/react-types.ts.txt";
+import tracingTypes from "!!raw-loader!synergy/src/vendor/tracing-types.ts.txt";
 import TypeScriptReactTMLanguage from "!!raw-loader!synergy/src/vendor/TypeScriptReact.tmLanguage";
 
 // setup a better typescript grammar for jsx syntax highlighting

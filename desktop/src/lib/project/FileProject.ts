@@ -234,7 +234,7 @@ export class FileProject extends Project {
         this.fileChangeQueueTimer = setTimeout(
           () => this.processFileChangeQueue(),
           1000
-        );
+        ) as unknown as number;
       });
   }
 
@@ -268,7 +268,7 @@ export class FileProject extends Project {
   public saveFile({ id, filePath, code$, codeRevisionId }: CodeEntry) {
     fs.mkdirSync(filePath.getDirname().getNativePath(), { recursive: true });
     const code = code$.getValue();
-    fs.writeFileSync(filePath.getNativePath(), code);
+    fs.writeFileSync(filePath.getNativePath(), code || "");
     this.savedCodeRevisions[id] = { id: codeRevisionId, code };
   }
 
