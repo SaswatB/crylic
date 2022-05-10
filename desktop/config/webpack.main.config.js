@@ -2,8 +2,9 @@ const path = require("path");
 const webpack = require("webpack");
 const SentryWebpackPlugin = require("@sentry/webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
+const getCommonWebpackDefines = require("./common-defines");
 
-module.exports = (env, argv) => ({
+module.exports = (_env, argv) => ({
   entry: {
     electron: "./src/electron.ts",
     "electron-child": "./src/electron-child.ts",
@@ -27,13 +28,7 @@ module.exports = (env, argv) => ({
           options: {
             ...require("../swc.config"),
             // lm_a95a542d63 electron version
-            env: {
-              targets: { electron: "17" },
-              include: [
-                "proposal-nullish-coalescing-operator",
-                "proposal-optional-chaining",
-              ],
-            },
+            env: { targets: { electron: "17" } },
           },
         },
       },
@@ -46,6 +41,9 @@ module.exports = (env, argv) => ({
   node: {
     __dirname: false,
   },
+  optimization: {
+    nodeEnv: false,
+  },
   plugins: [
     argv.mode !== "development" &&
       new SentryWebpackPlugin({
@@ -55,8 +53,11 @@ module.exports = (env, argv) => ({
     new CopyPlugin({
       patterns: [{ from: "src/assets/icon.ico", to: "." }],
     }),
-    new webpack.DefinePlugin({
-      __IS_RENDERER_BUNDLE__: JSON.stringify(false),
-    }),
+    new webpack.DefinePlugin(
+      getCommonWebpackDefines({
+        isProduction: argv.mode !== "development",
+        isRendererBundle: false,
+      })
+    ),
   ].filter(Boolean),
 });

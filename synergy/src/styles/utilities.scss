@@ -108,7 +108,7 @@
 }
 
 .grid2x {
-  @apply grid grid-cols-2 row-gap-3 col-gap-2 py-2;
+  @apply grid grid-cols-2 gap-y-3 gap-x-2 py-2;
 
   option {
     font-size: 16px;

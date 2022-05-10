@@ -5,7 +5,10 @@ import { Registry } from "monaco-textmate";
 import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
 import darkVs from "synergy/src/vendor/dark-vs.json";
 
-import reactTypes from "!!raw-loader!@types/react/index.d.ts";
+import cssTypes from "!!raw-loader!synergy/src/vendor/css-types.d";
+import propTypes from "!!raw-loader!synergy/src/vendor/prop-types.d";
+import reactTypes from "!!raw-loader!synergy/src/vendor/react-types.d";
+import tracingTypes from "!!raw-loader!synergy/src/vendor/tracing-types.d";
 import TypeScriptReactTMLanguage from "!!raw-loader!synergy/src/vendor/TypeScriptReact.tmLanguage";
 
 // setup a better typescript grammar for jsx syntax highlighting
@@ -57,10 +60,26 @@ export function setupLanguageService(
       fileUrl.toString()
     );
     // add react types
-    const MONACO_LIB_PREFIX = "file:///node_modules/";
-    monaco.languages.typescript.typescriptDefaults.addExtraLib(
-      reactTypes,
-      `${MONACO_LIB_PREFIX}react/index.d.ts`
+    const MONACO_LIB_PREFIX = "file:///node_modules";
+    [
+      [
+        `declare module 'csstype' { ${cssTypes} }`,
+        `${MONACO_LIB_PREFIX}/csstype/index.d.ts`,
+      ],
+      [
+        `declare module 'prop-types' { ${propTypes} }`,
+        `${MONACO_LIB_PREFIX}/@types/prop-types/index.d.ts`,
+      ],
+      [
+        `declare module 'scheduler/tracing' { ${tracingTypes} }`,
+        `${MONACO_LIB_PREFIX}/@types/scheduler/tracing.d.ts`,
+      ],
+      [
+        `declare module 'react' { ${reactTypes} }`,
+        `${MONACO_LIB_PREFIX}/@types/react/index.d.ts`,
+      ],
+    ].forEach(([code, path]) =>
+      monaco.languages.typescript.typescriptDefaults.addExtraLib(code!, path)
     );
     // add jsx support
     monaco.languages.typescript.typescriptDefaults.setCompilerOptions({

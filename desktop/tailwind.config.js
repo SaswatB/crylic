@@ -9,4 +9,5 @@ module.exports = {
   },
   variants: {},
   plugins: [],
+  content: ["./src/**/*.{html,ts,tsx}", "../synergy/src/**/*.{html,ts,tsx}"],
 };

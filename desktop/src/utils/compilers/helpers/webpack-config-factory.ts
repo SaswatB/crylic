@@ -325,7 +325,6 @@ export const webpackConfigFactory = async (
 
   let options: import("../../../../app/node_modules/webpack").Configuration = {
     mode: NODE_ENV,
-    // entry: [require.resolve('react-dev-utils/webpackHotDevClient'),primaryCodeEntry.filePath]
     entry: primaryCodeEntry.filePath,
     devtool: false,
     performance: false,
@@ -393,6 +392,8 @@ export const webpackConfigFactory = async (
         dns: false,
         http2: false,
         child_process: false,
+        util: false,
+        assert: false,
       },
     },
     resolveLoader: {

@@ -46,7 +46,7 @@ export const CodeEditorTabs: FunctionComponent<Props> = ({
         {usableTabs.map(({ key, name, title, onClose }, index) => (
           <div
             key={key}
-            className="flex px-6 py-1 whitespace-no-wrap select-none cursor-pointer text-sm default-transition hover:bg-gray-700"
+            className="flex px-6 py-1 whitespace-nowrap select-none cursor-pointer text-sm default-transition hover:bg-gray-700"
             style={
               (activeTab === index && { backgroundColor: "#373737" }) ||
               undefined

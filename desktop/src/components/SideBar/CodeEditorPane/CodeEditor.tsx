@@ -243,13 +243,13 @@ export const CodeEditor: FunctionComponent<Props> = ({
           console.error(e);
         }
         editorMonaco.addCommand(
-          monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S,
+          monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
           () => {
             try {
               // todo this probably has weird side effects
               fs.writeFileSync(
                 codeEntry.filePath.getNativePath(),
-                localValueRef.current
+                localValueRef.current || ""
               );
             } catch (error) {
               enqueueSnackbar(

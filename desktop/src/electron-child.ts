@@ -1,23 +1,15 @@
+// init sentry on the child process
+if (process.env.DISABLE_TRACKING !== "true") require("./sentry");
+
 const path = __non_webpack_require__("path") as typeof import("path");
 const appPath = __non_webpack_require__
   .resolve("webpack")
   .replace(/node_modules[/\\].*$/, "");
-const sentryPath = path.join(
-  appPath,
-  process.env.NODE_ENV === "development"
-    ? "desktop/public/sentry.js"
-    : "build/sentry.js"
-);
-
-// init sentry on the child process
-if (process.env.DISABLE_TRACKING !== "true")
-  __non_webpack_require__(sentryPath);
-
 let appModulesPath = path.join(appPath, "node_modules");
 
 // fix resolution paths so that modules are taken from app/ during development
 let moduleRequire: (m: string) => any = __non_webpack_require__;
-if (process.env.NODE_ENV === "development") {
+if (!__IS_PRODUCTION__) {
   moduleRequire = (m) =>
     __non_webpack_require__(path.join(appPath, "desktop/app/node_modules", m));
   appModulesPath = path.join(appPath, "desktop/app/node_modules");
@@ -46,7 +38,7 @@ if (process.argv[2] === "npm-install") {
     if (process.argv[4]) args.push(process.argv[4]); // package name
 
     console.log("> npm install", args.join(" "));
-    npm.commands.install(args, () => {});
+    npm.commands.install(args, () => undefined);
   });
 } else if (process.argv[2] === "yarn-install") {
   process.chdir(process.argv[3]!);
