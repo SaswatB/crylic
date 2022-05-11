@@ -2,7 +2,7 @@
   "extends": "react-app",
   "plugins": ["simple-import-sort", "import"],
   "rules": {
-    "simple-import-sort/sort": [
+    "simple-import-sort/imports": [
       "error",
       {
         "groups": [
