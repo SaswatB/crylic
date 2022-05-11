@@ -4,7 +4,10 @@ import { PluginBase } from "../PluginBase";
 
 export class NextPlugin extends PluginBase {
   public shouldActivate(config: ProjectConfig) {
-    return config.isNextInstalled();
+    return (
+      config.configFile.plugins?.next?.enabled ??
+      config.isPackageInstalled("next")
+    );
   }
 
   public override overrideProjectConfig(

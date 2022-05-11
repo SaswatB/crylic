@@ -172,6 +172,8 @@ const generateJobConfig = (
     project.config.configFile?.webpack?.overrideConfig?.disableFastRefresh,
   disableSWC: project.config.configFile?.webpack?.overrideConfig?.disableSWC,
   enableReactRuntimeCompat: project.config.isReactOverV17(),
+  disablePolyfills:
+    project.config.configFile?.webpack?.overrideConfig?.disablePolyfills,
   paths: {
     projectFolder: project.path.getNativePath(),
     overrideWebpackConfig: project.config

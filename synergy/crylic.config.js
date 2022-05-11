@@ -13,4 +13,10 @@ module.exports = {
       library: "@emotion/styled",
     },
   },
+  plugins: {
+    tailwind: {
+      enabled: true,
+      config: "../desktop/tailwind.config.js",
+    },
+  },
 };

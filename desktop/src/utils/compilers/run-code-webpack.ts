@@ -27,6 +27,9 @@ const nativeDeps = {
     undefined as unknown as typeof import("html-webpack-plugin"),
   ReactRefreshPlugin:
     undefined as unknown as typeof import("@pmmmwh/react-refresh-webpack-plugin"),
+  NodePolyfillPlugin:
+    // @ts-expect-error todo add types
+    undefined as unknown as typeof import("node-polyfill-webpack-plugin"),
   dotenvExpand: undefined as unknown as typeof import("dotenv-expand"),
   dotenv: undefined as unknown as typeof import("dotenv"),
   requireFromString:
@@ -54,7 +57,9 @@ export function initialize(nodeModulesPath = "") {
   // needed to resolve loaders and babel plugins/presets
   if (nodeModulesPath) {
     try {
-      process.chdir(nativeDeps.path.dirname(nodeModulesPath));
+      const newPath = nativeDeps.path.dirname(nodeModulesPath);
+      console.log("changing directory", newPath);
+      process.chdir(newPath);
     } catch (e) {
       console.error(e);
     }
@@ -91,6 +96,9 @@ export function initialize(nodeModulesPath = "") {
   );
   nativeDeps.ReactRefreshPlugin = __non_webpack_require__(
     `${nodeModulesPath}@pmmmwh/react-refresh-webpack-plugin`
+  );
+  nativeDeps.NodePolyfillPlugin = __non_webpack_require__(
+    `${nodeModulesPath}node-polyfill-webpack-plugin`
   );
 
   nativeDeps.dotenvExpand = __non_webpack_require__(
@@ -157,6 +165,13 @@ export const webpackRunCode = async (
   fetchCodeEntry: (codeEntryId: string) => Promise<string | undefined>
 ) => {
   if (!nativeDeps.webpack) initialize(getAppNodeModules());
+  try {
+    const newPath = config.paths.projectFolder;
+    console.log("changing directory", newPath);
+    process.chdir(newPath);
+  } catch (e) {
+    console.error(e);
+  }
 
   const {
     path,

@@ -57,6 +57,7 @@ export interface WebpackWorkerMessagePayload_Compile {
     disableSWC?: boolean;
     disableReactExternals?: boolean;
     enableReactRuntimeCompat?: boolean; // needed to React 17+
+    disablePolyfills?: boolean;
     pluginEvals: {
       webpack: { name: string; code: string }[];
       webpackDevServer: { name: string; code: string }[];

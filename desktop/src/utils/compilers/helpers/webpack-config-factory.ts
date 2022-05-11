@@ -17,6 +17,8 @@ interface WebpackConfigFactoryContext {
     webpack: typeof import("../../../../app/node_modules/webpack");
     HtmlWebpackPlugin: typeof import("html-webpack-plugin");
     ReactRefreshPlugin: typeof import("@pmmmwh/react-refresh-webpack-plugin");
+    // @ts-expect-error todo add types
+    NodePolyfillPlugin: typeof import("node-polyfill-webpack-plugin");
 
     dotenv: typeof import("dotenv");
     dotenvExpand: typeof import("dotenv-expand");
@@ -301,6 +303,7 @@ export const webpackConfigFactory = async (
     webpack,
     HtmlWebpackPlugin,
     ReactRefreshPlugin,
+    NodePolyfillPlugin,
     requireFromString,
   } = context.deps;
   const {
@@ -308,6 +311,7 @@ export const webpackConfigFactory = async (
     disableReactExternals,
     disableWebpackExternals,
     disableFastRefresh,
+    disablePolyfills,
   } = context.config;
   const env = getEnvVars(context);
 
@@ -375,26 +379,18 @@ export const webpackConfigFactory = async (
           : {}),
         ...(modules.webpackAliases || {}),
       },
-      // plugins: [PnpWebpackPlugin]
-      fallback: {
-        os: false,
-        fs: false,
-        tls: false,
-        net: false,
-        path: false,
-        zlib: false,
-        http: false,
-        https: false,
-        stream: false,
-        crypto: false,
-        module: false,
-        dgram: false,
-        dns: false,
-        http2: false,
-        child_process: false,
-        util: false,
-        assert: false,
-      },
+      fallback: !disablePolyfills
+        ? {
+            fs: false,
+            tls: false,
+            net: false,
+            module: false,
+            dgram: false,
+            dns: false,
+            http2: false,
+            child_process: false,
+          }
+        : undefined,
     },
     resolveLoader: {
       modules: ["node_modules", projectNodeModules].concat(
@@ -425,6 +421,7 @@ export const webpackConfigFactory = async (
         },
       }),
       !disableFastRefresh && new ReactRefreshPlugin({ forceEnable: true }),
+      !disablePolyfills && new NodePolyfillPlugin(),
     ].filter((p) => !!p),
   };
 

@@ -21,6 +21,7 @@ export const ProjectConfigFile = it.type({
           disableExternalsInjection: it.union([it.boolean, it.undefined]),
           disableFastRefresh: it.union([it.boolean, it.undefined]),
           disableSWC: it.union([it.boolean, it.undefined]),
+          disablePolyfills: it.union([it.boolean, it.undefined]),
         }),
         it.undefined,
       ]),
@@ -74,6 +75,24 @@ export const ProjectConfigFile = it.type({
             it.literal("@emotion/styled"),
             it.undefined,
           ]),
+        }),
+        it.undefined,
+      ]),
+    }),
+    it.undefined,
+  ]),
+  plugins: it.union([
+    it.type({
+      next: it.union([
+        it.type({
+          enabled: it.union([it.boolean, it.undefined]),
+        }),
+        it.undefined,
+      ]),
+      tailwind: it.union([
+        it.type({
+          enabled: it.union([it.boolean, it.undefined]),
+          config: it.union([it.string, it.undefined]),
         }),
         it.undefined,
       ]),
@@ -139,7 +158,6 @@ export abstract class ProjectConfig {
     return !!mv && semver.gte(mv, "17.0.0");
   };
   public isVueInstalled = () => this.isPackageInstalled("vue");
-  public isNextInstalled = () => this.isPackageInstalled("next");
 
   public abstract getPackageManager(): PackageManager;
 
