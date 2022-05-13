@@ -35,6 +35,12 @@ const nativeDeps = {
   requireFromString:
     undefined as unknown as typeof import("require-from-string"),
 };
+const nativeDepsPaths = {
+  modules: "",
+  react: "",
+  "react-dom": "",
+  "react-refresh/runtime": "",
+};
 
 let webpackCache: Record<
   string,
@@ -81,6 +87,13 @@ export function initialize(nodeModulesPath = "") {
     // };
   }
   pluginEvalDirectory = nodeModulesPath || __dirname;
+
+  Object.keys(nativeDepsPaths).forEach((key) => {
+    if (key === "modules") nativeDepsPaths.modules = nodeModulesPath;
+    else
+      nativeDepsPaths[key as keyof typeof nativeDepsPaths] =
+        __non_webpack_require__.resolve(key);
+  });
 
   nativeDeps.memfs = __non_webpack_require__(`${nodeModulesPath}memfs`);
   nativeDeps.joinPath = __non_webpack_require__(
@@ -199,7 +212,12 @@ export const webpackRunCode = async (
     };
 
     const options = await webpackConfigFactory(
-      { deps: nativeDeps, config, pluginEvalDirectory },
+      {
+        deps: nativeDeps,
+        depPaths: nativeDepsPaths,
+        config,
+        pluginEvalDirectory,
+      },
       primaryCodeEntry,
       onProgress
     );
@@ -371,7 +389,12 @@ export const dumpWebpackConfig = async (
   config: WebpackWorkerMessagePayload_Compile["config"]
 ) => {
   const options = await webpackConfigFactory(
-    { deps: nativeDeps, config, pluginEvalDirectory },
+    {
+      deps: nativeDeps,
+      depPaths: nativeDepsPaths,
+      config,
+      pluginEvalDirectory,
+    },
     {
       id: "dumpWebpackConfig",
       filePath: "target.tsx",

@@ -24,6 +24,12 @@ interface WebpackConfigFactoryContext {
     dotenvExpand: typeof import("dotenv-expand");
     requireFromString: typeof import("require-from-string");
   };
+  depPaths: {
+    modules: string;
+    react: string;
+    "react-dom": string;
+    "react-refresh/runtime": string;
+  };
   config: WebpackWorkerMessagePayload_Compile["config"];
   pluginEvalDirectory: string;
 }
@@ -115,9 +121,7 @@ const getWebpackModules = async (context: WebpackConfigFactoryContext) => {
           !disableReactExternals &&
           enableReactRuntimeCompat
             ? {
-                importSource: path.dirname(
-                  __non_webpack_require__.resolve("react")
-                ),
+                importSource: path.dirname(context.depPaths.react),
               }
             : {}),
         },
@@ -306,6 +310,7 @@ export const webpackConfigFactory = async (
     NodePolyfillPlugin,
     requireFromString,
   } = context.deps;
+  const { depPaths } = context;
   const {
     paths,
     disableReactExternals,
@@ -357,43 +362,36 @@ export const webpackConfigFactory = async (
     },
     module: await getWebpackModules(context),
     resolve: {
-      modules: ["node_modules", projectNodeModules].concat(
-        modules.additionalModulePaths || []
-      ),
+      modules: ["node_modules"].concat(modules.additionalModulePaths || []),
       extensions: [".mjs", ".js", ".jsx", ".ts", ".tsx", ".json"],
       alias: {
         "react-native": "react-native-web",
-        // lm_c76a4fbc3b webpack externals
-        ...(!disableWebpackExternals && !disableReactExternals
-          ? {
-              react: __non_webpack_require__.resolve("react"),
-              "react-dom": __non_webpack_require__.resolve("react-dom"),
-            }
-          : {}),
-        ...(!disableWebpackExternals
-          ? {
-              "react-refresh/runtime": __non_webpack_require__.resolve(
-                "react-refresh/runtime"
-              ),
-            }
-          : {}),
         ...(modules.webpackAliases || {}),
       },
-      fallback: !disablePolyfills
-        ? {
-            fs: false,
-            tls: false,
-            net: false,
-            module: false,
-            dgram: false,
-            dns: false,
-            http2: false,
-            child_process: false,
-          }
-        : undefined,
+      fallback: {
+        ...(!disablePolyfills && {
+          fs: false,
+          tls: false,
+          net: false,
+          module: false,
+          dgram: false,
+          dns: false,
+          http2: false,
+          child_process: false,
+        }),
+        // lm_c76a4fbc3b webpack externals
+        ...(!disableWebpackExternals &&
+          !disableReactExternals && {
+            react: depPaths.react,
+            "react-dom": depPaths["react-dom"],
+          }),
+        ...(!disableWebpackExternals && {
+          "react-refresh/runtime": depPaths["react-refresh/runtime"],
+        }),
+      },
     },
     resolveLoader: {
-      modules: ["node_modules", projectNodeModules].concat(
+      modules: [depPaths.modules, "node_modules"].concat(
         modules.additionalModulePaths || []
       ),
     },
@@ -416,7 +414,7 @@ export const webpackConfigFactory = async (
         contextRegExp: /moment$/,
       }),
       new webpack.ProgressPlugin({
-        handler(percentage, message, ...args) {
+        handler(percentage, message) {
           onProgress({ percentage, message });
         },
       }),
