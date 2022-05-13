@@ -3,10 +3,16 @@ import { ProjectConfig } from "../lib/project/ProjectConfig";
 import { RenderStarterDefinition } from "../lib/render-starter";
 
 export abstract class PluginBase {
+  protected project: Project | undefined;
+
   public abstract shouldActivate(project: ProjectConfig): boolean;
 
-  public onInit(_project: Project) {}
-  public onClose() {}
+  public onInit(project: Project) {
+    this.project = project;
+  }
+  public onClose() {
+    this.project = undefined;
+  }
   public overrideProjectConfig(
     config: ProjectConfig,
     _context: { fs: typeof import("fs") }

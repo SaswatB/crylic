@@ -1,13 +1,7 @@
-import { Project } from "../../lib/project/Project";
 import { ProjectConfig } from "../../lib/project/ProjectConfig";
 import { PluginBase } from "../PluginBase";
 
 export class TailwindPlugin extends PluginBase {
-  private options: Exclude<
-    ProjectConfig["configFile"]["plugins"],
-    undefined
-  >["tailwind"];
-
   public shouldActivate(config: ProjectConfig) {
     return (
       config.configFile.plugins?.tailwind?.enabled ??
@@ -15,18 +9,9 @@ export class TailwindPlugin extends PluginBase {
     );
   }
 
-  public override onInit(project: Project) {
-    this.options = project.config.configFile.plugins?.tailwind;
-  }
-
-  public override onClose() {
-    this.options = undefined;
-  }
-
   public override overrideWebpackConfig() {
-    const configObject = this.options?.config
-      ? `, { config: "${this.options.config}" }`
-      : "";
+    const config = this.project?.config.configFile.plugins?.tailwind?.config;
+    const configObject = config ? `, { config: "${config}" }` : "";
     return `
 /**
  * Webpack override function for Crylic

@@ -8,7 +8,9 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import { camelCase, upperFirst } from "lodash";
 import { useSnackbar } from "notistack";
 
+import { usePackageInstallerRecoil } from "../hooks/recoil/usePackageInstallerRecoil";
 import { usePersistentSelectInput, useTextInput } from "../hooks/useInput";
+import { useObservable } from "../hooks/useObservable";
 import { track, useTracking } from "../hooks/useTracking";
 import { getBoilerPlateComponent } from "../lib/component-boilerplate";
 import { CodeEntry } from "../lib/project/CodeEntry";
@@ -28,7 +30,9 @@ const getBoilerPlateStyleSheet = (name: string) =>
 
 export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
   const project = useProject();
-  const { enqueueSnackbar } = useSnackbar();
+  const projectConfig = useObservable(project.config$);
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  const { installPackages } = usePackageInstallerRecoil();
   useTracking("create.component.dialog-open", { onMount: true });
 
   const [name, renderNameInput] = useTextInput({
@@ -51,7 +55,7 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
 
   const [location, renderLocationInput] = useTextInput({
     label: "Component Location",
-    initialValue: project.config.getDefaultNewComponentFolder(),
+    initialValue: projectConfig.getDefaultNewComponentFolder(),
   });
 
   const code = useMemo(
@@ -62,16 +66,39 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
         {},
         preset === Preset.BasicWSS,
         preset === Preset.BasicWSC
-          ? // todo check if this needs to be installed
-            project.config.getStyledComponentsImport()
+          ? projectConfig.getStyledComponentsImport()
           : undefined
       ),
-    [normalizedComponentName, preset, project]
+    [normalizedComponentName, preset, projectConfig]
   );
 
   const onSubmit = () => {
     if (!normalizedComponentName) {
       enqueueSnackbar("Please enter a name", { variant: "error" });
+      return;
+    }
+    if (
+      preset === Preset.BasicWSC &&
+      !projectConfig.isPackageInstalled(
+        projectConfig.getStyledComponentsImport()
+      )
+    ) {
+      enqueueSnackbar(
+        "Unable to create component, styled-components is not installed.",
+        {
+          variant: "error",
+          action: (key) => (
+            <Button
+              onClick={() => {
+                closeSnackbar(key);
+                installPackages(projectConfig.getStyledComponentsImport());
+              }}
+            >
+              Install
+            </Button>
+          ),
+        }
+      );
       return;
     }
 

@@ -162,6 +162,7 @@ export class CodeEntry {
   }
 
   public isBootstrap() {
+    // todo refresh all project.config references on config change
     return (
       this.project.config.getBootstrapPath()?.isEqual(this.filePath) ?? false
     );

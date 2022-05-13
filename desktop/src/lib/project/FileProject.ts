@@ -148,14 +148,17 @@ export class FileProject extends Project {
     pluginService: PluginService
   ) {
     // build metadata
-    let config: ProjectConfig =
-      FileProjectConfig.createProjectConfigFromDirectory(folderPath);
-    pluginService.activatePlugins(config);
-    config = pluginService.reduceActive(
-      (acc, p) => p.overrideProjectConfig(acc, { fs }),
-      config
-    );
-    const project = new FileProject(folderPath, config);
+    const refreshConfig = () => {
+      const newConfig: ProjectConfig =
+        FileProjectConfig.createProjectConfigFromDirectory(folderPath);
+      pluginService.activatePlugins(newConfig);
+      return pluginService.reduceActive(
+        (acc, p) => p.overrideProjectConfig(acc, { fs }),
+        newConfig
+      );
+    };
+    const config: ProjectConfig = refreshConfig();
+    const project = new FileProject(folderPath, config, refreshConfig);
 
     // process all the source files
     const fileCodeEntries: CodeEntry[] = [];
@@ -212,7 +215,11 @@ export class FileProject extends Project {
   private fileChangeQueue = new Set<string>();
   private fileChangeQueueTimer: number | undefined;
 
-  protected constructor(path: PortablePath, config: ProjectConfig) {
+  protected constructor(
+    path: PortablePath,
+    config: ProjectConfig,
+    private refreshConfigImpl: () => ProjectConfig
+  ) {
     super(path, config);
 
     // watch for changes on files in the source folder
@@ -325,8 +332,7 @@ export class FileProject extends Project {
   }
 
   public refreshConfig() {
-    // todo refresh all config dependencies as well
-    this.config = FileProjectConfig.createProjectConfigFromDirectory(this.path);
+    this.config$.next(this.refreshConfigImpl());
   }
 
   public addAsset(source: PortablePath) {

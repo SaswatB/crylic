@@ -8,6 +8,7 @@ import { track } from "../hooks/useTracking";
 import { Project } from "../lib/project/Project";
 import { RenderEntry } from "../lib/project/RenderEntry";
 import { eagerMap, eagerMapArrayAny } from "../lib/rxjs/eagerMap";
+import { PluginBase } from "../plugins/PluginBase";
 import { PluginService } from "./PluginService";
 
 const RECENT_PROJECTS_KEY = "recentProjects";
@@ -24,16 +25,21 @@ export class ProjectService {
   );
 
   constructor(private pluginService: PluginService) {
+    let loadedPlugins: PluginBase[] = [];
     this.project$.subscribe((project) => {
       (window as any).project = project; // only for debugging purposes
       if (!this.projectSubjectLoaded) this.projectSubjectLoaded = true;
       else {
         track(project ? "project.open" : "project.close");
         if (project) {
-          pluginService.forEachActive((p) => p.onInit(project));
+          pluginService.forEachActive((p) => {
+            p.onInit(project);
+            loadedPlugins.push(p);
+          });
         } else {
           pluginService.forEachActive((p) => p.onClose());
           pluginService.deactivatePlugins();
+          loadedPlugins = [];
         }
       }
 
@@ -48,6 +54,28 @@ export class ProjectService {
             ),
           ])
         );
+      }
+    });
+
+    // support dynamically added/removed plugins based on refreshed project config
+    this.project$.pipe(map((project) => project?.config$)).subscribe(() => {
+      const project = this.project$.getValue();
+      if (!project) return;
+      const activePlugins: PluginBase[] = [];
+      // init new plugins
+      pluginService.forEachActive((p) => {
+        if (!loadedPlugins.includes(p)) {
+          p.onInit(project);
+          loadedPlugins.push(p);
+        }
+        activePlugins.push(p);
+      });
+      // close deactivated plugins
+      for (const loadedPlugin of loadedPlugins) {
+        if (!activePlugins.includes(loadedPlugin)) {
+          loadedPlugin.onClose();
+          loadedPlugins.splice(loadedPlugins.indexOf(loadedPlugin), 1);
+        }
       }
     });
 

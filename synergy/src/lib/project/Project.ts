@@ -22,6 +22,7 @@ type EditorEntry<T> = {
 };
 
 export abstract class Project {
+  public readonly config$;
   public readonly codeEntries$ = new LTBehaviorSubject<CodeEntry[]>([]); // lm_9dfd4feb9b entries cannot be removed
   public readonly editEntries$ = new BehaviorSubject<EditEntry[]>([]);
   public readonly renderEntries$ = new BehaviorSubject<RenderEntry[]>([]);
@@ -32,8 +33,9 @@ export abstract class Project {
 
   protected constructor(
     public readonly path: PortablePath,
-    public config: ProjectConfig
+    config: ProjectConfig
   ) {
+    this.config$ = new BehaviorSubject(config);
     this.elementEditorEntries = [
       {
         editor: new JSXASTEditor({
@@ -47,6 +49,10 @@ export abstract class Project {
       { editor: new StyleSheetASTEditor(), shouldApply: (e) => e.isStyleEntry },
     ];
     this.initUndoRedo();
+  }
+
+  public get config() {
+    return this.config$.getValue();
   }
 
   public abstract saveFiles(): void;
