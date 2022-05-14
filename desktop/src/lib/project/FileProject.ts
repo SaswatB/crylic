@@ -25,6 +25,7 @@ import { streamToString } from "../../utils/utils";
 import { FileProjectConfig } from "./FileProjectConfig";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
+const fsP = fs.promises;
 const chokidar = __non_webpack_require__(
   "chokidar"
 ) as typeof import("chokidar");
@@ -47,8 +48,13 @@ export class FileProject extends Project {
     pluginService: PluginService
   ) {
     console.log(folderPath);
-    if (!fs.existsSync(folderPath.getNativePath()))
-      fs.mkdirSync(folderPath.getNativePath(), { recursive: true });
+    if (
+      !(await fsP
+        .access(folderPath.getNativePath())
+        .then(() => true)
+        .catch(() => false))
+    )
+      await fsP.mkdir(folderPath.getNativePath(), { recursive: true });
 
     const buffer = await TemplateBuffers[template]();
 
@@ -102,7 +108,7 @@ export class FileProject extends Project {
             if (isDir) {
               mkdirOptions.mode = procMode;
             }
-            fs.mkdirSync(destDir.getNativePath(), mkdirOptions);
+            await fsP.mkdir(destDir.getNativePath(), mkdirOptions);
             if (isDir) return;
 
             const readStream = await new Promise<Readable>(
@@ -115,7 +121,7 @@ export class FileProject extends Project {
             );
 
             if (symlink) {
-              fs.symlinkSync(
+              await fsP.symlink(
                 await streamToString(readStream),
                 dest.getNativePath()
               );
@@ -163,46 +169,48 @@ export class FileProject extends Project {
     // process all the source files
     const fileCodeEntries: CodeEntry[] = [];
     // recursive function for creating code entries from a folder
-    const read = (subFolderPath: PortablePath) =>
-      fs.readdirSync(subFolderPath.getNativePath()).forEach((file) => {
-        const filePath = subFolderPath.join(file);
-        // skip ignored paths
-        if (
-          config
-            .getIgnoredPaths()
-            .find((g) =>
-              minimatch(
-                filePath
-                  .getNormalizedPath()
-                  .replace(folderPath.getNormalizedPath(), ""),
-                g
+    const read = async (subFolderPath: PortablePath) =>
+      Promise.all(
+        (await fsP.readdir(subFolderPath.getNativePath())).map(async (file) => {
+          const filePath = subFolderPath.join(file);
+          // skip ignored paths
+          if (
+            config
+              .getIgnoredPaths()
+              .find((g) =>
+                minimatch(
+                  filePath
+                    .getNormalizedPath()
+                    .replace(folderPath.getNormalizedPath(), ""),
+                  g
+                )
               )
-            )
-        ) {
-          console.log("ignoring file due to config", filePath);
-          return;
-        }
-        if (fs.statSync(filePath.getNativePath()).isDirectory()) {
-          // recurse through the directory's children
-          read(filePath);
-        } else if (
-          file.match(SCRIPT_EXTENSION_REGEX) ||
-          file.match(STYLE_EXTENSION_REGEX)
-        ) {
-          // add scripts/styles as code entries
-          const code = fs.readFileSync(filePath.getNativePath(), {
-            encoding: "utf-8",
-          });
-          fileCodeEntries.push(new CodeEntry(project, filePath, code));
-        } else if (file.match(IMAGE_EXTENSION_REGEX)) {
-          // add images as code entries without text code
-          fileCodeEntries.push(new CodeEntry(project, filePath, undefined));
-        } else {
-          console.log("ignoring file due to extension", filePath);
-        }
-      });
+          ) {
+            console.log("ignoring file due to config", filePath);
+            return;
+          }
+          if ((await fsP.stat(filePath.getNativePath())).isDirectory()) {
+            // recurse through the directory's children
+            await read(filePath);
+          } else if (
+            file.match(SCRIPT_EXTENSION_REGEX) ||
+            file.match(STYLE_EXTENSION_REGEX)
+          ) {
+            // add scripts/styles as code entries
+            const code = await fsP.readFile(filePath.getNativePath(), {
+              encoding: "utf-8",
+            });
+            fileCodeEntries.push(new CodeEntry(project, filePath, code));
+          } else if (file.match(IMAGE_EXTENSION_REGEX)) {
+            // add images as code entries without text code
+            fileCodeEntries.push(new CodeEntry(project, filePath, undefined));
+          } else {
+            console.log("ignoring file due to extension", filePath);
+          }
+        })
+      );
     // read all files within the folder
-    read(folderPath);
+    await read(folderPath);
 
     // set the window name
     document.title = `${config.name} - Crylic`;

@@ -1,5 +1,5 @@
 module.exports = function binaryLoader(source) {
-  return `module.exports = new Buffer('${source.toString(
+  return `module.exports = Buffer.from('${source.toString(
     "base64"
   )}', 'base64');`;
 };

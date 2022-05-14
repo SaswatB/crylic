@@ -79,7 +79,7 @@ export function Intro() {
       pluginService
     )
       .then((p) => projectService.setProject(p))
-      .finally(() => setLoading((l) => l - 1));
+      .finally(() => setTimeout(() => setLoading((l) => l - 1), 100));
   };
 
   const openProjectWithPath = (filePath: string) => {
@@ -98,7 +98,7 @@ export function Intro() {
           pluginService
         )
           .then((p) => projectService.setProject(p))
-          .finally(() => setLoading((l) => l - 1)),
+          .finally(() => setTimeout(() => setLoading((l) => l - 1), 100)),
       150
     );
   };
