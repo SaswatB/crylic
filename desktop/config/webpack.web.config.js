@@ -175,4 +175,13 @@ module.exports = (_env, argv) => ({
       publicPath: "/static",
     },
   },
+  ignoreWarnings: [
+    // node_modules/typescript/lib/typescript.js contains some require() calls that use expressions
+    // these aren't supported by webpack and aren't used by us so ignore the warnings
+    {
+      module: /typescript.js/,
+      message:
+        /Critical dependency: the request of a dependency is an expression/,
+    },
+  ],
 });
