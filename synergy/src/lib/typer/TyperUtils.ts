@@ -1,7 +1,34 @@
 import { pipe } from "fp-ts/lib/pipeable";
 import ts from "typescript";
 
+import libTypes from "../../vendor/ts-lib/lib.d.ts.txt";
+import libDomTypes from "../../vendor/ts-lib/lib.dom.d.ts.txt";
+import libEs5Types from "../../vendor/ts-lib/lib.es5.d.ts.txt";
 import { RemoteCodeEntry } from "../project/CodeEntry";
+import { TSTypeKind, TSTypeWrapper } from "./ts-type-wrapper";
+
+function isObjectType(t: ts.Type): t is ts.ObjectType {
+  return !!(t.flags & ts.TypeFlags.Object);
+}
+
+function isTypeReference(t: ts.ObjectType): t is ts.TypeReference {
+  return !!(t.objectFlags & ts.ObjectFlags.Reference);
+}
+
+const defaultLibs = [
+  {
+    path: "/lib.d.ts",
+    code: libTypes,
+  },
+  {
+    path: "/lib.dom.ts",
+    code: libDomTypes,
+  },
+  {
+    path: "/lib.es5.ts",
+    code: libEs5Types,
+  },
+];
 
 export class TyperUtils {
   protected services: ts.LanguageService;
@@ -13,19 +40,27 @@ export class TyperUtils {
     protected codeEntries: RemoteCodeEntry[]
   ) {
     const servicesHost: ts.LanguageServiceHost = {
-      getScriptFileNames: () => codeEntries.map((e) => e.filePath),
+      getScriptFileNames: () => [
+        ...codeEntries.map((e) => e.filePath),
+        ...defaultLibs.map((d) => d.path),
+      ],
       getScriptVersion: (fileName) =>
         `${
           this.codeEntries.find((e) => e.filePath === fileName)
             ?.codeRevisionId || 0
         }`,
-      getScriptSnapshot: (fileName) =>
-        pipe(this.codeEntries.find((e) => e.filePath === fileName)?.code, (_) =>
-          _ ? ts.ScriptSnapshot.fromString(_) : undefined
-        ),
+      getScriptSnapshot: (fileName) => {
+        const defaultLib = defaultLibs.find((d) => d.path === fileName);
+        if (defaultLib) return ts.ScriptSnapshot.fromString(defaultLib.code);
+
+        const code = this.codeEntries.find(
+          (e) => e.filePath === fileName
+        )?.code;
+        return code ? ts.ScriptSnapshot.fromString(code) : undefined;
+      },
       getCurrentDirectory: () => projectDir,
       getCompilationSettings: () => ({ jsx: ts.JsxEmit.React }),
-      getDefaultLibFileName: (options) => ts.getDefaultLibFilePath(options),
+      getDefaultLibFileName: () => defaultLibs[0]!.path,
     };
 
     this.services = ts.createLanguageService(
@@ -46,6 +81,83 @@ export class TyperUtils {
         this.codeEntries[existingEntryIndex] = newEntry;
       else this.codeEntries.push(newEntry);
     });
+  }
+
+  protected wrapType(t: ts.Type, depth = 1): TSTypeWrapper {
+    if (!t || depth > 100) return { kind: TSTypeKind.Unknown }; // avoid infinite recursion
+    debugger;
+
+    if (t.flags & ts.TypeFlags.StringLike) {
+      // todo support template string
+      if (t.isStringLiteral())
+        return { kind: TSTypeKind.LiteralString, value: t.value };
+      return { kind: TSTypeKind.String };
+    } else if (t.flags & ts.TypeFlags.NumberLike) {
+      if (t.isNumberLiteral())
+        return { kind: TSTypeKind.LiteralNumber, value: t.value };
+      return { kind: TSTypeKind.Number };
+    } else if (t.flags & ts.TypeFlags.BooleanLike)
+      return { kind: TSTypeKind.Boolean };
+    else if (t.flags & ts.TypeFlags.VoidLike)
+      return { kind: TSTypeKind.Undefined };
+    else if (t.flags & ts.TypeFlags.Null) return { kind: TSTypeKind.Null };
+    else if (isObjectType(t)) return this.wrapObjectType(t, depth + 1);
+    else if (t.isUnion())
+      // todo handle intersection?
+      return {
+        kind: TSTypeKind.Union,
+        memberTypes: t.types.map((type) => this.wrapType(type)),
+      };
+
+    return { kind: TSTypeKind.Unknown };
+  }
+
+  protected wrapObjectType(t: ts.ObjectType, depth = 1): TSTypeWrapper {
+    if (!t || depth > 100) return { kind: TSTypeKind.Object, props: [] }; // avoid infinite recursion
+
+    if (t.getCallSignatures().length > 0) return { kind: TSTypeKind.Function };
+    else if (
+      t.objectFlags &
+      (ts.ObjectFlags.ClassOrInterface | ts.ObjectFlags.Anonymous)
+    ) {
+      return {
+        kind: TSTypeKind.Object,
+        props: t.getProperties().map((prop) => ({
+          name: prop.escapedName as string,
+          type: this.wrapType(
+            this.tc.getTypeOfSymbolAtLocation(
+              prop,
+              t.getSymbol()?.declarations?.[0]!
+            ),
+            depth + 1
+          ),
+          optional: !!(prop.getFlags() & ts.SymbolFlags.Optional),
+        })),
+      };
+    } else if (isTypeReference(t)) {
+      if (t.symbol?.escapedName === "Array") {
+        return {
+          kind: TSTypeKind.Array,
+          memberType: this.wrapType(
+            this.tc.getTypeArguments(t)![0]!,
+            depth + 1
+          ),
+        };
+      } else if (t.target.objectFlags & ts.ObjectFlags.Tuple) {
+        return {
+          kind: TSTypeKind.Tuple,
+          memberTypes: isTypeReference(t)
+            ? this.tc
+                .getTypeArguments(t)
+                .map((type) => this.wrapType(type, depth + 1))
+            : [],
+        };
+      }
+
+      return this.wrapType(t.target, depth + 1);
+    }
+
+    return { kind: TSTypeKind.Object, props: [] };
   }
 
   /**
@@ -95,25 +207,14 @@ export class TyperUtils {
     };
 
     // todo support HoCs?
-    const props = pipe(
+    const propType = pipe(
       declaration,
       (_) => _ && resolveFunctionDeclaration(_),
       (_) => _ && this.tc.getSignatureFromDeclaration(_),
       (_) => _?.getParameters()[0]?.getDeclarations()?.[0],
-      (_) => _ && this.tc.getTypeAtLocation(_),
-      (_) => _ && this.tc.getPropertiesOfType(_)
+      (_) => _ && this.tc.getTypeAtLocation(_)
     );
 
-    return props?.map((prop) => ({
-      prop: prop.escapedName,
-      type: pipe(
-        this.tc.getTypeOfSymbolAtLocation(prop, declaration!),
-        (_) =>
-          Object.entries(ts.TypeFlags).find(
-            ([_k, v]) => typeof v === "number" && _.getFlags() & v
-          )?.[0]
-      ),
-      optional: !!(prop.getFlags() & ts.SymbolFlags.Optional),
-    }));
+    return propType && this.wrapType(propType);
   }
 }

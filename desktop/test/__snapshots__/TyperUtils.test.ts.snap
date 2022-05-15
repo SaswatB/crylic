@@ -1,0 +1,297 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TyperUtils tests test export declaration follower get props from default function 1`] = `
+Object {
+  "kind": "object",
+  "props": Array [
+    Object {
+      "name": "test",
+      "optional": false,
+      "type": Object {
+        "kind": "string",
+      },
+    },
+  ],
+}
+`;
+
+exports[`TyperUtils tests test export declaration follower get props from default lambda function 1`] = `
+Object {
+  "kind": "object",
+  "props": Array [
+    Object {
+      "name": "test",
+      "optional": false,
+      "type": Object {
+        "kind": "string",
+      },
+    },
+  ],
+}
+`;
+
+exports[`TyperUtils tests test export declaration follower get props from named function 1`] = `
+Object {
+  "kind": "object",
+  "props": Array [
+    Object {
+      "name": "test",
+      "optional": false,
+      "type": Object {
+        "kind": "string",
+      },
+    },
+  ],
+}
+`;
+
+exports[`TyperUtils tests test export declaration follower get props from named lambda function 1`] = `
+Object {
+  "kind": "object",
+  "props": Array [
+    Object {
+      "name": "test",
+      "optional": false,
+      "type": Object {
+        "kind": "string",
+      },
+    },
+  ],
+}
+`;
+
+exports[`TyperUtils tests test export declaration follower get props from separate default function 1`] = `
+Object {
+  "kind": "object",
+  "props": Array [
+    Object {
+      "name": "test",
+      "optional": false,
+      "type": Object {
+        "kind": "string",
+      },
+    },
+  ],
+}
+`;
+
+exports[`TyperUtils tests test export declaration follower get props from separate default lambda 1`] = `
+Object {
+  "kind": "object",
+  "props": Array [
+    Object {
+      "name": "test",
+      "optional": false,
+      "type": Object {
+        "kind": "string",
+      },
+    },
+  ],
+}
+`;
+
+exports[`TyperUtils tests test export declaration follower get props from separate named function 1`] = `
+Object {
+  "kind": "object",
+  "props": Array [
+    Object {
+      "name": "test",
+      "optional": false,
+      "type": Object {
+        "kind": "string",
+      },
+    },
+  ],
+}
+`;
+
+exports[`TyperUtils tests test export declaration follower get props from separate named lambda 1`] = `
+Object {
+  "kind": "object",
+  "props": Array [
+    Object {
+      "name": "test",
+      "optional": false,
+      "type": Object {
+        "kind": "string",
+      },
+    },
+  ],
+}
+`;
+
+exports[`TyperUtils tests test type declaration follower get props with a type definition in a different file 1`] = `
+Object {
+  "kind": "object",
+  "props": Array [
+    Object {
+      "name": "test",
+      "optional": false,
+      "type": Object {
+        "kind": "string",
+      },
+    },
+  ],
+}
+`;
+
+exports[`TyperUtils tests test type declaration follower get props with an inline type definition 1`] = `
+Object {
+  "kind": "object",
+  "props": Array [
+    Object {
+      "name": "test",
+      "optional": false,
+      "type": Object {
+        "kind": "string",
+      },
+    },
+  ],
+}
+`;
+
+exports[`TyperUtils tests test type declaration follower get props without a type annotation 1`] = `
+Object {
+  "kind": "object",
+  "props": Array [
+    Object {
+      "name": "test",
+      "optional": false,
+      "type": Object {
+        "kind": "unknown",
+      },
+    },
+  ],
+}
+`;
+
+exports[`TyperUtils tests test type extractor  array prop 1`] = `
+Object {
+  "kind": "object",
+  "props": Array [
+    Object {
+      "name": "test",
+      "optional": false,
+      "type": Object {
+        "kind": "array",
+        "memberType": Object {
+          "kind": "string",
+        },
+      },
+    },
+  ],
+}
+`;
+
+exports[`TyperUtils tests test type extractor extracts enum prop 1`] = `
+Object {
+  "kind": "object",
+  "props": Array [
+    Object {
+      "name": "test",
+      "optional": true,
+      "type": Object {
+        "kind": "union",
+        "memberTypes": Array [
+          Object {
+            "kind": "literalNumber",
+            "value": 0,
+          },
+          Object {
+            "kind": "literalNumber",
+            "value": 1,
+          },
+        ],
+      },
+    },
+  ],
+}
+`;
+
+exports[`TyperUtils tests test type extractor extracts function prop 1`] = `
+Object {
+  "kind": "object",
+  "props": Array [
+    Object {
+      "name": "test",
+      "optional": true,
+      "type": Object {
+        "kind": "function",
+      },
+    },
+  ],
+}
+`;
+
+exports[`TyperUtils tests test type extractor extracts string literal prop 1`] = `
+Object {
+  "kind": "object",
+  "props": Array [
+    Object {
+      "name": "test",
+      "optional": true,
+      "type": Object {
+        "kind": "union",
+        "memberTypes": Array [
+          Object {
+            "kind": "literalString",
+            "value": "a",
+          },
+          Object {
+            "kind": "literalString",
+            "value": "b",
+          },
+        ],
+      },
+    },
+  ],
+}
+`;
+
+exports[`TyperUtils tests test type extractor extracts tuple prop 1`] = `
+Object {
+  "kind": "object",
+  "props": Array [
+    Object {
+      "name": "test",
+      "optional": true,
+      "type": Object {
+        "kind": "tuple",
+        "memberTypes": Array [
+          Object {
+            "kind": "literalNumber",
+            "value": 1,
+          },
+          Object {
+            "kind": "literalNumber",
+            "value": 2,
+          },
+        ],
+      },
+    },
+  ],
+}
+`;
+
+exports[`TyperUtils tests test type extractor extracts union prop 1`] = `
+Object {
+  "kind": "object",
+  "props": Array [
+    Object {
+      "name": "test",
+      "optional": true,
+      "type": Object {
+        "kind": "union",
+        "memberTypes": Array [
+          Object {
+            "kind": "string",
+          },
+          Object {
+            "kind": "number",
+          },
+        ],
+      },
+    },
+  ],
+}
+`;

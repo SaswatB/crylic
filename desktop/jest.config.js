@@ -7,6 +7,7 @@ module.exports = {
   testRegex: ".*(test|spec)\\.tsx?$",
   transform: {
     "^.+\\.fixture\\..+$": "<rootDir>/config/jest/rawTransform.js",
+    ".txt$": "<rootDir>/config/jest/rawTransform.js",
     "^.+\\.(t|j)sx?$": ["@swc/jest", require("./swc.config")],
     "^.+\\.css$": "<rootDir>/config/jest/cssTransform.js",
     "^(?!.*\\.(js|jsx|ts|tsx|css|json)$)":
