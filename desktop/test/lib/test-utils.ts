@@ -25,7 +25,7 @@ class TestProjectConfig extends FileProjectConfig {
 
 export class TestProject extends FileProject {
   public constructor(config = new TestProjectConfig()) {
-    super(new FilePortablePath(""), config);
+    super(new FilePortablePath(""), config, () => config);
   }
 }
 

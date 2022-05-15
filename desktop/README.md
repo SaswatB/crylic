@@ -11,6 +11,17 @@ yarn web:dev
 yarn electron:dev
 ```
 
+## Testing
+
+```
+# Run all tests
+yarn test
+# Run all tests with hot reloading
+yarn test -- --watch
+# Run a specific test file
+yarn test -- --testPathPattern=test/TyperUtils.test.ts
+```
+
 ## Release Process
 
 ### Version bump
