@@ -9789,7 +9789,6 @@ __metadata:
     io-ts: ^2.2.16
     jest: ^28.1.0
     jest-environment-jsdom: ^28.1.0
-    jest-raw-loader: ^1.0.1
     jest-watch-typeahead: ^1.1.0
     jsonc-parser: ^3.0.0
     less: ^3.11.1
@@ -15830,13 +15829,6 @@ __metadata:
     jest-resolve:
       optional: true
   checksum: bd85dcc0e76e0eb0c3d56382ec140f08d25ff4068cda9d0e360bb78fb176cb726d0beab82dc0e8694cafd09f55fee7622b8bcb240afa5fad301f4ed3eebb4f47
-  languageName: node
-  linkType: hard
-
-"jest-raw-loader@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "jest-raw-loader@npm:1.0.1"
-  checksum: 0f1e2c650a0dd46cdb6c7b678b384170d41737cc17fca2f776a57af57827bf73bd37e6d0f6625d7912f126ea0dce09b1db2b26424cc1468f08e10e59c7ba1a70
   languageName: node
   linkType: hard
 

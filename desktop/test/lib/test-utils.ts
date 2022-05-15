@@ -66,3 +66,14 @@ export const runEditor = <
     ast
   ).replaceAll("\r", "");
 };
+
+export function debugPipe(start: any, ...parts: Function[]) {
+  let current = start;
+  const id = `${Math.random().toString(36).substring(4)}`;
+  console.log(`debugPipe(${id}): start - `, start);
+  for (const part of parts) {
+    current = part(current);
+    console.log(`debugPipe(${id}): part ${part.toString()} - `, current);
+  }
+  return current;
+}

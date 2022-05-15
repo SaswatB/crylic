@@ -6,7 +6,7 @@ module.exports = {
   testEnvironment: "jest-environment-jsdom",
   testRegex: ".*(test|spec)\\.tsx?$",
   transform: {
-    "^.+\\.fixture\\..+$": "jest-raw-loader",
+    "^.+\\.fixture\\..+$": "<rootDir>/config/jest/rawTransform.js",
     "^.+\\.(t|j)sx?$": ["@swc/jest", require("./swc.config")],
     "^.+\\.css$": "<rootDir>/config/jest/cssTransform.js",
     "^(?!.*\\.(js|jsx|ts|tsx|css|json)$)":
@@ -17,7 +17,7 @@ module.exports = {
   moduleNameMapper: {
     "^react-native$": "react-native-web",
     "^.+\\.module\\.(css|sass|scss)$": "identity-obj-proxy",
-    "^!!.*binaryLoader!.*": "jest-raw-loader",
+    "^!!.*binaryLoader!.*": "<rootDir>/config/jest/rawTransform.js",
   },
   moduleFileExtensions: [
     "web.js",
