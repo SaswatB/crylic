@@ -115,7 +115,12 @@ export function useProject<T extends true | false>(options?: {
   allowUndefined?: T;
 }): T extends true ? Project | undefined : Project {
   const project = useObservable(useService(ProjectService).project$);
-  if (!project && !options?.allowUndefined) throw new Error("No project");
+  if (!project && !options?.allowUndefined) {
+    if (__IS_CRYLIC__) {
+      return {} as any;
+    }
+    throw new Error("No project");
+  }
 
   return project as T extends true ? Project | undefined : Project;
 }

@@ -48,7 +48,6 @@ import {
   resetWebpackWithWorker,
   webpackRunCodeWithWorker,
 } from "./utils/compilers/run-code-webpack-worker";
-import "./App.scss";
 
 const open = __non_webpack_require__("open") as typeof import("open");
 

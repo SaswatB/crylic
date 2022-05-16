@@ -85,7 +85,6 @@ export class TyperUtils {
 
   protected wrapType(t: ts.Type, depth = 1): TSTypeWrapper {
     if (!t || depth > 100) return { kind: TSTypeKind.Unknown }; // avoid infinite recursion
-    debugger;
 
     if (t.flags & ts.TypeFlags.StringLike) {
       // todo support template string

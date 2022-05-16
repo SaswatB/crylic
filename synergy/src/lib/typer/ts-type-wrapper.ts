@@ -11,7 +11,6 @@ export enum TSTypeKind {
   Array = "array",
   Tuple = "tuple",
   Function = "function",
-  Enum = "enum",
   Union = "union",
 }
 

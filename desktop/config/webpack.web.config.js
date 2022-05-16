@@ -92,6 +92,11 @@ module.exports = (_env, argv) => ({
         test: /\.(woff|woff2|eot|ttf|otf)$/i,
         type: "asset/resource",
       },
+      // text files
+      {
+        test: /\.txt$/i,
+        type: "asset/resource",
+      },
     ],
   },
   resolve: {
