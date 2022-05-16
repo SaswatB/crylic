@@ -1,4 +1,6 @@
 import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
+import { printTSTypeWrapper } from "synergy/src/lib/typer/ts-type-printer";
+import { TSTypeKind } from "synergy/src/lib/typer/ts-type-wrapper";
 import { TyperUtils } from "synergy/src/lib/typer/TyperUtils";
 
 import { FilePortablePath } from "../src/lib/project/FilePortablePath";
@@ -132,5 +134,52 @@ describe("TyperUtils tests", () => {
         `const MyComponent = ({ test }: { test: string }) => {return <div />;}; export { MyComponent };`
       );
     });
+  });
+});
+
+describe("TS Type Printer tests", () => {
+  test("prints a simple type", () => {
+    expect(
+      printTSTypeWrapper("TestType", {
+        kind: TSTypeKind.String,
+      })
+    ).toBe("type TestType = string;");
+  });
+  test("prints a union type", () => {
+    expect(
+      printTSTypeWrapper("TestType", {
+        kind: TSTypeKind.Union,
+        memberTypes: [{ kind: TSTypeKind.String }, { kind: TSTypeKind.Number }],
+      })
+    ).toBe("type TestType = (string | number);");
+  });
+  test("prints an object, array & function type", () => {
+    expect(
+      printTSTypeWrapper("TestType", {
+        kind: TSTypeKind.Object,
+        props: [
+          {
+            name: "test",
+            optional: false,
+            type: {
+              kind: TSTypeKind.Array,
+              memberType: { kind: TSTypeKind.String },
+            },
+          },
+          {
+            name: "test2",
+            optional: true,
+            type: { kind: TSTypeKind.String },
+          },
+          {
+            name: "test3",
+            optional: false,
+            type: { kind: TSTypeKind.Function },
+          },
+        ],
+      })
+    ).toBe(
+      "type TestType = { test: string[]; test2?: string; test3: Function; };"
+    );
   });
 });
