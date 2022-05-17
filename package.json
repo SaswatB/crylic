@@ -4,7 +4,8 @@
     "synergy",
     "desktop",
     "web",
-    "figma"
+    "figma",
+    "gptproxy"
   ],
   "resolutions": {
     "react-refresh": "patch:react-refresh@0.8.3#./patches/react-refresh+0.8.3.patch"

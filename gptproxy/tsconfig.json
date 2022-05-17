@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "noEmit": false,
+    "outDir": "build",
+    "target": "ESNext",
+    // unable to import the parent tsconfig due to fly.io's build system
+    // so these props are copied
+    "strict": true,
+    "noImplicitAny": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["src", "test"]
+}
