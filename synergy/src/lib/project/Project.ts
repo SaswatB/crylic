@@ -10,7 +10,14 @@ import { StyleSheetASTEditor } from "../ast/editors/StyleSheetASTEditor";
 import { LTBehaviorSubject } from "../lightObservable/LTBehaviorSubject";
 import { ltMap } from "../lightObservable/LTOperator";
 import { eagerMapArrayAny } from "../rxjs/eagerMap";
-import { produceNext } from "../utils";
+import { fillPropsWithGpt } from "../typer/gpt-propfiller";
+import {
+  getPlaceholderTSTypeWrapperValue,
+  TSTypeKind,
+  TSTypeWrapper,
+} from "../typer/ts-type-wrapper";
+import { TyperUtils } from "../typer/TyperUtils";
+import { ltTakeNext, produceNext } from "../utils";
 import { CodeEntry } from "./CodeEntry";
 import { PortablePath } from "./PortablePath";
 import { ProjectConfig } from "./ProjectConfig";
@@ -30,6 +37,18 @@ export abstract class Project {
   public readonly projectSaved$ = new Subject();
   private readonly elementEditorEntries: EditorEntry<ElementASTEditor<any>>[];
   private readonly styleEditorEntries: EditorEntry<StyleASTEditor<any>>[];
+
+  private _tu: TyperUtils | undefined;
+  protected get typerUtils() {
+    if (!this._tu) {
+      // todo this might be better in a worker
+      this._tu = new TyperUtils(
+        this.path.getNativePath(),
+        this.codeEntries$.getValue().map((c) => c.getRemoteCodeEntry())
+      );
+    }
+    return this._tu;
+  }
 
   protected constructor(
     public readonly path: PortablePath,
@@ -202,22 +221,61 @@ export abstract class Project {
 
   public async addRenderEntries(...codeEntries: CodeEntry[]) {
     const newRenderEntries: RenderEntry[] = [];
-    codeEntries.forEach((codeEntry) => {
-      let baseName = codeEntry.friendlyName;
-      const name = { current: baseName };
-      let index = 1;
-      while (
-        [...this.renderEntries$.getValue(), ...newRenderEntries].find(
-          (renderEntry) => renderEntry.name === name.current
-        )
-      ) {
-        name.current = `${baseName} (${index++})`;
-      }
+    await Promise.all(
+      codeEntries.map(async (codeEntry) => {
+        let baseName = codeEntry.friendlyName;
+        const name = { current: baseName };
+        let index = 1;
+        while (
+          [...this.renderEntries$.getValue(), ...newRenderEntries].find(
+            (r) => r.name === name.current
+          )
+        ) {
+          name.current = `${baseName} (${index++})`;
+        }
 
-      newRenderEntries.push(
-        new RenderEntry(uniqueId(), name.current, codeEntry)
-      );
-    });
+        const renderEntry = new RenderEntry(
+          uniqueId(),
+          name.current,
+          codeEntry
+        );
+
+        // attempt to extract prop types for the component
+        const componentProps = this.typerUtils?.getExportedComponentProps(
+          codeEntry.filePath.getNativePath(),
+          {
+            name: await ltTakeNext(codeEntry.exportName$),
+            isDefault: !!(await ltTakeNext(codeEntry.exportIsDefault$)),
+          }
+        );
+
+        // if prop types are available, try to fill in mock values
+        if (
+          componentProps &&
+          componentProps.kind === TSTypeKind.Object &&
+          componentProps.props.length > 0
+        ) {
+          // set an async request to get props values guessed by gpt (can take >5s)
+          fillPropsWithGpt(componentProps)
+            .then((gptProps) => {
+              produceNext(renderEntry.componentProps$, (draft) => {
+                Object.keys(draft).forEach((key) => {
+                  // todo don't overwrite props explicitly set by the user
+                  draft[key] = gptProps[key] ?? draft[key];
+                });
+              });
+            })
+            .catch((e) => console.error("failed to retrieve api props", e));
+
+          // fill in mock values while we wait for gpt
+          const placeholderProps = getPlaceholderTSTypeWrapperValue(
+            componentProps
+          ) as Record<string, TSTypeWrapper>;
+          renderEntry.componentProps$.next(placeholderProps);
+        }
+        newRenderEntries.push(renderEntry);
+      })
+    );
     produceNext(this.renderEntries$, (draft) =>
       (draft as RenderEntry[]).push(...newRenderEntries)
     );

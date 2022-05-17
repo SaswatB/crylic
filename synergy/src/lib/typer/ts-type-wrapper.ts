@@ -71,3 +71,44 @@ export type TSTypeWrapper =
   | TSTypeW_Tuple
   | TSTypeW_Function
   | TSTypeW_Union;
+
+/**
+ * Creates a value that should match the given type
+ */
+export function getPlaceholderTSTypeWrapperValue(type: TSTypeWrapper): unknown {
+  switch (type.kind) {
+    case TSTypeKind.String:
+      return "placeholder";
+    case TSTypeKind.Number:
+      return 0;
+    case TSTypeKind.Boolean:
+      return false;
+    case TSTypeKind.Undefined:
+      return undefined;
+    case TSTypeKind.Null:
+      return null;
+    case TSTypeKind.LiteralString:
+    case TSTypeKind.LiteralNumber:
+      return type.value;
+    case TSTypeKind.Object:
+      return type.props
+        .filter((p) => !p.optional)
+        .reduce(
+          (obj, p) => ({
+            ...obj,
+            [p.name]: getPlaceholderTSTypeWrapperValue(p.type),
+          }),
+          {}
+        );
+    case TSTypeKind.Array:
+      return [];
+    case TSTypeKind.Tuple:
+      return [type.memberTypes.map((p) => getPlaceholderTSTypeWrapperValue(p))];
+    case TSTypeKind.Function:
+      return () => void 0;
+    case TSTypeKind.Union:
+      // todo prefer undefined in a union
+      return getPlaceholderTSTypeWrapperValue(type.memberTypes[0]!);
+  }
+  return undefined;
+}
