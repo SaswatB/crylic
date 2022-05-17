@@ -2,6 +2,8 @@ import { uniqueId } from "lodash";
 import { BehaviorSubject, Subject } from "rxjs";
 import { bufferCount, distinctUntilChanged, map } from "rxjs/operators";
 
+import { ALLOW_GPT_LOCALKEY } from "../../constants";
+import { getParsedLocalStorageValue } from "../../hooks/useLocalStorage";
 import { EditEntry } from "../../types/paint";
 import { ElementASTEditor, StyleASTEditor } from "../ast/editors/ASTEditor";
 import { JSXASTEditor } from "../ast/editors/JSXASTEditor";
@@ -255,17 +257,19 @@ export abstract class Project {
           componentProps.kind === TSTypeKind.Object &&
           componentProps.props.length > 0
         ) {
-          // set an async request to get props values guessed by gpt (can take >5s)
-          fillPropsWithGpt(componentProps)
-            .then((gptProps) => {
-              produceNext(renderEntry.componentProps$, (draft) => {
-                Object.keys(draft).forEach((key) => {
-                  // todo don't overwrite props explicitly set by the user
-                  draft[key] = gptProps[key] ?? draft[key];
+          if (getParsedLocalStorageValue(ALLOW_GPT_LOCALKEY) ?? true) {
+            // set an async request to get props values guessed by gpt (can take >5s)
+            fillPropsWithGpt(componentProps)
+              .then((gptProps) => {
+                produceNext(renderEntry.componentProps$, (draft) => {
+                  Object.keys(draft).forEach((key) => {
+                    // todo don't overwrite props explicitly set by the user
+                    draft[key] = gptProps[key] ?? draft[key];
+                  });
                 });
-              });
-            })
-            .catch((e) => console.error("failed to retrieve api props", e));
+              })
+              .catch((e) => console.error("failed to retrieve api props", e));
+          }
 
           // fill in mock values while we wait for gpt
           const placeholderProps = getPlaceholderTSTypeWrapperValue(

@@ -1,5 +1,6 @@
 import React, { useContext, VoidFunctionComponent } from "react";
-import { Button, Dialog, DialogContent, DialogTitle } from "@material-ui/core";
+import styled from "@emotion/styled";
+import { Dialog, DialogContent, DialogTitle } from "@material-ui/core";
 
 import { usePackageInstallerRecoil } from "../../hooks/recoil/usePackageInstallerRecoil";
 import { useService } from "../../hooks/useService";
@@ -8,10 +9,10 @@ import { TourContext } from "../Tour/Tour";
 
 export const ConfigurationDialog: VoidFunctionComponent<{
   open: boolean;
-  trackingConfigNode: React.ReactNode;
+  optOutConfigNode: React.ReactNode;
   onClose: () => void;
   onEditWebpackConfig: () => void;
-}> = ({ open, trackingConfigNode, onClose, onEditWebpackConfig }) => {
+}> = ({ open, optOutConfigNode, onClose, onEditWebpackConfig }) => {
   const projectService = useService(ProjectService);
   const project = useProject();
   const { installPackages } = usePackageInstallerRecoil();
@@ -67,9 +68,16 @@ export const ConfigurationDialog: VoidFunctionComponent<{
               <Button onClick={() => resetTour()}>Restart Tour</Button>
             )}
           </div>
-          {trackingConfigNode}
+          {optOutConfigNode}
         </div>
       </DialogContent>
     </Dialog>
   );
 };
+
+const Button = styled.button`
+  border-radius: 15px;
+  background-color: #0000003b;
+  padding: 20px;
+  margin: 10px;
+`;

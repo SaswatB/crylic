@@ -27,6 +27,7 @@ import { Tour } from "synergy/src/components/Tour/Tour";
 import { TransformContainer } from "synergy/src/components/TransformContainer";
 import { ConfigurationDialog } from "synergy/src/components/Workspace/ConfigurationDialog";
 import { InstallDialog } from "synergy/src/components/Workspace/InstallDialog";
+import { ALLOW_GPT_LOCALKEY } from "synergy/src/constants";
 import { useLocalStorage } from "synergy/src/hooks/useLocalStorage";
 import {
   useMemoObservable,
@@ -129,14 +130,24 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allowTracking]);
 
-  const renderTrackingConfig = () => (
-    <TrackingControlGroup>
-      <Checkbox
-        checked={allowTracking}
-        onChange={(e) => setAllowTracking(e.target.checked)}
-      />
-      Allow collecting error reports and anonymized usage analytics.
-    </TrackingControlGroup>
+  const [allowGpt, setAllowGpt] = useLocalStorage<boolean>(ALLOW_GPT_LOCALKEY);
+  const renderOptOutConfig = () => (
+    <>
+      <TrackingControlGroup>
+        <Checkbox
+          checked={allowTracking}
+          onChange={(e) => setAllowTracking(e.target.checked)}
+        />
+        Allow collecting error reports and anonymized usage analytics.
+      </TrackingControlGroup>
+      <div>
+        <Checkbox
+          checked={!!(allowGpt ?? true)}
+          onChange={(e) => setAllowGpt(e.target.checked)}
+        />
+        Allow uploading snippets of your code for AI-assisted functionality
+      </div>
+    </>
   );
 
   const renderLeftPane = (projectName: string) => (
@@ -151,7 +162,7 @@ export function App() {
         />
         <ConfigurationDialog
           open={showConfigDialog}
-          trackingConfigNode={renderTrackingConfig()}
+          optOutConfigNode={renderOptOutConfig()}
           onClose={() => setShowConfigDialog(false)}
           onEditWebpackConfig={() => setShowWebpackConfigDialog(true)}
         />
@@ -233,7 +244,7 @@ export function App() {
         Look around for beacons to get further instructions.
         <br />
         <br />
-        {renderTrackingConfig()}
+        {renderOptOutConfig()}
       </Tour>
       <PaneContainer>
         {project && (
