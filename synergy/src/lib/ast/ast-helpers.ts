@@ -234,7 +234,6 @@ export const astLiteralToValue = (
   else if (value.type === "ObjectExpression") {
     return value.properties
       .map((prop) => {
-        debugger;
         if (prop.type !== "ObjectProperty") return undefined;
         return {
           key: pipe(
