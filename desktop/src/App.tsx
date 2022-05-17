@@ -28,7 +28,11 @@ import { TransformContainer } from "synergy/src/components/TransformContainer";
 import { ConfigurationDialog } from "synergy/src/components/Workspace/ConfigurationDialog";
 import { InstallDialog } from "synergy/src/components/Workspace/InstallDialog";
 import { ALLOW_GPT_LOCALKEY, INSTALLID_LOCALKEY } from "synergy/src/constants";
-import { useLocalStorage } from "synergy/src/hooks/useLocalStorage";
+import {
+  getParsedLocalStorageValue,
+  setParsedLocalStorageValue,
+  useLocalStorage,
+} from "synergy/src/hooks/useLocalStorage";
 import {
   useMemoObservable,
   useObservable,
@@ -57,6 +61,12 @@ const Store = __non_webpack_require__(
 ) as typeof import("electron-store");
 const store = new Store();
 
+let installId = getParsedLocalStorageValue<string>(INSTALLID_LOCALKEY)!;
+if (!installId) {
+  installId = uuidV4();
+  setParsedLocalStorageValue(INSTALLID_LOCALKEY, installId);
+}
+
 Nucleus.init("625458c24bdc36ee283672da", {
   disableErrorReports: true,
   autoUserId: false,
@@ -65,7 +75,6 @@ let isNucleusStarted = false;
 
 export function App() {
   const bus = useBus();
-  const [installId, setInstallId] = useLocalStorage<string>(INSTALLID_LOCALKEY);
   const { enqueueSnackbar } = useSnackbar();
   const selectService = useService(SelectService);
   const hasSelectedElement = useMemoObservable(
@@ -106,12 +115,7 @@ export function App() {
     store.set("tracking_disabled", !allowTracking);
     if (allowTracking && __IS_PRODUCTION__) {
       if (!isNucleusStarted) {
-        let id = installId;
-        if (!id) {
-          id = uuidV4();
-          setInstallId(id);
-        }
-        Nucleus.identify(id, {});
+        Nucleus.identify(installId, {});
         Nucleus.setProps(
           {
             version: __BUILD_VERSION__,
