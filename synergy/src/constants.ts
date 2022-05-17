@@ -15,6 +15,7 @@ export const DEFAULT_PROJECT_HTML_TEMPLATE_PATH = "public/index.html";
 export const DEFAULT_HTML_TEMPLATE_SELECTOR = "root";
 
 export const ALLOW_GPT_LOCALKEY = "allowGpt";
+export const INSTALLID_LOCALKEY = "installId";
 
 export enum SelectModeType {
   SelectElement,

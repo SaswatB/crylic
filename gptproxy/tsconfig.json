@@ -7,6 +7,7 @@
     // unable to import the parent tsconfig due to fly.io's build system
     // so these props are copied
     "strict": true,
+    "skipLibCheck": true,
     "noImplicitAny": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true

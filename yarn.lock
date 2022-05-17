@@ -7579,6 +7579,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"axios@npm:^0.26.0":
+  version: 0.26.1
+  resolution: "axios@npm:0.26.1"
+  dependencies:
+    follow-redirects: ^1.14.8
+  checksum: d9eb58ff4bc0b36a04783fc9ff760e9245c829a5a1052ee7ca6013410d427036b1d10d04e7380c02f3508c5eaf3485b1ae67bd2adbfec3683704745c8d7a6e1a
+  languageName: node
+  linkType: hard
+
 "axios@npm:^0.27.2":
   version: 0.27.2
   resolution: "axios@npm:0.27.2"
@@ -10382,13 +10391,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"data-uri-to-buffer@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "data-uri-to-buffer@npm:4.0.0"
-  checksum: a010653869abe8bb51259432894ac62c52bf79ad761d418d94396f48c346f2ae739c46b254e8bb5987bded8a653d467db1968db3a69bab1d33aa5567baa5cfc7
-  languageName: node
-  linkType: hard
-
 "data-urls@npm:^2.0.0":
   version: 2.0.0
   resolution: "data-urls@npm:2.0.0"
@@ -12713,16 +12715,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fetch-blob@npm:^3.1.2, fetch-blob@npm:^3.1.4":
-  version: 3.1.5
-  resolution: "fetch-blob@npm:3.1.5"
-  dependencies:
-    node-domexception: ^1.0.0
-    web-streams-polyfill: ^3.0.3
-  checksum: 6493f21bfe196798343431d20c0284835202728d076dd2cbf502a2846679f9265f3b0c3a7224750ae1a770b925da09e592b05fe7c3a22ca27794a39a0039ab21
-  languageName: node
-  linkType: hard
-
 "figgy-pudding@npm:^3.5.1":
   version: 3.5.2
   resolution: "figgy-pudding@npm:3.5.2"
@@ -12992,7 +12984,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"follow-redirects@npm:^1.14.9":
+"follow-redirects@npm:^1.14.8, follow-redirects@npm:^1.14.9":
   version: 1.15.0
   resolution: "follow-redirects@npm:1.15.0"
   peerDependenciesMeta:
@@ -13070,15 +13062,6 @@ __metadata:
     combined-stream: ^1.0.6
     mime-types: ^2.1.12
   checksum: 10c1780fa13dbe1ff3100114c2ce1f9307f8be10b14bf16e103815356ff567b6be39d70fc4a40f8990b9660012dc24b0f5e1dde1b6426166eb23a445ba068ca3
-  languageName: node
-  linkType: hard
-
-"formdata-polyfill@npm:^4.0.10":
-  version: 4.0.10
-  resolution: "formdata-polyfill@npm:4.0.10"
-  dependencies:
-    fetch-blob: ^3.1.2
-  checksum: 82a34df292afadd82b43d4a740ce387bc08541e0a534358425193017bf9fb3567875dc5f69564984b1da979979b70703aa73dee715a17b6c229752ae736dd9db
   languageName: node
   linkType: hard
 
@@ -13762,7 +13745,8 @@ __metadata:
   dependencies:
     "@types/express": ^4.17.13
     express: ^4.18.1
-    node-fetch: ^3.2.4
+    lru-cache: ^7.10.1
+    openai: ^2.0.5
     typescript: ^4.6.4
   languageName: unknown
   linkType: soft
@@ -17538,6 +17522,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lru-cache@npm:^7.10.1":
+  version: 7.10.1
+  resolution: "lru-cache@npm:7.10.1"
+  checksum: e8b190d71ed0fcd7b29c71a3e9b01f851c92d1ef8865ff06b5581ca991db1e5e006920ed4da8b56da1910664ed51abfd76c46fb55e82ac252ff6c970ff910d72
+  languageName: node
+  linkType: hard
+
 "lru-cache@npm:^7.7.1":
   version: 7.9.0
   resolution: "lru-cache@npm:7.9.0"
@@ -18400,13 +18391,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-domexception@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "node-domexception@npm:1.0.0"
-  checksum: ee1d37dd2a4eb26a8a92cd6b64dfc29caec72bff5e1ed9aba80c294f57a31ba4895a60fd48347cf17dd6e766da0ae87d75657dfd1f384ebfa60462c2283f5c7f
-  languageName: node
-  linkType: hard
-
 "node-emoji@npm:^1.8.1":
   version: 1.10.0
   resolution: "node-emoji@npm:1.10.0"
@@ -18444,17 +18428,6 @@ __metadata:
     encoding:
       optional: true
   checksum: 8d816ffd1ee22cab8301c7756ef04f3437f18dace86a1dae22cf81db8ef29c0bf6655f3215cb0cdb22b420b6fe141e64b26905e7f33f9377a7fa59135ea3e10b
-  languageName: node
-  linkType: hard
-
-"node-fetch@npm:^3.2.4":
-  version: 3.2.4
-  resolution: "node-fetch@npm:3.2.4"
-  dependencies:
-    data-uri-to-buffer: ^4.0.0
-    fetch-blob: ^3.1.4
-    formdata-polyfill: ^4.0.10
-  checksum: cfc715441302167bd4a9c6d6f3ff8eecb65e5aeeccd55a690497dcce5f95ec017d65c5682414287cad3998a28b1bab4820dcbe51852902eaa5f15f3975562384
   languageName: node
   linkType: hard
 
@@ -19121,6 +19094,16 @@ __metadata:
     is-docker: ^2.1.1
     is-wsl: ^2.2.0
   checksum: e9545bec64cdbf30a0c35c1bdc310344adf8428a117f7d8df3c0af0a0a24c513b304916a6d9b11db0190ff7225c2d578885080b761ed46a3d5f6f1eebb98b63c
+  languageName: node
+  linkType: hard
+
+"openai@npm:^2.0.5":
+  version: 2.0.5
+  resolution: "openai@npm:2.0.5"
+  dependencies:
+    axios: ^0.26.0
+    form-data: ^4.0.0
+  checksum: 2d0d73a37a2993d4f953d6b262a4302976e7b5f309d878770b4d9e94e2f7dcd5234d91c20449cd750e75da232f421fcce9c1ae589c97c952ef97eb27dd75cd40
   languageName: node
   linkType: hard
 
@@ -25827,13 +25810,6 @@ react-refresh@0.8.3:
   dependencies:
     defaults: ^1.0.3
   checksum: 814e9d1ddcc9798f7377ffa448a5a3892232b9275ebb30a41b529607691c0491de47cba426e917a4d08ded3ee7e9ba2f3fe32e62ee3cd9c7d3bafb7754bd553c
-  languageName: node
-  linkType: hard
-
-"web-streams-polyfill@npm:^3.0.3":
-  version: 3.2.1
-  resolution: "web-streams-polyfill@npm:3.2.1"
-  checksum: b119c78574b6d65935e35098c2afdcd752b84268e18746606af149e3c424e15621b6f1ff0b42b2676dc012fc4f0d313f964b41a4b5031e525faa03997457da02
   languageName: node
   linkType: hard
 

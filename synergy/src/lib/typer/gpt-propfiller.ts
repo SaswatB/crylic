@@ -1,11 +1,15 @@
 import { pipe } from "fp-ts/lib/pipeable";
 
+import { INSTALLID_LOCALKEY } from "../../constants";
+import { getParsedLocalStorageValue } from "../../hooks/useLocalStorage";
 import { jsxElementAttributesToObject, parseAST } from "../ast/ast-helpers";
 import { printTSTypeWrapper } from "./ts-type-printer";
 import { TSTypeW_Object } from "./ts-type-wrapper";
 
 // lm_4673266fee copied interfaces
 interface GPTPropFillRequest {
+  // user identifier, mandated by OpenAI for their abuse tracking
+  userId: string;
   // a type definition
   // ex: `type Props = { foo: string; bar: number; };`
   type: string;
@@ -22,6 +26,7 @@ export async function fillPropsWithGpt(
   try {
     // request the best prop values to use here
     const req: GPTPropFillRequest = {
+      userId: getParsedLocalStorageValue(INSTALLID_LOCALKEY) || "",
       // lm_17bf0c76a3 type name is expected to be "Props"
       type: printTSTypeWrapper("Props", componentProps),
     };

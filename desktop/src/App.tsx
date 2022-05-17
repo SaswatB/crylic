@@ -27,7 +27,7 @@ import { Tour } from "synergy/src/components/Tour/Tour";
 import { TransformContainer } from "synergy/src/components/TransformContainer";
 import { ConfigurationDialog } from "synergy/src/components/Workspace/ConfigurationDialog";
 import { InstallDialog } from "synergy/src/components/Workspace/InstallDialog";
-import { ALLOW_GPT_LOCALKEY } from "synergy/src/constants";
+import { ALLOW_GPT_LOCALKEY, INSTALLID_LOCALKEY } from "synergy/src/constants";
 import { useLocalStorage } from "synergy/src/hooks/useLocalStorage";
 import {
   useMemoObservable,
@@ -65,7 +65,7 @@ let isNucleusStarted = false;
 
 export function App() {
   const bus = useBus();
-  const [installId, setInstallId] = useLocalStorage<string>("installId");
+  const [installId, setInstallId] = useLocalStorage<string>(INSTALLID_LOCALKEY);
   const { enqueueSnackbar } = useSnackbar();
   const selectService = useService(SelectService);
   const hasSelectedElement = useMemoObservable(
