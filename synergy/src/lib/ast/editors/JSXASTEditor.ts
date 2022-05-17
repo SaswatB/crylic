@@ -32,7 +32,7 @@ import {
   ifObjectExpression,
   ifObjectProperty,
   ifStringLiteral,
-  jsxLiteralToValue,
+  jsxElementAttributesToObject,
   traverseJSXElements,
   valueToJSXLiteral,
 } from "../ast-helpers";
@@ -379,29 +379,7 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
               )
             )
           ) || "",
-        // get the component props by best effort (won't match non literals)
-        directProps:
-          path.value.openingElement.attributes
-            ?.map((attr) =>
-              pipe(attr, ifJSXAttribute, (_) =>
-                _
-                  ? {
-                      key: pipe(_.name, ifJSXIdentifier, getName),
-                      value:
-                        _.value &&
-                        // todo investigate how this is possible https://github.com/benjamn/ast-types/pull/375
-                        _.value?.type !== "JSXElement" &&
-                        _.value?.type !== "JSXFragment"
-                          ? jsxLiteralToValue(_.value)
-                          : undefined,
-                    }
-                  : undefined
-              )
-            )
-            .reduce((acc: Record<string, unknown>, cur) => {
-              if (cur && cur.key !== undefined) acc[cur.key] = cur.value;
-              return acc;
-            }, {}) || {},
+        directProps: jsxElementAttributesToObject(path.value),
       };
 
       if (options?.includeImports) {

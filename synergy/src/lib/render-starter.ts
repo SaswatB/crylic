@@ -5,6 +5,7 @@ export interface RenderStarterDefinition {
     root: string;
     errorWrapper: string;
     wrappers: { open: string; close: string }[];
+    componentProps: string[];
   };
   afterRender: string[];
 }
@@ -23,7 +24,7 @@ ReactDOM.render((
   <${def.render.errorWrapper}>
     ${def.render.wrappers.reduceRight(
       (c, { open, close }) => `<${open}>${c}</${close}>`,
-      "<Component />"
+      `<Component ${def.render.componentProps?.join(" ") || ""} />`
     )}
   </${def.render.errorWrapper}>),
   document.getElementById("${def.render.root}")

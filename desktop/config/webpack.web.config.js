@@ -95,7 +95,7 @@ module.exports = (_env, argv) => ({
       // text files
       {
         test: /\.txt$/i,
-        type: "asset/resource",
+        use: "raw-loader",
       },
     ],
   },

@@ -1,5 +1,13 @@
 import { namedTypes as t } from "ast-types";
-import { ExpressionKind, LiteralKind } from "ast-types/gen/kinds";
+import {
+  ExpressionKind,
+  JSXElementKind,
+  JSXEmptyExpressionKind,
+  JSXExpressionContainerKind,
+  JSXFragmentKind,
+  LiteralKind,
+  PatternKind,
+} from "ast-types/gen/kinds";
 import { NodePath } from "ast-types/lib/node-path";
 import clone from "clone";
 import deepFreeze from "deep-freeze-strict";
@@ -132,6 +140,10 @@ export const ifVariableDeclarator = (
   node?.type === "VariableDeclarator"
     ? (node as t.VariableDeclarator)
     : undefined;
+export const ifLiteralKind = (
+  node: t.Node | null | undefined
+): node is LiteralKind =>
+  LiteralKindTypes.includes(node?.type as typeof LiteralKindTypes["0"]);
 
 export const eitherIf =
   <S, T, U extends S>(check: (n: S) => T | undefined) =>
@@ -203,35 +215,51 @@ const LiteralKindTypes = [
   "NumericLiteral",
   "RegExpLiteral",
   "StringLiteral",
-];
+] as const;
 
-export const astLiteralToValue = (value: LiteralKind | t.ObjectExpression) => {
-  if (LiteralKindTypes.includes(value.type)) {
-    return (value as LiteralKind).value;
-  } else if (value.type === "ObjectExpression") {
+export const astLiteralToValue = (
+  value:
+    | ExpressionKind
+    | JSXEmptyExpressionKind
+    | LiteralKind
+    | JSXExpressionContainerKind
+    | JSXElementKind
+    | JSXFragmentKind
+    | PatternKind
+    | null
+): unknown => {
+  if (!value) return undefined;
+  else if (ifLiteralKind(value))
+    return value.type === "NullLiteral" ? null : value.value;
+  else if (value.type === "ObjectExpression") {
     return value.properties
       .map((prop) => {
-        if (prop.type === "ObjectProperty") {
-          if (LiteralKindTypes.includes(prop.value.type)) {
-            return {
-              key: pipe(
-                prop.key,
-                eitherIf(ifStringLiteral),
-                fold(getValue, (a) => pipe(a, ifIdentifier, (_) => _?.name))
-              ),
-              value: (prop.value as LiteralKind).value,
-            };
-          }
-        }
-        return undefined;
+        debugger;
+        if (prop.type !== "ObjectProperty") return undefined;
+        return {
+          key: pipe(
+            prop.key,
+            eitherIf(ifStringLiteral),
+            fold(getValue, (a) => pipe(a, ifIdentifier, (_) => _?.name))
+          ),
+          value: astLiteralToValue(prop.value),
+        };
       })
       .filter((e) => e && e.key !== undefined)
       .reduce((acc: Record<string, unknown>, cur) => {
         acc[cur!.key!] = cur!.value;
         return acc;
       }, {});
+  } else if (value.type === "ArrayExpression") {
+    return value.elements
+      .filter(
+        <T extends { type: string }>(e: T | null | t.SpreadElement): e is T =>
+          !!e && e.type !== "SpreadElement"
+      )
+      .map((e) => astLiteralToValue(e));
   }
-  throw new Error(`Unexpected value type ${value.type}`);
+  // todo support more cases if necessary
+  return undefined;
 };
 
 export const valueToJSXLiteral = (value: unknown) => {
@@ -243,17 +271,42 @@ export const valueToJSXLiteral = (value: unknown) => {
   return b.jsxExpressionContainer(valueToASTLiteral(value));
 };
 
-export const jsxLiteralToValue = (
-  value: LiteralKind | t.JSXExpressionContainer
-) => {
-  if (value.type === "JSXExpressionContainer") {
-    if (value.expression.type === "ObjectExpression") {
-      return astLiteralToValue(value.expression);
-    }
-    // todo process more types of expressions
-    return undefined;
-  }
-  return astLiteralToValue(value);
+/**
+ *  Get the component props by best effort (won't match non literals)
+ */
+export const jsxElementAttributesToObject = (element: t.JSXElement) => {
+  return (
+    element.openingElement.attributes
+      ?.map((attr) =>
+        pipe(attr, ifJSXAttribute, (_) => {
+          if (!_) return undefined;
+
+          const key = pipe(_.name, ifJSXIdentifier, getName);
+          if (key === undefined) return undefined;
+
+          let value;
+          if (_.value === null) {
+            // handle <C prop />, which is equivalent to <C prop={true} />
+            value = true;
+          } else if (
+            _.value &&
+            // todo investigate how this is possible https://github.com/benjamn/ast-types/pull/375
+            _.value?.type !== "JSXElement" &&
+            _.value?.type !== "JSXFragment"
+          ) {
+            value = astLiteralToValue(
+              _.value.type === "JSXExpressionContainer"
+                ? _.value.expression
+                : _.value
+            );
+          } else value = undefined;
+
+          return { key, value };
+        })
+      )
+      .filter(isDefined)
+      .reduce((acc, { key, value }) => ({ ...acc, [key]: value }), {}) || {}
+  );
 };
 
 export const copyJSXName = (

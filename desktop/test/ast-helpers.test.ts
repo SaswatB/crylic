@@ -1,28 +1,34 @@
-import { getComponentExports, parseAST } from "synergy/src/lib/ast/ast-helpers";
+import { pipe } from "fp-ts/lib/pipeable";
 
-import exportDefaultFunctionExpressionFixture from "./fixtures/component-name/export-default-function-expression.fixture";
+import {
+  getComponentExports,
+  jsxElementAttributesToObject,
+  parseAST,
+} from "synergy/src/lib/ast/ast-helpers";
+
 import exportDefaultFunctionFixture from "./fixtures/component-name/export-default-function.fixture";
+import exportDefaultFunctionExpressionFixture from "./fixtures/component-name/export-default-function-expression.fixture";
 import exportDefaultLambdaFixture from "./fixtures/component-name/export-default-lambda.fixture";
+import exportDefaultMemoFixture from "./fixtures/component-name/export-default-memo.fixture";
 import exportDefaultMemoExplicitImportFixture from "./fixtures/component-name/export-default-memo-explicit-import.fixture";
 import exportDefaultMemoRenamedImportFixture from "./fixtures/component-name/export-default-memo-renamed-import.fixture";
-import exportDefaultMemoFixture from "./fixtures/component-name/export-default-memo.fixture";
 import exportMultipleFunctionsFixture from "./fixtures/component-name/export-multiple-functions.fixture";
 // @ts-expect-error fixture
-import exportNamedFunctionExpressionWithNameFixture from "./fixtures/component-name/export-named-function-expression-with-name.fixture";
+import exportNamedFunctionFixture from "./fixtures/component-name/export-named-function.fixture";
 // @ts-expect-error fixture
 import exportNamedFunctionExpressionFixture from "./fixtures/component-name/export-named-function-expression.fixture";
 // @ts-expect-error fixture
-import exportNamedFunctionFixture from "./fixtures/component-name/export-named-function.fixture";
+import exportNamedFunctionExpressionWithNameFixture from "./fixtures/component-name/export-named-function-expression-with-name.fixture";
 // @ts-expect-error fixture
 import exportNamedLambdaFixture from "./fixtures/component-name/export-named-lambda.fixture";
 // @ts-expect-error fixture
 import exportNamedMemoFixture from "./fixtures/component-name/export-named-memo.fixture";
 // @ts-expect-error fixture
+import exportNamedStyledFixture from "./fixtures/component-name/export-named-styled.fixture";
+// @ts-expect-error fixture
 import exportNamedStyledHoCFixture from "./fixtures/component-name/export-named-styled-hoc.fixture";
 // @ts-expect-error fixture
 import exportNamedStyledWithFunctionFixture from "./fixtures/component-name/export-named-styled-with-function.fixture";
-// @ts-expect-error fixture
-import exportNamedStyledFixture from "./fixtures/component-name/export-named-styled.fixture";
 import exportSeparateDefaultFunctionFixture from "./fixtures/component-name/export-separate-default-function.fixture";
 import exportSeparateDefaultLambdaFixture from "./fixtures/component-name/export-separate-default-lambda.fixture";
 import exportSeparateDefaultMemoFixture from "./fixtures/component-name/export-separate-default-memo.fixture";
@@ -241,5 +247,48 @@ describe("getComponentExports", () => {
       parseAST(noComponentExport)
     ).preferredExport;
     expect(comp).toBeUndefined();
+  });
+});
+
+function matchJsxElementAttributesToObject(
+  code: string,
+  expectedObject: unknown
+) {
+  const element = pipe(
+    parseAST(code),
+    (_) => _.program.body[0],
+    (_) => (_?.type === "ExpressionStatement" ? _.expression : undefined),
+    (_) => (_?.type === "JSXElement" ? _ : undefined)
+  );
+  expect(jsxElementAttributesToObject(element!)).toEqual(expectedObject);
+}
+
+describe("jsxElementAttributesToObject", () => {
+  test.only("converts attributes to object", () => {
+    matchJsxElementAttributesToObject(
+      `<Component test test1={true} test2={null} test3={undefined} test4={"0"} test5="9" test6={() => {}} test7={{ prop1: '1', prop2: 1, prop3: false, props4: { sprop1: null, sprop2: { ssprop1: undefined } } }} test8={["1", "2"]} />`,
+      {
+        test: true,
+        test1: true,
+        test2: null,
+        test3: undefined,
+        test4: "0",
+        test5: "9",
+        test6: undefined, // functions aren't supported currently
+        test7: {
+          prop1: "1",
+          prop2: 1,
+          prop3: false,
+          props4: { sprop1: null, sprop2: { ssprop1: undefined } },
+        },
+        test8: ["1", "2"],
+      }
+    );
+  });
+  test("converts empty attributes to empty object", () => {
+    matchJsxElementAttributesToObject("<Component />", {});
+  });
+  test("ignores spread attributes", () => {
+    matchJsxElementAttributesToObject("<Component {...test} />", {});
   });
 });

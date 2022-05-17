@@ -8,7 +8,7 @@ import React, {
 import { debounce } from "lodash";
 import { debounceTime, map } from "rxjs/operators";
 
-import { useMemoObservable } from "../../hooks/useObservable";
+import { useMemoObservable, useObservable } from "../../hooks/useObservable";
 import { useObservableCallback } from "../../hooks/useObservableCallback";
 import { useRerender } from "../../hooks/useRerender";
 import { useService } from "../../hooks/useService";
@@ -69,6 +69,9 @@ export const CompilerComponentView: FunctionComponent<
       }
     }, [renderEntry])
   );
+
+  // rerender on props change
+  const renderEntryComponentProps = useObservable(renderEntry.componentProps$);
 
   // helper for getting elements by a lookup id
   const getElementsByLookupId = (lookupId: string) => {
@@ -178,7 +181,7 @@ export const CompilerComponentView: FunctionComponent<
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedCodeEntries, renderEntry.publish]);
+  }, [debouncedCodeEntries, renderEntry.publish, renderEntryComponentProps]);
 
   return <Frame {...props} ref={frame} />;
 };

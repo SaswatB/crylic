@@ -4,7 +4,10 @@ import ReactDOMServer from "react-dom/server";
 import { ErrorBoundary } from "synergy/src/components/ErrorBoundary";
 import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
 import { Project } from "synergy/src/lib/project/Project";
-import { RenderEntryDeployerContext } from "synergy/src/lib/project/RenderEntry";
+import {
+  RenderEntry,
+  RenderEntryDeployerContext,
+} from "synergy/src/lib/project/RenderEntry";
 import { findFiber } from "synergy/src/lib/react-dev-tools";
 import {
   generateRenderStarter,
@@ -89,12 +92,12 @@ const getImportFromCodeEntry = async (local: string, codeEntry: CodeEntry) => {
 
 const generateBundleCode = async (
   project: Project,
-  componentCodeEntry: CodeEntry,
+  renderEntry: RenderEntry,
   pluginService: PluginService
 ) => {
   const componentImport = await getImportFromCodeEntry(
     "Component",
-    componentCodeEntry
+    renderEntry.codeEntry
   );
 
   // get the bootstrap file
@@ -147,6 +150,7 @@ const generateBundleCode = async (
             },
           ]
         : [],
+      componentProps: renderEntry.componentProps$.getValue(),
     },
     afterRender: [
       `if ((module || {}).hot && (window || {}).${HMR_STATUS_HANDLER_PROP}) {
@@ -211,10 +215,9 @@ export const webpackRunCodeWithWorker = async ({
 }: RenderEntryDeployerContext) => {
   const startTime = Date.now();
   const compileId = ++compileIdCounter;
-  const componentCodeEntry = renderEntry.codeEntry;
   const bundleCodeEntry = {
     id: `bundle-${renderEntry.codeId}`,
-    code: await generateBundleCode(project, componentCodeEntry, pluginService),
+    code: await generateBundleCode(project, renderEntry, pluginService),
     filePath: project.path.join("paintbundle.tsx").getNativePath(),
   };
 

@@ -1,10 +1,15 @@
 import { pipe } from "fp-ts/lib/pipeable";
 import ts from "typescript";
 
+import reactTypes from "../../vendor/react-types.ts.txt";
 import libTypes from "../../vendor/ts-lib/lib.d.ts.txt";
 import libDomTypes from "../../vendor/ts-lib/lib.dom.d.ts.txt";
 import libEs5Types from "../../vendor/ts-lib/lib.es5.d.ts.txt";
-import { RemoteCodeEntry } from "../project/CodeEntry";
+import { normalizePath } from "../normalizePath";
+import {
+  INITIAL_CODE_REVISION_ID,
+  RemoteCodeEntry,
+} from "../project/CodeEntry";
 import { TSTypeKind, TSTypeWrapper } from "./ts-type-wrapper";
 
 function isObjectType(t: ts.Type): t is ts.ObjectType {
@@ -28,6 +33,10 @@ const defaultLibs = [
     path: "/lib.es5.ts",
     code: libEs5Types,
   },
+  {
+    path: "<project-path>/node_modules/@types/react/index.d.ts",
+    code: reactTypes,
+  },
 ];
 
 export class TyperUtils {
@@ -39,18 +48,23 @@ export class TyperUtils {
     protected projectDir: string,
     protected codeEntries: RemoteCodeEntry[]
   ) {
+    const projectDefaultLibs = defaultLibs.map((lib) => ({
+      ...lib,
+      path: lib.path.replace("<project-path>", normalizePath(projectDir, "/")),
+    }));
+
     const servicesHost: ts.LanguageServiceHost = {
       getScriptFileNames: () => [
         ...codeEntries.map((e) => e.filePath),
-        ...defaultLibs.map((d) => d.path),
+        ...projectDefaultLibs.map((d) => d.path),
       ],
       getScriptVersion: (fileName) =>
         `${
           this.codeEntries.find((e) => e.filePath === fileName)
-            ?.codeRevisionId || 0
+            ?.codeRevisionId || INITIAL_CODE_REVISION_ID
         }`,
       getScriptSnapshot: (fileName) => {
-        const defaultLib = defaultLibs.find((d) => d.path === fileName);
+        const defaultLib = projectDefaultLibs.find((d) => d.path === fileName);
         if (defaultLib) return ts.ScriptSnapshot.fromString(defaultLib.code);
 
         const code = this.codeEntries.find(
@@ -59,8 +73,11 @@ export class TyperUtils {
         return code ? ts.ScriptSnapshot.fromString(code) : undefined;
       },
       getCurrentDirectory: () => projectDir,
-      getCompilationSettings: () => ({ jsx: ts.JsxEmit.React }),
-      getDefaultLibFileName: () => defaultLibs[0]!.path,
+      getCompilationSettings: () => ({
+        jsx: ts.JsxEmit.React,
+        esModuleInterop: true,
+      }),
+      getDefaultLibFileName: () => projectDefaultLibs[0]!.path,
     };
 
     this.services = ts.createLanguageService(
