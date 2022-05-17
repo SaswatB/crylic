@@ -308,12 +308,22 @@ export const webpackRunCodeWithWorker = async ({
       [HMR_STATUS_HANDLER_PROP]?: (status: string) => void;
       __REACT_DEVTOOLS_GLOBAL_HOOK__?: Partial<ReactDevToolsHook>;
       paintBundle?: () => void;
+      __react_refresh_test__?: boolean;
+      onHotAcceptError?: (message: string) => void;
     };
 
     if (frameWindow.paintBundle === undefined) {
       console.error("frame has no bundle");
       return;
     }
+
+    // react-refresh exposes the hook `onHotAcceptError` when set to test mode
+    frameWindow.__react_refresh_test__ = true;
+    // refresh the iframe if there's a hot reload error
+    frameWindow.onHotAcceptError = (message) => {
+      console.error("hot reload accept error", message);
+      frameWindow.location.reload();
+    };
 
     const errorHandler = (error: Error) => {
       const body = frame!.contentDocument!.querySelector("body")!;
