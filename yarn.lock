@@ -12427,6 +12427,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"express-rate-limit@npm:^6.4.0":
+  version: 6.4.0
+  resolution: "express-rate-limit@npm:6.4.0"
+  peerDependencies:
+    express: ^4 || ^5
+  checksum: 3125332fc3a73f0c50eaece169fa8d956d212f7b5c4dcaaa713fbe00fea6edc1a030705a71b60b8c8b5734c5b03004be38f843336e0bba4116a51726297f35e4
+  languageName: node
+  linkType: hard
+
 "express@npm:^4.17.1":
   version: 4.17.1
   resolution: "express@npm:4.17.1"
@@ -13745,6 +13754,7 @@ __metadata:
   dependencies:
     "@types/express": ^4.17.13
     express: ^4.18.1
+    express-rate-limit: ^6.4.0
     lru-cache: ^7.10.1
     openai: ^2.0.5
     typescript: ^4.6.4

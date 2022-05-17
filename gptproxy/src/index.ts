@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import express from "express";
+import rateLimit from "express-rate-limit";
 import LRU from "lru-cache";
 import { Configuration, OpenAIApi } from "openai";
 
@@ -31,6 +32,15 @@ const cache = new LRU<string, string>({
 const port = 56900;
 const app = express();
 app.use(express.json());
+
+// rate limit required by OpenAI
+app.use(
+  rateLimit({
+    windowMs: 60 * 1000,
+    max: 60, // limit each IP to 60 requests per minute
+    message: "Rate limit exceeded.",
+  })
+);
 
 const wrapGPTPropFillResponse = (props: string): GPTPropFillResponse => ({
   component: `<Component ${props} />`,
