@@ -91,9 +91,9 @@ export const AssetTreePane: FunctionComponent<Props> = ({
     const filePath = project.path.join(
       `${project.config.getDefaultNewStylesFolder()}/${name}.css`
     );
-    project?.addCodeEntries([new CodeEntry(project, filePath, "")], {
-      edit: true,
-    });
+    const codeEntry = new CodeEntry(project, filePath, "");
+    project.addCodeEntries([codeEntry]);
+    project.addEditEntries(codeEntry);
     enqueueSnackbar("Created a new stylesheet!");
     track("create.stylesheet");
   };

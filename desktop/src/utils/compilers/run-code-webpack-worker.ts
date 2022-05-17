@@ -150,7 +150,13 @@ const generateBundleCode = async (
             },
           ]
         : [],
-      componentProps: renderEntry.componentProps$.getValue(),
+      componentProps: Object.entries(
+        renderEntry.componentProps$.getValue()
+      ).map(([k, v]) =>
+        `${k}={${JSON.stringify(v, (_key, val) =>
+          typeof val === "function" ? "[function]" : val
+        )}}`.replaceAll(`"[function]"`, `() => void 0`)
+      ),
     },
     afterRender: [
       `if ((module || {}).hot && (window || {}).${HMR_STATUS_HANDLER_PROP}) {

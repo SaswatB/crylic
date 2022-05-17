@@ -20,7 +20,9 @@ export class RenderEntry {
   public readonly reactMetadata$ = new BehaviorSubject<
     ReactMetadata | undefined
   >(undefined);
-  public readonly componentProps$ = new BehaviorSubject<string[]>([]);
+  public readonly componentProps$ = new BehaviorSubject<
+    Record<string, unknown>
+  >({});
 
   public constructor(
     public readonly id: string,

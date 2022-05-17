@@ -88,15 +88,8 @@ export abstract class Project {
     return this.codeEntries$.getValue().find(({ id }) => id === codeId);
   }
 
-  public addCodeEntries(
-    entries: CodeEntry[],
-    options?: { render?: boolean; edit?: boolean }
-  ) {
+  public addCodeEntries(entries: CodeEntry[]) {
     produceNext(this.codeEntries$, (draft) => draft.push(...entries));
-
-    // if these code entries are edited/rendered by default, add those respective entries
-    if (options?.edit) this.addEditEntries(...entries);
-    if (options?.render) this.addRenderEntries(...entries);
   }
 
   // #endregion
@@ -207,7 +200,7 @@ export abstract class Project {
     else this.addEditEntries(codeEntry);
   }
 
-  public addRenderEntries(...codeEntries: CodeEntry[]) {
+  public async addRenderEntries(...codeEntries: CodeEntry[]) {
     const newRenderEntries: RenderEntry[] = [];
     codeEntries.forEach((codeEntry) => {
       let baseName = codeEntry.friendlyName;

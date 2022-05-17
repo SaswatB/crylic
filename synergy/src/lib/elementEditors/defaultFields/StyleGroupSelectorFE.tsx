@@ -193,9 +193,7 @@ export function StyleGroupSelectorFE({
             filePath = getPath(`-${index++}`);
           }
           styleEntry = new CodeEntry(project, filePath, "");
-          project?.addCodeEntries([styleEntry], {
-            edit: true,
-          });
+          project?.addCodeEntries([styleEntry]);
           project.saveFile(styleEntry);
         } else {
           styleEntry = res.codeEntry!;

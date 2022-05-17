@@ -72,7 +72,7 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
     [normalizedComponentName, preset, projectConfig]
   );
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     if (!normalizedComponentName) {
       enqueueSnackbar("Please enter a name", { variant: "error" });
       return;
@@ -107,7 +107,8 @@ export const NewComponentModal = createModal<{}, null>(({ resolve }) => {
       `${location}/${normalizedComponentName}.tsx`
     );
     const codeEntry = new CodeEntry(project, filePath, code);
-    project.addCodeEntries([codeEntry], { render: true });
+    project.addCodeEntries([codeEntry]);
+    await project.addRenderEntries(codeEntry);
     project.saveFile(codeEntry);
 
     if (preset === Preset.BasicWSS) {
