@@ -12,17 +12,21 @@ import { Observable, Subject } from "rxjs";
 
 import { SelectModeCursor, SelectModeType } from "../../constants";
 import { useObservableCallback } from "../../hooks/useObservableCallback";
+import { findEntryRecurse } from "../../lib/outline";
 import { Project } from "../../lib/project/Project";
 import { isDefined } from "../../lib/utils";
 import {
   FrameSettings,
   onMoveResizeCallback,
   OutlineElement,
+  OutlineElementType,
   ViewContext,
 } from "../../types/paint";
 import {
   ifSelectedElementTarget_Component,
   isSelectedElementTarget_Component,
+  isSelectedElementTarget_RenderEntry,
+  isSelectedElementTarget_VirtualComponent,
   SelectedElement,
 } from "../../types/selected-element";
 import { Draggable } from "../Draggable";
@@ -86,6 +90,13 @@ const getBestElementFromEvent = (
   return componentElement;
 };
 
+enum HighlightBoxType {
+  Preview,
+  PreviewVirtual,
+  RenderEntry,
+  VirtualComponent,
+}
+
 let lastDragResizeHandled = 0;
 export function useOverlay(
   project: Project | undefined,
@@ -102,9 +113,44 @@ export function useOverlay(
   const { enqueueSnackbar } = useSnackbar();
   const [elementHover, setElementHover] = useState<Element>();
   const highlightBox = useMemo(() => {
-    const elements = elementHover
-      ? [elementHover]
-      : outlineHover?.closestElements || [];
+    let elements: Element[] = [];
+    let type = HighlightBoxType.Preview;
+    if (elementHover) elements = [elementHover];
+    else if (
+      outlineHover ||
+      isSelectedElementTarget_RenderEntry(selectedElement)
+    ) {
+      if (outlineHover?.type === OutlineElementType.Element) {
+        if (!outlineHover?.element) type = HighlightBoxType.PreviewVirtual;
+        elements = outlineHover!.closestElements;
+      } else {
+        // select the whole frame
+        return {
+          type: outlineHover
+            ? HighlightBoxType.PreviewVirtual
+            : HighlightBoxType.RenderEntry,
+          rect: {
+            top: 0,
+            left: 0,
+            width: frameSettings.width,
+            height: frameSettings.height,
+          },
+        };
+      }
+    } else if (isSelectedElementTarget_VirtualComponent(selectedElement)) {
+      // search the outline for the selected element to get the closest elements to highlight
+      type = HighlightBoxType.VirtualComponent;
+      const outline = selectedElement.renderEntry.outline$.getValue()?.outline;
+      const outlineElement =
+        outline &&
+        findEntryRecurse(
+          [outline],
+          (n) =>
+            n.lookupId === selectedElement.target.lookupId &&
+            n.lookupIdIndex === selectedElement.target.index
+        );
+      elements = outlineElement?.element.closestElements || [];
+    }
     if (elements.length === 0) return null;
 
     const firstRect = elements[0]!.getBoundingClientRect();
@@ -126,8 +172,14 @@ export function useOverlay(
       rect.top = Math.min(rect.top, rect2.top);
     }
 
-    return rect;
-  }, [elementHover, outlineHover]);
+    return { rect, type };
+  }, [
+    elementHover,
+    frameSettings.height,
+    frameSettings.width,
+    outlineHover,
+    selectedElement,
+  ]);
 
   const onOverlayMove = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
@@ -240,18 +292,24 @@ export function useOverlay(
     >
       {highlightBox ? (
         <div
-          className="absolute border-blue-300 border-solid pointer-events-none"
+          className={`absolute border-solid pointer-events-none ${
+            highlightBox.type === HighlightBoxType.Preview
+              ? "element-highlight-border"
+              : highlightBox.type === HighlightBoxType.PreviewVirtual
+              ? "virtual-highlight-border"
+              : "border-4 pulsing-highlight-virtual"
+          }`}
           style={{
-            top: highlightBox.top,
-            left: highlightBox.left,
-            width: highlightBox.width,
-            height: highlightBox.height,
+            top: highlightBox.rect.top,
+            left: highlightBox.rect.left,
+            width: highlightBox.rect.width,
+            height: highlightBox.rect.height,
             borderWidth: "4px",
           }}
         />
       ) : (
         <Draggable
-          className="border-4 border-blue-600 border-solid pulsing-highlight"
+          className="border-4 border-solid pulsing-highlight"
           element={
             ifSelectedElementTarget_Component(selectedElement)?.target.element
           }

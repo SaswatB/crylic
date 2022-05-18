@@ -1,7 +1,9 @@
 import { BehaviorSubject, Subject } from "rxjs";
 
 import { PluginService } from "../../services/PluginService";
-import { ReactMetadata, ViewContext } from "../../types/paint";
+import { OutlineElement, ReactMetadata, ViewContext } from "../../types/paint";
+import { buildOutline } from "../outline";
+import { throttleAsync } from "../throttle-async";
 import { CodeEntry } from "./CodeEntry";
 import { Project } from "./Project";
 
@@ -23,12 +25,26 @@ export class RenderEntry {
   public readonly componentProps$ = new BehaviorSubject<
     Record<string, unknown>
   >({});
+  public readonly outline$ = new BehaviorSubject<
+    | { outline: OutlineElement; treeNodeIdMap: Map<string, OutlineElement> }
+    | undefined
+  >(undefined);
 
   public constructor(
+    private readonly project: Project,
     public readonly id: string,
     public readonly name: string,
     public readonly codeEntry: CodeEntry
-  ) {}
+  ) {
+    // recalculate the component view outline when the component view compiles, reloads, or changes its route
+    this.domChanged$.subscribe(this.refreshOutline);
+    this.viewContext$.subscribe(this.refreshOutline);
+    this.viewReloaded$.subscribe(this.refreshOutline);
+    this.reactMetadata$.subscribe(this.refreshOutline);
+    this.compileStatus$.subscribe(
+      (c) => c === RenderEntryCompileStatus.COMPILED && this.refreshOutline()
+    );
+  }
 
   public get codeId() {
     return this.codeEntry.id;
@@ -74,6 +90,41 @@ export class RenderEntry {
   public setViewContext(viewContext: ViewContext) {
     this.viewContext$.next(viewContext);
   }
+
+  // #region outline
+
+  public refreshOutline = throttleAsync(async () => {
+    const rootElement = this.viewContext$.getValue()?.getRootElement();
+    if (!rootElement) return;
+    console.log("reloading outline");
+
+    // build the outline tree
+    const outline =
+      (await buildOutline(
+        this.project,
+        this,
+        rootElement,
+        this.reactMetadata$.getValue()?.fiberComponentRoot
+      )) || [];
+
+    // build a map of tree nodes by id
+    const treeNodeIdMap = new Map<string, OutlineElement>();
+    function recurse(node: OutlineElement) {
+      // it's very important not to render duplicate node ids https://github.com/mui-org/material-ui/issues/20832
+      while (treeNodeIdMap.has(node.id)) {
+        console.error("duplicate node id", node.id, treeNodeIdMap, outline);
+        node.id = node.id + "+";
+      }
+      treeNodeIdMap.set(node.id, node);
+
+      node.children.forEach((c) => recurse(c));
+    }
+    if (outline) recurse(outline);
+
+    this.outline$.next({ outline, treeNodeIdMap });
+  });
+
+  // #endregion
 }
 
 export interface RenderEntryDeployerContext {

@@ -1,22 +1,12 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useSnackbar } from "notistack";
 
 import { useObservable } from "../../hooks/useObservable";
-import { useObservableCallback } from "../../hooks/useObservableCallback";
 import { useService } from "../../hooks/useService";
 import { useUpdatingRef } from "../../hooks/useUpdatingRef";
 import { updateElementHelper } from "../../lib/ast/code-edit-helpers";
-import { buildOutline, findEntryRecurse } from "../../lib/outline";
-import {
-  RenderEntry,
-  RenderEntryCompileStatus,
-} from "../../lib/project/RenderEntry";
+import { findEntryRecurse } from "../../lib/outline";
+import { RenderEntry } from "../../lib/project/RenderEntry";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
 import { OutlineElement, OutlineElementType } from "../../types/paint";
@@ -25,61 +15,6 @@ import {
   SelectedElementTargetType,
 } from "../../types/selected-element";
 import { OutlineTree } from "./OutlineTree";
-
-function useOutline(renderEntry: RenderEntry) {
-  const project = useProject();
-  const [outline, setOutline] = useState<OutlineElement>();
-
-  const viewContext = useObservable(renderEntry.viewContext$);
-  const reactMetadata = useObservable(renderEntry.reactMetadata$);
-  const refreshOutline = useCallback(async () => {
-    // todo debounce
-    const rootElement = viewContext?.getRootElement();
-    if (!rootElement) return;
-    console.log("reloading outline");
-
-    setOutline(
-      (await buildOutline(
-        project,
-        renderEntry,
-        rootElement,
-        reactMetadata?.fiberComponentRoot
-      )) || []
-    );
-  }, [project, reactMetadata, renderEntry, viewContext]);
-
-  useEffect(
-    () => void refreshOutline(),
-    [renderEntry, reactMetadata, refreshOutline]
-  );
-
-  // recalculate the component view outline when the component view compiles, reloads, or changes its route
-  useObservableCallback(renderEntry.viewReloaded$, refreshOutline);
-  useObservableCallback(renderEntry.domChanged$, refreshOutline);
-  useObservableCallback(
-    renderEntry.compileStatus$,
-    (c) => c === RenderEntryCompileStatus.COMPILED && refreshOutline()
-  );
-
-  const treeNodeIdMap = useMemo(() => {
-    const map = new Map<string, OutlineElement>();
-    function recurse(node: OutlineElement) {
-      // it's very important not to render duplicate node ids https://github.com/mui-org/material-ui/issues/20832
-      while (map.has(node.id)) {
-        console.error("duplicate node id", node.id, map, outline);
-        node.id = node.id + "+";
-      }
-      map.set(node.id, node);
-
-      node.children.forEach((c) => recurse(c));
-    }
-    if (outline) recurse(outline);
-
-    return map;
-  }, [outline]);
-
-  return { outline, treeNodeIdMap, refreshOutline };
-}
 
 function useExpandedNodes({
   renderEntry,
@@ -195,13 +130,13 @@ export function OutlinePaneEntry({ renderEntry, openUrl }: Props) {
   const selectedElement = useObservable(selectService.selectedElement$);
   const selectMode = useObservable(selectService.selectMode$);
 
-  const { outline, treeNodeIdMap, refreshOutline } = useOutline(renderEntry);
+  const { outline, treeNodeIdMap } = useObservable(renderEntry.outline$) || {};
   const [collapsedNodes, setCollapsedNodes] = useState<string[]>([]);
 
   const { expandedNodes, selectedElementNodeId } = useExpandedNodes({
     renderEntry,
     outline,
-    treeNodeIdMap,
+    treeNodeIdMap: treeNodeIdMap || new Map(),
     selectedElement,
     collapsedNodes,
     setCollapsedNodes,
@@ -220,6 +155,7 @@ export function OutlinePaneEntry({ renderEntry, openUrl }: Props) {
       openUrl={openUrl}
       onNodeToggle={(newExpandedNodes) =>
         // only store nodes that have been collapsed
+        treeNodeIdMap &&
         setCollapsedNodes(
           Array.from(treeNodeIdMap.keys()).filter(
             (n) => !newExpandedNodes.includes(n)
@@ -227,7 +163,7 @@ export function OutlinePaneEntry({ renderEntry, openUrl }: Props) {
         )
       }
       onExpandAllNodes={() => setCollapsedNodes([])}
-      onRefresh={refreshOutline}
+      onRefresh={renderEntry.refreshOutline}
       onNodeSelected={async (node, hints) => {
         try {
           await selectService.invokeSelectModeAction(

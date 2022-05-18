@@ -237,6 +237,7 @@ export abstract class Project {
         }
 
         const renderEntry = new RenderEntry(
+          this,
           uniqueId(),
           name.current,
           codeEntry

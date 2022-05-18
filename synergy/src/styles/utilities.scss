@@ -164,10 +164,22 @@
   }
 }
 
+.element-highlight-border {
+  border-color: #2196f3;
+}
 .pulsing-highlight {
   animation: border-pulsate 3s infinite;
   --border-light: #2196f3;
   --border-dark: #0d47a1;
+}
+
+.virtual-highlight-border {
+  border-color: #f321c2;
+}
+.pulsing-highlight-virtual {
+  animation: border-pulsate 3s infinite;
+  --border-light: #f321c2;
+  --border-dark: #770da1;
 }
 
 .overflow-unset {
