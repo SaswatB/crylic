@@ -1,6 +1,7 @@
 import { startCase } from "lodash";
 
 import { useTextInput } from "../../../hooks/useInput";
+import { ifSelectedElementTarget_Component } from "../../../types/selected-element";
 import {
   createElementEditorField,
   ElementEditorFieldProps,
@@ -24,9 +25,10 @@ function useAttributeFE({
     label:
       AttributeNameMap[attributeName] || startCase(`${attributeName || ""}`),
     initialValue:
-      (selectedElement.element as HTMLLinkElement).getAttribute(
-        attributeName
-      ) ?? undefined,
+      (
+        ifSelectedElementTarget_Component(selectedElement)?.target
+          .element as HTMLLinkElement
+      ).getAttribute(attributeName) ?? undefined,
     onChange: (value: string) => onChangeAttributes({ [attributeName]: value }),
   };
 }

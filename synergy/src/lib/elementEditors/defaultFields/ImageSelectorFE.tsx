@@ -8,7 +8,10 @@ import { useObservable } from "../../../hooks/useObservable";
 import { useService } from "../../../hooks/useService";
 import { useProject } from "../../../services/ProjectService";
 import { SelectService } from "../../../services/SelectService";
-import { getSelectedElementStyleValue } from "../../../types/selected-element";
+import {
+  getSelectedElementStyleValue,
+  isSelectedElementTarget_Component,
+} from "../../../types/selected-element";
 import { updateStyleGroupHelper } from "../../ast/code-edit-helpers";
 import { CodeEntry } from "../../project/CodeEntry";
 import { ElementEditorFieldProps } from "../ElementEditor";
@@ -35,7 +38,9 @@ export function ImageSelectorFE({
     });
   };
   const label = StylePropNameMap[imageProp] || startCase(`${imageProp || ""}`);
-  const initialValue = getSelectedElementStyleValue(selectedElement, imageProp);
+  const initialValue = isSelectedElementTarget_Component(selectedElement)
+    ? getSelectedElementStyleValue(selectedElement, imageProp)
+    : "";
 
   const [, renderMenu, openMenu, closeMenu] = useMenuInput({
     options: (project?.codeEntries$.getValue() || [])

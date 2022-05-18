@@ -5,6 +5,7 @@ import { AnimationEditorModal } from "../../../components/Animation/AnimationEdi
 import { usePackageInstallerRecoil } from "../../../hooks/recoil/usePackageInstallerRecoil";
 import { useProject } from "../../../services/ProjectService";
 import { ComponentDefinitionType } from "../../../types/paint";
+import { isSelectedElementTarget_Component } from "../../../types/selected-element";
 import { ltTakeNext, sleep } from "../../utils";
 import { ElementEditorFieldProps } from "../ElementEditor";
 
@@ -29,14 +30,16 @@ export function AnimationFE({
       </>
     );
   }
-  const { componentName } = selectedElement.sourceMetadata || {};
+  if (!isSelectedElementTarget_Component(selectedElement)) return null;
+
+  const { lookupId, sourceMetadata } = selectedElement.target;
+  const { componentName } = sourceMetadata || {};
   if (componentName && !componentName.startsWith("motion.")) {
     // todo support more elements for animation conversion
     if (["div", "a", "button", "span"].includes(componentName)) {
       const enableAnimation = async () => {
-        const codeId = project.primaryElementEditor.getCodeIdFromLookupId(
-          selectedElement.lookupId
-        );
+        const codeId =
+          project.primaryElementEditor.getCodeIdFromLookupId(lookupId);
         if (!codeId) return;
         const codeEntry = project?.getCodeEntryValue(codeId);
         if (!codeEntry) return;

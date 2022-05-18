@@ -20,7 +20,11 @@ import {
   OutlineElement,
   ViewContext,
 } from "../../types/paint";
-import { SelectedElement } from "../../types/selected-element";
+import {
+  ifSelectedElementTarget_Component,
+  isSelectedElementTarget_Component,
+  SelectedElement,
+} from "../../types/selected-element";
 import { Draggable } from "../Draggable";
 
 const getComponentElementsFromEvent = (
@@ -161,15 +165,16 @@ export function useOverlay(
   };
 
   const calculateBoundingBox = () => {
-    if (!selectedElement?.element) return {};
+    if (!isSelectedElementTarget_Component(selectedElement)) return {};
 
-    const pbcr = (selectedElement?.computedStyles.position === "static" &&
-      selectedElement.element.parentElement?.getBoundingClientRect()) || {
+    const { element, computedStyles } = selectedElement.target;
+    const pbcr = (computedStyles.position === "static" &&
+      element.parentElement?.getBoundingClientRect()) || {
       top: 0,
       left: 0,
       ...frameSettings,
     };
-    const bcr = selectedElement.element.getBoundingClientRect();
+    const bcr = element.getBoundingClientRect();
 
     return {
       bounds: {
@@ -224,7 +229,7 @@ export function useOverlay(
           : undefined,
         display:
           !isDefined(selectModeType) &&
-          !selectedElement?.element &&
+          !isSelectedElementTarget_Component(selectedElement) &&
           !highlightBox
             ? "none"
             : undefined,
@@ -247,7 +252,9 @@ export function useOverlay(
       ) : (
         <Draggable
           className="border-4 border-blue-600 border-solid pulsing-highlight"
-          element={selectedElement?.element}
+          element={
+            ifSelectedElementTarget_Component(selectedElement)?.target.element
+          }
           calculateBoundingBox={calculateBoundingBox}
           recalculateBoundsObservable={recalculateBoundsObservable.current}
           onDragStart={() => {

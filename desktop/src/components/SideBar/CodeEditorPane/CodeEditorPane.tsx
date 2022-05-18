@@ -9,6 +9,7 @@ import { editorOpenLocation } from "synergy/src/lib/events";
 import { isDefined } from "synergy/src/lib/utils";
 import { useProject } from "synergy/src/services/ProjectService";
 import { SelectService } from "synergy/src/services/SelectService";
+import { ifSelectedElementTarget_NotRenderEntry } from "synergy/src/types/selected-element";
 
 import { CodeEditor } from "./CodeEditor";
 import { CodeEditorTabs } from "./CodeEditorTabs";
@@ -20,7 +21,7 @@ export const CodeEditorPane: FunctionComponent = () => {
   const selectedElementLookupId = useMemoObservable(
     () =>
       selectService.selectedElement$.pipe(
-        map((e) => e?.lookupId),
+        map((e) => ifSelectedElementTarget_NotRenderEntry(e)?.target.lookupId),
         distinctUntilChanged()
       ),
     [selectService]

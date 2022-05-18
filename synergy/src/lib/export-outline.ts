@@ -155,7 +155,10 @@ export function exportOutline(
       styles[style] = elementStyles[style];
     });
     if (elementStyles.overflow === "hidden") styles.clip = "true";
-  } else {
+  }
+  // if there's a dom disconnect, like a portal, the dom children might not match the outline children
+  // so this handles both virtual nodes (which have no html element) and portals
+  if (children.length === 0) {
     children.push(
       ...node.children
         .map((c) => exportOutline(c, parentElement))

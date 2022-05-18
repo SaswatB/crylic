@@ -159,7 +159,7 @@ function OutlineTreeItem({ node, ...context }: OutlineTreeItemProps) {
         <>
           <IconButton
             title="Expand Outline"
-            className="mr-2"
+            className="ml-2"
             icon={faExpandAlt}
             onClick={(e) => {
               e.stopPropagation();
@@ -169,6 +169,7 @@ function OutlineTreeItem({ node, ...context }: OutlineTreeItemProps) {
           {/* todo: use a better icon as this icon implies the frame will be refreshed */}
           <IconButton
             title="Refresh Outline"
+            className="ml-2"
             icon={faSync}
             onClick={(e) => {
               e.stopPropagation();
@@ -180,6 +181,7 @@ function OutlineTreeItem({ node, ...context }: OutlineTreeItemProps) {
       {isSelected && (
         <IconButton
           title="Export to Figma"
+          className="ml-2"
           icon={faCloudUploadAlt}
           onClick={(e) => {
             e.stopPropagation();

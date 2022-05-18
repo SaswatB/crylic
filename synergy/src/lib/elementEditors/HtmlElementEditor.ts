@@ -15,6 +15,8 @@ import {
 } from "../../components/SideBar/css-options";
 import {
   getSelectedElementStyleValue,
+  ifSelectedElementTarget_Component,
+  isSelectedElementTarget_Component,
   SelectedElement,
 } from "../../types/selected-element";
 import { AnimationFE } from "./defaultFields/AnimationFE";
@@ -55,18 +57,20 @@ const TEXT_TAGS = [
 // TODO: allow partial edits
 // allow editing elements with text or elements that are supposed to have text
 function allowTextEdit(selectedElement: SelectedElement) {
+  if (!isSelectedElementTarget_Component(selectedElement)) return false;
+  const { element } = selectedElement.target;
   return (
-    !Array.from(selectedElement.element.childNodes || []).find(
+    !Array.from(element.childNodes || []).find(
       (node) => node.nodeType !== Node.TEXT_NODE
     ) &&
-    (TEXT_TAGS.includes(selectedElement?.element.tagName.toLowerCase() || "") ||
-      (selectedElement?.element.textContent?.trim().length ?? 0) > 0)
+    (TEXT_TAGS.includes(element.tagName.toLowerCase() || "") ||
+      (element.textContent?.trim().length ?? 0) > 0)
   );
 }
 
 export class HtmlElementEditor implements ElementEditor {
   canApply(selectedElement: SelectedElement): number {
-    return selectedElement.hasDomPassthrough ? 1 : 0;
+    return isSelectedElementTarget_Component(selectedElement) ? 1 : 0;
   }
 
   getEditorSections(): ElementEditorSection[] {
@@ -94,8 +98,9 @@ export class HtmlElementEditor implements ElementEditor {
             createConditionalFE(
               e,
               ({ selectedElement }) =>
+                isSelectedElementTarget_Component(selectedElement) &&
                 getSelectedElementStyleValue(selectedElement, "position") !==
-                "static"
+                  "static"
             )
           ),
           createBreakdownSGFE("padding"),
@@ -119,6 +124,7 @@ export class HtmlElementEditor implements ElementEditor {
               CSS_BACKGROUND_SIZE_OPTIONS
             ),
             ({ selectedElement }) =>
+              isSelectedElementTarget_Component(selectedElement) &&
               getSelectedElementStyleValue(
                 selectedElement,
                 "backgroundImage"
@@ -142,8 +148,9 @@ export class HtmlElementEditor implements ElementEditor {
           createConditionalFE(
             createSelectSGFE("textAlign", CSS_TEXT_ALIGN_OPTIONS),
             ({ selectedElement }) =>
+              isSelectedElementTarget_Component(selectedElement) &&
               getSelectedElementStyleValue(selectedElement, "display") !==
-              "flex"
+                "flex"
           ),
           createSelectSGFE(
             "textDecorationLine",
@@ -154,6 +161,7 @@ export class HtmlElementEditor implements ElementEditor {
       {
         name: "Content",
         shouldHide: ({ selectedElement }) =>
+          isSelectedElementTarget_Component(selectedElement) &&
           getSelectedElementStyleValue(selectedElement, "display") !== "flex",
         defaultCollapsed: true,
         fields: [
@@ -178,7 +186,9 @@ export class HtmlElementEditor implements ElementEditor {
           createConditionalFE(
             createBoundTextAttrFE("href"),
             ({ selectedElement }) =>
-              selectedElement?.element.tagName.toLowerCase() === "a"
+              ifSelectedElementTarget_Component(
+                selectedElement
+              )?.target.element.tagName.toLowerCase() === "a"
           ),
           createElementEditorField(DeleteFE),
         ],

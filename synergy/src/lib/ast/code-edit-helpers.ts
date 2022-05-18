@@ -3,7 +3,10 @@ import {
   ComponentDefinition,
   ComponentDefinitionType,
 } from "../../types/paint";
-import { SelectedElement } from "../../types/selected-element";
+import {
+  isSelectedElementTarget_NotRenderEntry,
+  SelectedElement,
+} from "../../types/selected-element";
 import { Project } from "../project/Project";
 import { RenderEntry } from "../project/RenderEntry";
 import { sleep } from "../utils";
@@ -109,9 +112,12 @@ export const updateElementHelper = async <T extends ASTType>(
   if (typeof targetElement === "string") {
     lookupId = targetElement;
     index = 0;
+  } else if (isSelectedElementTarget_NotRenderEntry(targetElement)) {
+    ({ lookupId, index } = targetElement.target);
   } else {
-    ({ lookupId, index } = targetElement);
+    throw new Error("Unable to directly edit a render entry");
   }
+
   const editor = project?.primaryElementEditor;
   if (!editor) return;
   const codeId = editor.getCodeIdFromLookupId(lookupId);

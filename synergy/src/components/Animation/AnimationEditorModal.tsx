@@ -12,6 +12,7 @@ import { useSelectInput } from "../../hooks/useInput";
 import { useObservableCallback } from "../../hooks/useObservableCallback";
 import { useService } from "../../hooks/useService";
 import { SelectService } from "../../services/SelectService";
+import { isSelectedElementTarget_NotRenderEntry } from "../../types/selected-element";
 import { IconButton } from "../IconButton";
 import { createModal } from "../PromiseModal";
 import { AnimationPropertyEditor } from "./AnimationPropertyEditor";
@@ -31,9 +32,13 @@ export const AnimationEditorModal = createModal<{}, void>(({ resolve }) => {
   const [animationProperties, setAnimationProperties] =
     useState<AnimationPropertyMap>({});
   useObservableCallback(selectService.selectedElement$, (selectedElement) => {
-    // convert the selected element's props to a map of animation properties per animation type
-    const props = selectedElement?.sourceMetadata?.directProps || {};
-    setAnimationProperties(propsToAnimationPropertyMap(props));
+    if (isSelectedElementTarget_NotRenderEntry(selectedElement)) {
+      // convert the selected element's props to a map of animation properties per animation type
+      const props = selectedElement?.target.sourceMetadata?.directProps || {};
+      setAnimationProperties(propsToAnimationPropertyMap(props));
+    } else {
+      throw new Error("Can't edit animation on render entry");
+    }
   });
   const onSave = () => {
     // save the animation properties in the selected element's attributes

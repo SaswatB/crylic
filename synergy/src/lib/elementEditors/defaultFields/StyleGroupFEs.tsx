@@ -12,7 +12,12 @@ import {
   useTextInput,
 } from "../../../hooks/useInput";
 import { StyleKeys } from "../../../types/paint";
-import { getSelectedElementStyleValue } from "../../../types/selected-element";
+import {
+  getSelectedElementStyleValue,
+  ifSelectedElementTarget_NotRenderEntry,
+  isSelectedElementTarget_Component,
+  SelectedElementTargetType,
+} from "../../../types/selected-element";
 import {
   createElementEditorField,
   ElementEditorFieldProps,
@@ -29,7 +34,9 @@ function useStyleGroupFE({
 }: StyleGroupFEProps) {
   return {
     label: StylePropNameMap[styleProp] || startCase(`${styleProp || ""}`),
-    initialValue: getSelectedElementStyleValue(selectedElement, styleProp),
+    initialValue: isSelectedElementTarget_Component(selectedElement)
+      ? getSelectedElementStyleValue(selectedElement, styleProp)
+      : "",
     onChange: (value: string, preview?: boolean) =>
       onChangeStyleGroup({ [styleProp]: value }, preview),
   };
@@ -147,14 +154,15 @@ function BreakdownSGFE({
     <button
       title={`Expand ${startCase(prop)} Options`}
       onClick={() => {
+        if (!isSelectedElementTarget_Component(selectedElement)) return;
         setShowBreakdown(true);
         // todo only update styles if prop is defined for this style group
         void onChangeStyleGroup({
           [prop]: null,
-          [`${prop}Top`]: selectedElement.computedStyles[prop],
-          [`${prop}Bottom`]: selectedElement.computedStyles[prop],
-          [`${prop}Left`]: selectedElement.computedStyles[prop],
-          [`${prop}Right`]: selectedElement.computedStyles[prop],
+          [`${prop}Top`]: selectedElement.target.computedStyles[prop],
+          [`${prop}Bottom`]: selectedElement.target.computedStyles[prop],
+          [`${prop}Left`]: selectedElement.target.computedStyles[prop],
+          [`${prop}Right`]: selectedElement.target.computedStyles[prop],
         });
       }}
     >
@@ -165,11 +173,12 @@ function BreakdownSGFE({
     <button
       title={`Consolidate ${startCase(prop)} Options`}
       onClick={() => {
+        if (!isSelectedElementTarget_Component(selectedElement)) return;
         setShowBreakdown(false);
         // todo only update styles if prop is defined for this style group
         void onChangeStyleGroup({
           // todo do an average or pick min/max
-          [prop]: selectedElement.computedStyles[`${prop}Top`],
+          [prop]: selectedElement.target.computedStyles[`${prop}Top`],
           [`${prop}Top`]: null,
           [`${prop}Bottom`]: null,
           [`${prop}Left`]: null,
@@ -228,7 +237,9 @@ function BreakdownSGFE({
   useEffect(() => {
     refreshBreakdown(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedElement.lookupId]);
+  }, [
+    ifSelectedElementTarget_NotRenderEntry(selectedElement)?.target.lookupId,
+  ]);
 
   const [, renderPropInput] = useCSSLengthInput({
     ...useStyleGroupFE({ styleProp: prop, ...props }),

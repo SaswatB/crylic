@@ -20,7 +20,10 @@ import {
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
 import { OutlineElement, OutlineElementType } from "../../types/paint";
-import { SelectedElement } from "../../types/selected-element";
+import {
+  SelectedElement,
+  SelectedElementTargetType,
+} from "../../types/selected-element";
 import { OutlineTree } from "./OutlineTree";
 
 function useOutline(renderEntry: RenderEntry) {
@@ -99,10 +102,29 @@ function useExpandedNodes({
       return undefined;
 
     const { element: node, path } =
-      findEntryRecurse(
-        outline.children,
-        (n) => n.element === selectedElement.element
-      ) || {};
+      findEntryRecurse([outline], (n) => {
+        switch (selectedElement.target.type) {
+          case SelectedElementTargetType.Component:
+            return n.element === selectedElement.target.element;
+          case SelectedElementTargetType.VirtualComponent:
+            return (
+              n.lookupId === selectedElement.target.lookupId &&
+              n.lookupIdIndex === selectedElement.target.index
+            );
+          case SelectedElementTargetType.RenderEntry:
+            return (
+              n.type === OutlineElementType.Frame &&
+              n.renderId === selectedElement.renderEntry.id
+            );
+          default:
+            console.error(
+              "unhandled selected element target type",
+              // @ts-expect-error this line will cause a type error if a type is not handled
+              selectedElement.target.type
+            );
+        }
+        return false;
+      }) || {};
     if (!node) return;
 
     const selectedNodeEntry = Array.from(treeNodeIdMap.entries()).find(
@@ -207,18 +229,17 @@ export function OutlinePaneEntry({ renderEntry, openUrl }: Props) {
       onExpandAllNodes={() => setCollapsedNodes([])}
       onRefresh={refreshOutline}
       onNodeSelected={async (node, hints) => {
-        if (!node.element) {
-          enqueueSnackbar(
-            "Selecting this type of component is not currently supported",
-            { variant: "warning" }
-          );
-          return;
-        }
-
         try {
           await selectService.invokeSelectModeAction(
             renderEntry,
-            node.element,
+            node.type === OutlineElementType.Frame
+              ? undefined
+              : node.element
+              ? { htmlElement: node.element }
+              : {
+                  lookupId: node.lookupId,
+                  index: node.lookupIdIndex,
+                },
             hints
           );
         } catch (e) {

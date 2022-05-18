@@ -28,6 +28,7 @@ import { RenderEntryCompileStatus } from "../../lib/project/RenderEntry";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
 import { FrameSettings, Styles } from "../../types/paint";
+import { isSelectedElementTarget_Component } from "../../types/selected-element";
 import { FrameSettingsModal } from "../FrameSettingsModal";
 import { IconButton } from "../IconButton";
 import { BuildProgress } from "./BuildProgress";
@@ -98,10 +99,9 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
   ) => {
     if (!componentElement) return;
     try {
-      await selectService.invokeSelectModeAction(
-        renderEntry,
-        componentElement as HTMLElement
-      );
+      await selectService.invokeSelectModeAction(renderEntry, {
+        htmlElement: componentElement as HTMLElement,
+      });
     } catch (e) {
       enqueueSnackbar((e as Error)?.message || `${e}`, { variant: "error" });
     }
@@ -121,25 +121,28 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
     onOverlaySelectElement,
     (deltaX, totalDeltaX, deltaY, totalDeltaY, width, height, preview) => {
       if (
-        !deltaX &&
-        !totalDeltaX &&
-        !deltaY &&
-        !totalDeltaY &&
-        !width &&
-        !height
+        !isSelectedElementTarget_Component(selectedElement) ||
+        (!deltaX &&
+          !totalDeltaX &&
+          !deltaY &&
+          !totalDeltaY &&
+          !width &&
+          !height)
       )
         return;
+
+      const { computedStyles } = selectedElement.target;
       const styles: Styles = {};
       if (deltaX || totalDeltaX) {
         const currentMarginLeft = parseInt(
-          selectedElement?.computedStyles.marginLeft.replace("px", "") || "0"
+          computedStyles.marginLeft.replace("px", "") || "0"
         );
         const newMarginLeft = (currentMarginLeft + deltaX!).toFixed(0);
         styles["marginLeft"] = `${newMarginLeft}px`;
       }
       if (deltaY || totalDeltaY) {
         const currentMarginTop = parseInt(
-          selectedElement?.computedStyles.marginTop.replace("px", "") || "0"
+          computedStyles.marginTop.replace("px", "") || "0"
         );
         const newMarginTop = (currentMarginTop + deltaY!).toFixed(0);
         styles["marginTop"] = `${newMarginTop}px`;
@@ -147,22 +150,14 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
       if (width) {
         let effectiveWidth = width;
         if (
-          selectedElement?.computedStyles.boxSizing === "content-box" &&
+          computedStyles.boxSizing === "content-box" &&
           width.includes("px")
         ) {
           let contentWidth = parseFloat(width);
-          contentWidth -= parseFloat(
-            selectedElement?.computedStyles.paddingLeft
-          );
-          contentWidth -= parseFloat(
-            selectedElement?.computedStyles.paddingRight
-          );
-          contentWidth -= parseFloat(
-            selectedElement?.computedStyles.borderLeftWidth
-          );
-          contentWidth -= parseFloat(
-            selectedElement?.computedStyles.borderRightWidth
-          );
+          contentWidth -= parseFloat(computedStyles.paddingLeft);
+          contentWidth -= parseFloat(computedStyles.paddingRight);
+          contentWidth -= parseFloat(computedStyles.borderLeftWidth);
+          contentWidth -= parseFloat(computedStyles.borderRightWidth);
           effectiveWidth = `${contentWidth}px`;
         }
         styles["width"] = effectiveWidth;
@@ -170,22 +165,14 @@ export const OverlayComponentView: FunctionComponent<Props> = ({
       if (height) {
         let effectiveHeight = height;
         if (
-          selectedElement?.computedStyles.boxSizing === "content-box" &&
+          computedStyles.boxSizing === "content-box" &&
           height.includes("px")
         ) {
           let contentHeight = parseFloat(height);
-          contentHeight -= parseFloat(
-            selectedElement?.computedStyles.paddingTop
-          );
-          contentHeight -= parseFloat(
-            selectedElement?.computedStyles.paddingBottom
-          );
-          contentHeight -= parseFloat(
-            selectedElement?.computedStyles.borderTopWidth
-          );
-          contentHeight -= parseFloat(
-            selectedElement?.computedStyles.borderBottomWidth
-          );
+          contentHeight -= parseFloat(computedStyles.paddingTop);
+          contentHeight -= parseFloat(computedStyles.paddingBottom);
+          contentHeight -= parseFloat(computedStyles.borderTopWidth);
+          contentHeight -= parseFloat(computedStyles.borderBottomWidth);
           effectiveHeight = `${contentHeight}px`;
         }
         styles["height"] = effectiveHeight;

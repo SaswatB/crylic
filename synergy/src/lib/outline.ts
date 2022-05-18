@@ -17,6 +17,7 @@ export const buildOutline = async (
     type: OutlineElementType.Frame,
     renderId: renderEntry.id,
     lookupId: renderEntry.id,
+    lookupIdIndex: 0,
     codeId: renderEntry.codeId,
     element: undefined,
     closestElements: [],
@@ -48,7 +49,8 @@ const buildOutlineRecurse = (
     project: Project;
     renderId: string;
   },
-  element: Element
+  element: Element,
+  lookupIdCountMap: Record<string, number | undefined> = {}
 ): OutlineElement[] =>
   Array.from(element.children)
     .map((child) => {
@@ -59,6 +61,7 @@ const buildOutlineRecurse = (
       if (lookupId) {
         const codeId =
           context.project.primaryElementEditor.getCodeIdFromLookupId(lookupId)!;
+        lookupIdCountMap[lookupId] = lookupIdCountMap[lookupId] || 0;
         return [
           {
             id: "", // ids are filled in later
@@ -66,14 +69,15 @@ const buildOutlineRecurse = (
             type: OutlineElementType.Element,
             renderId: context.renderId,
             lookupId,
+            lookupIdIndex: lookupIdCountMap[lookupId]!++,
             codeId,
             element: child as HTMLElement,
             closestElements: [child as HTMLElement],
-            children: buildOutlineRecurse(context, child),
+            children: buildOutlineRecurse(context, child, lookupIdCountMap),
           },
         ];
       }
-      return buildOutlineRecurse(context, child);
+      return buildOutlineRecurse(context, child, lookupIdCountMap);
     })
     .reduce((p, c) => [...p, ...c], []);
 
@@ -86,7 +90,8 @@ const buildReactFiberRecurse = (
     project: Project;
     renderId: string;
   },
-  node: ReactFiber
+  node: ReactFiber,
+  lookupIdCountMap: Record<string, number> = {}
 ): Promise<OutlineElement[]> =>
   Promise.all(
     getChildrenFromFiber(node).map(async (child): Promise<OutlineElement[]> => {
@@ -94,7 +99,8 @@ const buildReactFiberRecurse = (
         context.project.primaryElementEditor.getLookupIdFromProps(
           child.memoizedProps
         );
-      if (!lookupId) return buildReactFiberRecurse(context, child);
+      if (!lookupId)
+        return buildReactFiberRecurse(context, child, lookupIdCountMap);
 
       try {
         const codeId =
@@ -114,7 +120,11 @@ const buildReactFiberRecurse = (
         const element = isHTMLElement(child.stateNode)
           ? child.stateNode
           : undefined;
-        const children = await buildReactFiberRecurse(context, child);
+        const children = await buildReactFiberRecurse(
+          context,
+          child,
+          lookupIdCountMap
+        );
 
         // hide components that don't affect the dom
         if (!element && children.length === 0) {
@@ -137,6 +147,7 @@ const buildReactFiberRecurse = (
           );
         }
 
+        lookupIdCountMap[lookupId] = lookupIdCountMap[lookupId] || 0;
         return [
           {
             id: "", // ids are filled in later
@@ -144,6 +155,7 @@ const buildReactFiberRecurse = (
             type: OutlineElementType.Element,
             renderId: context.renderId,
             lookupId,
+            lookupIdIndex: lookupIdCountMap[lookupId]!++,
             codeId,
             element,
             closestElements,

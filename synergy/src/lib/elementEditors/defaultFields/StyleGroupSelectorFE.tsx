@@ -22,12 +22,16 @@ import { useService } from "../../../hooks/useService";
 import { useProject } from "../../../services/ProjectService";
 import { SelectService } from "../../../services/SelectService";
 import {
+  isSelectedElementTarget_Component,
+  isSelectedElementTarget_NotRenderEntry,
+  SelectedElementTargetType,
+} from "../../../types/selected-element";
+import {
   createNewEditContext,
   createNewReadContext,
   StyleGroup,
 } from "../../ast/editors/ASTEditor";
 import { editorOpenLocation } from "../../events";
-import { normalizePath } from "../../normalizePath";
 import { CodeEntry } from "../../project/CodeEntry";
 import { isDefined } from "../../utils";
 import { ElementEditorFieldProps } from "../ElementEditor";
@@ -136,7 +140,11 @@ export function StyleGroupSelectorFE({
   );
 
   const styleGroupOptions = [
-    ...(selectedElement.styleGroups || []).map((group) => ({
+    ...(
+      (isSelectedElementTarget_Component(selectedElement) &&
+        selectedElement.target.styleGroups) ||
+      []
+    ).map((group) => ({
       name: `${group.name}`,
       category: group.category,
       value: group,
@@ -145,8 +153,10 @@ export function StyleGroupSelectorFE({
       name: "Add Style Sheet Style Group",
       category: "Actions",
       value: async () => {
+        if (!isSelectedElementTarget_NotRenderEntry(selectedElement)) return;
+
         const codeId = project.primaryElementEditor.getCodeIdFromLookupId(
-          selectedElement.lookupId
+          selectedElement.target.lookupId
         );
         if (!codeId) return;
         const codeEntry = project.getCodeEntryValue(codeId);
@@ -158,7 +168,7 @@ export function StyleGroupSelectorFE({
         const { availableImports, directProps } =
           project.primaryElementEditor.getSourceMetaDataFromLookupId(
             await createNewReadContext(codeEntry),
-            selectedElement.lookupId,
+            selectedElement.target.lookupId,
             { includeImports: true }
           ) || {};
 
@@ -209,13 +219,22 @@ export function StyleGroupSelectorFE({
         // register a listener to select the new style group when it appears
         const subscription = selectService.selectedElement$.subscribe(
           (newSelectedElement) => {
-            if (newSelectedElement?.lookupId !== selectedElement.lookupId) {
+            if (
+              newSelectedElement?.target.type !== selectedElement.target.type ||
+              newSelectedElement?.target.lookupId !==
+                selectedElement.target.lookupId
+            ) {
               subscription.unsubscribe();
+              return;
+            } else if (
+              newSelectedElement.target.type !==
+              SelectedElementTargetType.Component
+            ) {
               return;
             }
 
             // todo use a better matching system than name
-            const newStyleGroup = newSelectedElement.styleGroups.find(
+            const newStyleGroup = newSelectedElement.target.styleGroups.find(
               (g) => g.name.replace(".", "").trim() === res.name
             );
             if (newStyleGroup) {

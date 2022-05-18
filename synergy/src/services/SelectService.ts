@@ -20,8 +20,22 @@ import { RenderEntry } from "../lib/project/RenderEntry";
 import { eagerMap } from "../lib/rxjs/eagerMap";
 import { getBestStyleGroup, sleep } from "../lib/utils";
 import { OutlineElement, Styles } from "../types/paint";
-import { SelectedElement } from "../types/selected-element";
+import {
+  ifSelectedElementTarget_Component,
+  isSelectedElementTarget_Component,
+  isSelectedElementTarget_NotRenderEntry,
+  SelectedElement,
+  SelectedElementTarget,
+  SelectedElementTargetType,
+} from "../types/selected-element";
 import { ProjectService } from "./ProjectService";
+
+type SelectElementSelector =
+  | { htmlElement: HTMLElement; lookupId?: undefined; index?: undefined }
+  // index: index of the primary element to select in the view
+  | { htmlElement?: undefined; lookupId: string; index: number }
+  // select the render entry itself
+  | undefined;
 
 @singleton()
 export class SelectService {
@@ -50,7 +64,9 @@ export class SelectService {
       await this.validateSelectedElement();
 
       // set the observer to detect changes to the selected element's parent
-      const parentElement = selectedElement?.element.parentElement;
+      const parentElement =
+        ifSelectedElementTarget_Component(selectedElement)?.target.element
+          .parentElement;
       if (parentElement) {
         this.selectedElementParentObserver.disconnect();
         this.selectedElementParentObserver.observe(parentElement, {
@@ -70,24 +86,29 @@ export class SelectService {
         )
       )
       .subscribe(async (selectedElement) => {
+        if (!isSelectedElementTarget_NotRenderEntry(selectedElement)) return;
+
         let newSelectedComponent = undefined;
         for (let i = 0; i < 5 && !newSelectedComponent; i++) {
           newSelectedComponent = selectedElement.renderEntry?.viewContext$
             .getValue()
-            ?.getElementsByLookupId(selectedElement.lookupId)[0];
+            ?.getElementsByLookupId(selectedElement.target.lookupId)[0];
           if (!newSelectedComponent) await sleep(100);
         }
 
         if (newSelectedComponent) {
           console.log(
             "setting selected element post-iframe reload",
-            selectedElement.lookupId
+            selectedElement.target.lookupId
           );
-          void this.selectElement(selectedElement.renderEntry, selectedElement);
+          void this.selectElement(
+            selectedElement.renderEntry,
+            selectedElement.target
+          );
         } else {
           console.log(
             "unable to reselect selected element post-iframe reload",
-            selectedElement.lookupId
+            selectedElement.target.lookupId
           );
           this.clearSelectedElement();
         }
@@ -130,10 +151,15 @@ export class SelectService {
    */
   private async validateSelectedElement() {
     const selectedElement = this.selectedElement$.getValue();
-    if (selectedElement && !selectedElement.element.parentElement) {
+    if (
+      isSelectedElementTarget_Component(selectedElement) &&
+      !selectedElement.target.element.parentElement
+    ) {
       if (this.badSelectedElementRetryCounter === 0) {
         this.badSelectedElementRetryCounter++;
-        await this.selectElement(selectedElement.renderEntry, selectedElement);
+        await this.selectElement(selectedElement.renderEntry, {
+          htmlElement: selectedElement.target.element,
+        });
       }
     } else {
       this.badSelectedElementRetryCounter = 0;
@@ -146,22 +172,22 @@ export class SelectService {
 
   public async invokeSelectModeAction(
     renderEntry: RenderEntry,
-    element: HTMLElement,
+    selector: SelectElementSelector,
     hints?: SelectModeHints
   ) {
     const selectMode = this.selectMode$.getValue();
     switch (selectMode?.type) {
       default:
       case SelectModeType.SelectElement:
-        console.log("setting selected from manual selection", element);
-        await this.selectElement(renderEntry, {
-          htmlElement: element,
-        });
+        console.log("setting selected from manual selection", selector);
+        await this.selectElement(renderEntry, selector);
         break;
       case SelectModeType.AddElement:
+        if (!selector)
+          throw new Error("Can't add element directly to render entry");
         await addElementHelper(
           this.projectService.project$.getValue()!,
-          element,
+          selector.htmlElement || selector.lookupId,
           selectMode.component,
           hints,
           {
@@ -182,119 +208,150 @@ export class SelectService {
 
   public async selectElement(
     renderEntry: RenderEntry,
-    selector:
-      | { htmlElement: HTMLElement; lookupId?: undefined; index?: undefined }
-      // index: index of the primary element to select in the view
-      | { htmlElement?: undefined; lookupId: string; index: number }
+    selector: SelectElementSelector
   ) {
     const { getElementsByLookupId } = renderEntry.viewContext$.getValue() || {};
 
-    // resolve lookupId
-    let lookupId;
-    if (selector.htmlElement) {
-      lookupId = this.project?.primaryElementEditor.getLookupIdFromHTMLElement(
-        selector.htmlElement
-      );
-      if (!lookupId) {
-        console.log(
-          "dropping element select, no lookup id",
-          selector.htmlElement
-        );
+    let target: SelectedElementTarget;
+    const overlayWarnings: string[] = [];
+
+    if (!selector) {
+      target = { type: SelectedElementTargetType.RenderEntry };
+    } else {
+      // resolve lookupId
+      let lookupId;
+      if (selector.htmlElement) {
+        lookupId =
+          this.project?.primaryElementEditor.getLookupIdFromHTMLElement(
+            selector.htmlElement
+          );
+        if (!lookupId) {
+          console.log(
+            "dropping element select, no lookup id",
+            selector.htmlElement
+          );
+          return;
+        }
+      } else {
+        lookupId = selector.lookupId;
+      }
+
+      // resolve code entry
+      const codeId =
+        this.project?.primaryElementEditor.getCodeIdFromLookupId(lookupId);
+      if (!codeId) {
+        console.log("dropping element select, no code id");
         return;
       }
-    } else {
-      lookupId = selector.lookupId;
-    }
+      const codeEntry = this.project?.getCodeEntryValue(codeId);
+      if (!codeEntry) {
+        console.log("dropping element select, no code entry");
+        return;
+      }
 
-    const componentElements = getElementsByLookupId?.(lookupId);
-    if (!componentElements?.length) {
-      console.log("dropping element select, no elements");
-      return;
-    }
-
-    // resolve index
-    let index;
-    if (selector.htmlElement) {
-      index = Math.max(componentElements.indexOf(selector.htmlElement), 0);
-    } else {
-      index = selector.index;
-    }
-
-    // resolve code entry
-    const codeId =
-      this.project?.primaryElementEditor.getCodeIdFromLookupId(lookupId);
-    if (!codeId) {
-      console.log("dropping element select, no code id");
-      return;
-    }
-    const codeEntry = this.project?.getCodeEntryValue(codeId);
-    if (!codeEntry) {
-      console.log("dropping element select, no code entry");
-      return;
-    }
-
-    if (!componentElements[index]) index = 0;
-    const primaryElement = componentElements[index]!;
-
-    // resolve style groups
-    const styleGroups: StyleGroup[] = [];
-    this.project?.editorEntries.forEach(({ editor }) => {
-      styleGroups.push(...editor.getStyleGroupsFromHTMLElement(primaryElement));
-    });
-
-    // resolve styles
-    const computedStyles = window.getComputedStyle(primaryElement);
-    let overlayWarnings = this.overlayWarningsCache.get(primaryElement) || []; // todo this is a bit scary :/
-    // add a temp size for 0 width/height elements
-    // todo make this configurable
-    if (computedStyles.width === "0px" || computedStyles.height === "0px") {
-      console.log("selected element has zero size, adding temp style");
-      if (computedStyles.width === "0px")
-        overlayWarnings.push(
-          "Element has no width by default and has been expanded"
+      const sourceMetadata =
+        this.project!.primaryElementEditor.getSourceMetaDataFromLookupId(
+          { ast: (await codeEntry.getLatestAst()) as ASTType, codeEntry },
+          lookupId
         );
-      if (computedStyles.height === "0px")
-        overlayWarnings.push(
-          "Element has no height by default and has been expanded"
-        );
-      setTimeout(
-        () =>
-          this.updateSelectedStyleGroup(
-            {
-              width: computedStyles.width === "0px" ? "100px" : undefined,
-              height: computedStyles.height === "0px" ? "100px" : undefined,
-            },
-            true
-          ),
-        100
-      );
-      overlayWarnings = uniq(overlayWarnings);
-      this.overlayWarningsCache.set(primaryElement, overlayWarnings);
+
+      const componentElements = getElementsByLookupId?.(lookupId);
+      if (componentElements?.length) {
+        // resolve index
+        let index;
+        if (selector.htmlElement) {
+          index = Math.max(componentElements.indexOf(selector.htmlElement), 0);
+        } else {
+          index = selector.index;
+        }
+
+        if (!componentElements[index]) index = 0;
+        const primaryElement = componentElements[index]!;
+
+        // resolve style groups
+        const styleGroups: StyleGroup[] = [];
+        this.project?.editorEntries.forEach(({ editor }) => {
+          styleGroups.push(
+            ...editor.getStyleGroupsFromHTMLElement(primaryElement)
+          );
+        });
+
+        // resolve styles
+        const computedStyles = window.getComputedStyle(primaryElement);
+        let elementOverlayWarnings =
+          this.overlayWarningsCache.get(primaryElement) || []; // todo this is a bit scary :/
+        // add a temp size for 0 width/height elements
+        // todo make this configurable
+        if (computedStyles.width === "0px" || computedStyles.height === "0px") {
+          console.log("selected element has zero size, adding temp style");
+          if (computedStyles.width === "0px")
+            elementOverlayWarnings.push(
+              "Element has no width by default and has been expanded"
+            );
+          if (computedStyles.height === "0px")
+            elementOverlayWarnings.push(
+              "Element has no height by default and has been expanded"
+            );
+          setTimeout(
+            () =>
+              this.updateSelectedStyleGroup(
+                {
+                  width: computedStyles.width === "0px" ? "100px" : undefined,
+                  height: computedStyles.height === "0px" ? "100px" : undefined,
+                },
+                true
+              ),
+            100
+          );
+          elementOverlayWarnings = uniq(elementOverlayWarnings);
+          this.overlayWarningsCache.set(primaryElement, elementOverlayWarnings);
+          overlayWarnings.push(...elementOverlayWarnings);
+        }
+        target = {
+          type: SelectedElementTargetType.Component,
+          lookupId,
+          index,
+          sourceMetadata,
+
+          element: primaryElement,
+          elements: componentElements,
+          styleGroups,
+          computedStyles,
+          inlineStyles: primaryElement.style,
+        };
+      } else {
+        // no component elements means its a virtual component (a component without a direct html element)
+        if (selector.htmlElement) {
+          console.error(
+            "unexpected state, selector.htmlElement should be undefined when processing a virtual component"
+          );
+          return;
+        }
+        target = {
+          type: SelectedElementTargetType.VirtualComponent,
+          lookupId,
+          index: selector.index,
+          sourceMetadata,
+        };
+      }
     }
 
     // save collected info
     this.selectedElement$.next({
       renderEntry,
-      lookupId,
-      index,
-      sourceMetadata:
-        this.project!.primaryElementEditor.getSourceMetaDataFromLookupId(
-          { ast: (await codeEntry.getLatestAst()) as ASTType, codeEntry },
-          lookupId
-        ),
-      hasDomPassthrough: true,
-      element: primaryElement,
-      elements: componentElements,
-      styleGroups,
-      computedStyles,
-      inlineStyles: primaryElement.style,
+      target,
       overlayWarnings,
     });
 
     // update style group
-    this.setSelectedStyleGroup(
-      getBestStyleGroup(styleGroups, this.selectedStyleGroup$.getValue())
-    );
+    if (target.type === SelectedElementTargetType.Component) {
+      this.setSelectedStyleGroup(
+        getBestStyleGroup(
+          target.styleGroups,
+          this.selectedStyleGroup$.getValue()
+        )
+      );
+    }
   }
 
   public async updateSelectedElement<T extends ASTType>(
@@ -312,11 +369,11 @@ export class SelectService {
 
   public async updateSelectedStyleGroup(styles: Styles, preview?: boolean) {
     const selectedElement = this.selectedElement$.getValue();
-    if (!selectedElement) return;
+    if (!isSelectedElementTarget_NotRenderEntry(selectedElement)) return;
 
     selectedElement.renderEntry.viewContext$
       .getValue()
-      ?.addTempStyles(selectedElement.lookupId, styles, !preview);
+      ?.addTempStyles(selectedElement.target.lookupId, styles, !preview);
 
     // preview is a flag used to quickly show updates in the dom
     // there shouldn't be any expensive calculations done when it's on
@@ -339,8 +396,11 @@ export class SelectService {
 
     // prevent an element from being deleted if its parent is the html template root
     if (
-      selectedElement.element.parentElement?.id ===
-      this.projectService.project$.getValue()?.config.getHtmlTemplateSelector()
+      isSelectedElementTarget_Component(selectedElement) &&
+      selectedElement.target.element.parentElement?.id ===
+        this.projectService.project$
+          .getValue()
+          ?.config.getHtmlTemplateSelector()
     )
       throw new Error("Unable to delete selected element, no parent found");
 
