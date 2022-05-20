@@ -1,5 +1,6 @@
 import { StyleGroup } from "../lib/ast/editors/ASTEditor";
 import { RenderEntry } from "../lib/project/RenderEntry";
+import { TSTypeW_Object } from "../lib/typer/ts-type-wrapper";
 import { StyleKeys } from "./paint";
 
 export interface SourceMetadata {
@@ -22,6 +23,7 @@ interface SelectedElementTarget_BaseComponent {
   lookupId: string;
   index: number; // index of element within elements/outline
   sourceMetadata: SourceMetadata | undefined;
+  propTypes?: TSTypeW_Object;
 }
 export interface SelectedElementTarget_Component
   extends SelectedElementTarget_BaseComponent {

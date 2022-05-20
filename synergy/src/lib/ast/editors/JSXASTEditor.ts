@@ -451,6 +451,31 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
     return decorations;
   }
 
+  public override getSourcePositionForElement(
+    { ast, codeEntry }: ReadContext<t.File>,
+    lookupId: string
+  ) {
+    // try to find the jsx element in the ast
+    const path = this.getJSXASTByLookupIndex(
+      ast,
+      this.getElementIndexFromLookupId(lookupId)
+    );
+
+    const { start: openStart } = path?.value?.openingElement?.name?.loc || {};
+
+    if (!openStart) return undefined;
+
+    // todo can ast be out of sync with code$ here?
+    const lines = codeEntry.code$.getValue()?.split("\n");
+    if (!lines || lines.length < openStart.line) return undefined;
+
+    let cursor = openStart.column - 1;
+    for (let i = 0; i < openStart.line - 1; i++) {
+      cursor += lines[i]!.length + 1;
+    }
+    return cursor;
+  }
+
   protected applyStylesToAST(
     { ast, lookupId }: EditContext<t.File>,
     styles: Styles

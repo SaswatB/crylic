@@ -41,12 +41,13 @@ export abstract class Project {
   private readonly styleEditorEntries: EditorEntry<StyleASTEditor<any>>[];
 
   private _tu: TyperUtils | undefined;
-  protected get typerUtils() {
+  public get typerUtils() {
     if (!this._tu) {
       // todo this might be better in a worker
       this._tu = new TyperUtils(
-        this.path.getNativePath(),
-        this.codeEntries$.getValue().map((c) => c.getRemoteCodeEntry())
+        this.path,
+        this.codeEntries$,
+        this.config$.getValue().tsHost
       );
     }
     return this._tu;

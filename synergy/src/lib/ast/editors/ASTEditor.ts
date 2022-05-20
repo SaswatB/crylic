@@ -209,4 +209,8 @@ export abstract class ElementASTEditor<
       afterContentClassName?: string | null;
     };
   }[];
+  public abstract getSourcePositionForElement(
+    readContext: ReadContext<ASTType>,
+    lookupId: string
+  ): number | undefined;
 }

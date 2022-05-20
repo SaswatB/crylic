@@ -16,12 +16,16 @@ export enum TSTypeKind {
 
 export interface TSTypeW_Basic {
   kind:
-    | TSTypeKind.Unknown
     | TSTypeKind.String
     | TSTypeKind.Number
     | TSTypeKind.Boolean
     | TSTypeKind.Undefined
     | TSTypeKind.Null;
+}
+
+export interface TSTypeW_Unknown {
+  kind: TSTypeKind.Unknown;
+  omittedDueToDepth?: boolean;
 }
 
 export interface TSTypeW_LiteralString {
@@ -64,6 +68,7 @@ export interface TSTypeW_Union {
 // todo enums currently get folded into unions, they should be handled separately
 export type TSTypeWrapper =
   | TSTypeW_Basic
+  | TSTypeW_Unknown
   | TSTypeW_LiteralString
   | TSTypeW_LiteralNumber
   | TSTypeW_Object

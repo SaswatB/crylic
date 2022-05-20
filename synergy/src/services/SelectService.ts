@@ -249,11 +249,27 @@ export class SelectService {
         return;
       }
 
+      const readContext = {
+        ast: (await codeEntry.getLatestAst()) as ASTType,
+        codeEntry,
+      };
       const sourceMetadata =
         this.project!.primaryElementEditor.getSourceMetaDataFromLookupId(
-          { ast: (await codeEntry.getLatestAst()) as ASTType, codeEntry },
+          readContext,
           lookupId
         );
+      const sourcePosition =
+        this.project!.primaryElementEditor.getSourcePositionForElement(
+          readContext,
+          lookupId
+        );
+      const propTypes =
+        sourcePosition !== undefined
+          ? this.project!.typerUtils.getComponentPropsAtPosition(
+              codeEntry.filePath.getNativePath(),
+              sourcePosition
+            )
+          : undefined;
 
       const componentElements = getElementsByLookupId?.(lookupId);
       if (componentElements?.length) {
@@ -312,6 +328,7 @@ export class SelectService {
           lookupId,
           index,
           sourceMetadata,
+          propTypes,
 
           element: primaryElement,
           elements: componentElements,
@@ -332,6 +349,7 @@ export class SelectService {
           lookupId,
           index: selector.index,
           sourceMetadata,
+          propTypes,
         };
       }
     }
