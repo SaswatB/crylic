@@ -11,14 +11,15 @@ function matchSnapshotProps(
   ...code: string[]
 ) {
   const props = new TyperUtils(
-    "/",
+    new FilePortablePath("/"),
     code.map((c, index) =>
       new CodeEntry(
         new TestProject(),
         new FilePortablePath(`/file${index || ""}.tsx`),
         c
       ).getRemoteCodeEntry()
-    )
+    ),
+    { fileExists: () => false, readFile: () => undefined } as any
   ).getExportedComponentProps("/file.tsx", exportTarget);
   expect(props).toMatchSnapshot();
 }

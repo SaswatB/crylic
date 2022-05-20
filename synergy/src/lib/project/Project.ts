@@ -18,7 +18,7 @@ import {
   TSTypeKind,
   TSTypeWrapper,
 } from "../typer/ts-type-wrapper";
-import { TyperUtils } from "../typer/TyperUtils";
+import { TyperUtilsRunner } from "../typer/TyperUtilsRunner";
 import { ltTakeNext, produceNext } from "../utils";
 import { CodeEntry } from "./CodeEntry";
 import { PortablePath } from "./PortablePath";
@@ -39,19 +39,6 @@ export abstract class Project {
   public readonly projectSaved$ = new Subject();
   private readonly elementEditorEntries: EditorEntry<ElementASTEditor<any>>[];
   private readonly styleEditorEntries: EditorEntry<StyleASTEditor<any>>[];
-
-  private _tu: TyperUtils | undefined;
-  public get typerUtils() {
-    if (!this._tu) {
-      // todo this might be better in a worker
-      this._tu = new TyperUtils(
-        this.path,
-        this.codeEntries$,
-        this.config$.getValue().tsHost
-      );
-    }
-    return this._tu;
-  }
 
   protected constructor(
     public readonly path: PortablePath,
@@ -81,6 +68,7 @@ export abstract class Project {
   public abstract saveFile(codeEntry: CodeEntry): void;
   public abstract addAsset(source: PortablePath): void;
   public abstract refreshConfig(): void;
+  public abstract getTyperUtils(): TyperUtilsRunner;
 
   public onClose() {}
 
@@ -245,13 +233,14 @@ export abstract class Project {
         );
 
         // attempt to extract prop types for the component
-        const componentProps = this.typerUtils?.getExportedComponentProps(
-          codeEntry.filePath.getNativePath(),
-          {
-            name: await ltTakeNext(codeEntry.exportName$),
-            isDefault: !!(await ltTakeNext(codeEntry.exportIsDefault$)),
-          }
-        );
+        const componentProps =
+          await this.getTyperUtils().getExportedComponentProps(
+            codeEntry.filePath.getNativePath(),
+            {
+              name: await ltTakeNext(codeEntry.exportName$),
+              isDefault: !!(await ltTakeNext(codeEntry.exportIsDefault$)),
+            }
+          );
 
         // if prop types are available, try to fill in mock values
         if (

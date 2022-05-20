@@ -1,6 +1,5 @@
 import * as it from "io-ts";
 import semver from "semver";
-import type { System } from "typescript";
 
 import {
   DEFAULT_HTML_TEMPLATE_SELECTOR,
@@ -107,8 +106,7 @@ export abstract class ProjectConfig {
   protected constructor(
     public readonly projectPath: PortablePath,
     public readonly configFile: ProjectConfigFile,
-    public readonly packageJson: PackageJson | undefined,
-    public readonly tsHost: System
+    public readonly packageJson: PackageJson | undefined
   ) {}
 
   get name() {

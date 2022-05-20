@@ -13,7 +13,6 @@ import { requireUncached } from "../../utils/utils";
 import { InbuiltPackageManager } from "../pkgManager/InbuiltPackageManager";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
-const ts = __non_webpack_require__("typescript") as typeof import("typescript");
 
 export class FileProjectConfig extends ProjectConfig {
   public static createProjectConfigFromDirectory(projectPath: PortablePath) {
@@ -49,12 +48,7 @@ export class FileProjectConfig extends ProjectConfig {
       );
     }
 
-    return new FileProjectConfig(
-      projectPath,
-      configFile || {},
-      packageJson,
-      ts.sys
-    );
+    return new FileProjectConfig(projectPath, configFile || {}, packageJson);
   }
 
   private packageManager: PackageManager | undefined;

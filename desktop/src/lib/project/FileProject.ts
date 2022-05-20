@@ -22,6 +22,7 @@ import { sleep } from "synergy/src/lib/utils";
 import { PluginService } from "synergy/src/services/PluginService";
 
 import { streamToString } from "../../utils/utils";
+import { FileTyperUtilsRunner } from "../typer/FileTyperUtilsRunner";
 import { FileProjectConfig } from "./FileProjectConfig";
 
 const fs = __non_webpack_require__("fs") as typeof import("fs");
@@ -216,6 +217,7 @@ export class FileProject extends Project {
     document.title = `${config.name} - Crylic`;
 
     project.addCodeEntries(fileCodeEntries);
+    project.getTyperUtils(); // load typer utils after all code entries are loaded
     return project;
   }
 
@@ -257,6 +259,7 @@ export class FileProject extends Project {
     super.onClose();
     void this.fileWatcher.close();
     clearTimeout(this.fileChangeQueueTimer);
+    this.fileTyperUtilsRunner?.dispose();
   }
 
   private savedCodeRevisions: Record<
@@ -341,6 +344,16 @@ export class FileProject extends Project {
 
   public refreshConfig() {
     this.config$.next(this.refreshConfigImpl());
+  }
+
+  private fileTyperUtilsRunner: FileTyperUtilsRunner | undefined;
+  public getTyperUtils() {
+    if (!this.fileTyperUtilsRunner)
+      this.fileTyperUtilsRunner = new FileTyperUtilsRunner(
+        this.path,
+        this.codeEntries$
+      );
+    return this.fileTyperUtilsRunner.getProxy();
   }
 
   public addAsset(source: PortablePath) {

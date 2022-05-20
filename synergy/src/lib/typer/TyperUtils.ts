@@ -4,8 +4,10 @@ import ts from "typescript";
 import libTypes from "../../vendor/ts-lib/lib.d.ts.txt";
 import libDomTypes from "../../vendor/ts-lib/lib.dom.d.ts.txt";
 import libEs5Types from "../../vendor/ts-lib/lib.es5.d.ts.txt";
-import { LTBehaviorSubject } from "../lightObservable/LTBehaviorSubject";
-import { CodeEntry, INITIAL_CODE_REVISION_ID } from "../project/CodeEntry";
+import {
+  INITIAL_CODE_REVISION_ID,
+  RemoteCodeEntry,
+} from "../project/CodeEntry";
 import { PortablePath } from "../project/PortablePath";
 import { TSTypeKind, TSTypeWrapper } from "./ts-type-wrapper";
 
@@ -53,7 +55,7 @@ export class TyperUtils {
 
   public constructor(
     protected projectPath: PortablePath,
-    public readonly codeEntries$: LTBehaviorSubject<CodeEntry[]>,
+    protected readonly codeEntries: RemoteCodeEntry[],
     tsHost: ts.System
   ) {
     const projectDefaultLibs = defaultLibs.map((lib) => ({
@@ -77,23 +79,18 @@ export class TyperUtils {
 
     const servicesHost: ts.LanguageServiceHost = {
       getScriptFileNames: () => [
-        ...codeEntries$.getValue().map((e) => e.filePath.getNativePath()),
+        ...codeEntries.map((e) => e.filePath),
         ...projectDefaultLibs.map((d) => d.path),
       ],
       getScriptVersion: (fileName) =>
         `${
-          codeEntries$
-            .getValue()
-            .find((e) => e.filePath.getNativePath() === fileName)
-            ?.codeRevisionId || INITIAL_CODE_REVISION_ID
+          codeEntries.find((e) => e.filePath === fileName)?.codeRevisionId ||
+          INITIAL_CODE_REVISION_ID
         }`,
       getScriptSnapshot: (fileName) => {
         const defaultLib = projectDefaultLibs.find((d) => d.path === fileName);
         if (defaultLib) return ts.ScriptSnapshot.fromString(defaultLib.code);
-        const code = codeEntries$
-          .getValue()
-          .find((e) => e.filePath.getNativePath() === fileName)
-          ?.code$.getValue();
+        const code = codeEntries.find((e) => e.filePath === fileName)?.code;
         return code
           ? ts.ScriptSnapshot.fromString(code)
           : ts.ScriptSnapshot.fromString(tsHost.readFile(fileName) || "");

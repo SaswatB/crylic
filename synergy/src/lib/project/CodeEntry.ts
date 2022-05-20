@@ -25,6 +25,7 @@ export const INITIAL_CODE_REVISION_ID = 1;
  * A partial, resolved CodeEntry for use with remote async code
  */
 export interface RemoteCodeEntry {
+  id: string;
   code: string | undefined;
   codeRevisionId: number;
   filePath: string;
@@ -187,6 +188,7 @@ export class CodeEntry {
 
   public getRemoteCodeEntry(): RemoteCodeEntry {
     return {
+      id: this.id,
       code: this.code$.getValue(),
       codeRevisionId: this.codeRevisionId,
       filePath: this.filePath.getNativePath(),

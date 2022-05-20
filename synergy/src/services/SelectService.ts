@@ -265,7 +265,7 @@ export class SelectService {
         );
       const propTypes =
         sourcePosition !== undefined
-          ? this.project!.typerUtils.getComponentPropsAtPosition(
+          ? await this.project!.getTyperUtils().getComponentPropsAtPosition(
               codeEntry.filePath.getNativePath(),
               sourcePosition
             )
