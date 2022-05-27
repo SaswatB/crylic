@@ -28,7 +28,8 @@
       {
         "additionalHooks": "useRecoilCallback|useMemoObservable"
       }
-    ]
+    ],
+    "react/forbid-foreign-prop-types": 0
   },
   "overrides": [
     {

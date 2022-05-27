@@ -233,41 +233,45 @@ export abstract class Project {
         );
 
         // attempt to extract prop types for the component
-        const componentProps =
-          await this.getTyperUtils().getExportedComponentProps(
-            codeEntry.filePath.getNativePath(),
-            {
-              name: await ltTakeNext(codeEntry.exportName$),
-              isDefault: !!(await ltTakeNext(codeEntry.exportIsDefault$)),
+        this.getTyperUtils()
+          .getExportedComponentProps(codeEntry.filePath.getNativePath(), {
+            name: await ltTakeNext(codeEntry.exportName$),
+            isDefault: !!(await ltTakeNext(codeEntry.exportIsDefault$)),
+          })
+          .then((componentProps) => {
+            // if prop types are available, try to fill in mock values
+            if (
+              componentProps &&
+              componentProps.kind === TSTypeKind.Object &&
+              componentProps.props.length > 0
+            ) {
+              renderEntry.componentPropsTypes$.next(componentProps);
+
+              if (getParsedLocalStorageValue(ALLOW_GPT_LOCALKEY) ?? true) {
+                // set an async request to get props values guessed by gpt (can take >5s)
+                fillPropsWithGpt(componentProps)
+                  .then((gptProps) => {
+                    produceNext(renderEntry.componentProps$, (draft) => {
+                      Object.keys(draft).forEach((key) => {
+                        // todo don't overwrite props explicitly set by the user
+                        draft[key] = gptProps[key] ?? draft[key];
+                      });
+                    });
+                  })
+                  .catch((e) =>
+                    console.error("failed to retrieve api props", e)
+                  );
+              }
+
+              // fill in mock values while we wait for gpt
+              const placeholderProps = getPlaceholderTSTypeWrapperValue(
+                componentProps
+              ) as Record<string, TSTypeWrapper>;
+              renderEntry.componentProps$.next(placeholderProps);
             }
-          );
+          })
+          .catch(console.error);
 
-        // if prop types are available, try to fill in mock values
-        if (
-          componentProps &&
-          componentProps.kind === TSTypeKind.Object &&
-          componentProps.props.length > 0
-        ) {
-          if (getParsedLocalStorageValue(ALLOW_GPT_LOCALKEY) ?? true) {
-            // set an async request to get props values guessed by gpt (can take >5s)
-            fillPropsWithGpt(componentProps)
-              .then((gptProps) => {
-                produceNext(renderEntry.componentProps$, (draft) => {
-                  Object.keys(draft).forEach((key) => {
-                    // todo don't overwrite props explicitly set by the user
-                    draft[key] = gptProps[key] ?? draft[key];
-                  });
-                });
-              })
-              .catch((e) => console.error("failed to retrieve api props", e));
-          }
-
-          // fill in mock values while we wait for gpt
-          const placeholderProps = getPlaceholderTSTypeWrapperValue(
-            componentProps
-          ) as Record<string, TSTypeWrapper>;
-          renderEntry.componentProps$.next(placeholderProps);
-        }
         newRenderEntries.push(renderEntry);
       })
     );

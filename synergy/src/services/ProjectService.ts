@@ -5,6 +5,7 @@ import { singleton } from "tsyringe";
 import { useObservable } from "../hooks/useObservable";
 import { useService } from "../hooks/useService";
 import { track } from "../hooks/useTracking";
+import { LTBehaviorSubject } from "../lib/lightObservable/LTBehaviorSubject";
 import { Project } from "../lib/project/Project";
 import { RenderEntry } from "../lib/project/RenderEntry";
 import { eagerMap, eagerMapArrayAny } from "../lib/rxjs/eagerMap";
@@ -117,7 +118,7 @@ export function useProject<T extends true | false>(options?: {
   const project = useObservable(useService(ProjectService).project$);
   if (!project && !options?.allowUndefined) {
     if (__IS_CRYLIC__) {
-      return {} as any;
+      return { codeEntries$: new LTBehaviorSubject([]) } as any;
     }
     throw new Error("No project");
   }

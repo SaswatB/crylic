@@ -41,6 +41,7 @@ export interface TSTypeW_Object {
   kind: TSTypeKind.Object;
   props: {
     name: string;
+    parentTypeName?: string; // useful for intersection types
     type: TSTypeWrapper;
     optional: boolean;
   }[];

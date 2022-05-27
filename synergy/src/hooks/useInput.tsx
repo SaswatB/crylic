@@ -255,6 +255,12 @@ export const useSelectInput: useInputFunction<{
 
   return [value, render];
 };
+export const SelectInput: FunctionComponent<
+  Parameters<typeof useSelectInput>[0]
+> = (props) => {
+  const [, render] = useSelectInput(props);
+  return render();
+};
 
 export const usePersistentSelectInput: useInputFunction<{
   options: { name: string; value: string }[];

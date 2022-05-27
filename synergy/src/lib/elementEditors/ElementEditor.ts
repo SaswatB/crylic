@@ -2,6 +2,7 @@ import { ComponentType } from "react";
 
 import { ComponentDefinition, Styles } from "../../types/paint";
 import { SelectedElement } from "../../types/selected-element";
+import { StyleASTEditor } from "../ast/editors/ASTEditor";
 
 export interface ElementEditorFieldProps {
   selectedElement: SelectedElement;
@@ -9,6 +10,10 @@ export interface ElementEditorFieldProps {
   onChangeStyleGroup: (styles: Styles, preview?: boolean) => Promise<void>;
   onChangeAttributes: (attr: Record<string, unknown>) => Promise<void>;
   onChangeComponent: (component: ComponentDefinition) => Promise<void>;
+  openInEditor: (
+    lookupId: string,
+    editor: StyleASTEditor<any> | undefined
+  ) => void;
 }
 export interface ElementEditorFieldEntry<T extends object = any> {
   component: ComponentType<T & ElementEditorFieldProps>;
@@ -31,7 +36,6 @@ export function createElementEditorField<T extends {}>(
 export interface ElementEditorSection {
   name: string;
   fields: ElementEditorFieldEntry[];
-  shouldHide?: (context: ElementEditorFieldProps) => boolean;
   collapsible?: boolean; // by default true
   defaultCollapsed?: boolean;
   grid?: boolean; // by default true
@@ -43,5 +47,5 @@ export interface ElementEditor {
    * @returns 0 - editor does not apply, 1+ - editor applies with larger numbers representing higher priority.
    */
   canApply(selectedElement: SelectedElement): number;
-  getEditorSections(): ElementEditorSection[];
+  getEditorSections(selectedElement: SelectedElement): ElementEditorSection[];
 }

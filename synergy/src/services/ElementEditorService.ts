@@ -3,6 +3,7 @@ import { singleton } from "tsyringe";
 
 import { ElementEditor } from "../lib/elementEditors/ElementEditor";
 import { HtmlElementEditor } from "../lib/elementEditors/HtmlElementEditor";
+import { VirtualElementEditor } from "../lib/elementEditors/VirtualElementEditor";
 import { SelectedElement } from "../types/selected-element";
 import { SelectService } from "./SelectService";
 
@@ -16,7 +17,10 @@ export class ElementEditorService {
     }))
   );
 
-  private elementEditors: ElementEditor[] = [new HtmlElementEditor()];
+  private elementEditors: ElementEditor[] = [
+    new HtmlElementEditor(),
+    new VirtualElementEditor(),
+  ];
 
   constructor(private selectService: SelectService) {}
 

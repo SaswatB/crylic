@@ -1,19 +1,25 @@
 import React, { FunctionComponent, useCallback, useMemo } from "react";
 import ReactPlaceholder from "react-placeholder";
+import { useBus } from "ts-bus/react";
 
 import { useObservable } from "../../hooks/useObservable";
 import { useService } from "../../hooks/useService";
+import { StyleASTEditor } from "../../lib/ast/editors/ASTEditor";
 import {
   ElementEditorFieldProps,
   ElementEditorSection,
 } from "../../lib/elementEditors/ElementEditor";
+import { editorOpenLocation } from "../../lib/events";
 import { renderSeparator } from "../../lib/render-utils";
 import { ElementEditorService } from "../../services/ElementEditorService";
+import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
 import { Collapsible } from "../Collapsible";
 import { Tour } from "../Tour/Tour";
 
 export const ElementEditorPane: FunctionComponent = () => {
+  const bus = useBus();
+  const project = useProject();
   const selectService = useService(SelectService);
   const elementEditorService = useService(ElementEditorService);
   const { selectedElement, editor: elementEditor } =
@@ -43,25 +49,59 @@ export const ElementEditorPane: FunctionComponent = () => {
       [selectService]
     );
 
+  const openInEditor = useCallback(
+    async (lookupId: string, editor: StyleASTEditor<any> | undefined) => {
+      editor = editor || project.primaryElementEditor;
+
+      const codeId = editor.getCodeIdFromLookupId(lookupId);
+      if (!codeId) return;
+      const codeEntry = project.getCodeEntryValue(codeId);
+      if (!codeEntry) return;
+      const line = editor.getCodeLineFromLookupId(
+        { codeEntry, ast: await codeEntry.getLatestAst() },
+        lookupId
+      );
+      let timeout = 0;
+      if (
+        !project?.editEntries$.getValue().find((e) => e.codeId === codeEntry.id)
+      ) {
+        project?.addEditEntries(codeEntry);
+        // todo don't cheat with a timeout here
+        timeout = 500;
+      }
+      setTimeout(
+        () => bus.publish(editorOpenLocation({ codeEntry, line })),
+        timeout
+      );
+    },
+    [bus, project]
+  );
+
   const context = useMemo<ElementEditorFieldProps>(
     () => ({
       selectedElement: selectedElement!, // this will be defined whenever context gets used
       onChangeStyleGroup,
       onChangeAttributes,
       onChangeComponent,
+      openInEditor,
     }),
-    [onChangeAttributes, onChangeComponent, onChangeStyleGroup, selectedElement]
+    [
+      onChangeAttributes,
+      onChangeComponent,
+      onChangeStyleGroup,
+      openInEditor,
+      selectedElement,
+    ]
   );
 
   const sections = useMemo(
-    () =>
-      elementEditor?.getEditorSections().filter((s) => s.fields.length !== 0),
-    [elementEditor]
+    () => selectedElement && elementEditor?.getEditorSections(selectedElement),
+    [elementEditor, selectedElement]
   );
 
   const renderSection = useCallback(
     (section: ElementEditorSection, index: number) => {
-      if (section.shouldHide?.(context)) return null;
+      if (section.fields.length === 0) return null;
 
       const renderedFields = section.fields.map(
         ({ component: Component, props }, i) => (

@@ -15,13 +15,11 @@ import {
 } from "../../components/SideBar/css-options";
 import {
   getSelectedElementStyleValue,
-  ifSelectedElementTarget_Component,
   isSelectedElementTarget_Component,
   SelectedElement,
 } from "../../types/selected-element";
 import { AnimationFE } from "./defaultFields/AnimationFE";
 import { createBoundTextAttrFE } from "./defaultFields/AttributeFEs";
-import { createConditionalFE } from "./defaultFields/ConditionalFE";
 import { DeleteFE } from "./defaultFields/DeleteFE";
 import { ImageSelectorFE } from "./defaultFields/ImageSelectorFE";
 import {
@@ -73,7 +71,9 @@ export class HtmlElementEditor implements ElementEditor {
     return isSelectedElementTarget_Component(selectedElement) ? 1 : 0;
   }
 
-  getEditorSections(): ElementEditorSection[] {
+  getEditorSections(selectedElement: SelectedElement): ElementEditorSection[] {
+    if (!isSelectedElementTarget_Component(selectedElement)) return [];
+
     return [
       {
         name: "Style Group",
@@ -89,20 +89,12 @@ export class HtmlElementEditor implements ElementEditor {
           createSelectSGFE("position", CSS_POSITION_OPTIONS),
           createSelectSGFE("display", CSS_DISPLAY_OPTIONS),
           createSelectSGFE("boxSizing", CSS_BOX_SIZING_OPTIONS),
-          ...[
-            createBoundCSSLengthSGFE("top"),
-            createBoundCSSLengthSGFE("left"),
-            createBoundCSSLengthSGFE("bottom"),
-            createBoundCSSLengthSGFE("right"),
-          ].map((e) =>
-            createConditionalFE(
-              e,
-              ({ selectedElement }) =>
-                isSelectedElementTarget_Component(selectedElement) &&
-                getSelectedElementStyleValue(selectedElement, "position") !==
-                  "static"
-            )
-          ),
+          ...(getSelectedElementStyleValue(selectedElement, "position") !==
+          "static"
+            ? (["top", "left", "bottom", "right"] as const).map((a) =>
+                createBoundCSSLengthSGFE(a)
+              )
+            : []),
           createBreakdownSGFE("padding"),
           createBreakdownSGFE("margin"),
           // todo breakdown?
@@ -118,18 +110,17 @@ export class HtmlElementEditor implements ElementEditor {
           createElementEditorField(ImageSelectorFE, {
             imageProp: "backgroundImage" as const,
           }),
-          createConditionalFE(
-            createAutocompleteSGFE(
-              "backgroundSize",
-              CSS_BACKGROUND_SIZE_OPTIONS
-            ),
-            ({ selectedElement }) =>
-              isSelectedElementTarget_Component(selectedElement) &&
-              getSelectedElementStyleValue(
-                selectedElement,
-                "backgroundImage"
-              ) !== "none"
-          ),
+          ...(getSelectedElementStyleValue(
+            selectedElement,
+            "backgroundImage"
+          ) !== "none"
+            ? [
+                createAutocompleteSGFE(
+                  "backgroundSize",
+                  CSS_BACKGROUND_SIZE_OPTIONS
+                ),
+              ]
+            : []),
         ],
       },
       // todo border
@@ -137,21 +128,17 @@ export class HtmlElementEditor implements ElementEditor {
         name: "Text",
         defaultCollapsed: true, // todo don't collapse this by default for text elements
         fields: [
-          createConditionalFE(
-            createElementEditorField(TextContentFE),
-            ({ selectedElement }) => allowTextEdit(selectedElement)
-          ),
+          ...(allowTextEdit(selectedElement)
+            ? [createElementEditorField(TextContentFE)]
+            : []),
           createBoundColorPickerSGFE("color"),
           createBoundCSSLengthSGFE("fontSize"),
           createSelectSGFE("fontWeight", CSS_FONT_WEIGHT_OPTIONS),
           createAutocompleteSGFE("fontFamily", CSS_FONT_FAMILY_OPTIONS),
-          createConditionalFE(
-            createSelectSGFE("textAlign", CSS_TEXT_ALIGN_OPTIONS),
-            ({ selectedElement }) =>
-              isSelectedElementTarget_Component(selectedElement) &&
-              getSelectedElementStyleValue(selectedElement, "display") !==
-                "flex"
-          ),
+          ...(getSelectedElementStyleValue(selectedElement, "display") !==
+          "flex"
+            ? [createSelectSGFE("textAlign", CSS_TEXT_ALIGN_OPTIONS)]
+            : []),
           createSelectSGFE(
             "textDecorationLine",
             CSS_TEXT_DECORATION_LINE_OPTIONS
@@ -160,16 +147,17 @@ export class HtmlElementEditor implements ElementEditor {
       },
       {
         name: "Content",
-        shouldHide: ({ selectedElement }) =>
-          isSelectedElementTarget_Component(selectedElement) &&
-          getSelectedElementStyleValue(selectedElement, "display") !== "flex",
         defaultCollapsed: true,
-        fields: [
-          createSelectSGFE("flexDirection", CSS_FLEX_DIRECTION_OPTIONS),
-          createSelectSGFE("flexWrap", CSS_FLEX_WRAP_OPTIONS),
-          createSelectSGFE("alignItems", CSS_ALIGN_ITEMS_OPTIONS),
-          createSelectSGFE("justifyContent", CSS_JUSTIFY_CONTENT_OPTIONS),
-        ],
+        fields:
+          isSelectedElementTarget_Component(selectedElement) &&
+          getSelectedElementStyleValue(selectedElement, "display") !== "flex"
+            ? [
+                createSelectSGFE("flexDirection", CSS_FLEX_DIRECTION_OPTIONS),
+                createSelectSGFE("flexWrap", CSS_FLEX_WRAP_OPTIONS),
+                createSelectSGFE("alignItems", CSS_ALIGN_ITEMS_OPTIONS),
+                createSelectSGFE("justifyContent", CSS_JUSTIFY_CONTENT_OPTIONS),
+              ]
+            : [],
       },
       {
         name: "Animation",
@@ -183,13 +171,9 @@ export class HtmlElementEditor implements ElementEditor {
         fields: [
           createSelectSGFE("cursor", CSS_CURSOR_OPTIONS),
           createBoundTextAttrFE("id"),
-          createConditionalFE(
-            createBoundTextAttrFE("href"),
-            ({ selectedElement }) =>
-              ifSelectedElementTarget_Component(
-                selectedElement
-              )?.target.element.tagName.toLowerCase() === "a"
-          ),
+          ...(selectedElement.target.element.tagName.toLowerCase() === "a"
+            ? [createBoundTextAttrFE("href")]
+            : []),
           createElementEditorField(DeleteFE),
         ],
       },

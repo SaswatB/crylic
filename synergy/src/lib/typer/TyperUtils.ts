@@ -196,6 +196,8 @@ export class TyperUtils {
             prop.declarations?.[0] || t.getSymbol()?.declarations?.[0];
           return {
             name: prop.escapedName as string,
+            parentTypeName: (prop as { parent?: ts.Symbol }).parent
+              ?.escapedName as string,
             type: this.wrapType(
               declaration
                 ? this.tc.getTypeOfSymbolAtLocation(prop, declaration)

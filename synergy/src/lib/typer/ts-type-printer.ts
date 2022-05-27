@@ -29,7 +29,7 @@ function printTSTypeWrapperHelper(type: TSTypeWrapper): string {
               p.type
             )}`
         )
-        .join("; ")}; }`;
+        .join("; ")}${type.props.length > 0 ? ";" : ""} }`;
     case TSTypeKind.Array:
       return `${printTSTypeWrapperHelper(type.memberType)}[]`;
     case TSTypeKind.Tuple:

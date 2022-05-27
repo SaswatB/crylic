@@ -4,6 +4,7 @@ import { PluginService } from "../../services/PluginService";
 import { OutlineElement, ReactMetadata, ViewContext } from "../../types/paint";
 import { buildOutline } from "../outline";
 import { throttleAsync } from "../throttle-async";
+import { TSTypeW_Object } from "../typer/ts-type-wrapper";
 import { CodeEntry } from "./CodeEntry";
 import { Project } from "./Project";
 
@@ -25,6 +26,9 @@ export class RenderEntry {
   public readonly componentProps$ = new BehaviorSubject<
     Record<string, unknown>
   >({});
+  public readonly componentPropsTypes$ = new BehaviorSubject<
+    TSTypeW_Object | undefined
+  >(undefined);
   public readonly outline$ = new BehaviorSubject<
     | { outline: OutlineElement; treeNodeIdMap: Map<string, OutlineElement> }
     | undefined
