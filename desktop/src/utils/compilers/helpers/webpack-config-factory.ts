@@ -328,7 +328,7 @@ export const webpackConfigFactory = async (
   const projectNodeModules = path.resolve(paths.projectFolder, "node_modules"); // appNodeModules
   const modules = getCraModules({
     ...paths,
-    projectSrcFolder: `${paths.projectFolder}/src`,
+    projectSrcFolder: path.join(paths.projectFolder, "src"),
     projectNodeModules,
   });
 

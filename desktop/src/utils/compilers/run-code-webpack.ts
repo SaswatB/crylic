@@ -86,6 +86,7 @@ export function initialize(nodeModulesPath = "") {
     //   return paths.filter((p) => p.replaceAll("\\", "/").startsWith(rootPath));
     // };
   }
+  // lm_ed556f628a used for resolving loaders in next plugin
   pluginEvalDirectory = nodeModulesPath || __dirname;
 
   Object.keys(nativeDepsPaths).forEach((key) => {

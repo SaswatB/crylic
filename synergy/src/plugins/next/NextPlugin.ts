@@ -75,6 +75,7 @@ export class NextPlugin extends PluginBase {
 
   public override overrideWebpackConfig() {
     return `
+const path = require("path");
 const NormalModule = require("webpack/lib/NormalModule");
 
 // replacement for Next's profiling plugin
@@ -111,7 +112,8 @@ module.exports = function (options, webpack) {
   // override the default image loader
   options.module.rules[0].oneOf.unshift({
     test: /\\.(png|jpg|jpeg|gif|webp|avif|ico|bmp|svg)$/i,
-    loader: "./loaders/next-image-shim-loader",
+    // lm_ed556f628a depends on plugin eval dir
+    loader: path.join(__dirname, "../loaders/next-image-shim-loader"),
     issuer: { not: /\\.(css|scss|sass)$/ },
     dependency: { not: ["url"] },
   });
