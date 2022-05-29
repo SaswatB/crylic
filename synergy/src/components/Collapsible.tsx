@@ -67,6 +67,7 @@ const Row = styled.div<{ collapsed: boolean }>`
   padding: 7px 10px;
   margin: -1px;
   align-items: center;
+  font-size: 10px;
   cursor: pointer;
   transition: ${DEFAULT_TRANSITION};
   opacity: ${(props) => (props.collapsed ? 0.7 : 1)};
@@ -80,7 +81,7 @@ const Row = styled.div<{ collapsed: boolean }>`
 const Title = styled.span`
   margin-top: 0px;
   margin-bottom: 0px;
-  margin-left: 20px;
+  margin-left: 12px;
   margin-right: 0px;
   color: #ffffff;
   font-size: 14px;
