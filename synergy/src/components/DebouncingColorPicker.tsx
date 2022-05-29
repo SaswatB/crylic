@@ -10,11 +10,13 @@ const DEFAULT_ALPHA = 100;
 
 interface Props {
   value: string;
+  className?: string;
   onChange: (c: string) => void;
   onTempChange?: (c: string) => void;
 }
 export const DebouncingColorPicker: FunctionComponent<Props> = ({
   value,
+  className,
   onChange,
   onTempChange,
 }) => {
@@ -75,6 +77,7 @@ export const DebouncingColorPicker: FunctionComponent<Props> = ({
   return (
     <ColorPicker
       animation="slide-up"
+      className={className}
       color={tempValue.color}
       alpha={tempValue.alpha}
       onChange={onColorPickerChange}

@@ -184,9 +184,9 @@ export const useCSSLengthInput: useInputFunction<{
               value={unit}
               onChange={(e) => updateValue(undefined, `${e.target.value}`)}
             >
-              {CSS_LENGTH_UNITS.map((o) => (
-                <option key={o.name} value={o.value}>
-                  {o.name}
+              {CSS_LENGTH_UNITS.map((u) => (
+                <option key={u} value={u}>
+                  {u}
                 </option>
               ))}
             </Select>
@@ -229,7 +229,8 @@ export const useSliderInput: useInputFunction<{}, SliderProps, number> = ({
 
 export const useSelectInput: useInputFunction<{
   options: { name: string; value: string }[];
-}> = ({ options, onChange, label, initialValue }) => {
+  endAddon?: React.ReactNode;
+}> = ({ options, endAddon, onChange, label, initialValue }) => {
   const [value, setValue] = useBoundState(initialValue || "");
 
   const render = (props?: FormControlProps) => (
@@ -243,6 +244,9 @@ export const useSelectInput: useInputFunction<{
           onChange?.(e.target.value as string);
         }}
         label={label}
+        endAdornment={
+          <InputAdornment position="end">{endAddon || null}</InputAdornment>
+        }
       >
         {options.map((o) => (
           <option key={o.name} value={o.value}>
@@ -282,7 +286,8 @@ export const usePersistentSelectInput: useInputFunction<{
 
 export const useColorPicker: useInputFunction<{
   bindInitialValue?: boolean;
-}> = ({ bindInitialValue, onChange, label, initialValue }) => {
+  endAddon?: React.ReactNode;
+}> = ({ bindInitialValue, endAddon, onChange, label, initialValue }) => {
   const anchor = useRef<HTMLButtonElement>(null);
   const [focused, setFocused] = useState(false);
   const [value, setValue] = useBoundState(() => {
@@ -310,6 +315,7 @@ export const useColorPicker: useInputFunction<{
           endAdornment={
             <InputAdornment position="end">
               <DebouncingColorPicker
+                className="mr-1"
                 value={value}
                 onChange={(newValue) => {
                   setValue(newValue);
@@ -317,6 +323,7 @@ export const useColorPicker: useInputFunction<{
                 }}
                 onTempChange={(previewValue) => onChange?.(previewValue, true)}
               />
+              {endAddon || null}
             </InputAdornment>
           }
           labelWidth={(label?.length || 0) * 6.9}

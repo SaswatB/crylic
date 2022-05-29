@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { faCompress, faExpand } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { startCase, uniq } from "lodash";
 
 import { StylePropNameMap } from "../../../components/SideBar/css-options";
+import { BORDER_STYLES } from "../../../constants";
 import {
   useAutocomplete,
   useColorPicker,
@@ -16,7 +17,6 @@ import {
   getSelectedElementStyleValue,
   ifSelectedElementTarget_NotRenderEntry,
   isSelectedElementTarget_Component,
-  SelectedElementTargetType,
 } from "../../../types/selected-element";
 import {
   createElementEditorField,
@@ -143,11 +143,45 @@ export const createSelectSGFE = (
 
 // #region breakdown
 
+function dirProp<S extends string, T extends string>(
+  dir: S,
+  p: T
+): T extends `border${infer V}` ? `border${S}${V}` : `${T}${S}` {
+  if (p.startsWith("border")) {
+    return `border${dir}${p.replace("border", "")}` as any;
+  }
+  return `${p}${dir}` as any;
+}
+
+const topProp = <T extends string>(p: T) => dirProp("Top", p);
+const bottomProp = <T extends string>(p: T) => dirProp("Bottom", p);
+const leftProp = <T extends string>(p: T) => dirProp("Left", p);
+const rightProp = <T extends string>(p: T) => dirProp("Right", p);
+
+type BreakdownStyleProp =
+  | "padding"
+  | "margin"
+  | "borderColor"
+  | "borderRadius"
+  | "borderStyle"
+  | "borderWidth";
+
+const BORDER_STYLE_OPTIONS = BORDER_STYLES.map((u) => ({ name: u, value: u }));
+
 function BreakdownSGFE({
   styleProp: prop,
   ...props
-}: StyleGroupFEProps & { styleProp: "padding" | "margin" }) {
+}: StyleGroupFEProps & { styleProp: BreakdownStyleProp }) {
   const { selectedElement, onChangeStyleGroup } = props;
+
+  const dir1Prop =
+    prop === "borderRadius" ? "borderTopLeftRadius" : topProp(prop);
+  const dir2Prop =
+    prop === "borderRadius" ? "borderTopRightRadius" : bottomProp(prop);
+  const dir3Prop =
+    prop === "borderRadius" ? "borderBottomLeftRadius" : leftProp(prop);
+  const dir4Prop =
+    prop === "borderRadius" ? "borderBottomRightRadius" : rightProp(prop);
 
   const [showBreakdown, setShowBreakdown] = useState(false);
   const renderExpand = () => (
@@ -159,10 +193,10 @@ function BreakdownSGFE({
         // todo only update styles if prop is defined for this style group
         void onChangeStyleGroup({
           [prop]: null,
-          [`${prop}Top`]: selectedElement.target.computedStyles[prop],
-          [`${prop}Bottom`]: selectedElement.target.computedStyles[prop],
-          [`${prop}Left`]: selectedElement.target.computedStyles[prop],
-          [`${prop}Right`]: selectedElement.target.computedStyles[prop],
+          [dir1Prop]: selectedElement.target.computedStyles[prop],
+          [dir2Prop]: selectedElement.target.computedStyles[prop],
+          [dir3Prop]: selectedElement.target.computedStyles[prop],
+          [dir4Prop]: selectedElement.target.computedStyles[prop],
         });
       }}
     >
@@ -178,11 +212,11 @@ function BreakdownSGFE({
         // todo only update styles if prop is defined for this style group
         void onChangeStyleGroup({
           // todo do an average or pick min/max
-          [prop]: selectedElement.target.computedStyles[`${prop}Top`],
-          [`${prop}Top`]: null,
-          [`${prop}Bottom`]: null,
-          [`${prop}Left`]: null,
-          [`${prop}Right`]: null,
+          [prop]: selectedElement.target.computedStyles[dir1Prop],
+          [dir1Prop]: null,
+          [dir2Prop]: null,
+          [dir3Prop]: null,
+          [dir4Prop]: null,
         });
       }}
     >
@@ -190,28 +224,44 @@ function BreakdownSGFE({
     </button>
   );
 
-  const [selectedElementPropTop, renderPropTopInput] = useCSSLengthInput({
-    ...useStyleGroupFE({ styleProp: `${prop}Top`, ...props }),
+  const useInput =
+    prop === "borderStyle"
+      ? useSelectInput
+      : prop === "borderColor"
+      ? useColorPicker
+      : useCSSLengthInput;
+
+  const options = useMemo(
+    () => (prop === "borderStyle" ? BORDER_STYLE_OPTIONS : []),
+    [prop]
+  );
+
+  const [selectedElementPropTop, renderPropTopInput] = useInput({
+    ...useStyleGroupFE({ styleProp: dir1Prop, ...props }),
     bindInitialValue: true,
     endAddon: renderCollapse(),
+    options,
   });
 
-  const [selectedElementPropBottom, renderPropBottomInput] = useCSSLengthInput({
-    ...useStyleGroupFE({ styleProp: `${prop}Bottom`, ...props }),
+  const [selectedElementPropBottom, renderPropBottomInput] = useInput({
+    ...useStyleGroupFE({ styleProp: dir2Prop, ...props }),
     bindInitialValue: true,
     endAddon: renderCollapse(),
+    options,
   });
 
-  const [selectedElementPropLeft, renderPropLeftInput] = useCSSLengthInput({
-    ...useStyleGroupFE({ styleProp: `${prop}Left`, ...props }),
+  const [selectedElementPropLeft, renderPropLeftInput] = useInput({
+    ...useStyleGroupFE({ styleProp: dir3Prop, ...props }),
     bindInitialValue: true,
     endAddon: renderCollapse(),
+    options,
   });
 
-  const [selectedElementPropRight, renderPropRightInput] = useCSSLengthInput({
-    ...useStyleGroupFE({ styleProp: `${prop}Right`, ...props }),
+  const [selectedElementPropRight, renderPropRightInput] = useInput({
+    ...useStyleGroupFE({ styleProp: dir4Prop, ...props }),
     bindInitialValue: true,
     endAddon: renderCollapse(),
+    options,
   });
 
   // reset breakdown visibility on selected element change
@@ -241,10 +291,11 @@ function BreakdownSGFE({
     ifSelectedElementTarget_NotRenderEntry(selectedElement)?.target.lookupId,
   ]);
 
-  const [, renderPropInput] = useCSSLengthInput({
+  const [, renderPropInput] = useInput({
     ...useStyleGroupFE({ styleProp: prop, ...props }),
     bindInitialValue: true,
     endAddon: renderExpand(),
+    options,
   });
 
   if (!showBreakdown) return renderPropInput();
@@ -257,7 +308,7 @@ function BreakdownSGFE({
     </>
   );
 }
-export const createBreakdownSGFE = (styleProp: "padding" | "margin") =>
+export const createBreakdownSGFE = (styleProp: BreakdownStyleProp) =>
   createElementEditorField(BreakdownSGFE, { styleProp });
 
 // #endregion

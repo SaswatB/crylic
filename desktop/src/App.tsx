@@ -282,7 +282,7 @@ export function App() {
             className={RightPaneContainer}
             minWidth={200}
             maxWidth={500}
-            defaultSize={{ height: "100vh", width: 300 }}
+            defaultSize={{ height: "100vh", width: 370 }}
             enable={{ left: true }}
           >
             <ElementEditorPane />

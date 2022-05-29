@@ -97,8 +97,6 @@ export class HtmlElementEditor implements ElementEditor {
             : []),
           createBreakdownSGFE("padding"),
           createBreakdownSGFE("margin"),
-          // todo breakdown?
-          createBoundCSSLengthSGFE("borderRadius"),
         ],
       },
       {
@@ -123,7 +121,6 @@ export class HtmlElementEditor implements ElementEditor {
             : []),
         ],
       },
-      // todo border
       {
         name: "Text",
         defaultCollapsed: true, // todo don't collapse this by default for text elements
@@ -158,6 +155,16 @@ export class HtmlElementEditor implements ElementEditor {
                 createSelectSGFE("justifyContent", CSS_JUSTIFY_CONTENT_OPTIONS),
               ]
             : [],
+      },
+      {
+        name: "Border",
+        defaultCollapsed: true,
+        fields: [
+          createBreakdownSGFE("borderColor"),
+          createBreakdownSGFE("borderWidth"),
+          createBreakdownSGFE("borderStyle"),
+          createBreakdownSGFE("borderRadius"),
+        ],
       },
       {
         name: "Animation",

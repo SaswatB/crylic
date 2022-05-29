@@ -157,19 +157,23 @@ function VirtualPropFE({
 
   return (
     <div data-tip={typeString}>
-      {label}{" "}
-      <Button
-        onClick={() =>
-          isSelectedElementTarget_NotRenderEntry(selectedElement)
-            ? openInEditor(selectedElement.target.lookupId, undefined)
-            : // todo implement
-              enqueueSnackbar("Editing this prop is not supported yet", {
-                variant: "warning",
-              })
-        }
-      >
-        Edit
-      </Button>
+      {renderType(type) || (
+        <>
+          {label}{" "}
+          <Button
+            onClick={() =>
+              isSelectedElementTarget_NotRenderEntry(selectedElement)
+                ? openInEditor(selectedElement.target.lookupId, undefined)
+                : // todo implement
+                  enqueueSnackbar("Editing this prop is not supported yet", {
+                    variant: "warning",
+                  })
+            }
+          >
+            Edit
+          </Button>
+        </>
+      )}
     </div>
   );
 }
