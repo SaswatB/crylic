@@ -58,11 +58,26 @@ export class FileProjectConfig extends ProjectConfig {
         this.configFile?.packageManager?.type ?? "inbuilt";
 
       if (packageManagerType.startsWith("inbuilt")) {
+        let yarnMode = false;
+        if (packageManagerType === "inbuilt-yarn") {
+          yarnMode = true;
+        } else if (packageManagerType !== "inbuilt-npm") {
+          if (
+            fs.existsSync(this.projectPath.join("yarn.lock").getNativePath())
+          ) {
+            yarnMode = true;
+          } else {
+            try {
+              if (this.packageJson.packageManager?.includes("yarn"))
+                yarnMode = true;
+            } catch (e) {
+              // ignore
+            }
+          }
+        }
         this.packageManager = new InbuiltPackageManager(
           this.projectPath,
-          packageManagerType === "inbuilt-yarn" ||
-            (packageManagerType !== "inbuilt-npm" &&
-              fs.existsSync(this.projectPath.join("yarn.lock").getNativePath()))
+          yarnMode
         );
       } else if (packageManagerType === "yarn") {
         // yarn
