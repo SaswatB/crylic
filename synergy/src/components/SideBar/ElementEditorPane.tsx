@@ -109,15 +109,6 @@ export const ElementEditorPane: FunctionComponent = () => {
         )
       );
 
-      if (section.collapsible === false) {
-        return (
-          <React.Fragment key={index}>
-            {renderSeparator(section.name)}
-            <div className="flex flex-row">{renderedFields}</div>
-          </React.Fragment>
-        );
-      }
-
       return (
         <Collapsible
           key={index}
@@ -125,9 +116,7 @@ export const ElementEditorPane: FunctionComponent = () => {
           variant="outline"
           defaultCollapsed={section.defaultCollapsed}
         >
-          <div className={section.grid === false ? "" : "grid2x"}>
-            {renderedFields}
-          </div>
+          {renderedFields}
         </Collapsible>
       );
     },

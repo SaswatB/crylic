@@ -78,7 +78,6 @@ export class HtmlElementEditor implements ElementEditor {
       {
         name: "Style Group",
         fields: [createElementEditorField(StyleGroupSelectorFE)],
-        grid: false,
       },
       {
         name: "Layout",
@@ -169,7 +168,6 @@ export class HtmlElementEditor implements ElementEditor {
         name: "Animation",
         defaultCollapsed: true,
         fields: [createElementEditorField(AnimationFE)],
-        grid: false,
       },
       {
         name: "Extras",

@@ -36,9 +36,7 @@ export function createElementEditorField<T extends {}>(
 export interface ElementEditorSection {
   name: string;
   fields: ElementEditorFieldEntry[];
-  collapsible?: boolean; // by default true
   defaultCollapsed?: boolean;
-  grid?: boolean; // by default true
 }
 
 export interface ElementEditor {

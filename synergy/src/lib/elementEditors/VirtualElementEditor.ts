@@ -33,14 +33,12 @@ export class VirtualElementEditor implements ElementEditor {
       ([parentTypeName, props], index): ElementEditorSection => ({
         name: parentTypeName,
         defaultCollapsed: index > 3,
-        grid: false,
         fields: props.map((p) => createVirtualPropFE(p)),
       })
     );
     if (sections.length === 0) {
       sections.push({
         name: "Props",
-        grid: false,
         fields: [createMessageFE("No props available to edit")],
       });
     }

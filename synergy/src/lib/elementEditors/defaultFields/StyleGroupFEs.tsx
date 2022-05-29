@@ -39,6 +39,7 @@ function useStyleGroupFE({
       : "",
     onChange: (value: string, preview?: boolean) =>
       onChangeStyleGroup({ [styleProp]: value }, preview),
+    onClear: () => onChangeStyleGroup({ [styleProp]: null }),
   };
 }
 

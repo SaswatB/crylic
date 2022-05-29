@@ -39,6 +39,7 @@ export type useInputFunction<
 > = (
   config: {
     onChange?: (value: U, preview?: boolean) => void;
+    onClear?: () => void; // todo preview?
     label?: string;
     initialValue?: U;
   } & S
