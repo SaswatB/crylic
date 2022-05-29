@@ -78,7 +78,6 @@ export class HtmlElementEditor implements ElementEditor {
       {
         name: "Style Group",
         fields: [createElementEditorField(StyleGroupSelectorFE)],
-        collapsible: false,
         grid: false,
       },
       {
@@ -147,7 +146,7 @@ export class HtmlElementEditor implements ElementEditor {
         defaultCollapsed: true,
         fields:
           isSelectedElementTarget_Component(selectedElement) &&
-          getSelectedElementStyleValue(selectedElement, "display") !== "flex"
+          getSelectedElementStyleValue(selectedElement, "display") === "flex"
             ? [
                 createSelectSGFE("flexDirection", CSS_FLEX_DIRECTION_OPTIONS),
                 createSelectSGFE("flexWrap", CSS_FLEX_WRAP_OPTIONS),

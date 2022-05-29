@@ -122,6 +122,7 @@ export const ElementEditorPane: FunctionComponent = () => {
         <Collapsible
           key={index}
           title={section.name}
+          variant="outline"
           defaultCollapsed={section.defaultCollapsed}
         >
           <div className={section.grid === false ? "" : "grid2x"}>
@@ -135,13 +136,12 @@ export const ElementEditorPane: FunctionComponent = () => {
 
   return (
     <ReactPlaceholder
-      className="p-8"
       type="text"
       color="#ffffff22"
       rows={5}
       ready={!!sections?.length}
     >
-      <div data-tour="edit-element-tab" className="overflow-auto p-4">
+      <div data-tour="edit-element-tab" className="overflow-auto">
         <Tour
           name="edit-element-tab"
           beaconStyle={{

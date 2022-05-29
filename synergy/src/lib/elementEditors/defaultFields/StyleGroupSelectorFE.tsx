@@ -1,4 +1,5 @@
 import React from "react";
+import styled from "@emotion/styled";
 import { faCrosshairs } from "@fortawesome/free-solid-svg-icons";
 import {
   Button,
@@ -257,7 +258,7 @@ export function StyleGroupSelectorFE({
   );
 
   return (
-    <>
+    <Container>
       <FormControl fullWidth variant="outlined" className="flex-1">
         <Select
           value={
@@ -296,6 +297,11 @@ export function StyleGroupSelectorFE({
           openInEditor(selectedStyleGroup.lookupId, selectedStyleGroup.editor)
         }
       />
-    </>
+    </Container>
   );
 }
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: row;
+`;

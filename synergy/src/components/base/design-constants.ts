@@ -6,4 +6,5 @@ text-overflow: ellipsis;
 white-space: nowrap;
 `;
 export const DARK_COLOR = "#27303E";
+export const MID_COLOR = "#445771";
 export const LIGHT_COLOR = "#65758A";
