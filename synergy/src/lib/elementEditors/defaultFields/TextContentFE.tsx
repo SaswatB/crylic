@@ -7,6 +7,7 @@ import {
   isSelectedElementTarget_Component,
 } from "../../../types/selected-element";
 import { ElementEditorFieldProps } from "../ElementEditor";
+import { useInputRowWrapper } from "../InputRowWrapper";
 
 export function TextContentFE({ selectedElement }: ElementEditorFieldProps) {
   const selectService = useService(SelectService);
@@ -17,23 +18,25 @@ export function TextContentFE({ selectedElement }: ElementEditorFieldProps) {
     1000
   );
 
-  const [, renderTextContentInput] = useTextInput({
-    onChange: (newTextContent) => {
-      if (!isSelectedElementTarget_Component(selectedElement)) return;
-      selectedElement.target.element.textContent = newTextContent;
-      updateSelectedElementDebounced((editor, editContext) =>
-        editor.updateElementText(editContext, newTextContent)
-      );
-    },
-    label: "Text Content",
-    initialValue:
-      ifSelectedElementTarget_Component(selectedElement)?.target.element
-        .textContent ?? undefined,
-    bindInitialValue: true,
-  });
+  const [, renderTextContentInput] = useInputRowWrapper<{}, any, string, any>(
+    useTextInput,
+    {
+      onChange: (newTextContent: string) => {
+        if (!isSelectedElementTarget_Component(selectedElement)) return;
+        selectedElement.target.element.textContent = newTextContent;
+        updateSelectedElementDebounced((editor, editContext) =>
+          editor.updateElementText(editContext, newTextContent)
+        );
+      },
+      label: "Text Content",
+      initialValue:
+        ifSelectedElementTarget_Component(selectedElement)?.target.element
+          .textContent ?? undefined,
+      bindInitialValue: true,
+    }
+  );
 
   return renderTextContentInput({
-    className: "col-span-2",
     autoFocus: true,
     multiline: true,
   });

@@ -39,7 +39,6 @@ export type useInputFunction<
 > = (
   config: {
     onChange?: (value: U, preview?: boolean) => void;
-    onClear?: () => void; // todo preview?
     label?: string;
     initialValue?: U;
   } & S
@@ -158,6 +157,7 @@ export const useCSSLengthInput: useInputFunction<{
     <FormControl variant="outlined">
       <InputLabel>{label}</InputLabel>
       <OutlinedInput
+        label={label}
         value={numberValue}
         onChange={(e) => updateValue(`${e.target.value}`)}
         onFocus={() => setFocused(true)}
@@ -194,7 +194,6 @@ export const useCSSLengthInput: useInputFunction<{
             {endAddon || null}
           </InputAdornment>
         }
-        labelWidth={(label?.length || 0) * 6.9}
       />
     </FormControl>
   );

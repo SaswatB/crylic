@@ -6,6 +6,7 @@ import {
   createElementEditorField,
   ElementEditorFieldProps,
 } from "../ElementEditor";
+import { useInputRowWrapper } from "../InputRowWrapper";
 
 const AttributeNameMap: Record<string, string | undefined> = {
   id: "Identifier",
@@ -30,14 +31,17 @@ function useAttributeFE({
           .element as HTMLLinkElement
       ).getAttribute(attributeName) ?? undefined,
     onChange: (value: string) => onChangeAttributes({ [attributeName]: value }),
+    onClear: () => onChangeAttributes({ [attributeName]: null }),
   };
 }
 
 // #region text
 
 function TextAttrFE(props: AttributeFEProps & { bindInitialValue?: boolean }) {
-  const [, render] = useTextInput(useAttributeFE(props));
-  return render();
+  return useInputRowWrapper<{}, any, any, any>(
+    useTextInput,
+    useAttributeFE(props)
+  )[1]();
 }
 export const creatTextAttrFE = (attributeName: string) =>
   createElementEditorField(TextAttrFE, { attributeName });

@@ -36,8 +36,8 @@ export const AnimationEditorModal = createModal<{}, void>(({ resolve }) => {
       // convert the selected element's props to a map of animation properties per animation type
       const props = selectedElement?.target.sourceMetadata?.directProps || {};
       setAnimationProperties(propsToAnimationPropertyMap(props));
-    } else {
-      throw new Error("Can't edit animation on render entry");
+    } else if (selectedElement) {
+      console.error("Can't edit animation on render entry");
     }
   });
   const onSave = () => {

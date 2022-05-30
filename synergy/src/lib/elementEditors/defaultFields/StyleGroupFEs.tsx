@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { faCompress, faExpand } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { startCase, uniq } from "lodash";
+import { useSnackbar } from "notistack";
 
 import { StylePropNameMap } from "../../../components/SideBar/css-options";
 import { BORDER_STYLES } from "../../../constants";
@@ -22,6 +23,7 @@ import {
   createElementEditorField,
   ElementEditorFieldProps,
 } from "../ElementEditor";
+import { useInputRowWrapper } from "../InputRowWrapper";
 
 interface StyleGroupFEProps extends ElementEditorFieldProps {
   styleProp: StyleKeys;
@@ -32,14 +34,20 @@ function useStyleGroupFE({
   styleProp,
   onChangeStyleGroup,
 }: StyleGroupFEProps) {
+  const { enqueueSnackbar } = useSnackbar();
+  const label = StylePropNameMap[styleProp] || startCase(`${styleProp || ""}`);
   return {
-    label: StylePropNameMap[styleProp] || startCase(`${styleProp || ""}`),
+    label,
     initialValue: isSelectedElementTarget_Component(selectedElement)
       ? getSelectedElementStyleValue(selectedElement, styleProp)
       : "",
+    // todo add snackbars around these promises?
     onChange: (value: string, preview?: boolean) =>
       onChangeStyleGroup({ [styleProp]: value }, preview),
-    onClear: () => onChangeStyleGroup({ [styleProp]: null }),
+    onClear: async () => {
+      await onChangeStyleGroup({ [styleProp]: null });
+      enqueueSnackbar(`Cleared ${label}`, { variant: "success" });
+    },
   };
 }
 
@@ -48,11 +56,10 @@ function useStyleGroupFE({
 function CSSLengthSGFE(
   props: StyleGroupFEProps & { bindInitialValue?: boolean }
 ) {
-  const [, render] = useCSSLengthInput({
+  return useInputRowWrapper(useCSSLengthInput, {
     ...useStyleGroupFE(props),
     bindInitialValue: props.bindInitialValue,
-  });
-  return render();
+  })[1]();
 }
 export const createCSSLengthSGFE = (styleProp: StyleKeys) =>
   createElementEditorField(CSSLengthSGFE, { styleProp });
@@ -67,13 +74,12 @@ export const createBoundCSSLengthSGFE = (styleProp: StyleKeys) =>
 // #region text
 
 function TextSGFE(props: StyleGroupFEProps & { bindInitialValue?: boolean }) {
-  const [, render] = useTextInput({
+  return useInputRowWrapper(useTextInput, {
     ...useStyleGroupFE(props),
     bindInitialValue: props.bindInitialValue,
-  });
-  return render();
+  })[1]();
 }
-export const creatTextSGFE = (styleProp: StyleKeys) =>
+export const createTextSGFE = (styleProp: StyleKeys) =>
   createElementEditorField(TextSGFE, { styleProp });
 export const createBoundTextSGFE = (styleProp: StyleKeys) =>
   createElementEditorField(TextSGFE, {
@@ -86,8 +92,10 @@ export const createBoundTextSGFE = (styleProp: StyleKeys) =>
 // #region color picker
 
 function ColorPickerSGFE(props: StyleGroupFEProps) {
-  const [, render] = useColorPicker(useStyleGroupFE(props));
-  return render();
+  return useInputRowWrapper<{}, any, any, any>(
+    useColorPicker,
+    useStyleGroupFE(props)
+  )[1]();
 }
 export const createBoundColorPickerSGFE = (styleProp: StyleKeys) =>
   createElementEditorField(ColorPickerSGFE, {
@@ -107,13 +115,12 @@ function AutocompleteSGFE({
   options: { name: string; value: string }[];
   config?: { freeSolo?: boolean; widePopper?: boolean };
 }) {
-  const [, render] = useAutocomplete({
+  return useInputRowWrapper(useAutocomplete, {
     ...useStyleGroupFE(props),
     options,
     freeSolo: config?.freeSolo ?? true,
     widePopper: config?.widePopper ?? true,
-  });
-  return render();
+  })[1]();
 }
 export const createAutocompleteSGFE = (
   styleProp: StyleKeys,
@@ -129,11 +136,10 @@ function SelectSGFE({
   options,
   ...props
 }: StyleGroupFEProps & { options: { name: string; value: string }[] }) {
-  const [, render] = useSelectInput({
+  return useInputRowWrapper(useSelectInput, {
     ...useStyleGroupFE(props),
     options,
-  });
-  return render();
+  })[1]();
 }
 export const createSelectSGFE = (
   styleProp: StyleKeys,
@@ -187,6 +193,7 @@ function BreakdownSGFE({
   const [showBreakdown, setShowBreakdown] = useState(false);
   const renderExpand = () => (
     <button
+      className="breakdown-action"
       title={`Expand ${startCase(prop)} Options`}
       onClick={() => {
         if (!isSelectedElementTarget_Component(selectedElement)) return;
@@ -206,6 +213,7 @@ function BreakdownSGFE({
   );
   const renderCollapse = () => (
     <button
+      className="breakdown-action"
       title={`Consolidate ${startCase(prop)} Options`}
       onClick={() => {
         if (!isSelectedElementTarget_Component(selectedElement)) return;
@@ -237,33 +245,45 @@ function BreakdownSGFE({
     [prop]
   );
 
-  const [selectedElementPropTop, renderPropTopInput] = useInput({
-    ...useStyleGroupFE({ styleProp: dir1Prop, ...props }),
-    bindInitialValue: true,
-    endAddon: renderCollapse(),
-    options,
-  });
+  const [selectedElementPropTop, renderPropTopInput] = useInputRowWrapper(
+    useInput,
+    {
+      ...useStyleGroupFE({ styleProp: dir1Prop, ...props }),
+      bindInitialValue: true,
+      endAddon: renderCollapse(),
+      options,
+    }
+  );
 
-  const [selectedElementPropBottom, renderPropBottomInput] = useInput({
-    ...useStyleGroupFE({ styleProp: dir2Prop, ...props }),
-    bindInitialValue: true,
-    endAddon: renderCollapse(),
-    options,
-  });
+  const [selectedElementPropBottom, renderPropBottomInput] = useInputRowWrapper(
+    useInput,
+    {
+      ...useStyleGroupFE({ styleProp: dir2Prop, ...props }),
+      bindInitialValue: true,
+      endAddon: renderCollapse(),
+      options,
+    }
+  );
 
-  const [selectedElementPropLeft, renderPropLeftInput] = useInput({
-    ...useStyleGroupFE({ styleProp: dir3Prop, ...props }),
-    bindInitialValue: true,
-    endAddon: renderCollapse(),
-    options,
-  });
+  const [selectedElementPropLeft, renderPropLeftInput] = useInputRowWrapper(
+    useInput,
+    {
+      ...useStyleGroupFE({ styleProp: dir3Prop, ...props }),
+      bindInitialValue: true,
+      endAddon: renderCollapse(),
+      options,
+    }
+  );
 
-  const [selectedElementPropRight, renderPropRightInput] = useInput({
-    ...useStyleGroupFE({ styleProp: dir4Prop, ...props }),
-    bindInitialValue: true,
-    endAddon: renderCollapse(),
-    options,
-  });
+  const [selectedElementPropRight, renderPropRightInput] = useInputRowWrapper(
+    useInput,
+    {
+      ...useStyleGroupFE({ styleProp: dir4Prop, ...props }),
+      bindInitialValue: true,
+      endAddon: renderCollapse(),
+      options,
+    }
+  );
 
   // reset breakdown visibility on selected element change
   const refreshBreakdown = (allowUnset = false) => {
@@ -292,7 +312,7 @@ function BreakdownSGFE({
     ifSelectedElementTarget_NotRenderEntry(selectedElement)?.target.lookupId,
   ]);
 
-  const [, renderPropInput] = useInput({
+  const [, renderPropInput] = useInputRowWrapper(useInput, {
     ...useStyleGroupFE({ styleProp: prop, ...props }),
     bindInitialValue: true,
     endAddon: renderExpand(),

@@ -39,7 +39,7 @@ export class VirtualElementEditor implements ElementEditor {
     if (sections.length === 0) {
       sections.push({
         name: "Props",
-        fields: [createMessageFE("No props available to edit")],
+        fields: [createMessageFE("No properties available to edit")],
       });
     }
 

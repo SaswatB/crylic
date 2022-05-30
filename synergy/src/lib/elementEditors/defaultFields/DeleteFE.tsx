@@ -3,14 +3,14 @@ import { useSnackbar } from "notistack";
 
 import { useService } from "../../../hooks/useService";
 import { SelectService } from "../../../services/SelectService";
+import { InputRowBlockButton } from "../InputRowWrapper";
 
 export function DeleteFE() {
   const selectService = useService(SelectService);
   const { enqueueSnackbar } = useSnackbar();
 
   return (
-    <button
-      className="btn col-span-2"
+    <InputRowBlockButton
       onClick={() =>
         selectService
           .deleteSelectedElement()
@@ -20,6 +20,6 @@ export function DeleteFE() {
       }
     >
       Delete Element
-    </button>
+    </InputRowBlockButton>
   );
 }

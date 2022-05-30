@@ -173,9 +173,19 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
       Object.entries(attributes).forEach(([key, value]) => {
         const { openingElement } = path.value;
         let attr = openingElement.attributes?.find(
-          (attr): attr is t.JSXAttribute =>
-            attr.type === "JSXAttribute" && attr.name.name === key
+          (a): a is t.JSXAttribute =>
+            a.type === "JSXAttribute" && a.name.name === key
         );
+        if (value === null) {
+          // support delete
+          if (attr) {
+            openingElement.attributes?.splice(
+              openingElement.attributes.indexOf(attr),
+              1
+            );
+          }
+          return;
+        }
         if (!attr) {
           openingElement.attributes = openingElement.attributes || [];
           attr = b.jsxAttribute(b.jsxIdentifier(key), valueToJSXLiteral({}));

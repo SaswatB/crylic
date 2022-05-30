@@ -15,6 +15,7 @@ import {
 import { updateStyleGroupHelper } from "../../ast/code-edit-helpers";
 import { CodeEntry } from "../../project/CodeEntry";
 import { ElementEditorFieldProps } from "../ElementEditor";
+import { useInputRowWrapper } from "../InputRowWrapper";
 
 export function ImageSelectorFE({
   selectedElement,
@@ -23,6 +24,7 @@ export function ImageSelectorFE({
   const project = useProject();
   const selectService = useService(SelectService);
   const selectedStyleGroup = useObservable(selectService.selectedStyleGroup$);
+  const codeEntries = useObservable(project.codeEntries$);
   const { enqueueSnackbar } = useSnackbar();
 
   const onChange = (assetEntry: CodeEntry) => {
@@ -42,13 +44,14 @@ export function ImageSelectorFE({
     ? getSelectedElementStyleValue(selectedElement, imageProp)
     : "";
 
+  const options = codeEntries
+    .filter((e) => e.isImageEntry)
+    .map((entry) => ({
+      name: entry.filePath.getBasename(),
+      value: entry.id,
+    }));
   const [, renderMenu, openMenu, closeMenu] = useMenuInput({
-    options: (project?.codeEntries$.getValue() || [])
-      .filter((e) => e.isImageEntry)
-      .map((entry) => ({
-        name: entry.filePath.getBasename(),
-        value: entry.id,
-      })),
+    options,
     disableSelection: true,
     onChange: (newCodeId: string) => {
       closeMenu();
@@ -56,7 +59,7 @@ export function ImageSelectorFE({
     },
   });
 
-  const [, renderValueInput] = useTextInput({
+  const [, renderValueInput] = useInputRowWrapper(useTextInput, {
     label,
     initialValue: `${initialValue}`,
     bindInitialValue: true,
@@ -64,7 +67,7 @@ export function ImageSelectorFE({
 
   return (
     <>
-      {renderValueInput({ onClick: openMenu })}
+      {renderValueInput({ onClick: (e) => options.length > 0 && openMenu(e) })}
       {renderMenu()}
     </>
   );

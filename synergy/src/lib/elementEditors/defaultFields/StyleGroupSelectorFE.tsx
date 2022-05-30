@@ -1,6 +1,5 @@
 import React from "react";
 import styled from "@emotion/styled";
-import { faCrosshairs } from "@fortawesome/free-solid-svg-icons";
 import {
   Button,
   Dialog,
@@ -14,7 +13,7 @@ import {
 } from "@material-ui/core";
 import { useSnackbar } from "notistack";
 
-import { IconButton } from "../../../components/IconButton";
+import { DEFAULT_TRANSITION } from "../../../components/base/design-constants";
 import { createModal } from "../../../components/PromiseModal";
 import { useSelectInput, useTextInput } from "../../../hooks/useInput";
 import { useObservable } from "../../../hooks/useObservable";
@@ -288,20 +287,36 @@ export function StyleGroupSelectorFE({
           ])}
         </Select>
       </FormControl>
-      <IconButton
-        title="View in Code Editor"
-        className="ml-3"
-        icon={faCrosshairs}
+      <ViewCodeEntryButton
         onClick={() =>
           selectedStyleGroup &&
           openInEditor(selectedStyleGroup.lookupId, selectedStyleGroup.editor)
         }
-      />
+      >
+        View in code editor {"<>"}
+      </ViewCodeEntryButton>
     </Container>
   );
 }
 
 const Container = styled.div`
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  padding: 10px 40px;
+
+  .MuiSelect-root {
+    padding: 12px;
+  }
+`;
+
+const ViewCodeEntryButton = styled.button`
+  font-size: 12px;
+  text-align: right;
+  margin-top: 7px;
+  opacity: 0.5;
+  transition: ${DEFAULT_TRANSITION};
+
+  &:hover {
+    opacity: 1;
+  }
 `;

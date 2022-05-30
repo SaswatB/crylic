@@ -85,14 +85,15 @@ export class HtmlElementEditor implements ElementEditor {
           createBoundCSSLengthSGFE("width"),
           createBoundCSSLengthSGFE("height"),
           createSelectSGFE("position", CSS_POSITION_OPTIONS),
-          createSelectSGFE("display", CSS_DISPLAY_OPTIONS),
-          createSelectSGFE("boxSizing", CSS_BOX_SIZING_OPTIONS),
+          // todo should this be a breakdown and/or have a special background color?
           ...(getSelectedElementStyleValue(selectedElement, "position") !==
           "static"
             ? (["top", "left", "bottom", "right"] as const).map((a) =>
                 createBoundCSSLengthSGFE(a)
               )
             : []),
+          createSelectSGFE("display", CSS_DISPLAY_OPTIONS),
+          createSelectSGFE("boxSizing", CSS_BOX_SIZING_OPTIONS),
           createBreakdownSGFE("padding"),
           createBreakdownSGFE("margin"),
         ],

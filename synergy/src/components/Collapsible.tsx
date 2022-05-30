@@ -88,5 +88,6 @@ const Title = styled.span`
 `;
 
 const Content = styled.div`
-  padding: 6px;
+  display: flex;
+  flex-direction: column;
 `;

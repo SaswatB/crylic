@@ -8,6 +8,7 @@ import { ComponentDefinitionType } from "../../../types/paint";
 import { isSelectedElementTarget_Component } from "../../../types/selected-element";
 import { ltTakeNext, sleep } from "../../utils";
 import { ElementEditorFieldProps } from "../ElementEditor";
+import { InputRowBlockButton } from "../InputRowWrapper";
 
 export function AnimationFE({
   selectedElement,
@@ -21,12 +22,12 @@ export function AnimationFE({
     return (
       <>
         <div className="text-center">Framer Motion is not installed</div>
-        <button
-          className="btn mt-2 w-full"
+        <InputRowBlockButton
+          className="mt-2"
           onClick={() => installPackages("framer-motion@4.1.17")}
         >
           Install
-        </button>
+        </InputRowBlockButton>
       </>
     );
   }
@@ -66,17 +67,17 @@ export function AnimationFE({
         enqueueSnackbar("Animation enabled on element!");
       };
       return (
-        <button className="btn w-full" onClick={enableAnimation}>
+        <InputRowBlockButton onClick={enableAnimation}>
           Enable Animation
-        </button>
+        </InputRowBlockButton>
       );
     }
     // todo use a better method of checking whether motion is being used on the element
     return <>Animation is not enabled for element</>;
   }
   return (
-    <button className="btn w-full" onClick={() => AnimationEditorModal({})}>
+    <InputRowBlockButton onClick={() => AnimationEditorModal({})}>
       Edit Animation
-    </button>
+    </InputRowBlockButton>
   );
 }
