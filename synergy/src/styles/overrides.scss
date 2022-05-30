@@ -33,3 +33,10 @@ body {
   width: 100% !important;
   height: 100% !important;
 }
+
+// .__react_component_tooltip .multi-line
+.type-tooltip span {
+  text-align: left !important;
+  white-space: pre;
+  font-family: monospace;
+}

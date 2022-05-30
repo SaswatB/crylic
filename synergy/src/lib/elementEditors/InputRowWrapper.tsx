@@ -1,10 +1,55 @@
-import React from "react";
+import React, { useEffect, useMemo } from "react";
+import ReactTooltip from "react-tooltip";
 import styled from "@emotion/styled";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 
 import { Button } from "../../components/base/Button";
 import { IconButton } from "../../components/IconButton";
 import { useInputFunction } from "../../hooks/useInput";
+
+export function InputRowWrapper({
+  label,
+  tooltip,
+  onClear,
+  children,
+}: {
+  label?: string;
+  tooltip?: string;
+  onClear?: () => void;
+  children: JSX.Element;
+}) {
+  useEffect(() => {
+    tooltip && void ReactTooltip.rebuild();
+  }, [tooltip]);
+  const multilineTooltip = useMemo(() => {
+    if (!tooltip) return undefined;
+    return tooltip.split("\n").join("<br />");
+  }, [tooltip]);
+
+  return (
+    <InputRow>
+      <InputRowLabel
+        data-tip={multilineTooltip}
+        data-place="left"
+        data-class="type-tooltip"
+        data-multiline
+      >
+        {label}
+      </InputRowLabel>
+      {children}
+      <div style={{ width: 21 }}>
+        {onClear ? (
+          <IconButton
+            className="ml-2"
+            title="Clear"
+            icon={faTrash}
+            onClick={onClear}
+          />
+        ) : null}
+      </div>
+    </InputRow>
+  );
+}
 
 export function useInputRowWrapper<
   S extends { label?: string; onClear?: () => void },
@@ -16,20 +61,7 @@ export function useInputRowWrapper<
   return [
     value,
     (renderProps?: T) => (
-      <InputRow>
-        <InputRowLabel>{props.label}</InputRowLabel>
-        {render(renderProps)}
-        <div style={{ width: 21 }}>
-          {props.onClear ? (
-            <IconButton
-              className="ml-2"
-              title="Clear"
-              icon={faTrash}
-              onClick={props.onClear}
-            />
-          ) : null}
-        </div>
-      </InputRow>
+      <InputRowWrapper {...props}>{render(renderProps)}</InputRowWrapper>
     ),
   ] as const;
 }

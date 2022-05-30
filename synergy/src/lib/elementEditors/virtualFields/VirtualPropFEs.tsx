@@ -23,6 +23,7 @@ import {
   createElementEditorField,
   ElementEditorFieldProps,
 } from "../ElementEditor";
+import { InputRowWrapper } from "../InputRowWrapper";
 
 interface VirtualPropFEProps extends ElementEditorFieldProps {
   name: string;
@@ -34,12 +35,11 @@ function VirtualPropFE({
   selectedElement,
   name,
   type,
-  optional, // todo handle optional/null/undefined
+  optional,
   bindInitialValue,
   onChangeAttributes,
   openInEditor,
 }: VirtualPropFEProps & { bindInitialValue?: boolean }) {
-  useEffect(() => void ReactTooltip.rebuild(), []);
   const { enqueueSnackbar } = useSnackbar();
 
   const label = startCase(`${name || ""}`);
@@ -58,7 +58,6 @@ function VirtualPropFE({
 
   const renderStringInput = () => (
     <TextInput
-      label={label}
       initialValue={initialValue as string}
       onChange={onChange}
       bindInitialValue={bindInitialValue}
@@ -67,7 +66,6 @@ function VirtualPropFE({
 
   const renderSelectInput = (options: { name: string; value: unknown }[]) => (
     <SelectInput
-      label={label}
       initialValue={JSON.stringify(initialValue)}
       options={options.map((o) => ({
         name: o.name,
@@ -79,7 +77,6 @@ function VirtualPropFE({
 
   const renderNumberInput = () => (
     <TextInput
-      label={label}
       initialValue={`${initialValue ?? ""}`}
       onChange={(p) => onChange(parseFloat(p))}
       bindInitialValue={bindInitialValue}
@@ -156,25 +153,26 @@ function VirtualPropFE({
   }, [name, type]);
 
   return (
-    <div data-tip={typeString}>
+    <InputRowWrapper
+      label={label}
+      tooltip={typeString}
+      onClear={optional ? () => onChange(null) : undefined}
+    >
       {renderType(type) || (
-        <>
-          {label}{" "}
-          <Button
-            onClick={() =>
-              isSelectedElementTarget_NotRenderEntry(selectedElement)
-                ? openInEditor(selectedElement.target.lookupId, undefined)
-                : // todo implement
-                  enqueueSnackbar("Editing this prop is not supported yet", {
-                    variant: "warning",
-                  })
-            }
-          >
-            Edit
-          </Button>
-        </>
+        <Button
+          onClick={() =>
+            isSelectedElementTarget_NotRenderEntry(selectedElement)
+              ? openInEditor(selectedElement.target.lookupId, undefined)
+              : // todo implement
+                enqueueSnackbar("Editing this prop is not supported yet", {
+                  variant: "warning",
+                })
+          }
+        >
+          Edit
+        </Button>
       )}
-    </div>
+    </InputRowWrapper>
   );
 }
 export const createVirtualPropFE = (prop: {

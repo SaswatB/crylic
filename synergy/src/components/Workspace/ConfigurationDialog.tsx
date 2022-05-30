@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogTitle } from "@material-ui/core";
 import { usePackageInstallerRecoil } from "../../hooks/recoil/usePackageInstallerRecoil";
 import { useService } from "../../hooks/useService";
 import { ProjectService, useProject } from "../../services/ProjectService";
+import { Button } from "../base/Button";
 import { TourContext } from "../Tour/Tour";
 
 export const ConfigurationDialog: VoidFunctionComponent<{
@@ -23,7 +24,7 @@ export const ConfigurationDialog: VoidFunctionComponent<{
       <DialogTitle>Project Configuration</DialogTitle>
       <DialogContent>
         <div className="flex flex-col">
-          <div className="flex">
+          <div className="flex gap-x-2">
             <Button
               onClick={() => {
                 project.saveFiles();
@@ -42,7 +43,7 @@ export const ConfigurationDialog: VoidFunctionComponent<{
               Close Project
             </Button>
           </div>
-          <div className="flex">
+          <div className="flex gap-x-2 mt-2">
             <Button
               onClick={() => {
                 installPackages(undefined);
@@ -60,7 +61,7 @@ export const ConfigurationDialog: VoidFunctionComponent<{
               Edit Webpack Config
             </Button>
           </div>
-          <div className="flex">
+          <div className="flex gap-x-2 mt-2">
             <Button onClick={() => setTourDisabled(!tourDisabled)}>
               {tourDisabled ? "Enable Tour" : "Disable Tour"}
             </Button>
@@ -74,10 +75,3 @@ export const ConfigurationDialog: VoidFunctionComponent<{
     </Dialog>
   );
 };
-
-const Button = styled.button`
-  border-radius: 15px;
-  background-color: #0000003b;
-  padding: 20px;
-  margin: 10px;
-`;

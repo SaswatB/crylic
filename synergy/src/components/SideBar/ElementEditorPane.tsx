@@ -10,7 +10,6 @@ import {
   ElementEditorSection,
 } from "../../lib/elementEditors/ElementEditor";
 import { editorOpenLocation } from "../../lib/events";
-import { renderSeparator } from "../../lib/render-utils";
 import { ElementEditorService } from "../../services/ElementEditorService";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
