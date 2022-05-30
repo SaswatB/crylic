@@ -123,7 +123,9 @@ function VirtualPropFE({
                 .map((t) => ({ name: `${t.value}`, value: t.value }))
             );
           }
-          return renderType(memberKinds.values().next().value);
+          // todo is there a better way?
+          const k = memberKinds.values().next().value;
+          return renderType(rType.memberTypes.find((t) => t.kind === k)!);
         } else if (memberKinds.size === 2) {
           if (
             memberKinds.has(TSTypeKind.String) &&
