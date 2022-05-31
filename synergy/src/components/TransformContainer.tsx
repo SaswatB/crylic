@@ -109,17 +109,17 @@ export const TransformContainer: FunctionComponent<Props> = ({
         padding: 0,
       }}
       onPointerDown={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
         if (e.button === 1) {
+          e.preventDefault();
+          e.stopPropagation();
           dragState.current = true;
           (e.target as HTMLElement).setPointerCapture(e.pointerId);
         }
       }}
       onPointerMove={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
         if (dragState.current) {
+          e.preventDefault();
+          e.stopPropagation();
           const { scale } = transformRef.current;
           onPan(e.movementX / ratio / scale, e.movementY / ratio / scale);
         }
