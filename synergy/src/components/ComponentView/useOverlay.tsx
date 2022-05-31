@@ -389,8 +389,9 @@ export function useOverlay(
           }
         >
           <FontAwesomeIcon
+            title="View warnings"
             icon={faExclamationTriangle}
-            className="text-gray-500"
+            className="text-white opacity-50 default-transition hover:opacity-100"
           />
         </div>
       ) : null}
