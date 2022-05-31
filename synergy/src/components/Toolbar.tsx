@@ -211,7 +211,7 @@ export const Toolbar: FunctionComponent<Props> = ({ setZoomAction }) => {
             selectService.setSelectMode({ type: SelectModeType.SelectElement })
           }
         >
-          <FontAwesomeIcon icon={faLocationArrow} className="rotate-90" />
+          <FontAwesomeIcon icon={faLocationArrow} className="-rotate-90" />
         </button>
         <Tour
           name="add-mode"
