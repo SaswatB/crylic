@@ -13,6 +13,7 @@ import { editorOpenLocation } from "../../lib/events";
 import { ElementEditorService } from "../../services/ElementEditorService";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
+import { ifSelectedElementTarget_NotRenderEntry } from "../../types/selected-element";
 import { Collapsible } from "../Collapsible";
 import { Tour } from "../Tour/Tour";
 
@@ -129,7 +130,14 @@ export const ElementEditorPane: FunctionComponent = () => {
       rows={5}
       ready={!!sections?.length}
     >
-      <div data-tour="edit-element-tab" className="overflow-auto">
+      <div
+        key={
+          ifSelectedElementTarget_NotRenderEntry(selectedElement)?.target
+            .lookupId
+        }
+        data-tour="edit-element-tab"
+        className="overflow-auto"
+      >
         <Tour
           name="edit-element-tab"
           beaconStyle={{

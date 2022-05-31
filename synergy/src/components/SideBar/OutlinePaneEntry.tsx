@@ -179,6 +179,7 @@ export function OutlinePaneEntry({ renderEntry, openUrl }: Props) {
             hints
           );
         } catch (e) {
+          console.error(e);
           enqueueSnackbar((e as Error)?.message || `${e}`, {
             variant: "error",
           });

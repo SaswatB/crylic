@@ -278,7 +278,8 @@ export class TyperUtils {
    * Given a source file & a position of a JSX element, this returns the prop type for the element's component
    */
   public getComponentPropsAtPosition(sourcePath: string, position: number) {
-    const source = this.program.getSourceFile(sourcePath)!;
+    const source = this.program.getSourceFile(sourcePath);
+    if (!source) return undefined;
 
     let jsxElement: ts.JsxOpeningElement | ts.JsxSelfClosingElement | undefined;
     visitJSX(source, (node) => {
