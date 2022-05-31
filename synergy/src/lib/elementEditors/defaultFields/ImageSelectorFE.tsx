@@ -27,7 +27,7 @@ export function ImageSelectorFE({
   const codeEntries = useObservable(project.codeEntries$);
   const { enqueueSnackbar } = useSnackbar();
 
-  const onChange = (assetEntry: CodeEntry) => {
+  const onChange = (assetEntry: CodeEntry | null) => {
     if (!selectedStyleGroup) return;
     void updateStyleGroupHelper(
       project,
@@ -54,8 +54,14 @@ export function ImageSelectorFE({
     options,
     disableSelection: true,
     onChange: (newCodeId: string) => {
-      closeMenu();
       onChange(project.getCodeEntryValue(newCodeId)!);
+      closeMenu();
+      // prevent the textbox from being focused so that it gets updated
+      // todo is there a better way than this timeout?
+      setTimeout(
+        () => (document.activeElement as HTMLInputElement)?.blur?.(),
+        100
+      );
     },
   });
 
@@ -63,6 +69,7 @@ export function ImageSelectorFE({
     label,
     initialValue: `${initialValue}`,
     bindInitialValue: true,
+    onClear: () => onChange(null),
   });
 
   return (

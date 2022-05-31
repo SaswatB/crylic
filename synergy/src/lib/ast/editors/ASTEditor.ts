@@ -98,7 +98,7 @@ export abstract class StyleASTEditor<ASTType> extends ASTEditor<ASTType> {
   protected abstract updateElementImageInAST(
     editContext: EditContext<ASTType>,
     imageProp: "backgroundImage",
-    assetEntry: CodeEntry
+    assetEntry: CodeEntry | null // null to delete
   ): void;
 
   public addStyleGroup = editAST(this.addStyleGroupToAST.bind(this)); // lookupId is ignored

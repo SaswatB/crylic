@@ -193,8 +193,8 @@ export const CSS_BACKGROUND_SIZE_OPTIONS = [
 
 export const StylePropNameMap: { [index in StyleKeys]?: string } = {
   backgroundColor: "Fill",
-  backgroundImage: "Image",
-  backgroundSize: "Image Size",
+  backgroundImage: "Fill Image",
+  backgroundSize: "Fill Image Size",
   flexDirection: "Direction",
   flexWrap: "Wrap",
   alignItems: "Align",

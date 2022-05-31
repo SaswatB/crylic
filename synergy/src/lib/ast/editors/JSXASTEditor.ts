@@ -235,8 +235,18 @@ export class JSXASTEditor extends ElementASTEditor<t.File> {
   protected updateElementImageInAST(
     { ast, codeEntry, lookupId }: EditContext<t.File>,
     imageProp: "backgroundImage",
-    assetEntry: CodeEntry
+    assetEntry: CodeEntry | null
   ) {
+    // support delete
+    if (assetEntry === null) {
+      this.getJSXElementByLookupId(ast, lookupId, (path) => {
+        this.applyJSXInlineStyleAttribute(path, [
+          { styleName: imageProp, styleValue: null },
+        ]);
+      });
+      return;
+    }
+
     // get the import for the asset
     const assetDefaultName = `Asset${startCase(
       assetEntry.filePath.getBasename().replace(/\..*$/, "")

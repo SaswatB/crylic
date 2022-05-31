@@ -129,7 +129,7 @@ export class StyledASTEditor extends StyleASTEditor<t.File> {
   protected updateElementImageInAST(
     { ast, lookupId }: EditContext<t.File>,
     imageProp: "backgroundImage",
-    assetEntry: CodeEntry
+    assetEntry: CodeEntry | null
   ) {
     throw new Error(
       "Adding images to a styled-component is not currently supported"

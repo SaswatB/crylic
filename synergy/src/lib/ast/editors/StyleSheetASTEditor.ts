@@ -130,28 +130,33 @@ export class StyleSheetASTEditor extends StyleASTEditor<CSSASTNode> {
     { ast, lookupId }: EditContext<CSSASTNode>,
     styles: Styles
   ): void {
-    let madeChange = false;
+    let foundRule = false;
     this.getStyleSheetRuleSetByLookup(ast, lookupId, (path) => {
       this.applyStyleSheetStyleAttribute(path, styles);
-      madeChange = true;
+      foundRule = true;
     });
-    if (!madeChange)
+    if (!foundRule)
       throw new Error(`Could not find element by lookup id ${lookupId}`);
   }
 
   protected updateElementImageInAST(
     context: EditContext<CSSASTNode>,
     imageProp: "backgroundImage",
-    assetEntry: CodeEntry
+    assetEntry: CodeEntry | null
   ) {
-    // get the import for the asset
-    const relativeAssetPath = context.codeEntry.getRelativeImportPath(
-      assetEntry.filePath
-    );
-    // add the css
-    this.applyStylesToAST(context, {
-      [imageProp]: `url(${relativeAssetPath})`,
-    });
+    let stylesUpdate: Styles;
+    if (assetEntry) {
+      // get the import for the asset
+      const relativeAssetPath = context.codeEntry.getRelativeImportPath(
+        assetEntry.filePath
+      );
+      stylesUpdate = { [imageProp]: `url(${relativeAssetPath})` };
+    } else {
+      // support delete
+      stylesUpdate = { [imageProp]: null };
+    }
+    // edit the css
+    this.applyStylesToAST(context, stylesUpdate);
   }
 
   protected addStyleGroupToAST({ ast }: EditContext<CSSASTNode>, name: string) {
