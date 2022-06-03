@@ -124,6 +124,15 @@ const generateBundleCode = async (
     );
   }
 
+  const stringifiedProps = Object.entries(
+    renderEntry.componentProps$.getValue()
+  ).map(([k, v]) => [
+    k,
+    JSON.stringify(v, (_key, val) =>
+      typeof val === "function" ? "[function]" : val
+    ).replaceAll(`"[function]"`, `() => void 0`),
+  ]);
+
   const def: RenderStarterDefinition = {
     imports: [
       'import React, { ErrorInfo } from "react";',
@@ -145,18 +154,14 @@ const generateBundleCode = async (
       wrappers: bootstrapImport
         ? [
             {
-              open: "Bootstrap Component={Component} pageProps={{}}",
+              open: `Bootstrap Component={Component} pageProps={{${stringifiedProps
+                .map(([k, v]) => `${k}: ${v}`)
+                .join(", ")}}}`,
               close: "Bootstrap",
             },
           ]
         : [],
-      componentProps: Object.entries(
-        renderEntry.componentProps$.getValue()
-      ).map(([k, v]) =>
-        `${k}={${JSON.stringify(v, (_key, val) =>
-          typeof val === "function" ? "[function]" : val
-        )}}`.replaceAll(`"[function]"`, `() => void 0`)
-      ),
+      componentProps: stringifiedProps.map(([k, v]) => `${k}={${v}}`),
     },
     afterRender: [
       `if ((module || {}).hot && (window || {}).${HMR_STATUS_HANDLER_PROP}) {
