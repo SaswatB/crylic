@@ -17,3 +17,5 @@ export const fileSyncSuccess = createEventDefinition<{
 export const fileSyncConflict = createEventDefinition<{
   paths: string[];
 }>()("project.fileSync.conflict");
+
+export const projectSave = createEventDefinition()("project.save");

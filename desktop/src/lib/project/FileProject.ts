@@ -280,7 +280,6 @@ export class FileProject extends Project {
         (e) => e.code$.getValue() !== undefined && !this.isCodeEntrySaved(e)
       )
       .forEach((e) => this.saveFile(e));
-    this.projectSaved$.next();
     track("project.saved");
   }
   public saveFile({ id, filePath, code$, codeRevisionId }: CodeEntry) {

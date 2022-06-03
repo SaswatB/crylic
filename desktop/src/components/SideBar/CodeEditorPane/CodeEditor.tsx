@@ -1,23 +1,24 @@
 import React, { FunctionComponent, useEffect, useRef } from "react";
 import MonacoEditor from "react-monaco-editor";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-import { useSnackbar } from "notistack";
+import { useBus } from "ts-bus/react";
 
 import { useBoundState } from "synergy/src/hooks/useBoundState";
 import { useBusSubscription } from "synergy/src/hooks/useBusSubscription";
 import { useDebounce } from "synergy/src/hooks/useDebounce";
 import { useObservable } from "synergy/src/hooks/useObservable";
-import { useUpdatingRef } from "synergy/src/hooks/useUpdatingRef";
 import { JSXActionProvider } from "synergy/src/lib/ast/providers/JSXActionProvider";
 import { ASTType } from "synergy/src/lib/ast/types";
-import { editorOpenLocation, editorResize } from "synergy/src/lib/events";
+import {
+  editorOpenLocation,
+  editorResize,
+  projectSave,
+} from "synergy/src/lib/events";
 import { CodeEntry } from "synergy/src/lib/project/CodeEntry";
 import { Project } from "synergy/src/lib/project/Project";
 import { isDefined, ltTakeNext } from "synergy/src/lib/utils";
 
 import { setupLanguageService } from "../../../utils/moncao-helpers";
-
-const fs = __non_webpack_require__("fs") as typeof import("fs");
 
 function refreshDecorations(
   project: Project,
@@ -120,12 +121,11 @@ export const CodeEditor: FunctionComponent<Props> = ({
   onSelectElement,
   isActiveEditor,
 }) => {
-  const { enqueueSnackbar } = useSnackbar();
+  const bus = useBus();
   const editorRef = useRef<MonacoEditor>(null);
   const code = useObservable(codeEntry.code$);
   const ast = useObservable(codeEntry.ast$);
   const [localValue, setLocalValue] = useBoundState(code);
-  const localValueRef = useUpdatingRef(localValue);
   const [debouncedLocalValue] = useDebounce(localValue, 1000);
   useEffect(() => {
     if (debouncedLocalValue !== code) {
@@ -245,18 +245,9 @@ export const CodeEditor: FunctionComponent<Props> = ({
         editorMonaco.addCommand(
           monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
           () => {
-            try {
-              // todo this probably has weird side effects
-              fs.writeFileSync(
-                codeEntry.filePath.getNativePath(),
-                localValueRef.current || ""
-              );
-            } catch (error) {
-              enqueueSnackbar(
-                `There was an error while saving: ${(error as Error).message}`,
-                { variant: "error" }
-              );
-            }
+            // lm_d1c6d7683b code change assumed to be synchronous
+            onCodeChange(codeEntry.id, editorMonaco.getValue() || "");
+            bus.publish(projectSave());
           }
         );
       }}

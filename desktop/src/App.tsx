@@ -102,12 +102,6 @@ export function App() {
     if (!project) resetWebpackWithWorker();
   }, [project]);
 
-  useObservableCallback(
-    project?.projectSaved$,
-    () => enqueueSnackbar("Files Saved!"),
-    { disableClearOnObservableChange: true }
-  );
-
   const [allowTracking, setAllowTracking] = useState(
     !store.get("tracking_disabled")
   );

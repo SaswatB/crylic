@@ -36,7 +36,6 @@ export abstract class Project {
   public readonly editEntries$ = new BehaviorSubject<EditEntry[]>([]);
   public readonly renderEntries$ = new BehaviorSubject<RenderEntry[]>([]);
   public readonly shouldReloadRenderEntries$ = new Subject();
-  public readonly projectSaved$ = new Subject();
   private readonly elementEditorEntries: EditorEntry<ElementASTEditor<any>>[];
   private readonly styleEditorEntries: EditorEntry<StyleASTEditor<any>>[];
 

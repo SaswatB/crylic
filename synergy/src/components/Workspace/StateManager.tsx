@@ -3,16 +3,22 @@ import React from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Button } from "@material-ui/core";
 import { useSnackbar } from "notistack";
+import { useBus } from "ts-bus/react";
 
 import { usePackageInstallerRecoil } from "../../hooks/recoil/usePackageInstallerRecoil";
 import { useBusSubscription } from "../../hooks/useBusSubscription";
 import { useService } from "../../hooks/useService";
-import { fileSyncConflict, fileSyncSuccess } from "../../lib/events";
+import {
+  fileSyncConflict,
+  fileSyncSuccess,
+  projectSave,
+} from "../../lib/events";
 import { useProject } from "../../services/ProjectService";
 import { SelectService } from "../../services/SelectService";
 
 export const StateManager: FunctionComponent = () => {
   const project = useProject({ allowUndefined: true });
+  const bus = useBus();
   const selectService = useService(SelectService);
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const { installPackages } = usePackageInstallerRecoil();
@@ -59,6 +65,19 @@ export const StateManager: FunctionComponent = () => {
     }
   }, [closeSnackbar, enqueueSnackbar, installPackages, project]);
 
+  // handle file save requests
+  useBusSubscription(projectSave, () => {
+    try {
+      project?.saveFiles();
+      enqueueSnackbar("Files Saved!", { variant: "success" });
+    } catch (error) {
+      enqueueSnackbar(
+        `There was an error while saving: ${(error as Error).message}`,
+        { variant: "error" }
+      );
+    }
+  });
+
   /* Notifications */
 
   // handle file sync notifications
@@ -98,16 +117,8 @@ export const StateManager: FunctionComponent = () => {
   // handle save/undo/redo hotkeys
   useHotkeys(
     "ctrl+s",
-    () => {
-      try {
-        project?.saveFiles();
-      } catch (error) {
-        enqueueSnackbar(
-          `There was an error while saving: ${(error as Error).message}`,
-          { variant: "error" }
-        );
-      }
-    },
+    () => bus.publish(projectSave()),
+    { enableOnTags: ["INPUT", "SELECT", "TEXTAREA"] },
     [project]
   );
   useHotkeys("ctrl+z", () => project?.undoCodeChange(), [project]);
