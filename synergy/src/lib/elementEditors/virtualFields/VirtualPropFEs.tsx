@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo } from "react";
-import ReactTooltip from "react-tooltip";
+import React, { useMemo } from "react";
 import { startCase } from "lodash";
 import { useSnackbar } from "notistack";
 
 import { Button } from "../../../components/base/Button";
 import { SelectInput, TextInput } from "../../../hooks/useInput";
+import { useObservable } from "../../../hooks/useObservable";
 import {
   isSelectedElementTarget_NotRenderEntry,
   isSelectedElementTarget_RenderEntry,
@@ -41,10 +41,15 @@ function VirtualPropFE({
   openInEditor,
 }: VirtualPropFEProps & { bindInitialValue?: boolean }) {
   const { enqueueSnackbar } = useSnackbar();
+  const componentProps = useObservable(
+    isSelectedElementTarget_RenderEntry(selectedElement)
+      ? selectedElement.renderEntry.componentProps$
+      : undefined
+  );
 
   const label = startCase(`${name || ""}`);
   const initialValue = isSelectedElementTarget_RenderEntry(selectedElement)
-    ? selectedElement.renderEntry.componentProps$.getValue()[name]
+    ? componentProps?.[name]
     : isSelectedElementTarget_VirtualComponent(selectedElement)
     ? selectedElement.target.sourceMetadata?.directProps[name]
     : undefined;
